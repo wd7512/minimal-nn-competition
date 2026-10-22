@@ -33,17 +33,30 @@ def test_render_site(tmp_path: Path) -> None:
         BenchmarkResult(
             "mnist-example", "mnist", 0.5, False, 10, {"samples": 2, "normalisation": False}
         ),
-        BenchmarkResult("snake-example", "snake", 1.0, False, 20, {"seed_lengths": [1]}),
+        BenchmarkResult(
+            "snake-example",
+            "snake",
+            1.0,
+            False,
+            20,
+            {"seed_lengths": [1], "max_length": 64},
+            score_std=0.5,
+        ),
     ]
     index = render_site(results, tmp_path)
     html = index.read_text()
     assert "MNIST" in html
     assert "SNAKE" in html
     assert "mnist-example" in html
+    assert "50.00%" in html
+    assert "1.56% ± 0.78%" in html
     assert "<th>Normalisation</th>" in html
     assert "<td>false</td>" in html
+    assert "<th>Details</th>" not in html
+    assert "<details>" not in html
     raw = json.loads((tmp_path / "leaderboard.json").read_text())
     assert [item["submission"] for item in raw] == ["mnist-example", "snake-example"]
+    assert raw[1]["score_std"] == 0.5
 
 
 def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

@@ -31,7 +31,7 @@ class MnistBenchmark:
             raise ValueError("MNIST submissions must declare input_size 784 and output_size 10")
         return materialize_submission(submission)
 
-    def evaluate(self, submission: LoadedSubmission) -> tuple[float, bool, dict[str, Any]]:
+    def evaluate(self, submission: LoadedSubmission) -> tuple[float, float, bool, dict[str, Any]]:
         if self.data_path is None or not self.data_path.is_file():
             raise FileNotFoundError(
                 "MNIST test data is unavailable; provide the official test-set cache "
@@ -62,6 +62,7 @@ class MnistBenchmark:
             ) from exc
         return (
             accuracy,
+            0.0,
             accuracy >= self.threshold,
             {
                 "samples": len(labels),

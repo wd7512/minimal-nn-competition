@@ -7,6 +7,7 @@ import argparse
 import json
 import logging
 import random
+import statistics
 from pathlib import Path
 from typing import Any
 
@@ -103,6 +104,7 @@ def train(
     from torch import nn
     from torch.distributions import Categorical
 
+    from minimal_nn_competition.benchmarks.snake.benchmark import DEFAULT_SEEDS
     from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
 
     logger = logging.getLogger(__name__)
@@ -208,8 +210,13 @@ def train(
                 sum(episode_food) / len(episode_food),
             )
 
-    lengths = _evaluate(policy, device, (0, 1, 2))
-    logger.info("Greedy evaluation lengths: %s", lengths)
+    lengths = _evaluate(policy, device, DEFAULT_SEEDS)
+    logger.info(
+        "Greedy evaluation: mean %.2f, std %.2f, lengths %s",
+        statistics.fmean(lengths),
+        statistics.pstdev(lengths),
+        lengths,
+    )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     state_dict = {key: value.detach().cpu() for key, value in policy.state_dict().items()}

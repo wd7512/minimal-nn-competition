@@ -17,6 +17,7 @@ class BenchmarkResult:
     passed: bool
     parameter_count: int
     details: dict[str, Any]
+    score_std: float = 0.0
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -24,7 +25,7 @@ class BenchmarkResult:
 
 def evaluate_submission(submission: Submission, benchmark: Any) -> BenchmarkResult:
     loaded: LoadedSubmission = benchmark.load_submission(submission)
-    score, passed, details = benchmark.evaluate(loaded)
+    score, score_std, passed, details = benchmark.evaluate(loaded)
     return BenchmarkResult(
         submission=submission.checkpoint.parent.name,
         benchmark=benchmark.name,
@@ -32,4 +33,5 @@ def evaluate_submission(submission: Submission, benchmark: Any) -> BenchmarkResu
         passed=bool(passed),
         parameter_count=parameter_count(loaded.state_dict),
         details=dict(details),
+        score_std=float(score_std),
     )

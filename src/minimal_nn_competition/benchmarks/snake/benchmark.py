@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import statistics
 from typing import Any
 
 from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
@@ -14,11 +15,13 @@ from minimal_nn_competition.model.entry import (
 # Be an 8x8 grid and an agent passess if it can fill out the 8x8 grid. If it does not it gets a secondary score which allows it to be placed on the leaderboard.
 # Therefore we should have {score = snake size (max 64), network_size = network size} and the ranking is score first and network size second.
 
+DEFAULT_SEEDS = tuple(range(100))
+
 
 class SnakeBenchmark:
     name = "snake"
 
-    def __init__(self, seeds: tuple[int, ...] = (0, 1, 2), max_moves: int = 4096) -> None:
+    def __init__(self, seeds: tuple[int, ...] = DEFAULT_SEEDS, max_moves: int = 4096) -> None:
         if not seeds:
             raise ValueError("Snake benchmark requires at least one seed")
         if max_moves <= 0:
@@ -33,7 +36,7 @@ class SnakeBenchmark:
             raise ValueError("Snake submissions must declare input_size 7 and output_size 4")
         return materialize_submission(submission)
 
-    def evaluate(self, submission: LoadedSubmission) -> tuple[float, bool, dict[str, Any]]:
+    def evaluate(self, submission: LoadedSubmission) -> tuple[float, float, bool, dict[str, Any]]:
         try:
             import torch
         except ImportError as exc:
@@ -51,13 +54,16 @@ class SnakeBenchmark:
                     action = int(torch.argmax(values, dim=1).item())
                     observation, _, done = environment.step(action)
                 lengths.append(len(environment.snake))
-        score = sum(lengths) / len(lengths)
+        score = statistics.fmean(lengths)
+        score_std = statistics.pstdev(lengths)
         board_size = environment.size * environment.size
         return (
             score,
+            score_std,
             all(length == board_size for length in lengths),
             {
                 "seed_lengths": lengths,
                 "max_length": board_size,
+                "seeds": len(self.seeds),
             },
         )

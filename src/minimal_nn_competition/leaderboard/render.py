@@ -18,16 +18,22 @@ table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
 th, td { border-bottom: 1px solid #8884; padding: 0.5rem; text-align: left; }
 th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
 tr.passed td { font-weight: 600; }
-pre { margin: 0; white-space: pre-wrap; font-size: 0.8rem; }
-details summary { cursor: pointer; }
 .muted { opacity: 0.65; }
 """
+
+
+def _score_text(result: BenchmarkResult) -> str:
+    maximum = float(result.details.get("max_length", 64)) if result.benchmark == "snake" else 1.0
+    mean = result.score / maximum * 100
+    if result.benchmark != "snake":
+        return f"{mean:.2f}%"
+    std = result.score_std / maximum * 100
+    return f"{mean:.2f}% ± {std:.2f}%"
 
 
 def _table(results: list[BenchmarkResult]) -> str:
     rows = []
     for rank, result in enumerate(results, start=1):
-        details = html.escape(json.dumps(result.details, sort_keys=True))
         status = "pass" if result.passed else "fail"
         normalisation = result.details.get("normalisation")
         normalisation_text = str(normalisation).lower() if isinstance(normalisation, bool) else "-"
@@ -35,15 +41,14 @@ def _table(results: list[BenchmarkResult]) -> str:
         rows.append(
             f"<tr{css}><td>{rank}</td>"
             f"<td>{html.escape(result.submission)}</td>"
-            f"<td>{result.score:.4f}</td>"
+            f"<td>{_score_text(result)}</td>"
             f"<td>{status}</td>"
             f"<td>{normalisation_text}</td>"
-            f"<td>{result.parameter_count}</td>"
-            f"<td><details><summary>details</summary><pre>{details}</pre></details></td></tr>"
+            f"<td>{result.parameter_count}</td></tr>"
         )
     return (
         "<table><thead><tr><th>#</th><th>Submission</th><th>Score</th>"
-        "<th>Status</th><th>Normalisation</th><th>Parameters</th><th>Details</th></tr></thead>"
+        "<th>Status</th><th>Normalisation</th><th>Parameters</th></tr></thead>"
         f"<tbody>{''.join(rows)}</tbody></table>"
     )
 

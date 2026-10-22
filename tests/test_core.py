@@ -80,7 +80,7 @@ def test_registry_and_leaderboard_ranking() -> None:
 
 
 def test_leaderboard_round_trip(tmp_path: Path) -> None:
-    result = BenchmarkResult("example", "snake", 1, True, 8, {"seed_lengths": [1]})
+    result = BenchmarkResult("example", "snake", 1, True, 8, {"seed_lengths": [1]}, score_std=0.5)
     path = tmp_path / "leaderboard.json"
     save_results(path, [result])
     assert load_results(path) == [result]
