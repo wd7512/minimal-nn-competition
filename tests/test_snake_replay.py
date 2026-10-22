@@ -186,3 +186,40 @@ def test_collect_and_render_replay_cli(
     assert (docs / "games" / "example.html").is_file()
     assert "view game" in (docs / "index.html").read_text()
     capsys.readouterr()
+
+
+def test_collect_records_replay_for_selected_input_indices(
+    tmp_path: Path, fast_snake_cli: None
+) -> None:
+    directory = tmp_path / "models" / "snake" / "selected"
+    directory.mkdir(parents=True)
+    (directory / "config.json").write_text(
+        json.dumps(
+            {
+                "benchmark": "snake",
+                "name": "selected",
+                "author": "tester",
+                "architecture": "linear",
+                "input_size": 2,
+                "output_size": 4,
+                "input_indices": [0, 1],
+            }
+        )
+    )
+    torch.save({"weight": torch.zeros((4, 2)), "bias": torch.zeros(4)}, directory / "model.pt")
+    replays = tmp_path / "replays"
+    assert (
+        main(
+            [
+                "collect",
+                "--models",
+                str(tmp_path / "models"),
+                "--output",
+                str(tmp_path / "leaderboard.json"),
+                "--replay-dir",
+                str(replays),
+            ]
+        )
+        == 0
+    )
+    assert (replays / "selected.json").is_file()

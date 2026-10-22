@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -19,13 +20,18 @@ def replay_slug(submission: str) -> str:
     return _SLUG_RE.sub("_", submission).strip("_") or "game"
 
 
-def record_game(model: Any, seed: int = REPLAY_SEED, max_moves: int = 4096) -> dict[str, Any]:
+def record_game(
+    model: Any,
+    seed: int = REPLAY_SEED,
+    max_moves: int = 4096,
+    input_indices: Sequence[int] | None = None,
+) -> dict[str, Any]:
     """Play one game and return a JSON-serialisable replay payload."""
     try:
         import torch
     except ImportError as exc:
         raise RuntimeError("PyTorch is required for Snake replays") from exc
-    environment = SnakeEnvironment(seed=seed, max_moves=max_moves)
+    environment = SnakeEnvironment(seed=seed, max_moves=max_moves, input_indices=input_indices)
     observation = environment.reset()
     frames = [{"snake": [list(cell) for cell in environment.snake], "food": list(environment.food)}]
     done = False
