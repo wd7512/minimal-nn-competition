@@ -96,8 +96,8 @@ After merging an entry into `dev`, the maintainer evaluates it locally:
 
 ```bash
 uv run mnc evaluate <benchmark> models/<benchmark>/<name>
-uv run mnc collect
-uv run mnc render leaderboard.json docs
+uv run mnc collect --replay-dir replays
+uv run mnc render leaderboard.json docs --replays replays
 ```
 
 The updated leaderboard is committed to `dev`, then `dev` is merged into `main`.
@@ -125,11 +125,14 @@ Evaluate all checked-in submissions and rebuild `leaderboard.json`:
 
 ```bash
 uv run mnc download-mnist --output data
-uv run mnc collect
-uv run mnc render leaderboard.json docs
+uv run mnc collect --replay-dir replays
+uv run mnc render leaderboard.json docs --replays replays
 ```
 
-`mnc collect` evaluates every `models/<benchmark>/<name>/` directory. To inspect
+`mnc collect` evaluates every `models/<benchmark>/<name>/` directory.
+`--replay-dir` records one seed-0 game per snake submission; `--replays`
+renders each as a `games/<name>.html` page linked from the snake table
+with a "view game" link. To inspect
 a saved leaderboard without changing it:
 
 ```bash
