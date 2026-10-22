@@ -1,0 +1,23 @@
+name: Submission check
+
+on:
+  pull_request:
+    branches: [submission]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate submission files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git show "$BASE_SHA:.github/scripts/validate_submission.py" > "$RUNNER_TEMP/validate_submission.py"
+          python3 "$RUNNER_TEMP/validate_submission.py"

@@ -21,6 +21,13 @@ This is a generic Python project template using `uv`, `ruff`, `ty`, and `pytest`
 - Prefer clear, boring Python over clever abstractions.
 - Use `logging` (stdlib) for all output — never `print()`. Configure via `logging.basicConfig()` in entry points.
 
+## Submissions
+
+- Submission PRs target `submission` and contain only `models/<benchmark>/<name>/config.json` and `model.pt`.
+- Do not merge submission PRs into `main` directly. Merge into `submission`, evaluate locally, commit the leaderboard to `submission`, then merge `submission` into `main`.
+- Do not execute code from a submission PR. The `Submission check` workflow validates paths and config only.
+- Keep `submission` fast-forwarded to `main` after promoting a submission.
+
 ## Worktrees
 
 - Create worktrees only under `.worktrees/` (`git worktree add .worktrees/<name> -b <branch> origin/main`).
