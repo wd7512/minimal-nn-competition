@@ -16,7 +16,9 @@ It must not change code, dependencies, workflows, the leaderboard, or `docs/`.
 The `Submission check` workflow verifies the changed paths and validates
 `config.json`; it does not execute the submitted model. `config.json` must
 include non-empty `name` and `author` strings, which are shown on the
-leaderboard.
+leaderboard. You are encouraged to include an optional `description` string
+with a short paragraph (or less) explaining how you built the network or its
+style. It is not shown on the leaderboard.
 
 If the check fails, update the PR rather than opening a new directory. Once it
 passes, a maintainer merges the PR into `submission`.
@@ -53,7 +55,7 @@ submission directory with `config.json` and `model.pt`.
 
 ## Other changes
 
-Code, documentation, and workflow changes go through a pull request to `main`.
-The `main` branch requires a pull request; repository admins can bypass branch
-protection when necessary. Only submissions need to go through the `submission`
-branch.
+Code, documentation, and workflow changes go through a pull request to `dev`
+and are promoted to `main` when ready. `main` requires a pull request;
+repository admins can bypass branch protection when necessary. Only submissions
+need to go through the `submission` branch.

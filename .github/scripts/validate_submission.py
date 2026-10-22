@@ -49,6 +49,9 @@ def _validate_config(config: Any, directory: Path) -> list[str]:
         value = config.get(field)
         if not isinstance(value, str) or not value.strip():
             errors.append(f"{config_path}: {field} must be a non-empty string")
+    description = config.get("description", "")
+    if not isinstance(description, str):
+        errors.append(f"{config_path}: description must be a string")
     if config.get("architecture") not in ALLOWED_ARCHITECTURES:
         errors.append(f"{config_path}: architecture must be linear or mlp")
     input_size = config.get("input_size")

@@ -15,7 +15,7 @@ How to submit
 - Open a PR against the `submission` branch with your model under `models/<benchmark>/<name>/`
 - The PR must contain only `config.json` and `model.pt`; do not include code, dependency, or workflow changes
 - After the PR is merged into `submission`, I evaluate it locally on this machine and add it to the leaderboard
-- Accepted submissions are then merged into `main`; maintainer changes can be pushed directly to `main`
+- Accepted submissions are then merged into `main`; feature and maintainer changes target `dev` first
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full submission and review flow.
 The `Submission check` workflow enforces the two-file rule without executing the
@@ -34,12 +34,15 @@ A submission is a directory containing `config.json` and `model.pt`:
   "input_size": 24,
   "output_size": 4,
   "hidden_sizes": [64, 64],
-  "activation": "relu"
+  "activation": "relu",
+  "description": "A small PPO-trained MLP policy."
 }
 ```
 
 `name` is the display name shown on the leaderboard and `author` credits
-who made the submission.
+who made the submission. `description` is optional: include a short paragraph
+(or less) explaining how you built the network or its style. It is not shown
+on the leaderboard site.
 
 MNIST submissions may also set `"normalisation": true` to scale pixels from
 `0-255` to `0-1`. The example MNIST model is trained on non-normalised inputs,
@@ -128,8 +131,8 @@ uv run mnc render leaderboard.json docs --replays replays
 ```
 
 The updated leaderboard is committed to `submission`, then `submission` is
-merged into `main`. GitHub Pages deploys from `main` only. Other changes can be
-committed directly to `main`.
+merged into `main`. GitHub Pages deploys from `main` only. Feature and
+maintainer changes target `dev` and are promoted to `main` when ready.
 
 ## Example submissions
 
@@ -173,6 +176,20 @@ for MNIST submissions. The site is published at
 https://wd7512.github.io/minimal-nn-competition/. Enable Pages with
 "GitHub Actions" as the source in the repository settings if it is not already
 enabled.
+
+## Internal token leaderboard
+
+Score the repo's own code for syntactic compactness (keywords, operators,
+and literals count; identifiers, comments, whitespace, and docstrings do
+not) across the `core`, `mnist`, and `snake` scopes. A scope scores only
+when all of its mapped tests pass:
+
+```bash
+uv run mnc internal
+uv run mnc render-internal internal-leaderboard.json docs
+```
+
+The hidden page lands at `docs/internal/` alongside the speed board.
 
 ## Development checks
 

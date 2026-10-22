@@ -132,7 +132,7 @@ def test_render_site_removes_stale_game_pages(tmp_path: Path) -> None:
 
 
 def test_collect_reports_replay_dir_errors(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, fast_snake_cli: None
 ) -> None:
     import shutil
 
@@ -157,7 +157,9 @@ def test_collect_reports_replay_dir_errors(
     assert "replays" in caplog.text
 
 
-def test_collect_and_render_replay_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_collect_and_render_replay_cli(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], fast_snake_cli: None
+) -> None:
     import shutil
 
     models = tmp_path / "models"

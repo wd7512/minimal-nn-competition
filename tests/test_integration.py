@@ -19,7 +19,7 @@ def test_checked_in_examples_load() -> None:
     assert SnakeBenchmark().load_submission(snake).model is not None
 
 
-def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str]) -> None:
+def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: None) -> None:
     assert main(["evaluate", "snake", "models/snake/example"]) == 0
     out = capsys.readouterr().out
     assert '"benchmark": "snake"' in out
@@ -72,7 +72,7 @@ def test_render_site(tmp_path: Path) -> None:
     assert "MNIST COMPRESSION" in html
     assert "SNAKE GAME" in html
     assert "mnist-example" in html
-    assert 'href="speed/"' in html
+    assert 'href="internal/speed/"' in html
     assert f"v{__version__}" in html
     assert "50.00%" in html
     assert "1.56% ± 0.78%" in html
@@ -99,7 +99,9 @@ def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert capsys.readouterr().out.strip().endswith("index.html")
 
 
-def test_collect_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_collect_cli(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], fast_snake_cli: None
+) -> None:
     import shutil
 
     models = tmp_path / "models"
