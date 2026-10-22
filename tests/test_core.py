@@ -30,20 +30,31 @@ def test_parameter_count_sums_tensor_values() -> None:
 def test_config_round_trip(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake","architecture":"mlp","input_size":7,'
+        '{"benchmark":"snake","name":"example","author":"tester",'
+        '"architecture":"mlp","input_size":7,'
         '"output_size":4,"hidden_sizes":[8,4],"activation":"relu",'
         '"normalisation":true}'
     )
     config = SubmissionConfig.from_file(path)
     assert config.benchmark == "snake"
+    assert config.name == "example"
+    assert config.author == "tester"
     assert config.hidden_sizes == (8, 4)
     assert config.normalisation is True
+
+
+def test_config_rejects_missing_identity(tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+    path.write_text('{"benchmark":"snake","architecture":"mlp","input_size":7,"output_size":4}')
+    with pytest.raises(SubmissionError, match="Invalid submission config"):
+        SubmissionConfig.from_file(path)
 
 
 def test_config_rejects_linear_hidden_sizes(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake","architecture":"linear","input_size":7,'
+        '{"benchmark":"snake","name":"example","author":"tester",'
+        '"architecture":"linear","input_size":7,'
         '"output_size":4,"hidden_sizes":[8]}'
     )
     with pytest.raises(SubmissionError, match="must not declare hidden_sizes"):

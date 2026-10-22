@@ -47,13 +47,15 @@ def _table(results: list[BenchmarkResult]) -> str:
         rows.append(
             f"<tr{css}><td>{rank}</td>"
             f"<td>{html.escape(result.submission)}</td>"
+            f"<td>{html.escape(result.name)}</td>"
+            f"<td>{html.escape(result.author)}</td>"
             f"<td>{_score_text(result)}</td>"
             f"<td>{status}</td>"
             f"<td>{normalisation_text}</td>"
             f"<td>{result.parameter_count}</td></tr>"
         )
     return (
-        "<table><thead><tr><th>#</th><th>Submission</th><th>Score</th>"
+        "<table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th><th>Score</th>"
         "<th>Status</th><th>Normalisation</th><th>Parameters</th></tr></thead>"
         f"<tbody>{''.join(rows)}</tbody></table>"
     )

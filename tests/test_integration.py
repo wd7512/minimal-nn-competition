@@ -21,12 +21,35 @@ def test_checked_in_examples_load() -> None:
 
 def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["evaluate", "snake", "models/snake/example"]) == 0
-    assert '"benchmark": "snake"' in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert '"benchmark": "snake"' in out
+    assert '"name": "example"' in out
+    assert '"author": "wd7512"' in out
 
 
 def test_data_path_rejected_for_snake(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["evaluate", "snake", "models/snake/example", "--data-path", "data.pt"]) == 2
     assert capsys.readouterr().out == ""
+
+
+def test_render_shows_name_and_author(tmp_path: Path) -> None:
+    results = [
+        BenchmarkResult(
+            "example",
+            "snake",
+            8.0,
+            False,
+            20,
+            {"max_length": 64},
+            name="Cool Net",
+            author="tester",
+        ),
+    ]
+    html = render_site(results, tmp_path).read_text()
+    assert "<th>Name</th>" in html
+    assert "<th>Author</th>" in html
+    assert "Cool Net" in html
+    assert "tester" in html
 
 
 def test_render_site(tmp_path: Path) -> None:

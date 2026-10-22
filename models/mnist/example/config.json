@@ -1,5 +1,7 @@
 {
   "benchmark": "mnist",
+  "name": "example",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,
