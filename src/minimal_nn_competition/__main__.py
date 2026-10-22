@@ -85,6 +85,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _record_replay(replay_dir: Path, name: str, benchmark: Any, submission: Submission) -> None:
+    from minimal_nn_competition.benchmarks.snake.benchmark import selected_input_indices
     from minimal_nn_competition.benchmarks.snake.replay import (
         REPLAY_SEED,
         record_game,
@@ -93,7 +94,12 @@ def _record_replay(replay_dir: Path, name: str, benchmark: Any, submission: Subm
     )
 
     loaded = benchmark.load_submission(submission)
-    payload = record_game(loaded.model, seed=REPLAY_SEED, max_moves=benchmark.max_moves)
+    payload = record_game(
+        loaded.model,
+        seed=REPLAY_SEED,
+        max_moves=benchmark.max_moves,
+        input_indices=selected_input_indices(submission.config),
+    )
     save_replay(replay_dir / f"{replay_slug(name)}.json", payload)
 
 
