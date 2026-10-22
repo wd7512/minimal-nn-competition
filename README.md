@@ -34,12 +34,15 @@ A submission is a directory containing `config.json` and `model.pt`:
   "input_size": 24,
   "output_size": 4,
   "hidden_sizes": [64, 64],
-  "activation": "relu"
+  "activation": "relu",
+  "description": "A small PPO-trained MLP policy."
 }
 ```
 
 `name` is the display name shown on the leaderboard and `author` credits
-who made the submission.
+who made the submission. `description` is optional: include a short paragraph
+(or less) explaining how you built the network or its style. It is not shown
+on the leaderboard site.
 
 MNIST submissions may also set `"normalisation": true` to scale pixels from
 `0-255` to `0-1`. The example MNIST model is trained on non-normalised inputs,

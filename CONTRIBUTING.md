@@ -16,7 +16,9 @@ It must not change code, dependencies, workflows, the leaderboard, or `docs/`.
 The `Submission check` workflow verifies the changed paths and validates
 `config.json`; it does not execute the submitted model. `config.json` must
 include non-empty `name` and `author` strings, which are shown on the
-leaderboard.
+leaderboard. You are encouraged to include an optional `description` string
+with a short paragraph (or less) explaining how you built the network or its
+style. It is not shown on the leaderboard.
 
 If the check fails, update the PR rather than opening a new directory. Once it
 passes, a maintainer merges the PR into `submission`.
