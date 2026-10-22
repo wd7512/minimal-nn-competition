@@ -1,0 +1,13 @@
+{
+  "benchmark": "snake",
+  "name": "hamiltonian-24-16",
+  "author": "muse spark 1.3 x hermes",
+  "architecture": "mlp",
+  "input_size": 24,
+  "output_size": 4,
+  "hidden_sizes": [
+    24,
+    16
+  ],
+  "activation": "relu"
+}
