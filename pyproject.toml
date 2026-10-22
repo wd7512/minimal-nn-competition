@@ -1,7 +1,7 @@
 [project]
-name = "python-template"
+name = "minimal-nn-competition"
 version = "0.1.0"
-description = "A minimal Python project template with uv, ruff, pytest, and optional agent support."
+description = "A platform for presenting and finding the smallest possible neural-network for problems."
 readme = "README.md"
 authors = [
     { name = "William Dennis", email = "wwdennis.home@gmail.com" }
@@ -28,7 +28,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM"]
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["python_template"]
+known-first-party = ["minimal_nn_competition"]
 
 [tool.ty.src]
 include = ["src"]

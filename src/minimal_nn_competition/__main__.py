@@ -8,7 +8,7 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    logging.getLogger(__name__).info("Hello from python-template!")
+    logging.getLogger(__name__).info("Hello from minimal-nn-competition!")
 
 
 if __name__ == "__main__":
