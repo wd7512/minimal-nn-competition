@@ -5,6 +5,11 @@
 Submit a model by opening a pull request against the **`submission`** branch.
 Do not target `main`.
 
+Benchmark-specific setup, config fields, and local evaluation:
+
+- [Snake submission](how-to/how-to-make-a-snake-game-submission.md)
+- [MNIST submission](how-to/how-to-make-an-mnist-submission.md)
+
 A submission PR must contain exactly two files in a new directory:
 
 ```text
