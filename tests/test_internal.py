@@ -77,6 +77,13 @@ def test_class_and_function_docstrings_are_ignored() -> None:
     )
 
 
+def test_implicitly_concatenated_docstrings_are_ignored() -> None:
+    assert count_tokens('"""a""" """b"""\nx = 1\n') == 2
+    assert count_tokens('def f():\n    """a""" """b"""\n    return 1\n') == count_tokens(
+        "def f():\n    return 1\n"
+    )
+
+
 def test_nondocstring_strings_count() -> None:
     assert count_tokens('x = """not a docstring"""\n') == 2
     assert count_tokens('s = "# not a comment"') == count_tokens('s = "x"') == 2
@@ -120,6 +127,11 @@ def test_soft_keywords_count_only_as_syntax() -> None:
     assert count_tokens("match cmd:\n    case _:\n        pass") == 6
     assert count_tokens("type X = int") == 2
     assert count_tokens("type = 5") == 2
+    assert count_tokens("match x:\n    case 1:\n        _ = 5\n") == 7
+    assert (
+        count_tokens("for _ in range(3):\n    pass")
+        == count_tokens("match x:\n    case 1:\n        for _ in range(3):\n            pass\n") - 5
+    )
 
 
 def test_fstring_counts_once() -> None:
@@ -244,6 +256,7 @@ def test_render_internal_site(tmp_path: Path) -> None:
     assert "1 failed" in page
     assert "failed validation" in page
     assert "Main leaderboard" in page
+    assert 'content="noindex,nofollow"' in page
     raw = json.loads((tmp_path / "internal" / "leaderboard.json").read_text())
     assert [item["tokens"] for item in raw] == [90, 100, 0]
 

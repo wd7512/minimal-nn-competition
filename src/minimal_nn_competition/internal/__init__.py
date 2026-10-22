@@ -1,17 +1,13 @@
 """Deterministic token-count leaderboards for the repo's own code (issue #6)."""
 
-from __future__ import annotations
-
 import json
 import logging
 import os
 import platform
 import subprocess
 import sys
-from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 
 from minimal_nn_competition.internal.scoring import RULES_VERSION, score_files
 
@@ -35,11 +31,11 @@ class Scope:
     tests: tuple[str, ...]
 
 
-SCOPES: tuple[Scope, ...] = (
+SCOPES = (
     Scope(
-        name="mnist",
-        sources=_MNIST_FILES,
-        tests=(
+        "mnist",
+        _MNIST_FILES,
+        (
             "tests/test_benchmarks.py::test_mnist_evaluation_and_threshold",
             "tests/test_benchmarks.py::test_mnist_normalisation_flag",
             "tests/test_benchmarks.py::test_mnist_requires_data_file",
@@ -48,9 +44,9 @@ SCOPES: tuple[Scope, ...] = (
         ),
     ),
     Scope(
-        name="snake",
-        sources=_SNAKE_FILES,
-        tests=(
+        "snake",
+        _SNAKE_FILES,
+        (
             "tests/test_benchmarks.py::test_snake_partial_run_does_not_pass",
             "tests/test_benchmarks.py::test_snake_full_board_passes",
             "tests/test_benchmarks.py::test_snake_defaults_to_100_seeds",
@@ -68,9 +64,9 @@ SCOPES: tuple[Scope, ...] = (
         ),
     ),
     Scope(
-        name="core",
-        sources=(PACKAGE,),
-        tests=(
+        "core",
+        (PACKAGE,),
+        (
             "tests/test_core.py::test_parameter_count_rejects_non_tensors",
             "tests/test_core.py::test_parameter_count_sums_tensor_values",
             "tests/test_core.py::test_config_round_trip",
@@ -94,18 +90,18 @@ SCOPES: tuple[Scope, ...] = (
 )
 
 
-def expand_scope_tests(scope: Scope, collected: Iterable[str]) -> list[str]:
+def expand_scope_tests(scope, collected):
     """Expand a scope's entries (files and node IDs) against collected IDs."""
     nodes = []
     for entry in scope.tests:
         if "::" in entry:
             nodes.append(entry)
         else:
-            nodes.extend(sorted(node for node in collected if node.startswith(entry + "::")))
+            nodes.extend(sorted(node for node in collected if node.startswith(f"{entry}::")))
     return nodes
 
 
-def scope_files(scope: Scope, root: Path) -> list[Path]:
+def scope_files(scope, root):
     """Resolve a scope's source prefixes to Python files under ``root``."""
     excluded = [root / source for source in _MNIST_FILES + _SNAKE_FILES]
     files = []
@@ -126,18 +122,18 @@ def scope_files(scope: Scope, root: Path) -> list[Path]:
     return sorted(files)
 
 
-def check_interpreter(root: Path) -> str:
+def check_interpreter(root):
     """Require the running interpreter to match the pinned ``.python-version``."""
     pinned = (root / ".python-version").read_text(encoding="utf-8").strip()
     running = platform.python_version()
-    if not running.split(".")[:2] == pinned.split(".")[:2]:
+    if running.split(".")[:2] != pinned.split(".")[:2]:
         raise RuntimeError(
             f"Scoring requires Python {pinned} (see .python-version), but running {running}"
         )
     return running
 
 
-def run_scope_tests(scope: Scope, root: Path, timeout: int = 600) -> tuple[bool, str]:
+def run_scope_tests(scope, root, timeout=600):
     """Run a scope's tests; return (passed, failure reason)."""
     env = {**os.environ, _NESTED_ENV_VAR: "1"}
     try:
@@ -157,45 +153,34 @@ def run_scope_tests(scope: Scope, root: Path, timeout: int = 600) -> tuple[bool,
     return False, tail or f"pytest exited with status {completed.returncode}"
 
 
-def _git_commit(root: Path) -> str:
+def _git(root, *args):
     try:
         completed = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            timeout=30,
+            ["git", *args], cwd=root, capture_output=True, text=True, timeout=30
         )
     except (OSError, subprocess.TimeoutExpired):
-        return "unknown"
-    if completed.returncode != 0:
-        return "unknown"
-    return completed.stdout.strip() or "unknown"
+        return None
+    return completed.stdout.strip() if completed.returncode == 0 else None
 
 
-def _git_dirty(root: Path) -> bool:
-    try:
-        completed = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=root,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return True
-    return bool(completed.stdout.strip())
+def _git_commit(root):
+    return _git(root, "rev-parse", "HEAD") or "unknown"
+
+
+def _git_dirty(root):
+    status = _git(root, "status", "--porcelain")
+    return status is None or bool(status)
 
 
 @dataclass(frozen=True)
 class InternalResult:
     scope: str
     tokens: int
-    commit: str
-    dirty: bool
-    measured_at: str
-    machine: str
-    python_version: str
+    commit: str = "unknown"
+    dirty: bool = False
+    measured_at: str = ""
+    machine: str = ""
+    python_version: str = ""
     rules_version: int = RULES_VERSION
     status: str = "pass"
     failure_reason: str = ""
@@ -204,7 +189,7 @@ class InternalResult:
         return json.dumps(asdict(self), sort_keys=True)
 
 
-def measure_scope(scope: Scope, root: Path) -> InternalResult:
+def measure_scope(scope, root):
     """Validate a scope's tests, then score its sources."""
     python_version = check_interpreter(root)
     passed, reason = run_scope_tests(scope, root)
@@ -224,7 +209,7 @@ def measure_scope(scope: Scope, root: Path) -> InternalResult:
     )
 
 
-def rank_internal_results(results: Iterable[InternalResult]) -> list[InternalResult]:
+def rank_internal_results(results):
     """Rank passing entries per scope by ascending tokens; failures last."""
     return sorted(
         results,
@@ -237,9 +222,7 @@ def rank_internal_results(results: Iterable[InternalResult]) -> list[InternalRes
     )
 
 
-def upsert_internal_result(
-    results: Iterable[InternalResult], result: InternalResult
-) -> list[InternalResult]:
+def upsert_internal_result(results, result):
     """Replace the entry for (scope, commit), keeping everything else."""
     kept = [
         existing
@@ -249,12 +232,12 @@ def upsert_internal_result(
     return kept + [result]
 
 
-def save_internal_results(path: Path, results: Iterable[InternalResult]) -> None:
+def save_internal_results(path, results):
     payload = [asdict(result) for result in rank_internal_results(results)]
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
-def load_internal_results(path: Path) -> list[InternalResult]:
+def load_internal_results(path):
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, list):
         raise ValueError("Internal leaderboard must contain a JSON list")
@@ -262,26 +245,14 @@ def load_internal_results(path: Path) -> list[InternalResult]:
     for item in raw:
         if not isinstance(item, dict):
             raise ValueError("Internal leaderboard entries must be JSON objects")
-        results.append(
-            InternalResult(
-                scope=str(item["scope"]),
-                tokens=int(item["tokens"]),
-                commit=str(item.get("commit", "unknown")),
-                dirty=bool(item.get("dirty", False)),
-                measured_at=str(item.get("measured_at", "")),
-                machine=str(item.get("machine", "")),
-                python_version=str(item.get("python_version", "")),
-                rules_version=int(item.get("rules_version", RULES_VERSION)),
-                status=str(item.get("status", "pass")),
-                failure_reason=str(item.get("failure_reason", "")),
-            )
-        )
+        results.append(InternalResult(**item))
     return rank_internal_results(results)
 
 
-def scope_rank(result: InternalResult, results: Iterable[InternalResult]) -> int:
+def scope_rank(result, results):
     """Competition rank within a scope: 1 + number of strictly lower scores."""
-    peers = [
-        other.tokens for other in results if other.scope == result.scope and other.status == "pass"
-    ]
-    return 1 + sum(1 for tokens in peers if tokens < result.tokens)
+    return 1 + sum(
+        other.tokens < result.tokens
+        for other in results
+        if other.scope == result.scope and other.status == "pass"
+    )

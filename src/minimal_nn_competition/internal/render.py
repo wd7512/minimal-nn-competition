@@ -1,18 +1,11 @@
 """Render the internal token-count leaderboard as a static site section."""
 
-from __future__ import annotations
-
 import html
 import json
 from dataclasses import asdict
 from itertools import groupby
-from pathlib import Path
 
-from minimal_nn_competition.internal import (
-    InternalResult,
-    rank_internal_results,
-    scope_rank,
-)
+from minimal_nn_competition.internal import rank_internal_results, scope_rank
 
 _STYLE = """
 :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
@@ -25,15 +18,15 @@ th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
 """
 
 
-def _commit_text(commit: str) -> str:
+def _commit_text(commit):
     return commit[:7] if commit != "unknown" else commit
 
 
-def _measured_text(measured_at: str) -> str:
+def _measured_text(measured_at):
     return measured_at.replace("T", " ").replace("+00:00", " UTC") or "-"
 
 
-def _table(scope: str, results: list[InternalResult]) -> str:
+def _table(results):
     rows = []
     for result in results:
         commit = html.escape(_commit_text(result.commit))
@@ -62,7 +55,7 @@ def _table(scope: str, results: list[InternalResult]) -> str:
     )
 
 
-def render_internal_html(results: list[InternalResult]) -> str:
+def render_internal_html(results):
     ranked = rank_internal_results(results)
     sections = []
     for scope, group in groupby(ranked, key=lambda result: result.scope):
@@ -72,13 +65,14 @@ def render_internal_html(results: list[InternalResult]) -> str:
             f"<section><h2>{html.escape(scope.upper())}</h2>"
             f'<p class="muted">{passes} scored run(s), ranked by ascending token '
             "count. Lower is better; equal counts share a rank.</p>"
-            f"{_table(scope, entries)}</section>"
+            f"{_table(entries)}</section>"
         )
     if not sections:
         sections.append("<p>No internal results have been recorded yet.</p>")
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        '<meta name="robots" content="noindex,nofollow">'
         "<title>Internal Token Leaderboard</title>"
         f"<style>{_STYLE}</style></head><body>"
         "<header><h1>Internal Token Leaderboard</h1>"
@@ -93,7 +87,7 @@ def render_internal_html(results: list[InternalResult]) -> str:
     )
 
 
-def render_internal_site(results: list[InternalResult], output_dir: Path) -> Path:
+def render_internal_site(results, output_dir):
     ranked = rank_internal_results(results)
     internal_dir = output_dir / "internal"
     internal_dir.mkdir(parents=True, exist_ok=True)
