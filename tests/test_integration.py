@@ -19,7 +19,7 @@ def test_checked_in_examples_load() -> None:
     assert SnakeBenchmark().load_submission(snake).model is not None
 
 
-def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str]) -> None:
+def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: None) -> None:
     assert main(["evaluate", "snake", "models/snake/example"]) == 0
     out = capsys.readouterr().out
     assert '"benchmark": "snake"' in out
@@ -99,7 +99,9 @@ def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert capsys.readouterr().out.strip().endswith("index.html")
 
 
-def test_collect_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_collect_cli(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], fast_snake_cli: None
+) -> None:
     import shutil
 
     models = tmp_path / "models"
