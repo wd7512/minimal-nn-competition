@@ -1,6 +1,6 @@
 # Agent Instructions
 
-This is a generic Python project template using `uv`, `ruff`, `ty`, and `pytest`.
+The ethos of this repo is simplicity and minimalism.
 
 ## Commands
 
