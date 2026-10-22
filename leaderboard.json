@@ -1,19 +1,5 @@
 [
   {
-    "author": "muse spark 1.3 x hermes",
-    "benchmark": "fashion-mnist",
-    "details": {
-      "normalisation": true,
-      "samples": 10000
-    },
-    "name": "mlp-9",
-    "parameter_count": 7165,
-    "passed": true,
-    "score": 1.0,
-    "score_std": 0.0,
-    "submission": "mlp-9"
-  },
-  {
     "author": "example author",
     "benchmark": "fashion-mnist",
     "details": {
@@ -26,6 +12,20 @@
     "score": 0.8579999804496765,
     "score_std": 0.0,
     "submission": "example"
+  },
+  {
+    "author": "muse spark 1.3 x hermes",
+    "benchmark": "fashion-mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 10000
+    },
+    "name": "mlp-9",
+    "parameter_count": 7165,
+    "passed": false,
+    "score": 0.15080000460147858,
+    "score_std": 0.0,
+    "submission": "mlp-9"
   },
   {
     "author": "muse spark 1.3 x hermes",
