@@ -17,6 +17,10 @@ How to submit
 - After the PR is merged into `submission`, I evaluate it locally on this machine and add it to the leaderboard
 - Accepted submissions are then merged into `main`; maintainer changes can be pushed directly to `main`
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full submission and review flow.
+The `Submission check` workflow enforces the two-file rule without executing the
+submitted model.
+
 ## Submission format
 
 A submission is a directory containing `config.json` and `model.pt`:

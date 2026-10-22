@@ -79,6 +79,10 @@ def render_html(results: list[BenchmarkResult]) -> str:
         f"<style>{_STYLE}</style></head><body>"
         "<header><h1>Minimal NN Competition</h1>"
         "<p>Small PyTorch state-dict submissions for MNIST and Snake.</p>"
+        "<p>Submit a model by opening a pull request against the "
+        '<code>submission</code> branch. See <a href="'
+        "https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"
+        '">CONTRIBUTING.md</a>.</p>'
         '<p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>'
         f"{''.join(sections)}"
         "<footer>"
