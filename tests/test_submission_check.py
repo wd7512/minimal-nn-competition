@@ -32,6 +32,8 @@ def _write_submission(
             config
             or {
                 "benchmark": benchmark,
+                "name": "tiny",
+                "author": "tester",
                 "architecture": "mlp",
                 "input_size": 784,
                 "output_size": 10,
@@ -87,3 +89,21 @@ def test_empty_checkpoint_is_rejected(tmp_path: Path) -> None:
     diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
     errors = _load_script().validate_diff(diff, tmp_path)
     assert any("must not be empty" in error for error in errors)
+
+
+def test_missing_identity_is_rejected(tmp_path: Path) -> None:
+    _write_submission(
+        tmp_path,
+        config={
+            "benchmark": "mnist",
+            "architecture": "mlp",
+            "input_size": 784,
+            "output_size": 10,
+            "hidden_sizes": [7],
+            "activation": "relu",
+        },
+    )
+    diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
+    errors = _load_script().validate_diff(diff, tmp_path)
+    assert any("name must be a non-empty string" in error for error in errors)
+    assert any("author must be a non-empty string" in error for error in errors)

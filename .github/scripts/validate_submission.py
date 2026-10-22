@@ -26,6 +26,10 @@ def _validate_config(config: Any, directory: Path) -> list[str]:
     benchmark = directory.parts[1] if len(directory.parts) > 1 else ""
     if config.get("benchmark") != benchmark:
         errors.append(f"{config_path}: benchmark must be {benchmark!r}")
+    for field in ("name", "author"):
+        value = config.get(field)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{config_path}: {field} must be a non-empty string")
     if config.get("architecture") not in ALLOWED_ARCHITECTURES:
         errors.append(f"{config_path}: architecture must be linear or mlp")
     input_size = config.get("input_size")

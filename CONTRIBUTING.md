@@ -14,7 +14,9 @@ models/<benchmark>/<name>/model.pt
 
 It must not change code, dependencies, workflows, the leaderboard, or `docs/`.
 The `Submission check` workflow verifies the changed paths and validates
-`config.json`; it does not execute the submitted model.
+`config.json`; it does not execute the submitted model. `config.json` must
+include non-empty `name` and `author` strings, which are shown on the
+leaderboard.
 
 If the check fails, update the PR rather than opening a new directory. Once it
 passes, a maintainer merges the PR into `submission`.
@@ -27,8 +29,8 @@ passes, a maintainer merges the PR into `submission`.
 
    ```bash
    uv run mnc evaluate <benchmark> models/<benchmark>/<name>
-   uv run mnc collect
-   uv run mnc render leaderboard.json docs
+   uv run mnc collect --replay-dir replays
+   uv run mnc render leaderboard.json docs --replays replays
    ```
 
 3. Commit the updated leaderboard to `submission`.
@@ -51,5 +53,7 @@ submission directory with `config.json` and `model.pt`.
 
 ## Other changes
 
-Code, documentation, and workflow changes can be committed directly to `main`.
-Only submissions need to go through the `submission` branch.
+Code, documentation, and workflow changes go through a pull request to `main`.
+The `main` branch requires a pull request; repository admins can bypass branch
+protection when necessary. Only submissions need to go through the `submission`
+branch.

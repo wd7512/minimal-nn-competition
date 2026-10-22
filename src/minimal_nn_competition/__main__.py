@@ -63,10 +63,14 @@ def _parser() -> argparse.ArgumentParser:
     train_mnist.add_argument("--epochs", type=int, default=20)
     train_mnist.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
     train_mnist.add_argument("--normalise", action="store_true")
+    train_mnist.add_argument("--name", default=None, help="Display name")
+    train_mnist.add_argument("--author", default="unknown", help="Submission author")
     train_snake = subparsers.add_parser("train-snake", help="Train the Snake example submission")
     train_snake.add_argument("--output", type=Path, default=Path("models/snake/example"))
     train_snake.add_argument("--iterations", type=int, default=600)
     train_snake.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
+    train_snake.add_argument("--name", default=None, help="Display name")
+    train_snake.add_argument("--author", default="unknown", help="Submission author")
     return parser
 
 
@@ -192,6 +196,8 @@ def main(argv: list[str] | None = None) -> int:
                 epochs=args.epochs,
                 device_name=args.device,
                 normalise=args.normalise,
+                name=args.name,
+                author=args.author,
             )
         except (FileNotFoundError, OSError, RuntimeError, ValueError) as exc:
             logging.getLogger(__name__).error("%s", exc)
@@ -201,7 +207,13 @@ def main(argv: list[str] | None = None) -> int:
         from minimal_nn_competition.examples.snake_submission import train
 
         try:
-            train(args.output, iterations=args.iterations, device_name=args.device)
+            train(
+                args.output,
+                iterations=args.iterations,
+                device_name=args.device,
+                name=args.name,
+                author=args.author,
+            )
         except (OSError, RuntimeError, ValueError) as exc:
             logging.getLogger(__name__).error("%s", exc)
             return 2

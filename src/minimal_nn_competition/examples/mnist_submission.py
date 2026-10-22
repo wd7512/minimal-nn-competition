@@ -42,6 +42,8 @@ def train(
     device_name: str = "auto",
     seed: int = 0,
     normalise: bool = False,
+    name: str | None = None,
+    author: str = "unknown",
 ) -> dict[str, Any]:
     """Train the example MLP and write ``config.json`` and ``model.pt``."""
     import torch
@@ -83,6 +85,8 @@ def train(
     torch.save(state_dict, output_dir / "model.pt")
     config = {
         "benchmark": "mnist",
+        "name": name or output_dir.name,
+        "author": author or "unknown",
         "architecture": "mlp",
         "input_size": 784,
         "output_size": 10,
@@ -103,6 +107,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
     parser.add_argument(
+        "--name", default=None, help="Display name (defaults to the output directory)"
+    )
+    parser.add_argument("--author", default="unknown", help="Author credited on the leaderboard")
+    parser.add_argument(
         "--normalise",
         action="store_true",
         help="Scale pixels to [0, 1] instead of training on raw 0-255 inputs",
@@ -114,6 +122,8 @@ def main(argv: list[str] | None = None) -> int:
         epochs=args.epochs,
         device_name=args.device,
         normalise=args.normalise,
+        name=args.name,
+        author=args.author,
     )
     return 0
 
