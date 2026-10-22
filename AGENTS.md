@@ -34,7 +34,7 @@ The ethos of this repo is simplicity and minimalism.
 
 ## Worktrees
 
-- Create worktrees only under `.worktrees/` (`git worktree add .worktrees/<name> -b <branch> origin/main`).
+- Create worktrees only under `.worktrees/` (`git worktree add .worktrees/<name> -b <branch> origin/dev`).
 - Before every commit, `git branch --show-current` must match the intended branch.
 
 ## Optional Agent Support

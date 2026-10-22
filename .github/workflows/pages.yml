@@ -32,7 +32,7 @@ jobs:
         run: uv sync --dev --locked
       - name: Render leaderboard
         run: |
-          uv run mnc render leaderboard.json docs
+          uv run mnc render leaderboard.json docs --replays docs/games
           uv run mnc render-speed speed-leaderboard.json docs/internal
           uv run mnc render-internal internal-leaderboard.json docs
       - name: Configure Pages

@@ -15,7 +15,7 @@ How to submit
 - Open a PR against the `submission` branch with your model under `models/<benchmark>/<name>/`
 - The PR must contain only `config.json` and `model.pt`; do not include code, dependency, or workflow changes
 - After the PR is merged into `submission`, I evaluate it locally on this machine and add it to the leaderboard
-- Accepted submissions are then merged into `main`; maintainer changes can be pushed directly to `main`
+- Accepted submissions are then merged into `main`; feature and maintainer changes target `dev` first
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full submission and review flow.
 The `Submission check` workflow enforces the two-file rule without executing the
@@ -131,8 +131,8 @@ uv run mnc render leaderboard.json docs --replays replays
 ```
 
 The updated leaderboard is committed to `submission`, then `submission` is
-merged into `main`. GitHub Pages deploys from `main` only. Other changes can be
-committed directly to `main`.
+merged into `main`. GitHub Pages deploys from `main` only. Feature and
+maintainer changes target `dev` and are promoted to `main` when ready.
 
 ## Example submissions
 

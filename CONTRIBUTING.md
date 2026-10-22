@@ -55,7 +55,7 @@ submission directory with `config.json` and `model.pt`.
 
 ## Other changes
 
-Code, documentation, and workflow changes go through a pull request to `main`.
-The `main` branch requires a pull request; repository admins can bypass branch
-protection when necessary. Only submissions need to go through the `submission`
-branch.
+Code, documentation, and workflow changes go through a pull request to `dev`
+and are promoted to `main` when ready. `main` requires a pull request;
+repository admins can bypass branch protection when necessary. Only submissions
+need to go through the `submission` branch.
