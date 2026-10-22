@@ -72,7 +72,7 @@ def test_render_site(tmp_path: Path) -> None:
     assert "MNIST COMPRESSION" in html
     assert "SNAKE GAME" in html
     assert "mnist-example" in html
-    assert 'href="speed/"' in html
+    assert 'href="internal/speed/"' in html
     assert f"v{__version__}" in html
     assert "50.00%" in html
     assert "1.56% ± 0.78%" in html

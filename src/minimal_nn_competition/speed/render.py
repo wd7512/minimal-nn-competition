@@ -64,7 +64,8 @@ def render_speed_html(results: list[SpeedResult]) -> str:
         '<p class="muted">A tick is one SnakeEngine.step() call (game engine only, '
         "excluding observation encoding). Older snake-speed-v1 entries include the "
         "7-feature observation encoding, so compare within a harness version.</p>"
-        '<p><a href="../">Main leaderboard</a> · '
+        '<p><a href="../../">Main leaderboard</a> · '
+        '<a href="../">Internal tokens</a> · '
         '<a href="leaderboard.json">Raw speed JSON</a></p></header>'
         f"{content}"
         "</body></html>\n"
