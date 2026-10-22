@@ -15,6 +15,10 @@ from minimal_nn_competition.model.entry import Submission, SubmissionError
 from minimal_nn_competition.runner.entry import evaluate_submission
 
 IMAGE_BENCHMARKS = ("fashion-mnist", "mnist")
+DEFAULT_TEST_CACHES = {
+    "mnist": Path("data/mnist-test.pt"),
+    "fashion-mnist": Path("data/fashion-mnist-test.pt"),
+}
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -328,6 +332,8 @@ def main(argv: list[str] | None = None) -> int:
     benchmark_kwargs = {}
     if args.data_path is not None:
         benchmark_kwargs["data_path"] = args.data_path
+    elif args.benchmark in DEFAULT_TEST_CACHES:
+        benchmark_kwargs["data_path"] = DEFAULT_TEST_CACHES[args.benchmark]
     try:
         benchmark = create_benchmark(args.benchmark, **benchmark_kwargs)
         result = evaluate_submission(Submission.from_directory(args.submission), benchmark)
