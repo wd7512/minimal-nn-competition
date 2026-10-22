@@ -1,0 +1,42 @@
+[project]
+name = "python-template"
+version = "0.1.0"
+description = "A minimal Python project template with uv, ruff, pytest, and optional agent support."
+readme = "README.md"
+authors = [
+    { name = "William Dennis", email = "wwdennis.home@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1,<10",
+    "ruff>=0.17.1,<0.18",
+    "ty>=0.0.90,<0.1",
+]
+
+[tool.uv]
+required-version = ">=0.12.13"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["python_template"]
+
+[tool.ty.src]
+include = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[build-system]
+requires = ["uv_build>=0.13.4,<0.14.0"]
+build-backend = "uv_build"
