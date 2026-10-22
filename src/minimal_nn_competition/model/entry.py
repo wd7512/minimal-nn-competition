@@ -38,6 +38,7 @@ class SubmissionConfig(BaseModel):
     hidden_sizes: tuple[StrictInt, ...] = ()
     activation: str = "relu"
     normalisation: StrictBool = False
+    input_indices: tuple[StrictInt, ...] | StrictBool | None = None
 
     @field_validator("architecture")
     @classmethod
@@ -58,6 +59,23 @@ class SubmissionConfig(BaseModel):
     def _validate_activation(cls, value: str) -> str:
         if value not in ACTIVATIONS:
             raise ValueError(f"activation must be one of {', '.join(ACTIVATIONS)}")
+        return value
+
+    @field_validator("input_indices")
+    @classmethod
+    def _validate_input_indices(
+        cls, value: tuple[int, ...] | bool | None
+    ) -> tuple[int, ...] | bool | None:
+        if value is None or value is True:
+            return value
+        if value is False:
+            raise ValueError("input_indices must be true or a list of feature indices")
+        if not value:
+            raise ValueError("input_indices must not be empty")
+        if any(index < 0 for index in value):
+            raise ValueError("input_indices must contain non-negative integers")
+        if len(set(value)) != len(value):
+            raise ValueError("input_indices must not contain duplicates")
         return value
 
     @model_validator(mode="after")

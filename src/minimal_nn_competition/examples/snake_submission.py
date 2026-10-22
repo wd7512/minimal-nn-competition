@@ -13,7 +13,7 @@ from typing import Any
 
 HIDDEN_SIZES = (64, 64)
 BOARD_SIZE = 8
-INPUT_SIZE = 7
+INPUT_SIZE = 24
 OUTPUT_SIZE = 4
 
 
@@ -40,14 +40,14 @@ def _select_device(requested: str) -> Any:
     return torch.device("cpu")
 
 
-def _distance(observation: tuple[int, ...]) -> int:
-    return abs(observation[0] - observation[2]) + abs(observation[1] - observation[3])
+def _distance(environment: Any) -> int:
+    head_x, head_y = environment.snake[0]
+    food_x, food_y = environment.food
+    return abs(head_x - food_x) + abs(head_y - food_y)
 
 
-def _shape_reward(
-    observation: tuple[int, ...], next_observation: tuple[int, ...], reward: float
-) -> float:
-    shaped = reward + 0.05 * (_distance(observation) - _distance(next_observation)) - 0.001
+def _shape_reward(previous_distance: int, next_distance: int, reward: float) -> float:
+    shaped = reward + 0.05 * (previous_distance - next_distance) - 0.001
     if reward > 0:
         shaped += 0.5
     elif reward < 0:
@@ -152,11 +152,14 @@ def train(
                     action = int(distribution.sample().item())
                     log_prob = distribution.log_prob(torch.tensor(action, device=device))
                     value = float(value_net(state).item())
+                previous_distance = _distance(environment)
                 next_observation, reward, done = environment.step(action)
                 states.append(state.squeeze(0))
                 actions.append(action)
                 old_log_probs.append(float(log_prob.item()))
-                episode_rewards.append(_shape_reward(observation, next_observation, reward))
+                episode_rewards.append(
+                    _shape_reward(previous_distance, _distance(environment), reward)
+                )
                 episode_values.append(value)
                 episode_dones.append(done)
                 observation = next_observation

@@ -29,7 +29,7 @@ A submission is a directory containing `config.json` and `model.pt`:
 {
   "benchmark": "snake",
   "architecture": "mlp",
-  "input_size": 7,
+  "input_size": 24,
   "output_size": 4,
   "hidden_sizes": [64, 64],
   "activation": "relu"
@@ -49,6 +49,22 @@ so its config uses `false`. For example:
   "hidden_sizes": [64],
   "activation": "relu",
   "normalisation": false
+}
+```
+
+Snake uses a 24-feature observation adapted from the Snake-Learning project.
+The features cover head position and distances to the walls and corners, food
+alignment/diagonals, and the nearest body segment in each of eight directions.
+To use only some of them, set `input_indices`; `input_size` must match its
+length. Omit it or set it to `true` to use all 24:
+
+```json
+{
+  "benchmark": "snake",
+  "architecture": "linear",
+  "input_size": 5,
+  "output_size": 4,
+  "input_indices": [0, 1, 2, 4, 7]
 }
 ```
 

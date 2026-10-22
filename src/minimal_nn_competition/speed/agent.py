@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from minimal_nn_competition.benchmarks.snake.environment import DIRECTIONS
+from typing import Protocol
+
+from minimal_nn_competition.benchmarks.snake.engine import DIRECTIONS
+
+
+class HasHeadCell(Protocol):
+    head_cell: int
+
 
 SIZE = 8
 BOARD_SIZE = SIZE * SIZE
@@ -94,5 +101,5 @@ def _build_actions() -> tuple[int, ...]:
 ACTIONS_BY_CELL = _build_actions()
 
 
-def action_for(observation: tuple[int, ...]) -> int:
-    return ACTIONS_BY_CELL[observation[1] * SIZE + observation[0]]
+def action_for(engine: HasHeadCell) -> int:
+    return ACTIONS_BY_CELL[engine.head_cell]

@@ -27,10 +27,10 @@ def test_snake_partial_run_does_not_pass(tmp_path: Path) -> None:
         {
             "benchmark": "snake",
             "architecture": "linear",
-            "input_size": 7,
+            "input_size": 24,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 7)), "bias": torch.zeros(4)},
+        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
     result = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(materialize_submission(submission))
     score, score_std, passed, details = result
@@ -44,14 +44,14 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     class FullBoardEnvironment:
         size = 8
 
-        def __init__(self, seed: int, max_moves: int) -> None:
+        def __init__(self, seed: int, max_moves: int, input_indices: object = None) -> None:
             self.snake = [(0, 0)] * 64
 
         def reset(self) -> tuple[int, ...]:
-            return (0, 0, 0, 0, 1, 0, 1)
+            return (0.0,) * 24
 
         def step(self, action: int) -> tuple[tuple[int, ...], float, bool]:
-            return (0, 0, 0, 0, 1, 0, 64), 1.0, True
+            return (0.0,) * 24, 1.0, True
 
     monkeypatch.setattr(snake_benchmark, "SnakeEnvironment", FullBoardEnvironment)
     submission = _write_submission(
@@ -59,10 +59,10 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         {
             "benchmark": "snake",
             "architecture": "linear",
-            "input_size": 7,
+            "input_size": 24,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 7)), "bias": torch.zeros(4)},
+        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
     score, score_std, passed, details = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(
         materialize_submission(submission)
@@ -81,14 +81,14 @@ def test_snake_score_std_across_seeds(tmp_path: Path, monkeypatch: pytest.Monkey
     class VariableEnvironment:
         size = 8
 
-        def __init__(self, seed: int, max_moves: int) -> None:
+        def __init__(self, seed: int, max_moves: int, input_indices: object = None) -> None:
             self.snake = [(0, 0)] * (64 if seed == 0 else 1)
 
         def reset(self) -> tuple[int, ...]:
-            return (0, 0, 0, 0, 1, 0, 1)
+            return (0.0,) * 24
 
         def step(self, action: int) -> tuple[tuple[int, ...], float, bool]:
-            return (0, 0, 0, 0, 1, 0, len(self.snake)), 1.0, True
+            return (0.0,) * 24, 1.0, True
 
     monkeypatch.setattr(snake_benchmark, "SnakeEnvironment", VariableEnvironment)
     submission = _write_submission(
@@ -96,10 +96,10 @@ def test_snake_score_std_across_seeds(tmp_path: Path, monkeypatch: pytest.Monkey
         {
             "benchmark": "snake",
             "architecture": "linear",
-            "input_size": 7,
+            "input_size": 24,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 7)), "bias": torch.zeros(4)},
+        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
     score, score_std, passed, details = SnakeBenchmark(seeds=(0, 1)).evaluate(
         materialize_submission(submission)
@@ -121,7 +121,59 @@ def test_snake_rejects_wrong_config(tmp_path: Path) -> None:
         },
         {"weight": torch.zeros((4, 8)), "bias": torch.zeros(4)},
     )
-    with pytest.raises(ValueError, match="input_size 7"):
+    with pytest.raises(ValueError, match="input_size 24"):
+        SnakeBenchmark().load_submission(submission)
+
+
+def test_snake_selected_input_indices_build_smaller_model(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake",
+            "architecture": "linear",
+            "input_size": 5,
+            "output_size": 4,
+            "input_indices": [0, 1, 2, 4, 7],
+        },
+        {"weight": torch.zeros((4, 5)), "bias": torch.zeros(4)},
+    )
+    loaded = SnakeBenchmark().load_submission(submission)
+    assert loaded.model.in_features == 5
+
+
+def test_snake_selected_inputs_evaluate(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake",
+            "architecture": "linear",
+            "input_size": 5,
+            "output_size": 4,
+            "input_indices": [0, 1, 2, 4, 7],
+        },
+        {"weight": torch.zeros((4, 5)), "bias": torch.zeros(4)},
+    )
+    result = SnakeBenchmark(seeds=(0,)).evaluate(materialize_submission(submission))
+    score, score_std, passed, details = result
+    assert score == 1.0
+    assert score_std == 0.0
+    assert passed is False
+    assert details["seed_lengths"] == [1]
+
+
+def test_snake_rejects_out_of_range_input_indices(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake",
+            "architecture": "linear",
+            "input_size": 1,
+            "output_size": 4,
+            "input_indices": [24],
+        },
+        {"weight": torch.zeros((4, 1)), "bias": torch.zeros(4)},
+    )
+    with pytest.raises(ValueError, match="input_indices"):
         SnakeBenchmark().load_submission(submission)
 
 
