@@ -18,6 +18,8 @@ class BenchmarkResult:
     parameter_count: int
     details: dict[str, Any]
     score_std: float = 0.0
+    name: str = "unknown"
+    author: str = "unknown"
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)
@@ -34,4 +36,6 @@ def evaluate_submission(submission: Submission, benchmark: Any) -> BenchmarkResu
         parameter_count=parameter_count(loaded.state_dict),
         details=dict(details),
         score_std=float(score_std),
+        name=submission.config.name,
+        author=submission.config.author,
     )

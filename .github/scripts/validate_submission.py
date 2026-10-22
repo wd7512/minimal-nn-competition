@@ -17,6 +17,25 @@ ALLOWED_ARCHITECTURES = {"linear", "mlp"}
 ALLOWED_ACTIVATIONS = {"relu", "identity"}
 
 
+def _validate_input_indices(
+    config: dict[str, Any], config_path: Path, input_size: Any
+) -> list[str]:
+    indices = config.get("input_indices")
+    if indices is None or indices is True:
+        return []
+    if indices is False:
+        return [f"{config_path}: input_indices must be true or a list of feature indices"]
+    if not isinstance(indices, list) or not indices:
+        return [f"{config_path}: input_indices must be a non-empty list of feature indices"]
+    if any(type(index) is not int or index < 0 for index in indices):
+        return [f"{config_path}: input_indices must contain non-negative integers"]
+    if len(set(indices)) != len(indices):
+        return [f"{config_path}: input_indices must not contain duplicates"]
+    if type(input_size) is int and input_size > 0 and len(indices) != input_size:
+        return [f"{config_path}: input_indices length must match input_size"]
+    return []
+
+
 def _validate_config(config: Any, directory: Path) -> list[str]:
     config_path = directory / "config.json"
     if not isinstance(config, dict):
@@ -26,11 +45,16 @@ def _validate_config(config: Any, directory: Path) -> list[str]:
     benchmark = directory.parts[1] if len(directory.parts) > 1 else ""
     if config.get("benchmark") != benchmark:
         errors.append(f"{config_path}: benchmark must be {benchmark!r}")
+    for field in ("name", "author"):
+        value = config.get(field)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{config_path}: {field} must be a non-empty string")
     if config.get("architecture") not in ALLOWED_ARCHITECTURES:
         errors.append(f"{config_path}: architecture must be linear or mlp")
     input_size = config.get("input_size")
     if type(input_size) is not int or input_size <= 0:
         errors.append(f"{config_path}: input_size must be a positive integer")
+    errors.extend(_validate_input_indices(config, config_path, input_size))
     output_size = config.get("output_size")
     if type(output_size) is not int or output_size <= 0:
         errors.append(f"{config_path}: output_size must be a positive integer")

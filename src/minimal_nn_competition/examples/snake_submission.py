@@ -98,6 +98,8 @@ def train(
     batch_size: int = 64,
     device_name: str = "auto",
     seed: int = 0,
+    name: str | None = None,
+    author: str = "unknown",
 ) -> dict[str, Any]:
     """Train the example Snake policy with PPO and write the submission files."""
     import torch
@@ -226,6 +228,8 @@ def train(
     torch.save(state_dict, output_dir / "model.pt")
     config = {
         "benchmark": "snake",
+        "name": name or output_dir.name,
+        "author": author or "unknown",
         "architecture": "mlp",
         "input_size": INPUT_SIZE,
         "output_size": OUTPUT_SIZE,
@@ -243,8 +247,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, default=Path("models/snake/example"))
     parser.add_argument("--iterations", type=int, default=600)
     parser.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
+    parser.add_argument(
+        "--name", default=None, help="Display name (defaults to the output directory)"
+    )
+    parser.add_argument("--author", default="unknown", help="Author credited on the leaderboard")
     args = parser.parse_args(argv)
-    train(args.output, iterations=args.iterations, device_name=args.device)
+    train(
+        args.output,
+        iterations=args.iterations,
+        device_name=args.device,
+        name=args.name,
+        author=args.author,
+    )
     return 0
 
 

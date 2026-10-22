@@ -28,6 +28,8 @@ A submission is a directory containing `config.json` and `model.pt`:
 ```json
 {
   "benchmark": "snake",
+  "name": "example",
+  "author": "example author",
   "architecture": "mlp",
   "input_size": 24,
   "output_size": 4,
@@ -36,6 +38,9 @@ A submission is a directory containing `config.json` and `model.pt`:
 }
 ```
 
+`name` is the display name shown on the leaderboard and `author` credits
+who made the submission.
+
 MNIST submissions may also set `"normalisation": true` to scale pixels from
 `0-255` to `0-1`. The example MNIST model is trained on non-normalised inputs,
 so its config uses `false`. For example:
@@ -43,6 +48,8 @@ so its config uses `false`. For example:
 ```json
 {
   "benchmark": "mnist",
+  "name": "example",
+  "author": "example author",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,
@@ -116,8 +123,8 @@ After merging an entry into `submission`, the maintainer evaluates it locally:
 
 ```bash
 uv run mnc evaluate <benchmark> models/<benchmark>/<name>
-uv run mnc collect
-uv run mnc render leaderboard.json docs
+uv run mnc collect --replay-dir replays
+uv run mnc render leaderboard.json docs --replays replays
 ```
 
 The updated leaderboard is committed to `submission`, then `submission` is
@@ -146,11 +153,14 @@ Evaluate all checked-in submissions and rebuild `leaderboard.json`:
 
 ```bash
 uv run mnc download-mnist --output data
-uv run mnc collect
-uv run mnc render leaderboard.json docs
+uv run mnc collect --replay-dir replays
+uv run mnc render leaderboard.json docs --replays replays
 ```
 
-`mnc collect` evaluates every `models/<benchmark>/<name>/` directory. To inspect
+`mnc collect` evaluates every `models/<benchmark>/<name>/` directory.
+`--replay-dir` records one seed-0 game per snake submission; `--replays`
+renders each as a `games/<name>.html` page linked from the snake table
+with a "view game" link. To inspect
 a saved leaderboard without changing it:
 
 ```bash
