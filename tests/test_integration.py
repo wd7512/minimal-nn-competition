@@ -94,7 +94,7 @@ def test_render_site(tmp_path: Path) -> None:
             1.0,
             False,
             20,
-            {"seed_lengths": [1], "max_length": 64},
+            {"seed_lengths": [1], "max_length": 64, "seed_moves": [10, 20]},
             score_std=0.5,
         ),
     ]
@@ -109,6 +109,8 @@ def test_render_site(tmp_path: Path) -> None:
     assert f"v{__version__}" in html
     assert "50.00%" in html
     assert "1.56% ± 0.78%" in html
+    assert "<th>Game length</th>" in html
+    assert "15.0 ± 5.0" in html
     assert "<th>Normalisation</th>" in html
     assert "<td>false</td>" in html
     assert "<th>Details</th>" not in html
@@ -120,6 +122,16 @@ def test_render_site(tmp_path: Path) -> None:
         "snake-example",
     ]
     assert raw[2]["score_std"] == 0.5
+
+
+def test_render_mnist_has_no_game_length_column(tmp_path: Path) -> None:
+    results = [
+        BenchmarkResult(
+            "mnist-example", "mnist", 0.5, False, 10, {"samples": 2, "normalisation": False}
+        )
+    ]
+    html = render_site(results, tmp_path).read_text()
+    assert "<th>Game length</th>" not in html
 
 
 def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

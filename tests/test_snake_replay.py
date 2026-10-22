@@ -13,6 +13,7 @@ from minimal_nn_competition.benchmarks.snake.replay import (
     save_replay,
 )
 from minimal_nn_competition.leaderboard.render import (
+    _game_length_text,
     render_game_html,
     render_game_pages,
     render_site,
@@ -78,8 +79,19 @@ def test_render_game_html() -> None:
 
 def _results() -> list[BenchmarkResult]:
     return [
-        BenchmarkResult("example", "snake", 8.0, False, 20, {"max_length": 64}),
+        BenchmarkResult(
+            "example", "snake", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
+        ),
     ]
+
+
+def test_game_length_text() -> None:
+    result = BenchmarkResult(
+        "example", "snake", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
+    )
+    assert _game_length_text(result) == "15.0 ± 5.0"
+    missing = BenchmarkResult("example", "snake", 8.0, False, 20, {"max_length": 64})
+    assert _game_length_text(missing) == "-"
 
 
 def test_render_site_writes_game_pages(tmp_path: Path) -> None:
@@ -87,6 +99,8 @@ def test_render_site_writes_game_pages(tmp_path: Path) -> None:
     index = render_site(_results(), tmp_path, {"example": payload})
     html = index.read_text()
     assert "view game" in html
+    assert "<th>Game length</th>" in html
+    assert "15.0 ± 5.0" in html
     assert "<th>Replay</th>" in html
     assert 'href="games/example.html"' in html
     game_page = tmp_path / "games" / "example.html"
@@ -100,6 +114,7 @@ def test_render_site_without_replays_has_no_replay_column(tmp_path: Path) -> Non
     index = render_site(_results(), tmp_path)
     html = index.read_text()
     assert "<th>Replay</th>" not in html
+    assert "<th>Game length</th>" in html
     assert "view game" not in html
     assert not (tmp_path / "games").exists()
 

@@ -1,8 +1,7 @@
 name: CI
 
 on:
-  push:
-    branches: [submission, main, dev]
+  # Run once per pull request; push checks duplicate them.
   pull_request:
     branches: [main, dev]
 

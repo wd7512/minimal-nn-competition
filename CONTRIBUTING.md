@@ -5,6 +5,11 @@
 Submit a model by opening a pull request against the **`submission`** branch.
 Do not target `main`.
 
+Benchmark-specific setup, config fields, and local evaluation:
+
+- [Snake submission](how-to/how-to-make-a-snake-game-submission.md)
+- [MNIST submission](how-to/how-to-make-an-mnist-submission.md)
+
 A submission PR must contain exactly two files in a new directory:
 
 ```text
@@ -31,11 +36,10 @@ passes, a maintainer merges the PR into `submission`.
 
    ```bash
    uv run mnc evaluate <benchmark> models/<benchmark>/<name>
-   uv run mnc collect --replay-dir replays
-   uv run mnc render leaderboard.json docs --replays replays
    ```
 
-3. Commit the updated leaderboard to `submission`.
+3. Rebuild the leaderboard as described in [Leaderboard](#leaderboard), then
+   commit it to `submission`.
 4. Open a `submission` → `main` pull request and merge it.
 5. Fast-forward `submission` to `main` so the next submission starts clean:
 
@@ -47,11 +51,69 @@ passes, a maintainer merges the PR into `submission`.
 
 If an entry fails, revert it on `submission` and do not promote it to `main`.
 
+## Leaderboard
+
+The site in `docs/` is deployed by `.github/workflows/pages.yml`. Pages must use
+"GitHub Actions" as its source. Rebuild it with:
+
+```bash
+uv run mnc download-mnist --output data
+uv run mnc collect --replay-dir replays
+uv run mnc render leaderboard.json docs --replays replays
+```
+
+`mnc collect` evaluates every `models/<benchmark>/<name>/` directory.
+`--replay-dir` records one seed-0 game per Snake submission; `--replays`
+renders each game under `docs/games/`. The leaderboard includes a
+`Normalisation` column for MNIST submissions. Inspect a saved leaderboard
+without rewriting it:
+
+```bash
+uv run mnc leaderboard leaderboard.json
+```
+
+The hidden speed board measures the local Snake environment:
+
+```bash
+uv run mnc speed
+uv run mnc render-speed speed-leaderboard.json docs/internal
+```
+
+The internal token leaderboard scores this repo's own code for syntactic
+compactness (keywords, operators, and literals count; identifiers, comments,
+whitespace, and docstrings do not) across the `core`, `mnist`, and `snake`
+scopes. A scope scores only when all of its mapped tests pass:
+
+```bash
+uv run mnc internal
+uv run mnc render-internal internal-leaderboard.json docs
+```
+
+The hidden page lands at `docs/internal/` alongside the speed board.
+
 ## Enforcing the submission check
 
 In the repository settings, protect the `submission` branch and require the
 `validate` status check. This blocks merges unless the PR contains exactly one
 submission directory with `config.json` and `model.pt`.
+
+## Local development
+
+```bash
+uv sync --dev --locked
+uv run mnc list
+```
+
+`mnc`, `minimal-nn-competition`, and `minimal_nn_competition` are equivalent
+entry points; `python -m minimal_nn_competition` also works.
+
+```bash
+uv run ruff format --check
+uv run ruff check
+uv run ty check
+uv run pytest
+uv build
+```
 
 ## Other changes
 

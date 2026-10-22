@@ -70,6 +70,7 @@ class SnakeBenchmark:
             raise RuntimeError("PyTorch is required for Snake evaluation") from exc
         indices = selected_input_indices(submission.config)
         lengths = []
+        moves = []
         with torch.no_grad():
             for seed in self.seeds:
                 environment = SnakeEnvironment(
@@ -79,13 +80,16 @@ class SnakeBenchmark:
                 )
                 observation = environment.reset()
                 done = False
+                ticks = 0
                 while not done:
                     values = submission.model(
                         torch.tensor(observation, dtype=torch.float32).unsqueeze(0)
                     )
                     action = int(torch.argmax(values, dim=1).item())
                     observation, _, done = environment.step(action)
+                    ticks += 1
                 lengths.append(len(environment.snake))
+                moves.append(ticks)
         score = statistics.fmean(lengths)
         score_std = statistics.pstdev(lengths)
         board_size = environment.size * environment.size
@@ -95,6 +99,7 @@ class SnakeBenchmark:
             all(length == board_size for length in lengths),
             {
                 "seed_lengths": lengths,
+                "seed_moves": moves,
                 "max_length": board_size,
                 "seeds": len(self.seeds),
             },

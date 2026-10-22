@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import statistics
 from collections.abc import Iterable
 from dataclasses import asdict
 from pathlib import Path
@@ -10,8 +11,17 @@ from pathlib import Path
 from minimal_nn_competition.runner.entry import BenchmarkResult
 
 
+def _game_length(result: BenchmarkResult) -> float:
+    if result.benchmark != "snake":
+        return 0.0
+    moves = result.details.get("seed_moves")
+    if not isinstance(moves, list) or not moves:
+        return float("inf")
+    return statistics.fmean(moves)
+
+
 def rank_results(results: Iterable[BenchmarkResult]) -> list[BenchmarkResult]:
-    """Rank by passing status, score, then smallest model within each benchmark."""
+    """Rank by passing status, score, parameter count, then Snake game length."""
     # For the snake competition it would be nice to have some renderings of the games.
     return sorted(
         results,
@@ -20,6 +30,7 @@ def rank_results(results: Iterable[BenchmarkResult]) -> list[BenchmarkResult]:
             not result.passed,
             -result.score,
             result.parameter_count,
+            _game_length(result),
             result.submission,
         ),
     )

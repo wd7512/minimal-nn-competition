@@ -40,6 +40,7 @@ def test_snake_partial_run_does_not_pass(tmp_path: Path) -> None:
     assert score_std == 0.0
     assert passed is False
     assert details["seed_lengths"] == [1, 1, 1]
+    assert details["seed_moves"] == [5, 5, 5]
 
 
 def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -73,6 +74,7 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert score_std == 0.0
     assert passed is True
     assert details["seed_lengths"] == [64, 64, 64]
+    assert details["seed_moves"] == [1, 1, 1]
 
 
 def test_snake_defaults_to_100_seeds() -> None:
@@ -110,6 +112,7 @@ def test_snake_score_std_across_seeds(tmp_path: Path, monkeypatch: pytest.Monkey
     assert score_std == 31.5
     assert passed is False
     assert details["seed_lengths"] == [64, 1]
+    assert details["seed_moves"] == [1, 1]
 
 
 def test_snake_rejects_wrong_config(tmp_path: Path) -> None:
