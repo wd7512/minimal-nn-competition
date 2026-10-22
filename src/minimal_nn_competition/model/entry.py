@@ -40,6 +40,7 @@ class SubmissionConfig(BaseModel):
     hidden_sizes: tuple[StrictInt, ...] = ()
     activation: str = "relu"
     normalisation: StrictBool = False
+    description: str = ""
     input_indices: tuple[StrictInt, ...] | StrictBool | None = None
 
     @field_validator("architecture")

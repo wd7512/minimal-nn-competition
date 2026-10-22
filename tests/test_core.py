@@ -33,14 +33,25 @@ def test_config_round_trip(tmp_path: Path) -> None:
         '{"benchmark":"snake","name":"example","author":"tester",'
         '"architecture":"mlp","input_size":24,'
         '"output_size":4,"hidden_sizes":[8,4],"activation":"relu",'
-        '"normalisation":true}'
+        '"normalisation":true,"description":"A tiny PPO policy."}'
     )
     config = SubmissionConfig.from_file(path)
     assert config.benchmark == "snake"
     assert config.name == "example"
     assert config.author == "tester"
+    assert config.description == "A tiny PPO policy."
     assert config.hidden_sizes == (8, 4)
     assert config.normalisation is True
+
+
+def test_config_description_is_optional(tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+    path.write_text(
+        '{"benchmark":"snake","name":"example","author":"tester",'
+        '"architecture":"linear","input_size":24,"output_size":4}'
+    )
+    config = SubmissionConfig.from_file(path)
+    assert config.description == ""
 
 
 def test_config_accepts_input_indices(tmp_path: Path) -> None:

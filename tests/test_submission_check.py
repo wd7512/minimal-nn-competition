@@ -187,3 +187,42 @@ def test_duplicate_input_indices_are_rejected(tmp_path: Path) -> None:
     diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
     errors = _load_script().validate_diff(diff, tmp_path)
     assert any("must not contain duplicates" in error for error in errors)
+
+
+def test_description_is_accepted(tmp_path: Path) -> None:
+    _write_submission(
+        tmp_path,
+        config={
+            "benchmark": "mnist",
+            "name": "tiny",
+            "author": "tester",
+            "description": "A small MLP trained on raw pixels.",
+            "architecture": "mlp",
+            "input_size": 784,
+            "output_size": 10,
+            "hidden_sizes": [7],
+            "activation": "relu",
+        },
+    )
+    diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
+    assert _load_script().validate_diff(diff, tmp_path) == []
+
+
+def test_description_must_be_a_string(tmp_path: Path) -> None:
+    _write_submission(
+        tmp_path,
+        config={
+            "benchmark": "mnist",
+            "name": "tiny",
+            "author": "tester",
+            "description": 123,
+            "architecture": "mlp",
+            "input_size": 784,
+            "output_size": 10,
+            "hidden_sizes": [7],
+            "activation": "relu",
+        },
+    )
+    diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
+    errors = _load_script().validate_diff(diff, tmp_path)
+    assert any("description must be a string" in error for error in errors)
