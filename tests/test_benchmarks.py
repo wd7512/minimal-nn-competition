@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 import torch
 
+from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
@@ -270,3 +271,58 @@ def test_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="input_size 784"):
         MnistBenchmark().load_submission(submission)
+
+
+def test_fashion_mnist_evaluation_and_threshold(tmp_path: Path) -> None:
+    data_path = tmp_path / "fashion-mnist-test.pt"
+    _write_mnist_cache(data_path)
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "fashion-mnist",
+            "architecture": "linear",
+            "input_size": 784,
+            "output_size": 10,
+        },
+        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+    )
+    loaded = materialize_submission(submission)
+    loaded.state_dict["weight"][0, 0] = 1
+    loaded.state_dict["weight"][1, 1] = 1
+    loaded.model.load_state_dict(loaded.state_dict)
+    score, score_std, passed, details = FashionMnistBenchmark(data_path=data_path).evaluate(loaded)
+    assert score == 1.0
+    assert score_std == 0.0
+    assert passed is True
+    assert details == {"samples": 2, "normalisation": False}
+
+
+def test_fashion_mnist_requires_data_file(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "fashion-mnist",
+            "architecture": "linear",
+            "input_size": 784,
+            "output_size": 10,
+        },
+        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+    )
+    loaded = materialize_submission(submission)
+    with pytest.raises(FileNotFoundError, match="Fashion-MNIST test data is unavailable"):
+        FashionMnistBenchmark(data_path=tmp_path / "missing.pt").evaluate(loaded)
+
+
+def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "fashion-mnist",
+            "architecture": "linear",
+            "input_size": 10,
+            "output_size": 10,
+        },
+        {"weight": torch.zeros((10, 10)), "bias": torch.zeros(10)},
+    )
+    with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
+        FashionMnistBenchmark().load_submission(submission)

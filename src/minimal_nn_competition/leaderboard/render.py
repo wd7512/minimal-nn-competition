@@ -16,7 +16,11 @@ from minimal_nn_competition.benchmarks.snake.replay import replay_slug
 from minimal_nn_competition.leaderboard import rank_results
 from minimal_nn_competition.runner.entry import BenchmarkResult
 
-_SECTION_TITLES = {"mnist": "MNIST COMPRESSION", "snake": "SNAKE GAME"}
+_SECTION_TITLES = {
+    "fashion-mnist": "FASHION-MNIST COMPRESSION",
+    "mnist": "MNIST COMPRESSION",
+    "snake": "SNAKE GAME",
+}
 
 _STYLE = """
 :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
@@ -247,7 +251,7 @@ def render_html(results: list[BenchmarkResult], replay_links: dict[str, str] | N
         "<title>Minimal NN Competition</title>"
         f"<style>{_STYLE}</style></head><body>"
         "<header><h1>Minimal NN Competition</h1>"
-        "<p>Small PyTorch state-dict submissions for MNIST and Snake.</p>"
+        "<p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, and Snake.</p>"
         "<p>Submit a model by opening a pull request against the "
         '<code>submission</code> branch. See <a href="'
         "https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"

@@ -1,0 +1,14 @@
+{
+  "benchmark": "snake",
+  "name": "hamiltonian-24-16",
+  "author": "muse spark 1.3 x hermes",
+  "architecture": "mlp",
+  "input_size": 24,
+  "output_size": 4,
+  "hidden_sizes": [
+    24,
+    16
+  ],
+  "activation": "relu",
+  "description": "Hamiltonian-cycle oracle distilled into a full-observation [24,16] MLP; fills the board on all 100 seeds."
+}

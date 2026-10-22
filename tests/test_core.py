@@ -113,6 +113,7 @@ def test_snake_can_move_into_vacating_tail() -> None:
 
 
 def test_registry_and_leaderboard_ranking() -> None:
+    assert create_benchmark("fashion-mnist").name == "fashion-mnist"
     assert create_benchmark("snake").name == "snake"
     results = [
         BenchmarkResult("a", "snake", 4, False, 1, {}),
