@@ -39,7 +39,7 @@ jobs:
         run: uv run pytest
       - name: Check leaderboard site
         run: |
-          uv run mnc render leaderboard.json /tmp/minimal-nn-docs
+          uv run mnc render leaderboard.json /tmp/minimal-nn-docs --replays docs/games
           uv run mnc render-speed speed-leaderboard.json /tmp/minimal-nn-docs
           diff -ru docs /tmp/minimal-nn-docs
       - name: Build
