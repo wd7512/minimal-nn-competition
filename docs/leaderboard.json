@@ -1,5 +1,19 @@
 [
   {
+    "author": "example author",
+    "benchmark": "fashion-mnist",
+    "details": {
+      "normalisation": false,
+      "samples": 10000
+    },
+    "name": "example",
+    "parameter_count": 50890,
+    "passed": false,
+    "score": 0.8579999804496765,
+    "score_std": 0.0,
+    "submission": "example"
+  },
+  {
     "author": "muse spark 1.3 x hermes",
     "benchmark": "mnist",
     "details": {
