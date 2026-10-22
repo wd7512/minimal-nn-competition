@@ -6,6 +6,7 @@ import logging
 import sys
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
 from minimal_nn_competition.benchmarks.register import available_benchmarks, create_benchmark
 from minimal_nn_competition.leaderboard import load_results, rank_results, save_results
@@ -27,6 +28,12 @@ def _parser() -> argparse.ArgumentParser:
     render = subparsers.add_parser("render", help="Render a leaderboard as static HTML")
     render.add_argument("path", type=Path)
     render.add_argument("output", type=Path)
+    render.add_argument(
+        "--replays",
+        type=Path,
+        default=None,
+        help="Directory of snake replay JSON files recorded by collect",
+    )
     speed = subparsers.add_parser("speed", help="Benchmark the local Snake environment")
     speed.add_argument("--duration", type=float, default=1.0)
     speed.add_argument("--runs", type=int, default=10)
@@ -41,6 +48,12 @@ def _parser() -> argparse.ArgumentParser:
     collect.add_argument("--models", type=Path, default=Path("models"))
     collect.add_argument("--data-path", type=Path, default=Path("data/mnist-test.pt"))
     collect.add_argument("--output", type=Path, default=Path("leaderboard.json"))
+    collect.add_argument(
+        "--replay-dir",
+        type=Path,
+        default=None,
+        help="Record one seed-0 snake game per submission into this directory",
+    )
     download = subparsers.add_parser("download-mnist", help="Download the official MNIST caches")
     download.add_argument("--output", type=Path, default=Path("data"))
     download.add_argument("--force", action="store_true")
@@ -55,6 +68,30 @@ def _parser() -> argparse.ArgumentParser:
     train_snake.add_argument("--iterations", type=int, default=600)
     train_snake.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
     return parser
+
+
+def _record_replay(replay_dir: Path, name: str, benchmark: Any, submission: Submission) -> None:
+    from minimal_nn_competition.benchmarks.snake.replay import (
+        REPLAY_SEED,
+        record_game,
+        replay_slug,
+        save_replay,
+    )
+
+    loaded = benchmark.load_submission(submission)
+    payload = record_game(loaded.model, seed=REPLAY_SEED, max_moves=benchmark.max_moves)
+    save_replay(replay_dir / f"{replay_slug(name)}.json", payload)
+
+
+def _load_replays(replay_dir: Path | None) -> dict[str, dict[str, Any]]:
+    from minimal_nn_competition.benchmarks.snake.replay import load_replay
+
+    replays: dict[str, dict[str, Any]] = {}
+    if replay_dir is None or not replay_dir.is_dir():
+        return replays
+    for path in sorted(replay_dir.glob("*.json")):
+        replays[path.stem] = load_replay(path)
+    return replays
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -78,7 +115,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "render":
         try:
-            index = render_site(load_results(args.path), args.output)
+            replays = _load_replays(args.replays)
+            index = render_site(load_results(args.path), args.output, replays)
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             logging.getLogger(__name__).error("%s", exc)
             return 2
@@ -126,7 +164,9 @@ def main(argv: list[str] | None = None) -> int:
                     benchmark_kwargs["data_path"] = args.data_path
                 benchmark = create_benchmark(submission.config.benchmark, **benchmark_kwargs)
                 results.append(evaluate_submission(submission, benchmark))
-            except (FileNotFoundError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:
+                if args.replay_dir is not None and submission.config.benchmark == "snake":
+                    _record_replay(args.replay_dir, config_path.parent.name, benchmark, submission)
+            except (OSError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:
                 logging.getLogger(__name__).error("%s: %s", config_path.parent, exc)
                 return 2
         save_results(args.output, results)
