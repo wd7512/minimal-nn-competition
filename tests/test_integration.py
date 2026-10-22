@@ -24,7 +24,7 @@ def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str]) -> None:
     out = capsys.readouterr().out
     assert '"benchmark": "snake"' in out
     assert '"name": "example"' in out
-    assert '"author": "wd7512"' in out
+    assert '"author": "example author"' in out
 
 
 def test_data_path_rejected_for_snake(capsys: pytest.CaptureFixture[str]) -> None:

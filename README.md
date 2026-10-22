@@ -29,7 +29,7 @@ A submission is a directory containing `config.json` and `model.pt`:
 {
   "benchmark": "snake",
   "name": "example",
-  "author": "wd7512",
+  "author": "example author",
   "architecture": "mlp",
   "input_size": 7,
   "output_size": 4,
@@ -49,7 +49,7 @@ so its config uses `false`. For example:
 {
   "benchmark": "mnist",
   "name": "example",
-  "author": "wd7512",
+  "author": "example author",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,

@@ -14,7 +14,7 @@
     "submission": "mlp-7-7"
   },
   {
-    "author": "wd7512",
+    "author": "example author",
     "benchmark": "mnist",
     "details": {
       "normalisation": false,
@@ -28,7 +28,7 @@
     "submission": "example"
   },
   {
-    "author": "wd7512",
+    "author": "example author",
     "benchmark": "snake",
     "details": {
       "max_length": 64,
