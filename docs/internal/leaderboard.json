@@ -1,0 +1,38 @@
+[
+  {
+    "commit": "6328e7451d9a1404c645d9b6884f61cd3102817a",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "arm64",
+    "measured_at": "2026-10-22T21:40:13+00:00",
+    "python_version": "3.12.13",
+    "rules_version": 1,
+    "scope": "core",
+    "status": "pass",
+    "tokens": 5417
+  },
+  {
+    "commit": "6328e7451d9a1404c645d9b6884f61cd3102817a",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "arm64",
+    "measured_at": "2026-10-22T21:40:09+00:00",
+    "python_version": "3.12.13",
+    "rules_version": 1,
+    "scope": "mnist",
+    "status": "pass",
+    "tokens": 969
+  },
+  {
+    "commit": "6328e7451d9a1404c645d9b6884f61cd3102817a",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "arm64",
+    "measured_at": "2026-10-22T21:40:11+00:00",
+    "python_version": "3.12.13",
+    "rules_version": 1,
+    "scope": "snake",
+    "status": "pass",
+    "tokens": 1685
+  }
+]
