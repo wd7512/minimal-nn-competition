@@ -19,6 +19,13 @@ _NESTED_ENV_VAR = "MINIMAL_NN_COMPETITION_INTERNAL"
 
 PACKAGE = "src/minimal_nn_competition"
 _MNIST_FILES = (f"{PACKAGE}/benchmarks/mnist", f"{PACKAGE}/examples/mnist_submission.py")
+_FASHION_FILES = (
+    f"{PACKAGE}/benchmarks/fashion_mnist",
+    f"{PACKAGE}/benchmarks/idx.py",
+    f"{PACKAGE}/benchmarks/image_classification.py",
+    f"{PACKAGE}/examples/classifier_submission.py",
+    f"{PACKAGE}/examples/fashion_mnist_submission.py",
+)
 _SNAKE_FILES = (f"{PACKAGE}/benchmarks/snake", f"{PACKAGE}/examples/snake_submission.py")
 
 
@@ -41,6 +48,19 @@ SCOPES = (
             "tests/test_benchmarks.py::test_mnist_requires_data_file",
             "tests/test_benchmarks.py::test_mnist_rejects_wrong_shape",
             "tests/test_mnist_data.py",
+        ),
+    ),
+    Scope(
+        "fashion-mnist",
+        _FASHION_FILES,
+        (
+            "tests/test_benchmarks.py::test_fashion_mnist_evaluation_and_threshold",
+            "tests/test_benchmarks.py::test_fashion_mnist_requires_data_file",
+            "tests/test_benchmarks.py::test_fashion_mnist_rejects_wrong_shape",
+            "tests/test_fashion_mnist_data.py",
+            "tests/test_integration.py::test_collect_fashion_mnist_cli",
+            "tests/test_integration.py::test_evaluate_fashion_mnist_cli",
+            "tests/test_training.py",
         ),
     ),
     Scope(
@@ -107,7 +127,7 @@ def expand_scope_tests(scope, collected):
 
 def scope_files(scope, root):
     """Resolve a scope's source prefixes to Python files under ``root``."""
-    excluded = [root / source for source in _MNIST_FILES + _SNAKE_FILES]
+    excluded = [root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES]
     files = []
     for source in scope.sources:
         path = root / source

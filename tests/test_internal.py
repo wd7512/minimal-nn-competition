@@ -285,7 +285,12 @@ def test_internal_cli(tmp_path: Path) -> None:
     output = tmp_path / "internal-leaderboard.json"
     assert main(["internal", "--root", str(root), "--output", str(output)]) == 0
     results = load_internal_results(output)
-    assert {result.scope for result in results} == {"core", "mnist", "snake"}
+    assert {result.scope for result in results} == {
+        "core",
+        "fashion-mnist",
+        "mnist",
+        "snake",
+    }
     assert all(result.status == "pass" for result in results)
     assert all(result.tokens > 0 for result in results)
 

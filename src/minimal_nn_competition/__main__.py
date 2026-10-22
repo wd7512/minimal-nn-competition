@@ -14,6 +14,8 @@ from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission, SubmissionError
 from minimal_nn_competition.runner.entry import evaluate_submission
 
+IMAGE_BENCHMARKS = ("fashion-mnist", "mnist")
+
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Evaluate minimal neural-network submissions")
@@ -57,6 +59,11 @@ def _parser() -> argparse.ArgumentParser:
     collect = subparsers.add_parser("collect", help="Evaluate every model under models/")
     collect.add_argument("--models", type=Path, default=Path("models"))
     collect.add_argument("--data-path", type=Path, default=Path("data/mnist-test.pt"))
+    collect.add_argument(
+        "--fashion-mnist-data-path",
+        type=Path,
+        default=Path("data/fashion-mnist-test.pt"),
+    )
     collect.add_argument("--output", type=Path, default=Path("leaderboard.json"))
     collect.add_argument(
         "--replay-dir",
@@ -67,6 +74,11 @@ def _parser() -> argparse.ArgumentParser:
     download = subparsers.add_parser("download-mnist", help="Download the official MNIST caches")
     download.add_argument("--output", type=Path, default=Path("data"))
     download.add_argument("--force", action="store_true")
+    download_fashion = subparsers.add_parser(
+        "download-fashion-mnist", help="Download the official Fashion-MNIST caches"
+    )
+    download_fashion.add_argument("--output", type=Path, default=Path("data"))
+    download_fashion.add_argument("--force", action="store_true")
     train_mnist = subparsers.add_parser("train-mnist", help="Train the MNIST example submission")
     train_mnist.add_argument("--data-path", type=Path, default=Path("data/mnist-train.pt"))
     train_mnist.add_argument("--output", type=Path, default=Path("models/mnist/example"))
@@ -75,6 +87,18 @@ def _parser() -> argparse.ArgumentParser:
     train_mnist.add_argument("--normalise", action="store_true")
     train_mnist.add_argument("--name", default=None, help="Display name")
     train_mnist.add_argument("--author", default="unknown", help="Submission author")
+    train_fashion = subparsers.add_parser(
+        "train-fashion-mnist", help="Train the Fashion-MNIST example submission"
+    )
+    train_fashion.add_argument(
+        "--data-path", type=Path, default=Path("data/fashion-mnist-train.pt")
+    )
+    train_fashion.add_argument("--output", type=Path, default=Path("models/fashion-mnist/example"))
+    train_fashion.add_argument("--epochs", type=int, default=20)
+    train_fashion.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
+    train_fashion.add_argument("--normalise", action="store_true")
+    train_fashion.add_argument("--name", default=None, help="Display name")
+    train_fashion.add_argument("--author", default="unknown", help="Submission author")
     train_snake = subparsers.add_parser("train-snake", help="Train the Snake example submission")
     train_snake.add_argument("--output", type=Path, default=Path("models/snake/example"))
     train_snake.add_argument("--iterations", type=int, default=600)
@@ -213,6 +237,8 @@ def main(argv: list[str] | None = None) -> int:
                 benchmark_kwargs = {}
                 if submission.config.benchmark == "mnist":
                     benchmark_kwargs["data_path"] = args.data_path
+                elif submission.config.benchmark == "fashion-mnist":
+                    benchmark_kwargs["data_path"] = args.fashion_mnist_data_path
                 benchmark = create_benchmark(submission.config.benchmark, **benchmark_kwargs)
                 results.append(evaluate_submission(submission, benchmark))
                 if args.replay_dir is not None and submission.config.benchmark == "snake":
@@ -233,8 +259,37 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         sys.stdout.write(f"{train_path}\n{test_path}\n")
         return 0
+    if args.command == "download-fashion-mnist":
+        try:
+            from minimal_nn_competition.benchmarks.fashion_mnist.data_loader import (
+                download_fashion_mnist,
+            )
+
+            train_path, test_path = download_fashion_mnist(args.output, force=args.force)
+        except (OSError, ValueError) as exc:
+            logging.getLogger(__name__).error("%s", exc)
+            return 2
+        sys.stdout.write(f"{train_path}\n{test_path}\n")
+        return 0
     if args.command == "train-mnist":
         from minimal_nn_competition.examples.mnist_submission import train
+
+        try:
+            train(
+                args.data_path,
+                args.output,
+                epochs=args.epochs,
+                device_name=args.device,
+                normalise=args.normalise,
+                name=args.name,
+                author=args.author,
+            )
+        except (FileNotFoundError, OSError, RuntimeError, ValueError) as exc:
+            logging.getLogger(__name__).error("%s", exc)
+            return 2
+        return 0
+    if args.command == "train-fashion-mnist":
+        from minimal_nn_competition.examples.fashion_mnist_submission import train
 
         try:
             train(
@@ -265,8 +320,10 @@ def main(argv: list[str] | None = None) -> int:
             logging.getLogger(__name__).error("%s", exc)
             return 2
         return 0
-    if args.data_path is not None and args.benchmark != "mnist":
-        logging.getLogger(__name__).error("--data-path is only supported for the mnist benchmark")
+    if args.data_path is not None and args.benchmark not in IMAGE_BENCHMARKS:
+        logging.getLogger(__name__).error(
+            "--data-path is only supported for the mnist and fashion-mnist benchmarks"
+        )
         return 2
     benchmark_kwargs = {}
     if args.data_path is not None:

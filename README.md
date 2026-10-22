@@ -5,6 +5,7 @@ A platform for presenting and finding the smallest possible neural-network for p
 Current problems
 - Playing Snake
 - MNIST classification
+- Fashion-MNIST classification
 
 Rules
 - Feed forward MLP
@@ -44,13 +45,27 @@ who made the submission. `description` is optional: include a short paragraph
 (or less) explaining how you built the network or its style. It is not shown
 on the leaderboard site.
 
-MNIST submissions may also set `"normalisation": true` to scale pixels from
-`0-255` to `0-1`. The example MNIST model is trained on non-normalised inputs,
-so its config uses `false`. For example:
+MNIST and Fashion-MNIST submissions may also set `"normalisation": true` to
+scale pixels from `0-255` to `0-1`. The example image models are trained on
+non-normalised inputs, so their configs use `false`. For example:
 
 ```json
 {
   "benchmark": "mnist",
+  "name": "example",
+  "author": "example author",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [64],
+  "activation": "relu",
+  "normalisation": false
+}
+```
+
+```json
+{
+  "benchmark": "fashion-mnist",
   "name": "example",
   "author": "example author",
   "architecture": "mlp",
@@ -94,26 +109,29 @@ uv sync --dev --locked
 uv run mnc list
 uv run mnc evaluate snake models/snake/example
 uv run mnc evaluate mnist models/mnist/example --data-path data/mnist-test.pt
+uv run mnc evaluate fashion-mnist models/fashion-mnist/example \
+  --data-path data/fashion-mnist-test.pt
 ```
 
 `mnc`, `minimal-nn-competition`, and `minimal_nn_competition` are equivalent
 installed entry points. `python -m minimal_nn_competition` also works.
 
-Download the official MNIST caches first:
+Download the official image-classification caches first:
 
 ```bash
 uv run mnc download-mnist --output data
+uv run mnc download-fashion-mnist --output data
 ```
 
-The cache stores raw `(inputs, labels)` tensors. Inputs are flattened to 784
+The caches store raw `(inputs, labels)` tensors. Inputs are flattened to 784
 values. If `normalisation` is enabled, the evaluator divides them by 255.
 
-MNIST scores are full-test-set accuracy, shown as a percentage; a submission
-passes at 100% accuracy. Snake uses an 8x8 board and evaluates each model across
-100 seeds (`0`–`99`) with a 4096-move episode cap. Its score is the mean final
-snake length as a percentage of the 64-cell board, and the site also shows the
-standard deviation across seeds. A submission passes only when it fills the
-board (length 64) on every seed.
+MNIST and Fashion-MNIST scores are full-test-set accuracy, shown as a
+percentage; a submission passes at 100% accuracy. Snake uses an 8x8 board and
+evaluates each model across 100 seeds (`0`–`99`) with a 4096-move episode cap.
+Its score is the mean final snake length as a percentage of the 64-cell board,
+and the site also shows the standard deviation across seeds. A submission
+passes only when it fills the board (length 64) on every seed.
 
 Results rank passing submissions before failing submissions, then by descending
 score and ascending parameter count. Submit a pull request against `submission`
@@ -136,19 +154,21 @@ maintainer changes target `dev` and are promoted to `main` when ready.
 
 ## Example submissions
 
-`src/minimal_nn_competition/examples/mnist_submission.py` and
-`snake_submission.py` are runnable training examples. They generate the
-checked-in submissions under `models/`:
+`src/minimal_nn_competition/examples/mnist_submission.py`,
+`fashion_mnist_submission.py`, and `snake_submission.py` are runnable training
+examples. They generate the checked-in submissions under `models/`:
 
 ```bash
 uv run mnc download-mnist --output data
+uv run mnc download-fashion-mnist --output data
 uv run mnc train-mnist
+uv run mnc train-fashion-mnist
 uv run mnc train-snake
 ```
 
-Both trainers use Apple MPS automatically when available. Training the examples
-takes only a few minutes. The MNIST example is trained on raw `0-255` pixels;
-pass `--normalise` to train a normalised variant instead.
+All trainers use Apple MPS automatically when available. Training the image
+examples takes only a few minutes. They are trained on raw `0-255` pixels; pass
+`--normalise` to train a normalised variant instead.
 
 ## Leaderboard and GitHub Pages
 
@@ -156,14 +176,17 @@ Evaluate all checked-in submissions and rebuild `leaderboard.json`:
 
 ```bash
 uv run mnc download-mnist --output data
+uv run mnc download-fashion-mnist --output data
 uv run mnc collect --replay-dir replays
 uv run mnc render leaderboard.json docs --replays replays
 ```
 
-`mnc collect` evaluates every `models/<benchmark>/<name>/` directory.
-`--replay-dir` records one seed-0 game per snake submission; `--replays`
-renders each as a `games/<name>.html` page linked from the snake table
-with a "view game" link. To inspect
+`mnc collect` evaluates every `models/<benchmark>/<name>/` directory. It reads
+the MNIST cache from `data/mnist-test.pt` and the Fashion-MNIST cache from
+`data/fashion-mnist-test.pt` by default; override them with `--data-path` and
+`--fashion-mnist-data-path`. `--replay-dir` records one seed-0 game per snake
+submission; `--replays` renders each as a `games/<name>.html` page linked from
+the snake table with a "view game" link. To inspect
 a saved leaderboard without changing it:
 
 ```bash
@@ -172,7 +195,7 @@ uv run mnc leaderboard leaderboard.json
 
 The checked-in `docs/` directory is deployed to GitHub Pages by
 `.github/workflows/pages.yml`. The leaderboard includes a `Normalisation` column
-for MNIST submissions. The site is published at
+for image-classification submissions. The site is published at
 https://wd7512.github.io/minimal-nn-competition/. Enable Pages with
 "GitHub Actions" as the source in the repository settings if it is not already
 enabled.
@@ -181,8 +204,8 @@ enabled.
 
 Score the repo's own code for syntactic compactness (keywords, operators,
 and literals count; identifiers, comments, whitespace, and docstrings do
-not) across the `core`, `mnist`, and `snake` scopes. A scope scores only
-when all of its mapped tests pass:
+not) across the `core`, `fashion-mnist`, `mnist`, and `snake` scopes. A scope
+scores only when all of its mapped tests pass:
 
 ```bash
 uv run mnc internal
