@@ -86,6 +86,7 @@ def render_internal_html(results: list[InternalResult]) -> str:
         "and literals count; identifiers, comments, whitespace, and docstrings "
         "do not. A scope scores only when all of its mapped tests pass.</p>"
         '<p><a href="../">Main leaderboard</a> · '
+        '<a href="speed/">Speed board</a> · '
         '<a href="leaderboard.json">Raw internal JSON</a></p></header>'
         f"{''.join(sections)}"
         "</body></html>\n"

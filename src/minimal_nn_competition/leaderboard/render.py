@@ -240,7 +240,7 @@ def render_html(results: list[BenchmarkResult], replay_links: dict[str, str] | N
         '<p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>'
         f"{''.join(sections)}"
         "<footer>"
-        '<a class="version" href="speed/" title="Hidden Snake environment speed leaderboard" '
+        '<a class="version" href="internal/speed/" title="Hidden Snake environment speed leaderboard" '
         'aria-label="Hidden Snake environment speed leaderboard">'
         f"v{html.escape(__version__)}</a></footer>"
         "</body></html>\n"
