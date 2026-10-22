@@ -32,6 +32,8 @@ class SubmissionConfig(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     benchmark: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    author: str = Field(min_length=1)
     architecture: str
     input_size: StrictInt = Field(gt=0)
     output_size: StrictInt = Field(gt=0)

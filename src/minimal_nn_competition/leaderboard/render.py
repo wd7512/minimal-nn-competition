@@ -51,6 +51,8 @@ def _table(results: list[BenchmarkResult], replay_links: dict[str, str] | None =
         row = (
             f"<tr{css}><td>{rank}</td>"
             f"<td>{html.escape(result.submission)}</td>"
+            f"<td>{html.escape(result.name)}</td>"
+            f"<td>{html.escape(result.author)}</td>"
             f"<td>{_score_text(result)}</td>"
             f"<td>{status}</td>"
             f"<td>{normalisation_text}</td>"
@@ -63,8 +65,8 @@ def _table(results: list[BenchmarkResult], replay_links: dict[str, str] | None =
         row += "</tr>"
         rows.append(row)
     header = (
-        "<table><thead><tr><th>#</th><th>Submission</th><th>Score</th>"
-        "<th>Status</th><th>Normalisation</th><th>Parameters</th>"
+        "<table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th>"
+        "<th>Score</th><th>Status</th><th>Normalisation</th><th>Parameters</th>"
     )
     if show_replay:
         header += "<th>Replay</th>"

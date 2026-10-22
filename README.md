@@ -28,6 +28,8 @@ A submission is a directory containing `config.json` and `model.pt`:
 ```json
 {
   "benchmark": "snake",
+  "name": "example",
+  "author": "example author",
   "architecture": "mlp",
   "input_size": 24,
   "output_size": 4,
@@ -36,6 +38,9 @@ A submission is a directory containing `config.json` and `model.pt`:
 }
 ```
 
+`name` is the display name shown on the leaderboard and `author` credits
+who made the submission.
+
 MNIST submissions may also set `"normalisation": true` to scale pixels from
 `0-255` to `0-1`. The example MNIST model is trained on non-normalised inputs,
 so its config uses `false`. For example:
@@ -43,6 +48,8 @@ so its config uses `false`. For example:
 ```json
 {
   "benchmark": "mnist",
+  "name": "example",
+  "author": "example author",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,

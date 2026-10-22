@@ -17,6 +17,7 @@ def _write_submission(
 ) -> Path:
     directory = tmp_path / "example"
     directory.mkdir()
+    config = {"name": "example", "author": "tester", **config}
     (directory / "config.json").write_text(json.dumps(config))
     torch.save(state, directory / "model.pt")
     return directory

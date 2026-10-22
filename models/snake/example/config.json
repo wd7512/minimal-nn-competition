@@ -1,5 +1,7 @@
 {
   "benchmark": "snake",
+  "name": "example",
+  "author": "example author",
   "architecture": "mlp",
   "input_size": 24,
   "output_size": 4,
