@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
+from minimal_nn_competition.benchmarks.snake.engine import SnakeEngine
 from minimal_nn_competition.speed.agent import (
     BOARD_SIZE,
     HAMILTONIAN_CYCLE,
@@ -51,12 +51,11 @@ def test_hamiltonian_cycle_is_valid() -> None:
 
 def test_agent_fills_board_on_every_seed() -> None:
     for seed in range(100):
-        environment = SnakeEnvironment(size=SIZE, seed=seed, max_moves=4096)
-        observation = environment.reset()
+        engine = SnakeEngine(size=SIZE, seed=seed, max_moves=4096)
         done = False
         while not done:
-            observation, _, done = environment.step(action_for(observation))
-        assert len(environment.snake) == BOARD_SIZE
+            _, done = engine.step(action_for(engine))
+        assert len(engine.snake) == BOARD_SIZE
 
 
 def test_measure_speed_short_run() -> None:
@@ -107,6 +106,7 @@ def test_render_speed_site(tmp_path: Path) -> None:
     assert "abc1234" in page
     assert "2026-10-22 00:00:00 UTC" in page
     assert "1,234,567 ± 12,345" in page
+    assert "test-harness" in page
     assert "Apple M5 Pro" in page
     assert "Main leaderboard" in page
     raw = json.loads((tmp_path / "speed" / "leaderboard.json").read_text())

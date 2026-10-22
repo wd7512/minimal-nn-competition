@@ -1,65 +1,75 @@
-"""Small deterministic Snake simulation used by the benchmark."""
+"""Compatibility wrapper combining the Snake engine and observation encoding."""
 
 from __future__ import annotations
 
-import random
-from dataclasses import dataclass
+from collections.abc import Sequence
+from typing import Any
 
-Position = tuple[int, int]
-Direction = tuple[int, int]
-DIRECTIONS: tuple[Direction, ...] = ((0, -1), (1, 0), (0, 1), (-1, 0))
+from minimal_nn_competition.benchmarks.snake.engine import (
+    DIRECTIONS,
+    Direction,
+    Position,
+    SnakeEngine,
+)
+from minimal_nn_competition.benchmarks.snake.observation import observe
+
+__all__ = ["DIRECTIONS", "SnakeEngine", "SnakeEnvironment"]
 
 
-@dataclass
 class SnakeEnvironment:
-    size: int = 8
-    seed: int = 0
-    max_moves: int = 512
+    """Engine plus observation wrapper used by evaluation and training."""
 
-    def reset(self) -> tuple[int, ...]:
-        self.random = random.Random(self.seed)
-        center = self.size // 2
-        self.snake: list[Position] = [(center, center)]
-        self.direction = (1, 0)
-        self.moves = 0
-        self.food = self._new_food()
+    def __init__(
+        self,
+        size: int = 8,
+        seed: int = 0,
+        max_moves: int = 512,
+        input_indices: Sequence[int] | None = None,
+    ) -> None:
+        self.engine = SnakeEngine(size=size, seed=seed, max_moves=max_moves)
+        self.input_indices = tuple(input_indices) if input_indices is not None else None
+
+    @property
+    def snake(self) -> list[Position]:
+        return self.engine.snake
+
+    @snake.setter
+    def snake(self, snake: list[Position]) -> None:
+        self.engine.set_snake(snake)
+
+    @property
+    def food(self) -> Position:
+        return self.engine.food
+
+    @food.setter
+    def food(self, position: Position) -> None:
+        self.engine.food = position
+
+    @property
+    def direction(self) -> Direction:
+        return self.engine.direction
+
+    @direction.setter
+    def direction(self, direction: Direction) -> None:
+        self.engine.direction = direction
+
+    def __getattr__(self, name: str) -> Any:
+        engine = self.__dict__.get("engine")
+        if engine is None:
+            raise AttributeError(name)
+        return getattr(engine, name)
+
+    def reset(self) -> tuple[float, ...]:
+        self.engine.reset()
         return self.observation()
 
-    def _new_food(self) -> Position:
-        occupied = set(self.snake)
-        available = [
-            (x, y) for y in range(self.size) for x in range(self.size) if (x, y) not in occupied
-        ]
-        return self.random.choice(available)
+    def observation(self) -> tuple[float, ...]:
+        return observe(self.engine, self.input_indices)
 
-    def observation(self) -> tuple[int, ...]:
-        head = self.snake[0]
-        return (head[0], head[1], self.food[0], self.food[1], *self.direction, len(self.snake))
+    def advance(self, action: int) -> tuple[float, bool]:
+        """Advance the engine without building an observation."""
+        return self.engine.step(action)
 
-    def step(self, action: int) -> tuple[tuple[int, ...], float, bool]:
-        if not 0 <= action < len(DIRECTIONS):
-            raise ValueError("Snake action must be an integer from 0 to 3")
-        requested = DIRECTIONS[action]
-        if requested != (-self.direction[0], -self.direction[1]):
-            self.direction = requested
-        head = self.snake[0]
-        next_head = (head[0] + self.direction[0], head[1] + self.direction[1])
-        self.moves += 1
-        tail = self.snake[-1]
-        moves_into_tail = next_head == tail and next_head != self.food
-        if (
-            next_head[0] not in range(self.size)
-            or next_head[1] not in range(self.size)
-            or (next_head in self.snake and not moves_into_tail)
-        ):
-            return self.observation(), -1.0, True
-        self.snake.insert(0, next_head)
-        if next_head == self.food:
-            if len(self.snake) == self.size * self.size:
-                return self.observation(), 1.0, True
-            self.food = self._new_food()
-            reward = 1.0
-        else:
-            self.snake.pop()
-            reward = 0.0
-        return self.observation(), reward, self.moves >= self.max_moves
+    def step(self, action: int) -> tuple[tuple[float, ...], float, bool]:
+        reward, done = self.engine.step(action)
+        return self.observation(), reward, done

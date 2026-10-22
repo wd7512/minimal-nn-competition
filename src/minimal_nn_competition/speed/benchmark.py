@@ -12,10 +12,10 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
+from minimal_nn_competition.benchmarks.snake.engine import SnakeEngine
 from minimal_nn_competition.speed.agent import ACTIONS_BY_CELL, AGENT_NAME, BOARD_SIZE, SIZE
 
-HARNESS_VERSION = "snake-speed-v1"
+HARNESS_VERSION = "snake-speed-v2"
 DEFAULT_DURATION = 1.0
 DEFAULT_RUNS = 10
 DEFAULT_WARMUP = 1.0
@@ -84,34 +84,31 @@ def _cpu_name() -> str:
 
 
 def _run_once(seconds: float) -> tuple[int, float]:
-    environment = SnakeEnvironment(size=SIZE, seed=0, max_moves=4096)
-    observation = environment.reset()
-    step = environment.step
-    reset = environment.reset
+    engine = SnakeEngine(size=SIZE, seed=0, max_moves=4096)
+    engine.reset()
+    step = engine.step
+    reset = engine.reset
     actions = ACTIONS_BY_CELL
     start = time.perf_counter()
     deadline = start + seconds
     ticks = 0
     while True:
         for _ in range(TIMER_CHUNK):
-            observation, _, done = step(actions[observation[1] * SIZE + observation[0]])
+            _, done = step(actions[engine.head_cell])
             ticks += 1
             if done:
-                observation = reset()
+                reset()
         if time.perf_counter() >= deadline:
             return ticks, time.perf_counter() - start
 
 
 def _validate_agent() -> None:
     for seed in VALIDATION_SEEDS:
-        environment = SnakeEnvironment(size=SIZE, seed=seed, max_moves=4096)
-        observation = environment.reset()
+        engine = SnakeEngine(size=SIZE, seed=seed, max_moves=4096)
         done = False
         while not done:
-            observation, _, done = environment.step(
-                ACTIONS_BY_CELL[observation[1] * SIZE + observation[0]]
-            )
-        if len(environment.snake) != BOARD_SIZE:
+            _, done = engine.step(ACTIONS_BY_CELL[engine.head_cell])
+        if len(engine.snake) != BOARD_SIZE:
             raise RuntimeError(f"Speed agent failed to fill the board on seed {seed}")
 
 

@@ -37,12 +37,13 @@ def _table(results: list[SpeedResult]) -> str:
             f"<tr><td>{rank}</td>"
             f'<td><code title="{html.escape(result.commit)}">{commit}</code></td>'
             f"<td>{result.ticks_per_second:,.0f} ± {result.ticks_std:,.0f}</td>"
+            f"<td>{html.escape(result.harness)}</td>"
             f"<td>{measured}</td>"
             f"<td>{html.escape(result.cpu or result.machine or '-')}</td></tr>"
         )
     return (
         "<table><thead><tr><th>#</th><th>Commit</th><th>Ticks/s</th>"
-        "<th>Measured</th><th>CPU</th></tr></thead>"
+        "<th>Harness</th><th>Measured</th><th>CPU</th></tr></thead>"
         f"<tbody>{''.join(rows)}</tbody></table>"
     )
 
@@ -60,7 +61,9 @@ def render_speed_html(results: list[SpeedResult]) -> str:
         "8x8 Snake environment, always filling the board. Each commit is measured with "
         "ten one-second runs; the ± value is the population standard deviation. Higher "
         "is better.</p>"
-        '<p class="muted">A tick is one SnakeEnvironment.step() call.</p>'
+        '<p class="muted">A tick is one SnakeEngine.step() call (game engine only, '
+        "excluding observation encoding). Older snake-speed-v1 entries include the "
+        "7-feature observation encoding, so compare within a harness version.</p>"
         '<p><a href="../">Main leaderboard</a> · '
         '<a href="leaderboard.json">Raw speed JSON</a></p></header>'
         f"{content}"
