@@ -1,0 +1,12 @@
+{
+  "benchmark": "mnist",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    7,
+    7
+  ],
+  "activation": "relu",
+  "normalisation": true
+}
