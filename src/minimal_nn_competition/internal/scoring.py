@@ -123,7 +123,11 @@ def count_tokens(source: str) -> int:
         elif token.type in _SKIPPED_TYPES:
             continue
         elif token.type == tokenize.NAME:
-            if token.string in keyword.kwlist or token.string in _SOFT_KEYWORDS and token.start in syntactic:
+            if (
+                token.string in keyword.kwlist
+                or token.string in _SOFT_KEYWORDS
+                and token.start in syntactic
+            ):
                 count += 1
         elif token.type == tokenize.STRING:
             if token.start not in docstrings:
