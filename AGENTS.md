@@ -21,6 +21,10 @@ This is a generic Python project template using `uv`, `ruff`, `ty`, and `pytest`
 - Prefer clear, boring Python over clever abstractions.
 - Use `logging` (stdlib) for all output — never `print()`. Configure via `logging.basicConfig()` in entry points.
 
+## Branches
+
+- Develop features on `dev` and promote them to `main` only when ready. Every push to `main` redeploys GitHub Pages, so avoiding direct feature merges to `main` prevents repeated Pages deployments.
+
 ## Submissions
 
 - Submission PRs target `submission` and contain only `models/<benchmark>/<name>/config.json` and `model.pt`.
