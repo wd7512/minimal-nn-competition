@@ -56,6 +56,15 @@ def test_valid_submission_passes(tmp_path: Path) -> None:
     assert _load_script().validate_diff(diff, tmp_path) == []
 
 
+def test_fashion_mnist_submission_passes(tmp_path: Path) -> None:
+    _write_submission(tmp_path, benchmark="fashion-mnist")
+    diff = _diff(
+        "models/fashion-mnist/tiny/config.json",
+        "models/fashion-mnist/tiny/model.pt",
+    )
+    assert _load_script().validate_diff(diff, tmp_path) == []
+
+
 def test_code_change_is_rejected(tmp_path: Path) -> None:
     _write_submission(tmp_path)
     diff = _diff(

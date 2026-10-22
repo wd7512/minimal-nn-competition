@@ -9,10 +9,17 @@ BenchmarkFactory = Callable[..., Any]
 
 
 def _factories() -> dict[str, BenchmarkFactory]:
+    from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import (
+        FashionMnistBenchmark,
+    )
     from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
     from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
 
-    return {"mnist": MnistBenchmark, "snake": SnakeBenchmark}
+    return {
+        "fashion-mnist": FashionMnistBenchmark,
+        "mnist": MnistBenchmark,
+        "snake": SnakeBenchmark,
+    }
 
 
 def available_benchmarks() -> tuple[str, ...]:

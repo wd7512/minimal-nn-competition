@@ -1,0 +1,13 @@
+{
+  "benchmark": "fashion-mnist",
+  "name": "example",
+  "author": "example author",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    64
+  ],
+  "activation": "relu",
+  "normalisation": false
+}
