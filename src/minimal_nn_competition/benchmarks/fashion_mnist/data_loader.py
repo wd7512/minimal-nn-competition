@@ -8,10 +8,10 @@ from minimal_nn_competition.benchmarks.idx import download_file, read_images, re
 
 FASHION_MNIST_BASE_URL = "https://github.com/zalandoresearch/fashion-mnist/raw/master/data/fashion/"
 FILES = {
-    "train-images-idx3-ubyte.gz": "train-images-idx3-ubyte.gz",
-    "train-labels-idx1-ubyte.gz": "train-labels-idx1-ubyte.gz",
-    "t10k-images-idx3-ubyte.gz": "t10k-images-idx3-ubyte.gz",
-    "t10k-labels-idx1-ubyte.gz": "t10k-labels-idx1-ubyte.gz",
+    "train-images-idx3-ubyte.gz": "fashion-train-images-idx3-ubyte.gz",
+    "train-labels-idx1-ubyte.gz": "fashion-train-labels-idx1-ubyte.gz",
+    "t10k-images-idx3-ubyte.gz": "fashion-t10k-images-idx3-ubyte.gz",
+    "t10k-labels-idx1-ubyte.gz": "fashion-t10k-labels-idx1-ubyte.gz",
 }
 
 
@@ -25,16 +25,16 @@ def download_fashion_mnist(destination: Path, force: bool = False) -> tuple[Path
     if train_path.is_file() and test_path.is_file() and not force:
         return train_path, test_path
 
-    for filename in FILES:
-        download_file(FASHION_MNIST_BASE_URL + filename, destination / filename)
+    for remote, local in FILES.items():
+        download_file(FASHION_MNIST_BASE_URL + remote, destination / local)
 
     train = (
-        read_images(destination / "train-images-idx3-ubyte.gz"),
-        read_labels(destination / "train-labels-idx1-ubyte.gz"),
+        read_images(destination / FILES["train-images-idx3-ubyte.gz"]),
+        read_labels(destination / FILES["train-labels-idx1-ubyte.gz"]),
     )
     test = (
-        read_images(destination / "t10k-images-idx3-ubyte.gz"),
-        read_labels(destination / "t10k-labels-idx1-ubyte.gz"),
+        read_images(destination / FILES["t10k-images-idx3-ubyte.gz"]),
+        read_labels(destination / FILES["t10k-labels-idx1-ubyte.gz"]),
     )
     torch.save(train, train_path)
     torch.save(test, test_path)
