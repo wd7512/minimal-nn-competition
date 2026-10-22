@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 import json
 import shutil
+import statistics
 from dataclasses import asdict
 from itertools import groupby
 from pathlib import Path
@@ -40,8 +41,18 @@ def _score_text(result: BenchmarkResult) -> str:
     return f"{mean:.2f}% ± {std:.2f}%"
 
 
+def _game_length_text(result: BenchmarkResult) -> str:
+    moves = result.details.get("seed_moves")
+    if not isinstance(moves, list) or not moves:
+        return "-"
+    mean = statistics.fmean(moves)
+    std = statistics.pstdev(moves)
+    return f"{mean:.1f} ± {std:.1f}"
+
+
 def _table(results: list[BenchmarkResult], replay_links: dict[str, str] | None = None) -> str:
     rows = []
+    show_game_length = bool(results) and results[0].benchmark == "snake"
     show_replay = bool(replay_links)
     for rank, result in enumerate(results, start=1):
         status = "pass" if result.passed else "fail"
@@ -54,10 +65,10 @@ def _table(results: list[BenchmarkResult], replay_links: dict[str, str] | None =
             f"<td>{html.escape(result.name)}</td>"
             f"<td>{html.escape(result.author)}</td>"
             f"<td>{_score_text(result)}</td>"
-            f"<td>{status}</td>"
-            f"<td>{normalisation_text}</td>"
-            f"<td>{result.parameter_count}</td>"
         )
+        if show_game_length:
+            row += f"<td>{_game_length_text(result)}</td>"
+        row += f"<td>{status}</td><td>{normalisation_text}</td><td>{result.parameter_count}</td>"
         if show_replay:
             link = (replay_links or {}).get(result.submission)
             cell = f'<a href="{html.escape(link)}">view game</a>' if link else "-"
@@ -65,9 +76,11 @@ def _table(results: list[BenchmarkResult], replay_links: dict[str, str] | None =
         row += "</tr>"
         rows.append(row)
     header = (
-        "<table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th>"
-        "<th>Score</th><th>Status</th><th>Normalisation</th><th>Parameters</th>"
+        "<table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th><th>Score</th>"
     )
+    if show_game_length:
+        header += "<th>Game length</th>"
+    header += "<th>Status</th><th>Normalisation</th><th>Parameters</th>"
     if show_replay:
         header += "<th>Replay</th>"
     header += "</tr></thead>"

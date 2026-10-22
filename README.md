@@ -112,8 +112,9 @@ MNIST scores are full-test-set accuracy, shown as a percentage; a submission
 passes at 100% accuracy. Snake uses an 8x8 board and evaluates each model across
 100 seeds (`0`–`99`) with a 4096-move episode cap. Its score is the mean final
 snake length as a percentage of the 64-cell board, and the site also shows the
-standard deviation across seeds. A submission passes only when it fills the
-board (length 64) on every seed.
+standard deviation across seeds. The `Game length` column shows the mean number
+of ticks per game and its standard deviation across seeds. A submission passes
+only when it fills the board (length 64) on every seed.
 
 Results rank passing submissions before failing submissions, then by descending
 score and ascending parameter count. Submit a pull request against `submission`

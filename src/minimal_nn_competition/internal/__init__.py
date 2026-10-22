@@ -82,6 +82,7 @@ SCOPES = (
             "tests/test_configs.py",
             "tests/test_integration.py::test_checked_in_examples_load",
             "tests/test_integration.py::test_render_site",
+            "tests/test_integration.py::test_render_mnist_has_no_game_length_column",
             "tests/test_integration.py::test_render_cli",
             "tests/test_integration.py::test_render_shows_name_and_author",
             "tests/test_integration.py::test_collect_cli",
