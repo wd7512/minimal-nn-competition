@@ -27,6 +27,16 @@ def _parser() -> argparse.ArgumentParser:
     render = subparsers.add_parser("render", help="Render a leaderboard as static HTML")
     render.add_argument("path", type=Path)
     render.add_argument("output", type=Path)
+    speed = subparsers.add_parser("speed", help="Benchmark the local Snake environment")
+    speed.add_argument("--duration", type=float, default=1.0)
+    speed.add_argument("--runs", type=int, default=10)
+    speed.add_argument("--warmup", type=float, default=1.0)
+    speed.add_argument("--output", type=Path, default=Path("speed-leaderboard.json"))
+    render_speed = subparsers.add_parser(
+        "render-speed", help="Render the hidden Snake speed leaderboard"
+    )
+    render_speed.add_argument("path", type=Path)
+    render_speed.add_argument("output", type=Path)
     collect = subparsers.add_parser("collect", help="Evaluate every model under models/")
     collect.add_argument("--models", type=Path, default=Path("models"))
     collect.add_argument("--data-path", type=Path, default=Path("data/mnist-test.pt"))
@@ -69,6 +79,38 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "render":
         try:
             index = render_site(load_results(args.path), args.output)
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            logging.getLogger(__name__).error("%s", exc)
+            return 2
+        sys.stdout.write(f"{index}\n")
+        return 0
+    if args.command == "speed":
+        from minimal_nn_competition.speed.benchmark import measure_snake_speed
+        from minimal_nn_competition.speed.leaderboard import (
+            load_speed_results,
+            save_speed_results,
+            upsert_speed_result,
+        )
+
+        try:
+            result = measure_snake_speed(
+                duration=args.duration,
+                runs=args.runs,
+                warmup=args.warmup,
+            )
+            results = load_speed_results(args.output) if args.output.exists() else []
+            save_speed_results(args.output, upsert_speed_result(results, result))
+        except (OSError, RuntimeError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            logging.getLogger(__name__).error("%s", exc)
+            return 2
+        sys.stdout.write(result.to_json() + "\n")
+        return 0
+    if args.command == "render-speed":
+        from minimal_nn_competition.speed.leaderboard import load_speed_results
+        from minimal_nn_competition.speed.render import render_speed_site
+
+        try:
+            index = render_speed_site(load_speed_results(args.path), args.output)
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             logging.getLogger(__name__).error("%s", exc)
             return 2

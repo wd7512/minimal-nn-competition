@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from minimal_nn_competition import __version__
 from minimal_nn_competition.__main__ import main
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
@@ -45,9 +46,11 @@ def test_render_site(tmp_path: Path) -> None:
     ]
     index = render_site(results, tmp_path)
     html = index.read_text()
-    assert "MNIST" in html
-    assert "SNAKE" in html
+    assert "MNIST COMPRESSION" in html
+    assert "SNAKE GAME" in html
     assert "mnist-example" in html
+    assert 'href="speed/"' in html
+    assert f"v{__version__}" in html
     assert "50.00%" in html
     assert "1.56% ± 0.78%" in html
     assert "<th>Normalisation</th>" in html

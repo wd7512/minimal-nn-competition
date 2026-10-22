@@ -8,8 +8,11 @@ from dataclasses import asdict
 from itertools import groupby
 from pathlib import Path
 
+from minimal_nn_competition import __version__
 from minimal_nn_competition.leaderboard import rank_results
 from minimal_nn_competition.runner.entry import BenchmarkResult
+
+_SECTION_TITLES = {"mnist": "MNIST COMPRESSION", "snake": "SNAKE GAME"}
 
 _STYLE = """
 :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
@@ -19,6 +22,9 @@ th, td { border-bottom: 1px solid #8884; padding: 0.5rem; text-align: left; }
 th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
 tr.passed td { font-weight: 600; }
 .muted { opacity: 0.65; }
+footer { margin-top: 2rem; text-align: right; }
+.version { color: inherit; opacity: 0.35; text-decoration: none; font-size: 0.8rem; }
+.version:hover, .version:focus-visible { opacity: 1; }
 """
 
 
@@ -57,8 +63,9 @@ def render_html(results: list[BenchmarkResult]) -> str:
     sections = []
     for benchmark, group in groupby(results, key=lambda result: result.benchmark):
         entries = list(group)
+        title = _SECTION_TITLES.get(benchmark, benchmark.upper())
         sections.append(
-            f"<section><h2>{html.escape(benchmark.upper())}</h2>"
+            f"<section><h2>{html.escape(title)}</h2>"
             f'<p class="muted">{len(entries)} result(s), ranked by pass status, '
             "score, then parameter count.</p>"
             f"{_table(entries)}</section>"
@@ -74,6 +81,10 @@ def render_html(results: list[BenchmarkResult]) -> str:
         "<p>Small PyTorch state-dict submissions for MNIST and Snake.</p>"
         '<p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>'
         f"{''.join(sections)}"
+        "<footer>"
+        '<a class="version" href="speed/" title="Hidden Snake environment speed leaderboard" '
+        'aria-label="Hidden Snake environment speed leaderboard">'
+        f"v{html.escape(__version__)}</a></footer>"
         "</body></html>\n"
     )
 
