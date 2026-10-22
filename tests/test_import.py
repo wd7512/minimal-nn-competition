@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-
 import pytest
 
 from minimal_nn_competition.__main__ import main
@@ -11,10 +9,6 @@ def test_main_callable() -> None:
     assert callable(main)
 
 
-def test_main_logs(caplog: pytest.LogCaptureFixture) -> None:
-    with caplog.at_level(logging.INFO, logger="minimal_nn_competition.__main__"):
-        main()
-    assert any(
-        record.message == "Hello from minimal-nn-competition!" and record.levelname == "INFO"
-        for record in caplog.records
-    )
+def test_main_lists_benchmarks(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["list"]) == 0
+    assert capsys.readouterr().out.splitlines() == ["mnist", "snake"]

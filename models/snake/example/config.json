@@ -1,0 +1,11 @@
+{
+  "benchmark": "snake",
+  "architecture": "mlp",
+  "input_size": 7,
+  "output_size": 4,
+  "hidden_sizes": [
+    64,
+    64
+  ],
+  "activation": "relu"
+}

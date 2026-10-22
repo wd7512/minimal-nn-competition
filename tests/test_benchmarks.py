@@ -1,0 +1,173 @@
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
+import torch
+
+from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
+from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
+from minimal_nn_competition.model.entry import Submission, materialize_submission
+
+
+def _write_submission(
+    tmp_path: Path, config: dict[str, Any], state: dict[str, torch.Tensor]
+) -> Submission:
+    directory = tmp_path / "example"
+    directory.mkdir()
+    (directory / "config.json").write_text(json.dumps(config))
+    torch.save(state, directory / "model.pt")
+    return Submission.from_directory(directory)
+
+
+def test_snake_partial_run_does_not_pass(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake",
+            "architecture": "linear",
+            "input_size": 7,
+            "output_size": 4,
+        },
+        {"weight": torch.zeros((4, 7)), "bias": torch.zeros(4)},
+    )
+    result = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(materialize_submission(submission))
+    score, passed, details = result
+    assert score == 1.0
+    assert passed is False
+    assert details["seed_lengths"] == [1, 1, 1]
+
+
+def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    class FullBoardEnvironment:
+        size = 8
+
+        def __init__(self, seed: int, max_moves: int) -> None:
+            self.snake = [(0, 0)] * 64
+
+        def reset(self) -> tuple[int, ...]:
+            return (0, 0, 0, 0, 1, 0, 1)
+
+        def step(self, action: int) -> tuple[tuple[int, ...], float, bool]:
+            return (0, 0, 0, 0, 1, 0, 64), 1.0, True
+
+    monkeypatch.setattr(snake_benchmark, "SnakeEnvironment", FullBoardEnvironment)
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake",
+            "architecture": "linear",
+            "input_size": 7,
+            "output_size": 4,
+        },
+        {"weight": torch.zeros((4, 7)), "bias": torch.zeros(4)},
+    )
+    score, passed, details = SnakeBenchmark().evaluate(materialize_submission(submission))
+    assert score == 64.0
+    assert passed is True
+    assert details["seed_lengths"] == [64, 64, 64]
+
+
+def test_snake_rejects_wrong_config(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake",
+            "architecture": "linear",
+            "input_size": 8,
+            "output_size": 4,
+        },
+        {"weight": torch.zeros((4, 8)), "bias": torch.zeros(4)},
+    )
+    with pytest.raises(ValueError, match="input_size 7"):
+        SnakeBenchmark().load_submission(submission)
+
+
+def _write_mnist_cache(path: Path) -> None:
+    inputs = torch.zeros((2, 784), dtype=torch.uint8)
+    inputs[0, 0] = 255
+    inputs[1, 1] = 255
+    torch.save((inputs, torch.tensor([0, 1])), path)
+
+
+def test_mnist_evaluation_and_threshold(tmp_path: Path) -> None:
+    data_path = tmp_path / "mnist-test.pt"
+    _write_mnist_cache(data_path)
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "mnist",
+            "architecture": "linear",
+            "input_size": 784,
+            "output_size": 10,
+        },
+        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+    )
+    loaded = materialize_submission(submission)
+    loaded.state_dict["weight"][0, 0] = 1
+    loaded.state_dict["weight"][1, 1] = 1
+    loaded.model.load_state_dict(loaded.state_dict)
+    score, passed, details = MnistBenchmark(data_path=data_path).evaluate(loaded)
+    assert score == 1.0
+    assert passed is True
+    assert details == {"samples": 2, "normalisation": False}
+
+    score, passed, _ = MnistBenchmark(data_path=data_path, threshold=1.01).evaluate(loaded)
+    assert score == 1.0
+    assert passed is False
+
+
+def test_mnist_normalisation_flag(tmp_path: Path) -> None:
+    data_path = tmp_path / "mnist-test.pt"
+    _write_mnist_cache(data_path)
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "mnist",
+            "architecture": "linear",
+            "input_size": 784,
+            "output_size": 10,
+            "normalisation": True,
+        },
+        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+    )
+    loaded = materialize_submission(submission)
+    loaded.state_dict["weight"][0, 0] = 1
+    loaded.state_dict["weight"][1, 1] = 1
+    loaded.model.load_state_dict(loaded.state_dict)
+    score, passed, details = MnistBenchmark(data_path=data_path).evaluate(loaded)
+    assert score == 1.0
+    assert passed is True
+    assert details == {"samples": 2, "normalisation": True}
+
+
+def test_mnist_requires_data_file(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "mnist",
+            "architecture": "linear",
+            "input_size": 784,
+            "output_size": 10,
+        },
+        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+    )
+    loaded = materialize_submission(submission)
+    with pytest.raises(FileNotFoundError, match="MNIST test data is unavailable"):
+        MnistBenchmark(data_path=tmp_path / "missing.pt").evaluate(loaded)
+
+
+def test_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "mnist",
+            "architecture": "linear",
+            "input_size": 10,
+            "output_size": 10,
+        },
+        {"weight": torch.zeros((10, 10)), "bias": torch.zeros(10)},
+    )
+    with pytest.raises(ValueError, match="input_size 784"):
+        MnistBenchmark().load_submission(submission)
