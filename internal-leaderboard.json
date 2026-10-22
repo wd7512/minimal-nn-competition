@@ -24,6 +24,18 @@
     "tokens": 6154
   },
   {
+    "commit": "49f5062b146e642bc5848c056d81795d3ca1bd84",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "arm64",
+    "measured_at": "2026-10-22T23:39:09+00:00",
+    "python_version": "3.12.14",
+    "rules_version": 1,
+    "scope": "core",
+    "status": "pass",
+    "tokens": 6154
+  },
+  {
     "commit": "5d6eacc0e59c8e63ad809e5cec465b02da01a7dc",
     "dirty": false,
     "failure_reason": "",
@@ -48,6 +60,18 @@
     "tokens": 1148
   },
   {
+    "commit": "49f5062b146e642bc5848c056d81795d3ca1bd84",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "arm64",
+    "measured_at": "2026-10-22T23:39:04+00:00",
+    "python_version": "3.12.14",
+    "rules_version": 1,
+    "scope": "fashion-mnist",
+    "status": "pass",
+    "tokens": 1148
+  },
+  {
     "commit": "5d6eacc0e59c8e63ad809e5cec465b02da01a7dc",
     "dirty": false,
     "failure_reason": "",
@@ -65,6 +89,18 @@
     "failure_reason": "",
     "machine": "arm64",
     "measured_at": "2026-10-22T23:30:42+00:00",
+    "python_version": "3.12.14",
+    "rules_version": 1,
+    "scope": "mnist",
+    "status": "pass",
+    "tokens": 377
+  },
+  {
+    "commit": "49f5062b146e642bc5848c056d81795d3ca1bd84",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "arm64",
+    "measured_at": "2026-10-22T23:39:02+00:00",
     "python_version": "3.12.14",
     "rules_version": 1,
     "scope": "mnist",
@@ -113,6 +149,18 @@
     "failure_reason": "",
     "machine": "arm64",
     "measured_at": "2026-10-22T23:30:50+00:00",
+    "python_version": "3.12.14",
+    "rules_version": 1,
+    "scope": "snake",
+    "status": "pass",
+    "tokens": 3199
+  },
+  {
+    "commit": "49f5062b146e642bc5848c056d81795d3ca1bd84",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "arm64",
+    "measured_at": "2026-10-22T23:39:06+00:00",
     "python_version": "3.12.14",
     "rules_version": 1,
     "scope": "snake",
