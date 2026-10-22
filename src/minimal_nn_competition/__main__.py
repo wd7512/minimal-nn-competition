@@ -44,6 +44,16 @@ def _parser() -> argparse.ArgumentParser:
     )
     render_speed.add_argument("path", type=Path)
     render_speed.add_argument("output", type=Path)
+    internal = subparsers.add_parser(
+        "internal", help="Score this repo's own code against its test scopes"
+    )
+    internal.add_argument("--root", type=Path, default=Path("."))
+    internal.add_argument("--output", type=Path, default=Path("internal-leaderboard.json"))
+    render_internal = subparsers.add_parser(
+        "render-internal", help="Render the internal token leaderboard"
+    )
+    render_internal.add_argument("path", type=Path)
+    render_internal.add_argument("output", type=Path)
     collect = subparsers.add_parser("collect", help="Evaluate every model under models/")
     collect.add_argument("--models", type=Path, default=Path("models"))
     collect.add_argument("--data-path", type=Path, default=Path("data/mnist-test.pt"))
@@ -153,6 +163,37 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             index = render_speed_site(load_speed_results(args.path), args.output)
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            logging.getLogger(__name__).error("%s", exc)
+            return 2
+        sys.stdout.write(f"{index}\n")
+        return 0
+    if args.command == "internal":
+        from minimal_nn_competition.internal import (
+            SCOPES,
+            load_internal_results,
+            measure_scope,
+            save_internal_results,
+            upsert_internal_result,
+        )
+
+        try:
+            results = load_internal_results(args.output) if args.output.exists() else []
+            for scope in SCOPES:
+                result = measure_scope(scope, args.root)
+                results = upsert_internal_result(results, result)
+                sys.stdout.write(result.to_json() + "\n")
+            save_internal_results(args.output, results)
+        except (OSError, RuntimeError, TypeError, ValueError, json.JSONDecodeError) as exc:
+            logging.getLogger(__name__).error("%s", exc)
+            return 2
+        return 0
+    if args.command == "render-internal":
+        from minimal_nn_competition.internal import load_internal_results
+        from minimal_nn_competition.internal.render import render_internal_site
+
+        try:
+            index = render_internal_site(load_internal_results(args.path), args.output)
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
             logging.getLogger(__name__).error("%s", exc)
             return 2

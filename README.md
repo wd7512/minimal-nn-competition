@@ -174,6 +174,20 @@ https://wd7512.github.io/minimal-nn-competition/. Enable Pages with
 "GitHub Actions" as the source in the repository settings if it is not already
 enabled.
 
+## Internal token leaderboard
+
+Score the repo's own code for syntactic compactness (keywords, operators,
+and literals count; identifiers, comments, whitespace, and docstrings do
+not) across the `core`, `mnist`, and `snake` scopes. A scope scores only
+when all of its mapped tests pass:
+
+```bash
+uv run mnc internal
+uv run mnc render-internal internal-leaderboard.json docs
+```
+
+The hidden page lands at `docs/internal/` alongside the speed board.
+
 ## Development checks
 
 ```bash
