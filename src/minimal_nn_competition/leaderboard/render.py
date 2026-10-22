@@ -231,10 +231,12 @@ def render_html(results: list[BenchmarkResult], replay_links: dict[str, str] | N
         entries = list(group)
         title = _SECTION_TITLES.get(benchmark, benchmark.upper())
         links = replay_links if benchmark == "snake" else None
+        ranking = "pass status, score, then parameter count"
+        if benchmark == "snake":
+            ranking = "pass status, score, parameter count, then game length"
         sections.append(
             f"<section><h2>{html.escape(title)}</h2>"
-            f'<p class="muted">{len(entries)} result(s), ranked by pass status, '
-            "score, then parameter count.</p>"
+            f'<p class="muted">{len(entries)} result(s), ranked by {ranking}.</p>'
             f"{_table(entries, links)}</section>"
         )
     if not sections:

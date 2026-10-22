@@ -119,8 +119,19 @@ def test_registry_and_leaderboard_ranking() -> None:
         BenchmarkResult("b", "snake", 2, True, 20, {}),
         BenchmarkResult("c", "snake", 2, True, 10, {}),
         BenchmarkResult("d", "mnist", 0.9, False, 5, {}),
+        BenchmarkResult("e", "snake", 2, True, 10, {"seed_moves": [100, 200]}),
+        BenchmarkResult("f", "snake", 2, True, 10, {"seed_moves": [50, 50]}),
+        BenchmarkResult("g", "snake", 2, True, 9, {"seed_moves": [500]}),
     ]
-    assert [result.submission for result in rank_results(results)] == ["d", "c", "b", "a"]
+    assert [result.submission for result in rank_results(results)] == [
+        "d",
+        "g",
+        "f",
+        "e",
+        "c",
+        "b",
+        "a",
+    ]
 
 
 def test_leaderboard_round_trip(tmp_path: Path) -> None:

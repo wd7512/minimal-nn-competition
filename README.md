@@ -117,8 +117,10 @@ of ticks per game and its standard deviation across seeds. A submission passes
 only when it fills the board (length 64) on every seed.
 
 Results rank passing submissions before failing submissions, then by descending
-score and ascending parameter count. Submit a pull request against `submission`
-containing only the model directory under `models/<benchmark>/<name>/`.
+score and ascending parameter count. Snake submissions with equal score and
+parameter count are ranked by ascending game length, so faster games win. Submit
+a pull request against `submission` containing only the model directory under
+`models/<benchmark>/<name>/`.
 
 ## Review process
 
