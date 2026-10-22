@@ -1,0 +1,1 @@
+"""A github pages leaderboard for the minimal neural network competition."""
