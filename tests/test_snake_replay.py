@@ -12,7 +12,11 @@ from minimal_nn_competition.benchmarks.snake.replay import (
     replay_slug,
     save_replay,
 )
-from minimal_nn_competition.leaderboard.render import render_game_html, render_site
+from minimal_nn_competition.leaderboard.render import (
+    render_game_html,
+    render_game_pages,
+    render_site,
+)
 from minimal_nn_competition.runner.entry import BenchmarkResult
 
 
@@ -98,6 +102,59 @@ def test_render_site_without_replays_has_no_replay_column(tmp_path: Path) -> Non
     assert "<th>Replay</th>" not in html
     assert "view game" not in html
     assert not (tmp_path / "games").exists()
+
+
+def test_render_game_pages_uses_slug_lookup(tmp_path: Path) -> None:
+    payload = record_game(_right_model())
+    result = BenchmarkResult("my model", "snake", 8.0, False, 20, {"max_length": 64})
+    links = render_game_pages([result], {"my_model": payload}, tmp_path)
+    assert links == {"my model": "games/my_model.html"}
+    assert (tmp_path / "games" / "my_model.html").is_file()
+
+
+def test_render_game_pages_rejects_slug_collisions(tmp_path: Path) -> None:
+    payload = record_game(_right_model())
+    results = [
+        BenchmarkResult("my model", "snake", 8.0, False, 20, {"max_length": 64}),
+        BenchmarkResult("my_model", "snake", 8.0, False, 20, {"max_length": 64}),
+    ]
+    with pytest.raises(ValueError, match="collision"):
+        render_game_pages(results, {"my_model": payload}, tmp_path)
+
+
+def test_render_site_removes_stale_game_pages(tmp_path: Path) -> None:
+    stale = tmp_path / "games" / "stale.html"
+    stale.parent.mkdir()
+    stale.write_text("stale")
+    payload = record_game(_right_model())
+    render_site(_results(), tmp_path, {"example": payload})
+    assert not stale.exists()
+
+
+def test_collect_reports_replay_dir_errors(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    import shutil
+
+    models = tmp_path / "models"
+    shutil.copytree(Path("models/snake/example"), models / "snake" / "example")
+    replays = tmp_path / "replays"
+    replays.write_text("not a directory")
+    assert (
+        main(
+            [
+                "collect",
+                "--models",
+                str(models),
+                "--output",
+                str(tmp_path / "leaderboard.json"),
+                "--replay-dir",
+                str(replays),
+            ]
+        )
+        == 2
+    )
+    assert "replays" in caplog.text
 
 
 def test_collect_and_render_replay_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

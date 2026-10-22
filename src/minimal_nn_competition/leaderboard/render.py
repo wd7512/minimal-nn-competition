@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import json
+import shutil
 from dataclasses import asdict
 from itertools import groupby
 from pathlib import Path
@@ -178,20 +179,33 @@ def render_game_pages(
     replays: dict[str, dict[str, Any]],
     output_dir: Path,
 ) -> dict[str, str]:
-    """Write one replay page per snake submission; return submission-to-href links."""
+    """Write one replay page per snake submission; return submission-to-href links.
+
+    ``replays`` is keyed by the replay slug, not the raw submission name.
+    """
     games_dir = output_dir / "games"
     links: dict[str, str] = {}
+    if not replays:
+        return links
+    shutil.rmtree(games_dir, ignore_errors=True)
+    seen: dict[str, str] = {}
     for result in results:
-        if result.benchmark != "snake" or result.submission not in replays:
+        if result.benchmark != "snake":
             continue
         slug = replay_slug(result.submission)
+        payload = replays.get(slug)
+        if payload is None:
+            continue
+        previous = seen.get(slug)
+        if previous is not None and previous != result.submission:
+            raise ValueError(
+                f"Replay filename collision: {previous!r} and {result.submission!r} "
+                f"both map to {slug!r}"
+            )
+        seen[slug] = result.submission
         games_dir.mkdir(parents=True, exist_ok=True)
-        (games_dir / f"{slug}.json").write_text(
-            json.dumps(replays[result.submission], sort_keys=True) + "\n"
-        )
-        (games_dir / f"{slug}.html").write_text(
-            render_game_html(result.submission, replays[result.submission])
-        )
+        (games_dir / f"{slug}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
+        (games_dir / f"{slug}.html").write_text(render_game_html(result.submission, payload))
         links[result.submission] = f"games/{slug}.html"
     return links
 

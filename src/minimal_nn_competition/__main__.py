@@ -166,7 +166,7 @@ def main(argv: list[str] | None = None) -> int:
                 results.append(evaluate_submission(submission, benchmark))
                 if args.replay_dir is not None and submission.config.benchmark == "snake":
                     _record_replay(args.replay_dir, config_path.parent.name, benchmark, submission)
-            except (FileNotFoundError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:
+            except (OSError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:
                 logging.getLogger(__name__).error("%s: %s", config_path.parent, exc)
                 return 2
         save_results(args.output, results)
