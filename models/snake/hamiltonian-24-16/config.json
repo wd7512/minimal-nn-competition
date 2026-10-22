@@ -9,5 +9,6 @@
     24,
     16
   ],
-  "activation": "relu"
+  "activation": "relu",
+  "description": "Hamiltonian-cycle oracle distilled into a full-observation [24,16] MLP; fills the board on all 100 seeds."
 }
