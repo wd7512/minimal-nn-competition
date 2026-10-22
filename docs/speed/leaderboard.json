@@ -1,0 +1,30 @@
+[
+  {
+    "agent": "hamiltonian-cycle-v1",
+    "commit": "717b407618f47eff2a0496b18c44c0511a8d395b",
+    "cpu": "Apple M5 Pro",
+    "duration_seconds": 1.0,
+    "harness": "snake-speed-v1",
+    "machine": "arm64",
+    "measured_at": "2026-10-22T20:37:44+00:00",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "python_version": "3.12.14",
+    "run_ticks": [
+      1518592,
+      1557504,
+      1541120,
+      1553408,
+      1537024,
+      1522688,
+      1552384,
+      1538048,
+      1549312,
+      1499136
+    ],
+    "runs": 10,
+    "ticks_per_second": 1536356.6262631966,
+    "ticks_std": 17533.345862377126,
+    "validation_seeds": 100,
+    "warmup_seconds": 1.0
+  }
+]
