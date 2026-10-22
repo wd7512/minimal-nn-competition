@@ -12,8 +12,10 @@ Rules
 - Pytorch models
 
 How to submit
-- PR into this repo with your model under `models/<benchmark>/<name>/`
-- I will run this and add it to the leaderboard
+- Open a PR against the `dev` branch with your model under `models/<benchmark>/<name>/`
+- The PR must contain only `config.json` and `model.pt`; do not include code, dependency, or workflow changes
+- After the PR is merged into `dev`, I evaluate it locally on this machine and add it to the leaderboard
+- Accepted submissions are then promoted from `dev` to `main`
 
 ## Submission format
 
@@ -84,8 +86,22 @@ standard deviation across seeds. A submission passes only when it fills the
 board (length 64) on every seed.
 
 Results rank passing submissions before failing submissions, then by descending
-score and ascending parameter count. Submit a pull request with the model
-directory under `models/<benchmark>/<name>/`.
+score and ascending parameter count. Submit a pull request against `dev`
+containing only the model directory under `models/<benchmark>/<name>/`.
+
+## Review process
+
+Submission PRs target `dev` and contain only `config.json` and `model.pt`.
+After merging an entry into `dev`, the maintainer evaluates it locally:
+
+```bash
+uv run mnc evaluate <benchmark> models/<benchmark>/<name>
+uv run mnc collect
+uv run mnc render leaderboard.json docs
+```
+
+The updated leaderboard is committed to `dev`, then `dev` is merged into `main`.
+GitHub Pages deploys from `main` only.
 
 ## Example submissions
 
