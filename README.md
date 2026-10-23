@@ -4,7 +4,7 @@ Find the smallest possible neural network for a problem.
 
 **[View the leaderboard →](https://wd7512.github.io/minimal-nn-competition/)**
 
-Problems: **Snake Simple 8x8**, **Snake Simple 16x16**, and **Snake Obstacles 8x8** (fill the board) · **MNIST** and **Fashion-MNIST** (classify images).
+Problems: **Snake Simple 8x8**, **Snake Simple 16x16**, and **Snake Obstacles 8x8** (fill every free cell) · **MNIST** and **Fashion-MNIST** (classify images).
 Rules: feed-forward `linear` or `mlp` models, a standard activation, and a PyTorch `state_dict`.
 
 Snake Obstacles 8x8 places two or four deterministic blocked cells per seed. A

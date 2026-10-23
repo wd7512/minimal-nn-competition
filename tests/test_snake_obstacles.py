@@ -16,6 +16,7 @@ from minimal_nn_competition.benchmarks.snake.benchmark import (
 )
 from minimal_nn_competition.benchmarks.snake.engine import DIRECTIONS, SnakeEngine
 from minimal_nn_competition.benchmarks.snake.layout import (
+    _check_tour,
     find_closed_tour,
     obstacles_for_seed,
     validate_seed,
@@ -92,7 +93,7 @@ def test_obstacles_are_deterministic_and_use_two_or_four_cells() -> None:
 
 
 def test_closed_tour_visits_every_free_cell_without_going_left() -> None:
-    for seed in FAST_SEEDS:
+    for seed in (*FAST_SEEDS, 4):
         blocked = obstacles_for_seed(8, seed)
         tour = find_closed_tour(8, blocked)
         assert tour is not None
@@ -207,6 +208,7 @@ def test_obstacle_benchmark_evaluation_with_dummy_model(tmp_path: Path) -> None:
         [list(cell) for cell in obstacles_for_seed(8, seed)] for seed in FAST_SEEDS
     ]
     assert details["seed_passed"] == [False, False, False]
+    assert details["max_length"] == max(details["target_lengths"])
 
 
 @pytest.mark.parametrize("won", [True, False])
@@ -243,9 +245,9 @@ def test_obstacle_benchmark_requires_the_loop_win(
 
 
 def test_replay_stem_prefixes_non_default_snake_benchmarks() -> None:
-    assert replay_stem("snake-simple-8x8", "my model") == "my_model"
-    assert replay_stem("snake-simple-16x16", "my model") == "snake-simple-16x16-my_model"
-    assert replay_stem("snake-obstacles-8x8", "my model") == "snake-obstacles-8x8-my_model"
+    assert replay_stem("snake-simple-8x8", "my model") == "snake-simple-8x8--my_model"
+    assert replay_stem("snake-simple-16x16", "my model") == "snake-simple-16x16--my_model"
+    assert replay_stem("snake-obstacles-8x8", "my model") == "snake-obstacles-8x8--my_model"
 
 
 def test_replay_payload_and_render_include_obstacles(tmp_path: Path) -> None:
@@ -270,9 +272,9 @@ def test_replay_payload_and_render_include_obstacles(tmp_path: Path) -> None:
         20,
         {"seed_lengths": [60], "target_lengths": [60], "seed_moves": [100]},
     )
-    links = render_game_pages([result], {"snake-obstacles-8x8-example": payload}, tmp_path)
-    assert links == {"example": "games/snake-obstacles-8x8-example.html"}
-    rendered = (tmp_path / "games" / "snake-obstacles-8x8-example.html").read_text()
+    links = render_game_pages([result], {"snake-obstacles-8x8--example": payload}, tmp_path)
+    assert links == {("snake-obstacles-8x8", "example"): "games/snake-obstacles-8x8--example.html"}
+    rendered = (tmp_path / "games" / "snake-obstacles-8x8--example.html").read_text()
     assert "const BLOCKED" in rendered
 
 
@@ -313,7 +315,7 @@ def test_render_site_shows_the_obstacle_section(tmp_path: Path) -> None:
         20,
         {"seed_lengths": [31], "target_lengths": [62], "seed_moves": [10]},
     )
-    index = render_site([result], tmp_path, {"snake-obstacles-8x8-example": payload})
+    index = render_site([result], tmp_path, {"snake-obstacles-8x8--example": payload})
     html = index.read_text()
     assert "SNAKE OBSTACLES 8X8" in html
     assert "50.00% ± 0.00%" in html
@@ -358,3 +360,106 @@ def test_train_obstacle_writes_benchmark(tmp_path: Path, monkeypatch: pytest.Mon
     )
     config = json.loads((output / "config.json").read_text())
     assert config["benchmark"] == "snake-obstacles-8x8"
+
+
+def test_all_default_seeds_have_verified_tours() -> None:
+    for seed in range(100):
+        result = validate_seed(8, seed)
+        assert result["tour_length"] == 64 - len(result["blocked"])
+        assert result["moves"] <= 4096
+
+
+def test_observe_handles_a_full_board_without_food() -> None:
+    blocked = obstacles_for_seed(8, 0)
+    tour = find_closed_tour(8, blocked)
+    assert tour is not None
+    engine = SnakeEngine(size=8, seed=0, max_moves=4096, blocked=blocked, loop_on_full=True)
+    engine.reset()
+    _follow_to_full(engine, tour)
+    values = observe(engine)
+    assert engine.food is None
+    assert len(values) == 24
+    assert all(isinstance(value, float) for value in values)
+
+
+def test_full_board_body_collision_loses() -> None:
+    path = [
+        (0, 0),
+        (1, 0),
+        (2, 0),
+        (3, 0),
+        (3, 1),
+        (2, 1),
+        (1, 1),
+        (0, 1),
+        (0, 2),
+        (1, 2),
+        (2, 2),
+        (3, 2),
+        (3, 3),
+        (2, 3),
+        (1, 3),
+        (0, 3),
+    ]
+    engine = SnakeEngine(size=4, seed=0, max_moves=100, loop_on_full=True)
+    engine.set_snake(path)
+    engine.food_bit = None
+    assert len(engine.snake) == engine.free_count == 16
+    assert engine.step(1) == (-1.0, True)
+    assert engine.won is False
+
+
+def test_max_moves_cap_prevents_the_bonus_loop_win() -> None:
+    seed = 0
+    baseline = validate_seed(8, seed)
+    blocked = obstacles_for_seed(8, seed)
+    tour = find_closed_tour(8, blocked)
+    assert tour is not None
+    free_count = 64 - len(blocked)
+    engine = SnakeEngine(
+        size=8,
+        seed=seed,
+        max_moves=baseline["moves"] - 1,
+        blocked=blocked,
+        loop_on_full=True,
+    )
+    engine.reset()
+    positions = {cell: index for index, cell in enumerate(tour)}
+    done = False
+    while not done:
+        current = engine.snake[0]
+        next_cell = tour[(positions[current] + 1) % len(tour)]
+        _, done = engine.step(_action_between(current, next_cell))
+    assert len(engine.snake) == free_count
+    assert engine.won is False
+
+
+def test_find_closed_tour_rejects_impossible_layouts_and_lists() -> None:
+    assert find_closed_tour(8, [(0, 0), (0, 2)]) is None
+
+
+def test_engine_rejects_out_of_bounds_or_centre_blocked_cells() -> None:
+    with pytest.raises(ValueError, match="inside the board"):
+        SnakeEngine(size=8, blocked=((8, 0),))
+    with pytest.raises(ValueError, match="start cell"):
+        SnakeEngine(size=8, blocked=((4, 4),))
+
+
+def test_check_tour_rejects_an_incomplete_tour() -> None:
+    blocked = obstacles_for_seed(8, 0)
+    tour = find_closed_tour(8, blocked)
+    assert tour is not None
+    with pytest.raises(AssertionError):
+        _check_tour(8, blocked, tour[:-1])
+
+
+def test_replay_stems_are_distinct_for_the_same_submission_name() -> None:
+    stems = {
+        replay_stem(benchmark, "example")
+        for benchmark in (
+            "snake-simple-8x8",
+            "snake-simple-16x16",
+            "snake-obstacles-8x8",
+        )
+    }
+    assert len(stems) == 3

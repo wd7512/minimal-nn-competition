@@ -65,7 +65,7 @@ def _all_features(engine):
                 next_y += dy
                 next_x += dx
 
-    return tuple((size - value - 1) / (size - 2) if value else value for value in values)
+    return tuple(float((size - value - 1) / (size - 2)) if value else 0.0 for value in values)
 
 
 def observe(engine, indices=None):

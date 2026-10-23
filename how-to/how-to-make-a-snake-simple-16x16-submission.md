@@ -70,9 +70,12 @@ checkpoint.
 
 ## 4. Evaluate locally
 
+There is no checked-in 16x16 example yet, so train one first with the command
+below or use your own submission directory:
+
 ```bash
 uv sync --dev --locked
-uv run mnnc evaluate snake-simple-16x16 models/snake-simple-16x16/example
+uv run mnnc evaluate snake-simple-16x16 models/snake-simple-16x16/<name>
 ```
 
 ## Scoring

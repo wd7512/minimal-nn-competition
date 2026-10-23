@@ -147,6 +147,8 @@ class SnakeEngine:
             if len(self.snake) == self.free_count:
                 if self.loop_on_full:
                     self.food_bit = None
+                    if self.moves >= self.max_moves:
+                        return 1.0, True
                     return 1.0, False
                 self.won = True
                 return 1.0, True

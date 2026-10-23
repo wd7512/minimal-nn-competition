@@ -122,8 +122,9 @@ The example can be trained locally:
 uv run mnnc train-snake-obstacles-8x8
 ```
 
-Training uses the benchmark's blocked cells and the extra loop move on each
-episode. It uses Apple MPS automatically when available.
+Training episodes use the benchmark's blocked cells and full-board rule, so a
+policy can learn the extra loop move. It uses Apple MPS automatically when
+available.
 
 ## 5. Open the pull request
 

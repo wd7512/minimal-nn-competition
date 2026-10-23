@@ -9,8 +9,8 @@ from minimal_nn_competition.__main__ import main
 from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeSimple16x16Benchmark
-from minimal_nn_competition.benchmarks.snake.replay import record_game
-from minimal_nn_competition.leaderboard.render import render_site
+from minimal_nn_competition.benchmarks.snake.replay import record_game, replay_stem
+from minimal_nn_competition.leaderboard.render import _score_text, render_game_pages, render_site
 from minimal_nn_competition.model.entry import (
     Submission,
     SubmissionConfig,
@@ -154,14 +154,14 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
         {"max_length": 256, "seed_moves": [10, 20]},
     )
     payload = record_game(_right_model(), size=16)
-    index = render_site([result], tmp_path, {"snake-simple-16x16-example": payload})
+    index = render_site([result], tmp_path, {"snake-simple-16x16--example": payload})
     html = index.read_text()
     assert "SNAKE SIMPLE 16X16" in html
     assert "50.00% ± 0.00%" in html
     assert "<th>Game length</th>" in html
     assert "15.0 ± 5.0" in html
     assert "<th>Replay</th>" in html
-    game_page = (tmp_path / "games" / "snake-simple-16x16-example.html").read_text()
+    game_page = (tmp_path / "games" / "snake-simple-16x16--example.html").read_text()
     assert "Snake Simple 16x16 replay" in game_page
     assert 'width="640" height="640"' in game_page
 
@@ -197,7 +197,7 @@ def test_collect_records_16x16_replay(tmp_path: Path, fast_snake_cli: None) -> N
         )
         == 0
     )
-    payload = json.loads((replays / "snake-simple-16x16-tiny.json").read_text())
+    payload = json.loads((replays / "snake-simple-16x16--tiny.json").read_text())
     assert payload["size"] == 16
     assert payload["frames"][0]["snake"] == [[8, 8]]
 
@@ -231,3 +231,101 @@ def test_train_16x16_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(snake_submission, "train", fake_train)
     assert main(["train-snake-simple-16x16", "--output", str(tmp_path / "output")]) == 0
     assert calls[0][1]["benchmark"] == "snake-simple-16x16"
+
+
+def test_16x16_defaults_are_100_seeds_and_4096_moves() -> None:
+    benchmark = SnakeSimple16x16Benchmark()
+    assert benchmark.seeds == tuple(range(100))
+    assert benchmark.max_moves == 4096
+    assert benchmark.size == 16
+
+
+def test_near_perfect_failing_image_score_keeps_precision() -> None:
+    result = BenchmarkResult("example", "mnist", 0.99996, False, 10, {})
+    assert _score_text(result) == "99.9960%"
+
+
+def test_replay_links_are_scoped_by_benchmark(tmp_path: Path) -> None:
+    payload_8 = record_game(_right_model())
+    payload_16 = record_game(_right_model(), size=16)
+    results = [
+        BenchmarkResult("example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
+        BenchmarkResult("example", "snake-simple-16x16", 128.0, False, 20, {"max_length": 256}),
+    ]
+    links = render_game_pages(
+        results,
+        {
+            replay_stem("snake-simple-8x8", "example"): payload_8,
+            replay_stem("snake-simple-16x16", "example"): payload_16,
+        },
+        tmp_path,
+    )
+    assert links[("snake-simple-8x8", "example")] == "games/snake-simple-8x8--example.html"
+    assert links[("snake-simple-16x16", "example")] == "games/snake-simple-16x16--example.html"
+    assert (tmp_path / links[("snake-simple-8x8", "example")]).is_file()
+    assert (tmp_path / links[("snake-simple-16x16", "example")]).is_file()
+
+
+def test_16x16_rejects_data_path() -> None:
+    assert (
+        main(
+            [
+                "evaluate",
+                "snake-simple-16x16",
+                "models/snake-simple-16x16/example",
+                "--data-path",
+                "data.pt",
+            ]
+        )
+        == 2
+    )
+
+
+def test_16x16_rejects_out_of_range_input_indices(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake-simple-16x16",
+            "architecture": "linear",
+            "input_size": 1,
+            "output_size": 4,
+            "input_indices": [24],
+        },
+        {"weight": torch.zeros((4, 1)), "bias": torch.zeros(4)},
+    )
+    with pytest.raises(ValueError, match="input_indices"):
+        SnakeSimple16x16Benchmark().load_submission(submission)
+
+
+def test_train_16x16_scales_the_default_move_budget(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from minimal_nn_competition.benchmarks.snake import environment as snake_environment
+    from minimal_nn_competition.examples import snake_submission
+
+    captured = []
+
+    class FakeEnvironment:
+        def __init__(self, **kwargs: object) -> None:
+            captured.append(kwargs)
+            self.snake = [(8, 8)]
+            self.food = (8, 9)
+
+        def reset(self) -> tuple[float, ...]:
+            return (0.0,) * 24
+
+        def step(self, action: int) -> tuple[tuple[float, ...], float, bool]:
+            return (0.0,) * 24, 0.0, True
+
+    monkeypatch.setattr(snake_environment, "SnakeEnvironment", FakeEnvironment)
+    monkeypatch.setattr(snake_submission, "_evaluate", lambda *args: [1])
+    snake_submission.train(
+        tmp_path / "submission",
+        iterations=1,
+        episodes_per_iteration=1,
+        update_epochs=1,
+        device_name="cpu",
+        benchmark="snake-simple-16x16",
+    )
+    assert captured[0]["size"] == 16
+    assert captured[0]["max_moves"] == 16 * 16 * 4

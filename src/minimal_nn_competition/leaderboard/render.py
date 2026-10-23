@@ -24,6 +24,11 @@ _REPLAY_TITLES = {
     "snake-simple-16x16": "Snake Simple 16x16",
     "snake-obstacles-8x8": "Snake Obstacles 8x8",
 }
+_SNAKE_MAX_LENGTH = {
+    "snake-simple-8x8": 64,
+    "snake-simple-16x16": 256,
+    "snake-obstacles-8x8": 64,
+}
 
 _STYLE = """
 :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
@@ -41,7 +46,10 @@ footer { margin-top: 2rem; text-align: right; }
 
 def _score_text(result):
     if result.benchmark not in SNAKE_BENCHMARKS:
-        return f"{result.score * 100:.2f}%"
+        maximum = result.details.get("max_length", 1)
+        mean = result.score / maximum * 100
+        digits = 4 if not result.passed and mean >= 99.995 else 2
+        return f"{mean:.{digits}f}%"
     lengths = result.details.get("seed_lengths")
     targets = result.details.get("target_lengths")
     if (
@@ -55,7 +63,7 @@ def _score_text(result):
             length / target * 100 for length, target in zip(lengths, targets, strict=True)
         ]
         return f"{statistics.fmean(percentages):.2f}% ± {statistics.pstdev(percentages):.2f}%"
-    maximum = result.details.get("max_length", 64)
+    maximum = result.details.get("max_length", _SNAKE_MAX_LENGTH.get(result.benchmark, 64))
     mean = result.score / maximum * 100
     return f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
 
@@ -75,7 +83,7 @@ def _table(results, replay_links=None):
     show_replay = bool(replay_links)
     for rank, result in enumerate(results, 1):
         normalisation = result.details.get("normalisation")
-        link = (replay_links or {}).get(result.submission)
+        link = (replay_links or {}).get((result.benchmark, result.submission))
         rows.append(
             f"""<tr{' class="passed"' if result.passed else ""}><td>{rank}</td><td>{html.escape(result.submission)}</td><td>{html.escape(result.name)}</td><td>{html.escape(result.author)}</td><td>{_score_text(result)}</td>{f"<td>{_game_length_text(result)}</td>" if show_game_length else ""}<td>{"pass" if result.passed else "fail"}</td><td>{str(normalisation).lower() if isinstance(normalisation, bool) else "-"}</td><td>{result.parameter_count}</td>{f'<td><a href="{html.escape(link)}">view game</a></td>' if link else "<td>-</td>" if show_replay else ""}</tr>"""
         )
@@ -95,6 +103,7 @@ button, select { font: inherit; padding: 0.25rem 0.75rem; }
 _GAME_SCRIPT = """
 const FRAMES = __FRAMES__;
 const SIZE = __SIZE__;
+const BLOCKED = __BLOCKED__;
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 const status = document.getElementById("status");
@@ -106,9 +115,15 @@ let timer = null;
 function draw() {
   const cell = canvas.width / SIZE;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  BLOCKED.forEach((blockedCell) => {
+    ctx.fillStyle = "#555";
+    ctx.fillRect(blockedCell[0] * cell, blockedCell[1] * cell, cell, cell);
+  });
   const food = FRAMES[frame].food;
-  ctx.fillStyle = "#c33";
-  ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);
+  if (food) {
+    ctx.fillStyle = "#c33";
+    ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);
+  }
   const snake = FRAMES[frame].snake;
   snake.forEach((segment, index) => {
     ctx.fillStyle = index === 0 ? "#1a7f37" : "#3fb950";
@@ -155,14 +170,6 @@ speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
 draw();
 """
 
-_GAME_SCRIPT_WITH_BLOCKED = _GAME_SCRIPT.replace(
-    "const SIZE = __SIZE__;",
-    "const SIZE = __SIZE__;\nconst BLOCKED = __BLOCKED__;",
-).replace(
-    '  const food = FRAMES[frame].food;\n  ctx.fillStyle = "#c33";\n  ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);',
-    '  BLOCKED.forEach((blockedCell) => {\n    ctx.fillStyle = "#555";\n    ctx.fillRect(blockedCell[0] * cell, blockedCell[1] * cell, cell, cell);\n  });\n  const food = FRAMES[frame].food;\n  if (food) {\n    ctx.fillStyle = "#c33";\n    ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);\n  }',
-)
-
 
 def render_game_html(submission, payload, benchmark="snake-simple-8x8"):
     """Render a standalone replay page with an inline frame player."""
@@ -170,21 +177,17 @@ def render_game_html(submission, payload, benchmark="snake-simple-8x8"):
     size = int(payload.get("size", 8))
     label = _REPLAY_TITLES.get(benchmark, benchmark)
     canvas = 40 * size
-    script = _GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"])).replace(
-        "__SIZE__", str(size)
+    script = (
+        _GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"]))
+        .replace("__SIZE__", str(size))
+        .replace("__BLOCKED__", json.dumps(payload.get("blocked", [])))
     )
-    if payload.get("blocked"):
-        script = (
-            _GAME_SCRIPT_WITH_BLOCKED.replace("__FRAMES__", json.dumps(payload["frames"]))
-            .replace("__SIZE__", str(size))
-            .replace("__BLOCKED__", json.dumps(payload["blocked"]))
-        )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{label} replay — {title}</title><style>{_GAME_STYLE}</style></head><body><header><h1>{label} replay — {title}</h1><p>Seed {int(payload.get("seed", 0))}, {int(payload.get("moves", 0))} moves, final length {int(payload.get("length", 0))}.</p><p><a href="../">Main leaderboard</a></p></header><canvas id="board" width="{canvas}" height="{canvas}"></canvas><div class="controls"><button id="play" type="button">Play</button><button id="prev" type="button">Step back</button><button id="next" type="button">Step forward</button><label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="4" selected>4x</option><option value="8">8x</option></select></label></div><p id="status" class="muted"></p><script>{script}</script></body></html>
 """
 
 
 def render_game_pages(results, replays, output_dir):
-    """Write one replay page per snake submission; return submission-to-href links.
+    """Write one replay page per snake submission; return benchmark/submission links.
 
     ``replays`` is keyed by the replay stem, not the raw submission name.
     """
@@ -197,22 +200,23 @@ def render_game_pages(results, replays, output_dir):
     for result in results:
         if result.benchmark not in SNAKE_BENCHMARKS:
             continue
-        slug = replay_stem(result.benchmark, result.submission)
-        payload = replays.get(slug)
+        stem = replay_stem(result.benchmark, result.submission)
+        payload = replays.get(stem)
         if payload is None:
             continue
-        previous = seen.get(slug)
-        if previous is not None and previous != result.submission:
+        previous = seen.get(stem)
+        if previous is not None and previous != (result.benchmark, result.submission):
             raise ValueError(
-                f"Replay filename collision: {previous!r} and {result.submission!r} both map to {slug!r}"
+                f"Replay filename collision: {previous!r} and "
+                f"{(result.benchmark, result.submission)!r} both map to {stem!r}"
             )
-        seen[slug] = result.submission
+        seen[stem] = (result.benchmark, result.submission)
         games_dir.mkdir(parents=True, exist_ok=True)
-        (games_dir / f"{slug}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
-        (games_dir / f"{slug}.html").write_text(
+        (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
+        (games_dir / f"{stem}.html").write_text(
             render_game_html(result.submission, payload, result.benchmark)
         )
-        links[result.submission] = f"games/{slug}.html"
+        links[(result.benchmark, result.submission)] = f"games/{stem}.html"
     return links
 
 
@@ -228,7 +232,7 @@ def render_html(results, replay_links=None):
         sections.append(
             f"""<section><h2>{html.escape(_SECTION_TITLES.get(benchmark, benchmark.upper()))}</h2><p class="muted">{len(entries)} result(s), ranked by {ranking}.</p>{_table(entries, replay_links if benchmark in SNAKE_BENCHMARKS else None)}</section>"""
         )
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>{_STYLE}</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, and Snake Simple 8x8.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{"".join(sections) or "<p>No results have been recorded yet.</p>"}<footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>{_STYLE}</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, and Snake benchmarks.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{"".join(sections) or "<p>No results have been recorded yet.</p>"}<footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></body></html>
 """
 
 

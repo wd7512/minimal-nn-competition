@@ -62,9 +62,15 @@ def _expand(frontier, unvisited, size):
     return expanded & board & unvisited
 
 
-@cache
 def find_closed_tour(size, blocked):
-    """Return a closed Hamiltonian tour over the unblocked cells, or ``None``.
+    """Return a closed Hamiltonian tour over the unblocked cells, or ``None``."""
+    normalised = tuple(sorted(tuple(cell) for cell in blocked))
+    return _find_closed_tour(size, normalised)
+
+
+@cache
+def _find_closed_tour(size, blocked):
+    """Cached closed-tour search for a normalised blocked-cell tuple.
 
     The tour starts at the centre, visits every free cell exactly once, ends on
     a cell adjacent to the centre, and its first move is not left.
@@ -242,6 +248,14 @@ def _follow_tour(engine, tour):
 def validate_seed(size, seed, max_moves=4096):
     """Re-check the layout's tour and prove a tour follower completes the game."""
     blocked = obstacles_for_seed(size, seed)
+    start = (size // 2, size // 2)
+    if len(blocked) not in (2, 4):
+        raise AssertionError(f"Seed {seed} has {len(blocked)} blocked cells, expected 2 or 4")
+    if start in blocked:
+        raise AssertionError(f"Seed {seed} blocks the centre start cell")
+    blocked_colours = [(x + y) % 2 for x, y in blocked]
+    if blocked_colours.count(0) != blocked_colours.count(1):
+        raise AssertionError(f"Seed {seed} does not block equal numbers of each colour")
     tour = find_closed_tour(size, blocked)
     if tour is None:
         raise AssertionError(f"No closed tour found for seed {seed}")

@@ -114,6 +114,7 @@ def _parser():
         train_snake = add(f"train-{benchmark}", help=f"Train the {benchmark} example submission")
         train_snake.add_argument("--output", type=Path, default=Path(f"models/{benchmark}/example"))
         train_snake.add_argument("--iterations", type=int, default=600)
+        train_snake.add_argument("--max-moves", type=int, default=None)
         _train_common(train_snake)
     return parser
 
@@ -134,7 +135,7 @@ def _record_replay(replay_dir, name, benchmark, submission):
             loaded.model,
             seed=REPLAY_SEED,
             max_moves=benchmark.max_moves,
-            input_indices=selected_input_indices(submission.config, type(benchmark).__name__),
+            input_indices=selected_input_indices(submission.config, benchmark.name),
             **benchmark.environment_options(REPLAY_SEED),
         ),
     )
@@ -304,6 +305,7 @@ def main(argv=None):
             train(
                 args.output,
                 iterations=args.iterations,
+                max_moves=args.max_moves,
                 device_name=args.device,
                 name=args.name,
                 author=args.author,

@@ -17,8 +17,7 @@ def replay_slug(submission):
 
 def replay_stem(benchmark, submission):
     """Return a replay file stem that is unique across Snake benchmarks."""
-    slug = replay_slug(submission)
-    return slug if benchmark == "snake-simple-8x8" else f"{replay_slug(benchmark)}-{slug}"
+    return f"{replay_slug(benchmark)}--{replay_slug(submission)}"
 
 
 def record_game(

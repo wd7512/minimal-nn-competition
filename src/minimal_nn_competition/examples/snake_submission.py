@@ -74,6 +74,7 @@ def _evaluate(policy, device, seeds, benchmark):
     from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
 
     lengths = []
+    wins = []
     with torch.no_grad():
         for seed in seeds:
             environment = SnakeEnvironment(
@@ -88,6 +89,8 @@ def _evaluate(policy, device, seeds, benchmark):
                 action = int(torch.argmax(policy(state), dim=1).item())
                 observation, _, done = environment.step(action)
             lengths.append(len(environment.snake))
+            wins.append(bool(getattr(environment, "won", False)))
+    logging.getLogger(__name__).info("Greedy evaluation wins %d/%d", sum(wins), len(wins))
     return lengths
 
 
@@ -95,7 +98,7 @@ def train(
     output_dir,
     iterations=600,
     episodes_per_iteration=4,
-    max_moves=256,
+    max_moves=None,
     update_epochs=4,
     batch_size=64,
     device_name="auto",
@@ -117,6 +120,8 @@ def train(
     if benchmark not in SNAKE_BENCHMARKS:
         raise ValueError(f"Unknown Snake benchmark {benchmark!r}")
     benchmark_instance = create_benchmark(benchmark)
+    size = benchmark_instance.size
+    max_moves = max_moves or size * size * 4
 
     logger = logging.getLogger(__name__)
     torch.manual_seed(seed)
@@ -241,6 +246,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("models/snake-simple-8x8/example"))
     parser.add_argument("--iterations", type=int, default=600)
+    parser.add_argument("--max-moves", type=int, default=None)
     parser.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
     parser.add_argument(
         "--name", default=None, help="Display name (defaults to the output directory)"
@@ -250,6 +256,7 @@ def main(argv=None):
     train(
         args.output,
         iterations=args.iterations,
+        max_moves=args.max_moves,
         device_name=args.device,
         name=args.name,
         author=args.author,
