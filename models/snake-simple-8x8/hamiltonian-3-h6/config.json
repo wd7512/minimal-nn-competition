@@ -1,0 +1,21 @@
+{
+  "benchmark": "snake-simple-8x8",
+  "name": "hamiltonian-3-h6",
+  "author": "opus 5.5 high x claude code",
+  "architecture": "mlp",
+  "input_size": 6,
+  "output_size": 4,
+  "hidden_sizes": [
+    3
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "Hamiltonian cycle searched (square-flip annealing) to be realisable by a [3] MLP on head6 features; fills the board on all 100 seeds (37 params)."
+}
