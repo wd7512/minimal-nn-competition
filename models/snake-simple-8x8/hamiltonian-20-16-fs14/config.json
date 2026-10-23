@@ -1,13 +1,13 @@
 {
-  "benchmark": "snake",
-  "name": "serpentine-8-8-fs14",
+  "benchmark": "snake-simple-8x8",
+  "name": "hamiltonian-20-16-fs14",
   "author": "muse spark 1.3 x hermes",
   "architecture": "mlp",
   "input_size": 14,
   "output_size": 4,
   "hidden_sizes": [
-    8,
-    8
+    20,
+    16
   ],
   "activation": "relu",
   "input_indices": [
@@ -26,5 +26,5 @@
     18,
     19
   ],
-  "description": "Serpentine Hamiltonian-cycle oracle distilled into a 14-feature [8,8] MLP; fills the board on all 100 seeds."
+  "description": "Hamiltonian-cycle oracle distilled into a 14-feature [20,16] MLP; fills the board on all 100 seeds."
 }

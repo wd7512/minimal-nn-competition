@@ -1,6 +1,4 @@
-"""Measure Snake environment throughput with a fixed deterministic agent."""
-
-from __future__ import annotations
+"""Measure Snake Simple 8x8 environment throughput with a fixed deterministic agent."""
 
 import json
 import platform
@@ -15,12 +13,12 @@ from pathlib import Path
 from minimal_nn_competition.benchmarks.snake.engine import SnakeEngine
 from minimal_nn_competition.speed.agent import ACTIONS_BY_CELL, AGENT_NAME, BOARD_SIZE, SIZE
 
-HARNESS_VERSION = "snake-speed-v2"
+HARNESS_VERSION = "snake-simple-8x8-speed-v2"
 DEFAULT_DURATION = 1.0
 DEFAULT_RUNS = 10
 DEFAULT_WARMUP = 1.0
 TIMER_CHUNK = 1024
-VALIDATION_SEEDS = tuple(range(100))
+VALIDATION_SEEDS = range(100)
 
 
 @dataclass
@@ -41,40 +39,37 @@ class SpeedResult:
     cpu: str
     validation_seeds: int
 
-    def to_json(self) -> str:
+    def to_json(self):
         return json.dumps(asdict(self), sort_keys=True)
 
 
-def _git_commit() -> str:
+def _git_commit():
     try:
-        completed = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
+        return (
+            subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+            ).strip()
+            or "unknown"
         )
     except (OSError, subprocess.CalledProcessError):
         return "unknown"
-    return completed.stdout.strip() or "unknown"
 
 
-def _cpu_name() -> str:
+def _cpu_name():
     if sys.platform == "darwin":
         try:
-            completed = subprocess.run(
+            cpu = subprocess.check_output(
                 ["sysctl", "-n", "machdep.cpu.brand_string"],
-                check=True,
-                capture_output=True,
                 text=True,
-            )
+                stderr=subprocess.DEVNULL,
+            ).strip()
         except (OSError, subprocess.CalledProcessError):
             pass
         else:
-            if completed.stdout.strip():
-                return completed.stdout.strip()
-    cpuinfo = Path("/proc/cpuinfo")
+            if cpu:
+                return cpu
     try:
-        lines = cpuinfo.read_text().splitlines()
+        lines = Path("/proc/cpuinfo").read_text().splitlines()
     except OSError:
         lines = []
     for line in lines:
@@ -83,7 +78,7 @@ def _cpu_name() -> str:
     return platform.processor() or platform.machine() or "unknown"
 
 
-def _run_once(seconds: float) -> tuple[int, float]:
+def _run_once(seconds):
     engine = SnakeEngine(size=SIZE, seed=0, max_moves=4096)
     engine.reset()
     step = engine.step
@@ -102,7 +97,7 @@ def _run_once(seconds: float) -> tuple[int, float]:
             return ticks, time.perf_counter() - start
 
 
-def _validate_agent() -> None:
+def _validate_agent():
     for seed in VALIDATION_SEEDS:
         engine = SnakeEngine(size=SIZE, seed=seed, max_moves=4096)
         done = False
@@ -113,11 +108,11 @@ def _validate_agent() -> None:
 
 
 def measure_snake_speed(
-    duration: float = DEFAULT_DURATION,
-    runs: int = DEFAULT_RUNS,
-    warmup: float = DEFAULT_WARMUP,
-    validate: bool = True,
-) -> SpeedResult:
+    duration=DEFAULT_DURATION,
+    runs=DEFAULT_RUNS,
+    warmup=DEFAULT_WARMUP,
+    validate=True,
+):
     if not duration > 0:
         raise ValueError("Speed benchmark duration must be positive")
     if runs <= 0:

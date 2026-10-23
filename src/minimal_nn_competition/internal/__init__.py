@@ -13,7 +13,7 @@ from minimal_nn_competition.internal.scoring import RULES_VERSION, score_files
 
 logger = logging.getLogger(__name__)
 
-# Set in validation subprocesses so tests that invoke `mnc internal` itself
+# Set in validation subprocesses so tests that invoke `mnnc internal` itself
 # skip instead of recursing (the outer run already covers them).
 _NESTED_ENV_VAR = "MINIMAL_NN_COMPETITION_INTERNAL"
 
@@ -42,74 +42,77 @@ SCOPES = (
     Scope(
         "mnist",
         _MNIST_FILES,
-        (
-            "tests/test_benchmarks.py::test_mnist_evaluation_and_threshold",
-            "tests/test_benchmarks.py::test_mnist_normalisation_flag",
-            "tests/test_benchmarks.py::test_mnist_requires_data_file",
-            "tests/test_benchmarks.py::test_mnist_rejects_wrong_shape",
-            "tests/test_mnist_data.py",
+        tuple(
+            """tests/test_benchmarks.py::test_mnist_evaluation_and_threshold
+tests/test_benchmarks.py::test_mnist_normalisation_flag
+tests/test_benchmarks.py::test_mnist_requires_data_file
+tests/test_benchmarks.py::test_mnist_rejects_wrong_shape
+tests/test_benchmarks.py::test_mnist_accepts_two_dimensional_labels
+tests/test_benchmarks.py::test_mnist_rejects_length_mismatch
+tests/test_benchmarks.py::test_mnist_rejects_wrong_input_width
+tests/test_mnist_data.py""".splitlines()
         ),
     ),
     Scope(
         "fashion-mnist",
         _FASHION_FILES,
-        (
-            "tests/test_benchmarks.py::test_fashion_mnist_evaluation_and_threshold",
-            "tests/test_benchmarks.py::test_fashion_mnist_requires_data_file",
-            "tests/test_benchmarks.py::test_fashion_mnist_rejects_wrong_shape",
-            "tests/test_fashion_mnist_data.py",
-            "tests/test_integration.py::test_collect_fashion_mnist_cli",
-            "tests/test_integration.py::test_evaluate_fashion_mnist_cli",
-            "tests/test_training.py",
+        tuple(
+            """tests/test_benchmarks.py::test_fashion_mnist_evaluation_and_threshold
+tests/test_benchmarks.py::test_fashion_mnist_requires_data_file
+tests/test_benchmarks.py::test_fashion_mnist_rejects_wrong_shape
+tests/test_fashion_mnist_data.py
+tests/test_integration.py::test_collect_fashion_mnist_cli
+tests/test_integration.py::test_evaluate_fashion_mnist_cli
+tests/test_training.py""".splitlines()
         ),
     ),
     Scope(
-        "snake",
+        "snake-simple-8x8",
         _SNAKE_FILES,
-        (
-            "tests/test_benchmarks.py::test_snake_partial_run_does_not_pass",
-            "tests/test_benchmarks.py::test_snake_full_board_passes",
-            "tests/test_benchmarks.py::test_snake_defaults_to_100_seeds",
-            "tests/test_benchmarks.py::test_snake_score_std_across_seeds",
-            "tests/test_benchmarks.py::test_snake_rejects_wrong_config",
-            "tests/test_benchmarks.py::test_snake_selected_input_indices_build_smaller_model",
-            "tests/test_benchmarks.py::test_snake_selected_inputs_evaluate",
-            "tests/test_benchmarks.py::test_snake_rejects_out_of_range_input_indices",
-            "tests/test_core.py::test_snake_is_deterministic",
-            "tests/test_core.py::test_snake_can_move_into_vacating_tail",
-            "tests/test_integration.py::test_evaluate_snake_cli",
-            "tests/test_integration.py::test_data_path_rejected_for_snake",
-            "tests/test_observation.py",
-            "tests/test_snake_replay.py",
+        tuple(
+            """tests/test_benchmarks.py::test_snake_partial_run_does_not_pass
+tests/test_benchmarks.py::test_snake_full_board_passes
+tests/test_benchmarks.py::test_snake_defaults_to_100_seeds
+tests/test_benchmarks.py::test_snake_score_std_across_seeds
+tests/test_benchmarks.py::test_snake_rejects_wrong_config
+tests/test_benchmarks.py::test_snake_selected_input_indices_build_smaller_model
+tests/test_benchmarks.py::test_snake_selected_inputs_evaluate
+tests/test_benchmarks.py::test_snake_rejects_out_of_range_input_indices
+tests/test_core.py::test_snake_is_deterministic
+tests/test_core.py::test_snake_can_move_into_vacating_tail
+tests/test_integration.py::test_evaluate_snake_cli
+tests/test_integration.py::test_data_path_rejected_for_snake
+tests/test_observation.py
+tests/test_snake_replay.py""".splitlines()
         ),
     ),
     Scope(
         "core",
         (PACKAGE,),
-        (
-            "tests/test_core.py::test_parameter_count_rejects_non_tensors",
-            "tests/test_core.py::test_parameter_count_sums_tensor_values",
-            "tests/test_core.py::test_config_round_trip",
-            "tests/test_core.py::test_config_description_is_optional",
-            "tests/test_core.py::test_config_accepts_input_indices",
-            "tests/test_core.py::test_config_rejects_duplicate_input_indices",
-            "tests/test_core.py::test_config_rejects_missing_identity",
-            "tests/test_core.py::test_config_rejects_linear_hidden_sizes",
-            "tests/test_core.py::test_registry_and_leaderboard_ranking",
-            "tests/test_core.py::test_leaderboard_round_trip",
-            "tests/test_core.py::test_leaderboard_cli",
-            "tests/test_import.py",
-            "tests/test_configs.py",
-            "tests/test_integration.py::test_checked_in_examples_load",
-            "tests/test_integration.py::test_render_site",
-            "tests/test_integration.py::test_render_mnist_has_no_game_length_column",
-            "tests/test_integration.py::test_render_cli",
-            "tests/test_integration.py::test_render_shows_name_and_author",
-            "tests/test_integration.py::test_collect_cli",
-            "tests/test_internal.py",
-            "tests/test_model.py",
-            "tests/test_speed.py",
-            "tests/test_submission_check.py",
+        tuple(
+            """tests/test_core.py::test_parameter_count_rejects_non_tensors
+tests/test_core.py::test_parameter_count_sums_tensor_values
+tests/test_core.py::test_config_round_trip
+tests/test_core.py::test_config_description_is_optional
+tests/test_core.py::test_config_accepts_input_indices
+tests/test_core.py::test_config_rejects_duplicate_input_indices
+tests/test_core.py::test_config_rejects_missing_identity
+tests/test_core.py::test_config_rejects_linear_hidden_sizes
+tests/test_core.py::test_registry_and_leaderboard_ranking
+tests/test_core.py::test_leaderboard_round_trip
+tests/test_core.py::test_leaderboard_cli
+tests/test_import.py
+tests/test_configs.py
+tests/test_integration.py::test_checked_in_examples_load
+tests/test_integration.py::test_render_site
+tests/test_integration.py::test_render_mnist_has_no_game_length_column
+tests/test_integration.py::test_render_cli
+tests/test_integration.py::test_render_shows_name_and_author
+tests/test_integration.py::test_collect_cli
+tests/test_internal.py
+tests/test_model.py
+tests/test_speed.py
+tests/test_submission_check.py""".splitlines()
         ),
     ),
 )
@@ -119,10 +122,11 @@ def expand_scope_tests(scope, collected):
     """Expand a scope's entries (files and node IDs) against collected IDs."""
     nodes = []
     for entry in scope.tests:
-        if "::" in entry:
-            nodes.append(entry)
-        else:
-            nodes.extend(sorted(node for node in collected if node.startswith(f"{entry}::")))
+        nodes += (
+            [entry]
+            if "::" in entry
+            else sorted(node for node in collected if node.startswith(f"{entry}::"))
+        )
     return nodes
 
 
@@ -180,12 +184,11 @@ def run_scope_tests(scope, root, timeout=600):
 
 def _git(root, *args):
     try:
-        completed = subprocess.run(
-            ["git", *args], cwd=root, capture_output=True, text=True, timeout=30
-        )
-    except (OSError, subprocess.TimeoutExpired):
+        return subprocess.check_output(
+            ["git", *args], cwd=root, text=True, timeout=30, stderr=subprocess.DEVNULL
+        ).strip()
+    except (OSError, subprocess.TimeoutExpired, subprocess.CalledProcessError):
         return None
-    return completed.stdout.strip() if completed.returncode == 0 else None
 
 
 def _git_commit(root):
@@ -210,7 +213,7 @@ class InternalResult:
     status: str = "pass"
     failure_reason: str = ""
 
-    def to_json(self) -> str:
+    def to_json(self):
         return json.dumps(asdict(self), sort_keys=True)
 
 
@@ -222,13 +225,13 @@ def measure_scope(scope, root):
     if not passed:
         logger.warning("Scope %s failed validation: %s", scope.name, reason)
     return InternalResult(
-        scope=scope.name,
-        tokens=tokens,
-        commit=_git_commit(root),
-        dirty=_git_dirty(root),
-        measured_at=datetime.now(UTC).isoformat(timespec="seconds"),
-        machine=platform.machine() or "unknown",
-        python_version=python_version,
+        scope.name,
+        tokens,
+        _git_commit(root),
+        _git_dirty(root),
+        datetime.now(UTC).isoformat(timespec="seconds"),
+        platform.machine() or "unknown",
+        python_version,
         status="pass" if passed else "fail",
         failure_reason="" if passed else reason,
     )
@@ -249,12 +252,11 @@ def rank_internal_results(results):
 
 def upsert_internal_result(results, result):
     """Replace the entry for (scope, commit), keeping everything else."""
-    kept = [
+    return [
         existing
         for existing in results
         if (existing.scope, existing.commit) != (result.scope, result.commit)
-    ]
-    return kept + [result]
+    ] + [result]
 
 
 def save_internal_results(path, results):

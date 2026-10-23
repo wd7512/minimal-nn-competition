@@ -1,6 +1,6 @@
-# How to make a Snake submission
+# How to make a Snake Simple 8x8 submission
 
-Snake uses an 8×8 board. A model observes 24 features and chooses one of four
+Snake Simple 8x8 uses an 8×8 board. A model observes 24 features and chooses one of four
 directions. A submission passes when it fills all 64 cells on every seed.
 
 ## 1. Create the submission
@@ -8,8 +8,8 @@ directions. A submission passes when it fills all 64 cells on every seed.
 Open a pull request against the `submission` branch with exactly two files:
 
 ```text
-models/snake/<name>/config.json
-models/snake/<name>/model.pt
+models/snake-simple-8x8/<name>/config.json
+models/snake-simple-8x8/<name>/model.pt
 ```
 
 The directory name is the submission slug shown on the leaderboard.
@@ -18,7 +18,7 @@ The directory name is the submission slug shown on the leaderboard.
 
 ```json
 {
-  "benchmark": "snake",
+  "benchmark": "snake-simple-8x8",
   "name": "example",
   "author": "example author",
   "architecture": "mlp",
@@ -48,7 +48,7 @@ length. Omit it or set it to `true` to use all 24.
 
 ```json
 {
-  "benchmark": "snake",
+  "benchmark": "snake-simple-8x8",
   "name": "example",
   "author": "example author",
   "architecture": "linear",
@@ -72,18 +72,18 @@ checkpoint.
 
 ```bash
 uv sync --dev --locked
-uv run mnc evaluate snake models/snake/example
+uv run mnnc evaluate snake-simple-8x8 models/snake-simple-8x8/example
 ```
 
 ## Scoring
 
-Snake evaluates each model across 100 seeds (`0`–`99`) with a 4096-move cap.
+Snake Simple 8x8 evaluates each model across 100 seeds (`0`–`99`) with a 4096-move cap.
 The score is the mean final snake length as a percentage of the 64-cell board,
 and the site also shows the standard deviation across seeds. The `Game length`
 column shows the mean number of ticks per game and its standard deviation.
 
 Results rank passing submissions before failing submissions, then by descending
-score and ascending parameter count. Snake submissions with equal score and
+score and ascending parameter count. Snake Simple 8x8 submissions with equal score and
 parameter count are ranked by ascending game length, so faster games win.
 
 ## Train the example
@@ -91,7 +91,7 @@ parameter count are ranked by ascending game length, so faster games win.
 The checked-in example can be trained locally:
 
 ```bash
-uv run mnc train-snake
+uv run mnnc train-snake-simple-8x8
 ```
 
 Training uses Apple MPS automatically when available and takes only a few

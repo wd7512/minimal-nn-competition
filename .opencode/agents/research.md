@@ -1,7 +1,6 @@
 ---
 description: Read-only research agent for academic docs and dependency research via CrossRef, OpenAlex, and PubMed MCPs
 mode: subagent
-model: opencode-go/mimo-v2.5
 permission:
   read: allow
   edit: deny

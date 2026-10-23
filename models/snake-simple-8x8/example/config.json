@@ -1,5 +1,5 @@
 {
-  "benchmark": "snake",
+  "benchmark": "snake-simple-8x8",
   "name": "example",
   "author": "example author",
   "architecture": "mlp",

@@ -45,58 +45,52 @@ class SubmissionConfig(BaseModel):
 
     @field_validator("architecture")
     @classmethod
-    def _validate_architecture(cls, value: str) -> str:
+    def _validate_architecture(cls, value):
         if value not in ARCHITECTURES:
             raise ValueError(f"architecture must be one of {', '.join(ARCHITECTURES)}")
         return value
 
     @field_validator("hidden_sizes")
     @classmethod
-    def _validate_hidden_sizes(cls, value: tuple[int, ...]) -> tuple[int, ...]:
-        if any(size <= 0 for size in value):
+    def _validate_hidden_sizes(cls, value):
+        if min(value, default=1) <= 0:
             raise ValueError("hidden_sizes must be a list of positive integers")
         return value
 
     @field_validator("activation")
     @classmethod
-    def _validate_activation(cls, value: str) -> str:
+    def _validate_activation(cls, value):
         if value not in ACTIVATIONS:
             raise ValueError(f"activation must be one of {', '.join(ACTIVATIONS)}")
         return value
 
     @field_validator("input_indices")
     @classmethod
-    def _validate_input_indices(
-        cls, value: tuple[int, ...] | bool | None
-    ) -> tuple[int, ...] | bool | None:
+    def _validate_input_indices(cls, value):
         if value is None or value is True:
             return value
         if value is False:
             raise ValueError("input_indices must be true or a list of feature indices")
         if not value:
             raise ValueError("input_indices must not be empty")
-        if any(index < 0 for index in value):
+        if min(value) < 0:
             raise ValueError("input_indices must contain non-negative integers")
         if len(set(value)) != len(value):
             raise ValueError("input_indices must not contain duplicates")
         return value
 
     @model_validator(mode="after")
-    def _validate_linear(self) -> SubmissionConfig:
+    def _validate_cross_fields(self):
         if self.architecture == "linear" and self.hidden_sizes:
             raise ValueError("linear submissions must not declare hidden_sizes")
-        return self
-
-    @model_validator(mode="after")
-    def _validate_input_indices_scope(self) -> SubmissionConfig:
-        if self.benchmark != "snake" and self.input_indices is not None:
-            raise ValueError("input_indices is only supported for the snake benchmark")
+        if self.benchmark != "snake-simple-8x8" and self.input_indices is not None:
+            raise ValueError("input_indices is only supported for the snake-simple-8x8 benchmark")
         return self
 
     @classmethod
-    def from_file(cls, path: Path) -> SubmissionConfig:
+    def from_file(cls, path):
         try:
-            raw: Any = json.loads(path.read_text())
+            raw = json.loads(path.read_text())
         except (OSError, json.JSONDecodeError) as exc:
             raise SubmissionError(f"Could not read config {path}: {exc}") from exc
         if not isinstance(raw, dict):
@@ -115,13 +109,11 @@ class Submission:
     checkpoint: Path
 
     @classmethod
-    def from_directory(cls, directory: Path) -> Submission:
-        config_path = directory / "config.json"
+    def from_directory(cls, directory):
         checkpoint = directory / "model.pt"
         if not checkpoint.is_file():
             raise SubmissionError(f"Missing checkpoint: {checkpoint}")
-        config = SubmissionConfig.from_file(config_path)
-        return cls(config, checkpoint)
+        return cls(SubmissionConfig.from_file(directory / "config.json"), checkpoint)
 
 
 @dataclass(frozen=True)
@@ -133,7 +125,7 @@ class LoadedSubmission:
     model: Any
 
 
-def load_state_dict(submission: Submission) -> dict[str, Any]:
+def load_state_dict(submission):
     """Load a CPU state dict without enabling arbitrary pickle execution."""
     try:
         import torch
@@ -148,7 +140,7 @@ def load_state_dict(submission: Submission) -> dict[str, Any]:
     return state
 
 
-def build_model(config: SubmissionConfig) -> Any:
+def build_model(config):
     """Build the configured feed-forward network."""
     try:
         from torch import nn
@@ -158,7 +150,7 @@ def build_model(config: SubmissionConfig) -> Any:
     if config.architecture == "linear":
         return nn.Linear(config.input_size, config.output_size)
 
-    layers: list[Any] = []
+    layers = []
     input_size = config.input_size
     for hidden_size in config.hidden_sizes:
         layers.append(nn.Linear(input_size, hidden_size))
@@ -168,7 +160,7 @@ def build_model(config: SubmissionConfig) -> Any:
     return nn.Sequential(*layers)
 
 
-def materialize_submission(submission: Submission) -> LoadedSubmission:
+def materialize_submission(submission):
     """Validate and materialize a submission for evaluation."""
     state_dict = load_state_dict(submission)
     model = build_model(submission.config)
@@ -182,7 +174,7 @@ def materialize_submission(submission: Submission) -> LoadedSubmission:
     return LoadedSubmission(submission.config, state_dict, model)
 
 
-def parameter_count(state_dict: dict[str, Any]) -> int:
+def parameter_count(state_dict):
     """Return the total number of scalar values in a state dict."""
     total = 0
     for name, value in state_dict.items():

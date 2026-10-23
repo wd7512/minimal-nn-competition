@@ -60,8 +60,8 @@ Download the official MNIST caches, then evaluate the example:
 
 ```bash
 uv sync --dev --locked
-uv run mnc download-mnist --output data
-uv run mnc evaluate mnist models/mnist/example --data-path data/mnist-test.pt
+uv run mnnc download-mnist --output data
+uv run mnnc evaluate mnist models/mnist/example --data-path data/mnist-test.pt
 ```
 
 The cache stores raw `(inputs, labels)` tensors, with inputs flattened to 784
@@ -79,8 +79,8 @@ count.
 The checked-in example can be trained locally:
 
 ```bash
-uv run mnc download-mnist --output data
-uv run mnc train-mnist
+uv run mnnc download-mnist --output data
+uv run mnnc train-mnist
 ```
 
 Training uses Apple MPS automatically when available and takes only a few

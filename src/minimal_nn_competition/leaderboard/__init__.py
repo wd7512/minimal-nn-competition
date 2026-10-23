@@ -1,18 +1,14 @@
 """A github pages leaderboard for the minimal neural network competition."""
 
-from __future__ import annotations
-
 import json
 import statistics
-from collections.abc import Iterable
 from dataclasses import asdict
-from pathlib import Path
 
 from minimal_nn_competition.runner.entry import BenchmarkResult
 
 
-def _game_length(result: BenchmarkResult) -> float:
-    if result.benchmark != "snake":
+def _game_length(result):
+    if result.benchmark != "snake-simple-8x8":
         return 0.0
     moves = result.details.get("seed_moves")
     if not isinstance(moves, list) or not moves:
@@ -20,9 +16,9 @@ def _game_length(result: BenchmarkResult) -> float:
     return statistics.fmean(moves)
 
 
-def rank_results(results: Iterable[BenchmarkResult]) -> list[BenchmarkResult]:
-    """Rank by passing status, score, parameter count, then Snake game length."""
-    # For the snake competition it would be nice to have some renderings of the games.
+def rank_results(results):
+    """Rank by passing status, score, parameter count, then Snake Simple 8x8 game length."""
+    # For the Snake Simple 8x8 competition it would be nice to have some renderings of the games.
     return sorted(
         results,
         key=lambda result: (
@@ -36,12 +32,12 @@ def rank_results(results: Iterable[BenchmarkResult]) -> list[BenchmarkResult]:
     )
 
 
-def save_results(path: Path, results: Iterable[BenchmarkResult]) -> None:
+def save_results(path, results):
     payload = [asdict(result) for result in rank_results(results)]
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
-def load_results(path: Path) -> list[BenchmarkResult]:
+def load_results(path):
     raw = json.loads(path.read_text())
     if not isinstance(raw, list):
         raise ValueError("Leaderboard must contain a JSON list")
