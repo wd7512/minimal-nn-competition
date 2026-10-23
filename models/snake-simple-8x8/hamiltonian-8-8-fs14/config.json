@@ -1,7 +1,7 @@
 {
   "benchmark": "snake-simple-8x8",
   "name": "hamiltonian-8-8-fs14",
-  "author": "muse spark 1.3 x hermes",
+  "author": "gemini 3.6 flash x jules",
   "architecture": "mlp",
   "input_size": 14,
   "output_size": 4,
