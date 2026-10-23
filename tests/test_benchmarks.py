@@ -1,12 +1,16 @@
 import json
+import random
 from pathlib import Path
 from typing import Any
 
 import pytest
 import torch
 
+from minimal_nn_competition.benchmarks.cartpole.benchmark import CartPoleBenchmark
+from minimal_nn_competition.benchmarks.cartpole.engine import reset, step
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
 from minimal_nn_competition.model.entry import Submission, materialize_submission
@@ -326,3 +330,59 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
         FashionMnistBenchmark().load_submission(submission)
+
+
+def test_cartpole_registers_by_name() -> None:
+    assert create_benchmark("cartpole").name == "cartpole"
+    assert CartPoleBenchmark().seeds == tuple(range(100))
+    assert CartPoleBenchmark().max_steps == 500
+
+
+def test_cartpole_physics_sanity() -> None:
+    state = reset(random.Random(0))
+    assert len(state) == 4
+    assert all(abs(value) <= 0.05 for value in state)
+    upright: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
+    for index in range(10):
+        upright, done = step(upright, index % 2)
+        assert done is False
+    _, fallen = step((0.0, 0.0, 0.3, 0.0), 0)
+    assert fallen is True
+    _, off_track = step((2.5, 0.0, 0.0, 0.0), 1)
+    assert off_track is True
+
+
+def test_cartpole_evaluate_dummy_linear(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "cartpole",
+            "architecture": "linear",
+            "input_size": 4,
+            "output_size": 2,
+        },
+        {"weight": torch.zeros((2, 4)), "bias": torch.zeros(2)},
+    )
+    score, score_std, passed, details = CartPoleBenchmark(seeds=(0, 1)).evaluate(
+        materialize_submission(submission)
+    )
+    assert isinstance(passed, bool)
+    assert len(details["steps"]) == 2
+    assert details["max_steps"] == 500
+    assert details["seeds"] == 2
+    assert all(0 < count <= 500 for count in details["steps"])
+
+
+def test_cartpole_rejects_wrong_shape(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "cartpole",
+            "architecture": "linear",
+            "input_size": 8,
+            "output_size": 2,
+        },
+        {"weight": torch.zeros((2, 8)), "bias": torch.zeros(2)},
+    )
+    with pytest.raises(ValueError, match="input_size 4"):
+        CartPoleBenchmark().load_submission(submission)

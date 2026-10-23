@@ -27,6 +27,10 @@ _FASHION_FILES = (
     f"{PACKAGE}/examples/fashion_mnist_submission.py",
 )
 _SNAKE_FILES = (f"{PACKAGE}/benchmarks/snake", f"{PACKAGE}/examples/snake_submission.py")
+_CARTPOLE_FILES = (
+    f"{PACKAGE}/benchmarks/cartpole",
+    f"{PACKAGE}/examples/cartpole_submission.py",
+)
 
 
 @dataclass(frozen=True)
@@ -84,6 +88,16 @@ SCOPES = (
         ),
     ),
     Scope(
+        "cartpole",
+        _CARTPOLE_FILES,
+        (
+            "tests/test_benchmarks.py::test_cartpole_registers_by_name",
+            "tests/test_benchmarks.py::test_cartpole_physics_sanity",
+            "tests/test_benchmarks.py::test_cartpole_evaluate_dummy_linear",
+            "tests/test_benchmarks.py::test_cartpole_rejects_wrong_shape",
+        ),
+    ),
+    Scope(
         "core",
         (PACKAGE,),
         (
@@ -128,7 +142,9 @@ def expand_scope_tests(scope, collected):
 
 def scope_files(scope, root):
     """Resolve a scope's source prefixes to Python files under ``root``."""
-    excluded = [root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES]
+    excluded = [
+        root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES + _CARTPOLE_FILES
+    ]
     files = []
     for source in scope.sources:
         path = root / source
