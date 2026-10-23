@@ -7,7 +7,7 @@ and resampled from the same RNG stream.
 """
 
 import random
-from functools import cache
+from functools import cache, lru_cache
 
 from minimal_nn_competition.benchmarks.snake.engine import DIRECTIONS, SnakeEngine, geometry
 
@@ -68,7 +68,7 @@ def find_closed_tour(size, blocked):
     return _find_closed_tour(size, normalised)
 
 
-@cache
+@lru_cache(maxsize=4096)
 def _find_closed_tour(size, blocked):
     """Cached closed-tour search for a normalised blocked-cell tuple.
 
@@ -195,7 +195,7 @@ def _sample_obstacles(rng, size, count):
     return tuple(sorted(chosen))
 
 
-@cache
+@lru_cache(maxsize=4096)
 def obstacles_for_seed(size, seed):
     """Return the deterministic blocked cells chosen for ``seed``."""
     rng = random.Random(seed)

@@ -166,12 +166,13 @@ def train(
                     value = value_net(state).item()
                 previous_distance = _distance(environment)
                 observation, reward, done = environment.step(action)
+                shaped_reward = _shape_reward(previous_distance, _distance(environment), reward)
+                if done and getattr(environment, "won", False):
+                    shaped_reward += 1.0
                 states.append(state.squeeze(0))
                 actions.append(action)
                 old_log_probs.append(log_prob.item())
-                episode_rewards.append(
-                    _shape_reward(previous_distance, _distance(environment), reward)
-                )
+                episode_rewards.append(shaped_reward)
                 episode_values.append(value)
                 episode_dones.append(done)
                 if done:
