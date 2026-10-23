@@ -2,9 +2,10 @@
 
 Rules (versioned by ``RULES_VERSION``): every counted token costs 1.
 Count operators, punctuation, numeric/string literals, and keywords.
-Never count identifiers, comments, whitespace, docstrings, or tokenizer
-bookkeeping tokens. Soft keywords (``match``/``case``/``_``/``type``) count
-only when used as syntax, anchored via the ``ast`` positions below.
+Never count identifiers, comments, whitespace, docstrings, type annotations,
+or tokenizer bookkeeping tokens. Soft keywords (``match``/``case``/``_``/
+``type``) count only when used as syntax, anchored via the ``ast`` positions
+below.
 """
 
 import ast
@@ -12,7 +13,7 @@ import io
 import keyword
 import tokenize
 
-RULES_VERSION = 1
+RULES_VERSION = 2
 
 
 def _docstring_spans(tree):
@@ -35,6 +36,38 @@ def _docstring_spans(tree):
                 )
             )
     return spans
+
+
+def _annotation_token_indices(tree, tokens):
+    """Return token indices in type annotations, including their punctuation."""
+    indices = set()
+    for node in ast.walk(tree):
+        annotation = getattr(node, "annotation", None) or getattr(node, "returns", None)
+        if annotation is None:
+            continue
+        end = (
+            annotation.end_lineno or annotation.lineno,
+            annotation.end_col_offset or annotation.col_offset,
+        )
+        first = next(
+            (
+                index
+                for index, token in enumerate(tokens)
+                if token.start == (annotation.lineno, annotation.col_offset)
+            ),
+            None,
+        )
+        if first is None:
+            continue
+        index = first - 1
+        while index and tokens[index].string not in (":", "->", "="):
+            index -= 1
+        indices.update(
+            position
+            for position, token in enumerate(tokens)
+            if tokens[index].start <= token.start < end
+        )
+    return indices
 
 
 def _syntactic_soft_positions(tree, tokens):
@@ -83,10 +116,13 @@ def count_tokens(source):
     except (tokenize.TokenError, IndentationError, SyntaxError) as exc:
         raise ValueError(f"Cannot tokenize Python source: {exc}") from exc
     docstrings = _docstring_spans(tree)
+    annotations = _annotation_token_indices(tree, tokens)
     syntactic = _syntactic_soft_positions(tree, tokens)
     count = 0
     fstring_depth = 0
-    for token in tokens:
+    for index, token in enumerate(tokens):
+        if index in annotations:
+            continue
         if token.type == tokenize.FSTRING_START:
             count += not fstring_depth
             fstring_depth += 1
