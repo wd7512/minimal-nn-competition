@@ -1,4 +1,5 @@
 import json
+import random
 from pathlib import Path
 from typing import Any
 
@@ -7,8 +8,16 @@ import torch
 
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
+from minimal_nn_competition.benchmarks.tictactoe.benchmark import TicTacToeBenchmark
+from minimal_nn_competition.benchmarks.tictactoe.engine import (
+    legal_moves,
+    minimax_move,
+    play,
+    winner,
+)
 from minimal_nn_competition.model.entry import Submission, materialize_submission
 
 
@@ -326,3 +335,74 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
         FashionMnistBenchmark().load_submission(submission)
+
+
+def test_tictactoe_registers_by_name() -> None:
+    assert create_benchmark("tictactoe").name == "tictactoe"
+    assert TicTacToeBenchmark().seeds == tuple(range(100))
+
+
+def test_tictactoe_win_and_draw_detection() -> None:
+    assert winner((1, 1, 1, 0, 0, 0, 0, 0, 0)) == 1
+    assert winner((-1, 0, 0, 0, -1, 0, 0, 0, -1)) == -1
+    assert winner((1, -1, 1, 1, -1, -1, -1, 1, 1)) == 0
+    assert winner((0,) * 9) is None
+    assert legal_moves((1,) + (0,) * 8) == list(range(1, 9))
+
+
+def test_tictactoe_minimax_blocks_immediate_win() -> None:
+    assert minimax_move((1, 1, 0, 0, -1, 0, 0, 0, 0)) == 2
+    assert minimax_move((0,) * 9) == 0
+    assert minimax_move((1,) * 9) is None
+
+
+def test_tictactoe_minimax_never_loses_to_random() -> None:
+    rng = random.Random(0)
+    for _ in range(10):
+        board = (0,) * 9
+        while True:
+            board = play(board, rng.choice(legal_moves(board)), 1)
+            result = winner(board)
+            if result is None:
+                move = minimax_move(board)
+                assert move is not None
+                board = play(board, move, -1)
+                result = winner(board)
+            if result is not None:
+                assert result != 1
+                break
+
+
+def test_tictactoe_evaluate_dummy_linear(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "tictactoe",
+            "architecture": "linear",
+            "input_size": 9,
+            "output_size": 9,
+        },
+        {"weight": torch.zeros((9, 9)), "bias": torch.zeros(9)},
+    )
+    score, score_std, passed, details = TicTacToeBenchmark(seeds=(0, 1)).evaluate(
+        materialize_submission(submission)
+    )
+    assert (score, score_std, passed) == (0.0, 0.0, False)
+    assert details["scores"] == [0.0, 0.0]
+    assert details["results"] == ["loss", "loss"]
+    assert details["seeds"] == 2
+
+
+def test_tictactoe_rejects_wrong_shape(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "tictactoe",
+            "architecture": "linear",
+            "input_size": 24,
+            "output_size": 9,
+        },
+        {"weight": torch.zeros((9, 24)), "bias": torch.zeros(9)},
+    )
+    with pytest.raises(ValueError, match="input_size 9"):
+        TicTacToeBenchmark().load_submission(submission)
