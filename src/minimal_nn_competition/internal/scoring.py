@@ -2,9 +2,10 @@
 
 Rules (versioned by ``RULES_VERSION``): every counted token costs 1.
 Count operators, punctuation, numeric/string literals, and keywords.
-Never count identifiers, comments, whitespace, docstrings, or tokenizer
-bookkeeping tokens. Soft keywords (``match``/``case``/``_``/``type``) count
-only when used as syntax, anchored via the ``ast`` positions below.
+Never count identifiers, comments, whitespace, docstrings, type annotations,
+or tokenizer bookkeeping tokens. Soft keywords (``match``/``case``/``_``/
+``type``) count only when used as syntax, anchored via the ``ast`` positions
+below.
 """
 
 import ast
@@ -12,32 +13,61 @@ import io
 import keyword
 import tokenize
 
-RULES_VERSION = 1
+RULES_VERSION = 2
 
 
 def _docstring_spans(tree):
     """Return the start and end positions of every module/class/function docstring."""
     spans = set()
     for node in ast.walk(tree):
-        if not isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-            continue
-        if not node.body:
-            continue
-        first = node.body[0]
-        if not isinstance(first, ast.Expr):
-            continue
-        value = first.value
-        if not isinstance(value, ast.Constant) or not isinstance(value.value, str):
-            continue
-        spans.add(
-            (
-                value.lineno,
-                value.col_offset,
-                value.end_lineno or value.lineno,
-                value.end_col_offset or value.col_offset,
+        if (
+            isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.body
+            and isinstance(first := node.body[0], ast.Expr)
+            and isinstance(value := first.value, ast.Constant)
+            and isinstance(value.value, str)
+        ):
+            spans.add(
+                (
+                    value.lineno,
+                    value.col_offset,
+                    value.end_lineno or value.lineno,
+                    value.end_col_offset or value.col_offset,
+                )
             )
-        )
     return spans
+
+
+def _annotation_token_indices(tree, tokens):
+    """Return token indices in type annotations, including their punctuation."""
+    indices = set()
+    for node in ast.walk(tree):
+        annotation = getattr(node, "annotation", None) or getattr(node, "returns", None)
+        if annotation is None:
+            continue
+        end = (
+            annotation.end_lineno or annotation.lineno,
+            annotation.end_col_offset or annotation.col_offset,
+        )
+        first = next(
+            (
+                index
+                for index, token in enumerate(tokens)
+                if token.start == (annotation.lineno, annotation.col_offset)
+            ),
+            None,
+        )
+        if first is None:
+            continue
+        index = first - 1
+        while index and tokens[index].string not in (":", "->", "="):
+            index -= 1
+        indices.update(
+            position
+            for position, token in enumerate(tokens)
+            if tokens[index].start <= token.start < end
+        )
+    return indices
 
 
 def _syntactic_soft_positions(tree, tokens):
@@ -49,7 +79,7 @@ def _syntactic_soft_positions(tree, tokens):
     """
     positions = set()
     for node in ast.walk(tree):
-        if isinstance(node, ast.Match):
+        if isinstance(node, (ast.Match, ast.TypeAlias)):
             positions.add((node.lineno, node.col_offset))
         elif isinstance(node, ast.match_case):
             pattern = node.pattern
@@ -65,15 +95,13 @@ def _syntactic_soft_positions(tree, tokens):
             if starts:
                 positions.add(max(starts))
             end = (pattern.end_lineno or line, pattern.end_col_offset or col)
-            for token in tokens:
-                if (
-                    token.type == tokenize.NAME
-                    and token.string == "_"
-                    and (line, col) <= token.start < end
-                ):
-                    positions.add(token.start)
-        elif isinstance(node, ast.TypeAlias):
-            positions.add((node.lineno, node.col_offset))
+            positions.update(
+                token.start
+                for token in tokens
+                if token.type == tokenize.NAME
+                and token.string == "_"
+                and (line, col) <= token.start < end
+            )
     return positions
 
 
@@ -88,35 +116,34 @@ def count_tokens(source):
     except (tokenize.TokenError, IndentationError, SyntaxError) as exc:
         raise ValueError(f"Cannot tokenize Python source: {exc}") from exc
     docstrings = _docstring_spans(tree)
+    annotations = _annotation_token_indices(tree, tokens)
     syntactic = _syntactic_soft_positions(tree, tokens)
     count = 0
     fstring_depth = 0
-    for token in tokens:
-        if fstring_depth:
-            if token.type == tokenize.FSTRING_START:
-                fstring_depth += 1
-            elif token.type == tokenize.FSTRING_END:
-                fstring_depth -= 1
+    for index, token in enumerate(tokens):
+        if index in annotations:
             continue
         if token.type == tokenize.FSTRING_START:
-            # A whole f-string (including any embedded expressions) is one token.
-            count += 1
-            fstring_depth = 1
-        elif token.type == tokenize.NAME:
-            if (
-                token.string in keyword.kwlist
-                or token.string in keyword.softkwlist
-                and token.start in syntactic
-            ):
+            count += not fstring_depth
+            fstring_depth += 1
+        elif token.type == tokenize.FSTRING_END and fstring_depth:
+            fstring_depth -= 1
+        elif not fstring_depth:
+            if token.type == tokenize.NAME:
+                if (
+                    token.string in keyword.kwlist
+                    or token.string in keyword.softkwlist
+                    and token.start in syntactic
+                ):
+                    count += 1
+            elif token.type == tokenize.STRING:
+                if not any(
+                    (row, col) <= token.start < (last_row, last_col)
+                    for row, col, last_row, last_col in docstrings
+                ):
+                    count += 1
+            elif token.type in (tokenize.OP, tokenize.NUMBER):
                 count += 1
-        elif token.type == tokenize.STRING:
-            if not any(
-                (row, col) <= token.start < (last_row, last_col)
-                for row, col, last_row, last_col in docstrings
-            ):
-                count += 1
-        elif token.type in (tokenize.OP, tokenize.NUMBER):
-            count += 1
     return count
 
 

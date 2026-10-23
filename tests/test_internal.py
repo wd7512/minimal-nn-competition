@@ -27,7 +27,7 @@ from minimal_nn_competition.internal.scoring import RULES_VERSION, count_tokens
 
 
 def test_rules_version_is_pinned() -> None:
-    assert RULES_VERSION == 1
+    assert RULES_VERSION == 2
 
 
 def test_score_is_deterministic() -> None:
@@ -82,6 +82,41 @@ def test_implicitly_concatenated_docstrings_are_ignored() -> None:
     assert count_tokens('def f():\n    """a""" """b"""\n    return 1\n') == count_tokens(
         "def f():\n    return 1\n"
     )
+
+
+@pytest.mark.parametrize(
+    ("annotated", "plain"),
+    [
+        (
+            "def f(value: int) -> str:\n    return str(value)",
+            "def f(value):\n    return str(value)",
+        ),
+        (
+            "def f(value: dict[str, list[int]] | None = None):\n    pass",
+            "def f(value=None):\n    pass",
+        ),
+        ("x: int = 1", "x = 1"),
+        ("class A:\n    x: list[int] = []", "class A:\n    x = []"),
+        ('def f(value: "int"):\n    pass', "def f(value):\n    pass"),
+        (
+            "def f(*args: int, **kwargs: str) -> None:\n    pass",
+            "def f(*args, **kwargs):\n    pass",
+        ),
+        (
+            "def f(value: dict[\n    str,\n    int,\n]):\n    pass",
+            "def f(value):\n    pass",
+        ),
+    ],
+)
+def test_type_annotations_do_not_change_score(annotated: str, plain: str) -> None:
+    assert count_tokens(annotated) == count_tokens(plain)
+
+
+def test_annotation_defaults_still_count() -> None:
+    assert count_tokens("def f(value: int = 1):\n    pass") == count_tokens(
+        "def f(value = 1):\n    pass"
+    )
+    assert count_tokens("x: list[int] = [1]") == count_tokens("x = [1]")
 
 
 def test_nondocstring_strings_count() -> None:

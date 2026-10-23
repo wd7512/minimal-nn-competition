@@ -1,15 +1,16 @@
 """Helpers for downloading and parsing IDX-format image datasets."""
 
-from __future__ import annotations
-
 import gzip
 import struct
 import urllib.request
-from pathlib import Path
-from typing import Any
+
+FILES = """train-images-idx3-ubyte.gz
+train-labels-idx1-ubyte.gz
+t10k-images-idx3-ubyte.gz
+t10k-labels-idx1-ubyte.gz""".splitlines()
 
 
-def download_file(url: str, path: Path) -> None:
+def download_file(url, path):
     """Download ``url`` to ``path`` unless the file already exists."""
     if path.is_file():
         return
@@ -17,25 +18,38 @@ def download_file(url: str, path: Path) -> None:
         path.write_bytes(response.read())
 
 
-def read_images(path: Path) -> Any:
-    """Read an IDX image file as a ``(count, rows * columns)`` uint8 tensor."""
+def read_idx(path, labels=False):
+    """Read an IDX file as an image matrix or a vector of int64 labels."""
     import torch
 
     raw = gzip.decompress(path.read_bytes())
-    magic, count, rows, columns = struct.unpack(">IIII", raw[:16])
-    if magic != 2051:
-        raise ValueError(f"Unexpected IDX image magic number in {path}: {magic}")
-    pixels = torch.frombuffer(bytearray(raw[16:]), dtype=torch.uint8)
-    return pixels.reshape(count, rows * columns).clone()
+    fmt, magic = (">II", 2049) if labels else (">IIII", 2051)
+    header = struct.unpack_from(fmt, raw)
+    if header[0] != magic:
+        kind = "label" if labels else "image"
+        raise ValueError(f"Unexpected IDX {kind} magic number in {path}: {header[0]}")
+    values = torch.frombuffer(bytearray(raw[struct.calcsize(fmt) :]), dtype=torch.uint8)
+    if labels:
+        return values.to(torch.int64).reshape(header[1]).clone()
+    return values.reshape(header[1], header[2] * header[3]).clone()
 
 
-def read_labels(path: Path) -> Any:
-    """Read an IDX label file as a ``(count,)`` int64 tensor."""
+def download_dataset(destination, base_url, prefix, cache, force=False, download=download_file):
+    """Download IDX files into raw caches and save ``(inputs, labels)`` tensors."""
     import torch
 
-    raw = gzip.decompress(path.read_bytes())
-    magic, count = struct.unpack(">II", raw[:8])
-    if magic != 2049:
-        raise ValueError(f"Unexpected IDX label magic number in {path}: {magic}")
-    labels = torch.frombuffer(bytearray(raw[8:]), dtype=torch.uint8)
-    return labels.to(torch.int64).reshape(count).clone()
+    destination.mkdir(parents=True, exist_ok=True)
+    train_path = destination / f"{cache}-train.pt"
+    test_path = destination / f"{cache}-test.pt"
+    if train_path.is_file() and test_path.is_file() and not force:
+        return train_path, test_path
+    train_images, train_labels, test_images, test_labels = (
+        destination / f"{prefix}-{name}" for name in FILES
+    )
+    for name in FILES:
+        download(base_url + name, destination / f"{prefix}-{name}")
+    train = (read_idx(train_images), read_idx(train_labels, True))
+    test = (read_idx(test_images), read_idx(test_labels, True))
+    torch.save(train, train_path)
+    torch.save(test, test_path)
+    return train_path, test_path

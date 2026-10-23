@@ -1,76 +1,71 @@
 """load the eval function for the mnist benchmark
 and train a NN that passes the benchmark with PPO"""
 
-from __future__ import annotations
-
 import argparse
 import json
 import logging
 import random
 import statistics
 from pathlib import Path
-from typing import Any
 
 HIDDEN_SIZES = (64, 64)
-BOARD_SIZE = 8
 INPUT_SIZE = 24
 OUTPUT_SIZE = 4
 
 
-def create_model() -> Any:
+def create_model(output_size=OUTPUT_SIZE):
     """Return the MLP policy shape used by the example submission."""
     from torch import nn
 
+    first, second = HIDDEN_SIZES
     return nn.Sequential(
-        nn.Linear(INPUT_SIZE, HIDDEN_SIZES[0]),
+        nn.Linear(INPUT_SIZE, first),
         nn.ReLU(),
-        nn.Linear(HIDDEN_SIZES[0], HIDDEN_SIZES[1]),
+        nn.Linear(first, second),
         nn.ReLU(),
-        nn.Linear(HIDDEN_SIZES[1], OUTPUT_SIZE),
+        nn.Linear(second, output_size),
     )
 
 
-def _select_device(requested: str) -> Any:
+def _select_device(requested):
     import torch
 
-    if requested != "auto":
-        return torch.device(requested)
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
-    return torch.device("cpu")
+    return torch.device(
+        requested if requested != "auto" else "mps" if torch.backends.mps.is_available() else "cpu"
+    )
 
 
-def _distance(environment: Any) -> int:
+def _distance(environment):
     head_x, head_y = environment.snake[0]
     food_x, food_y = environment.food
     return abs(head_x - food_x) + abs(head_y - food_y)
 
 
-def _shape_reward(previous_distance: int, next_distance: int, reward: float) -> float:
-    shaped = reward + 0.05 * (previous_distance - next_distance) - 0.001
-    if reward > 0:
-        shaped += 0.5
-    elif reward < 0:
-        shaped -= 0.5
-    return shaped
+def _shape_reward(previous_distance, next_distance, reward):
+    return (
+        reward
+        + 0.05 * (previous_distance - next_distance)
+        - 0.001
+        + 0.5 * ((reward > 0) - (reward < 0))
+    )
 
 
-def _gae(
-    rewards: list[float], values: list[float], dones: list[bool], gamma: float, lam: float
-) -> tuple[list[float], list[float]]:
+def _gae(rewards, values, dones, gamma, lam):
     advantages = [0.0] * len(rewards)
     gae = 0.0
-    for index in range(len(rewards) - 1, -1, -1):
-        next_value = values[index + 1] if index + 1 < len(values) else 0.0
-        nonterminal = 0.0 if dones[index] else 1.0
+    next_value = values[len(rewards)] if len(rewards) < len(values) else 0.0
+    for index in reversed(range(len(rewards))):
+        nonterminal = not dones[index]
         delta = rewards[index] + gamma * next_value * nonterminal - values[index]
         gae = delta + gamma * lam * nonterminal * gae
         advantages[index] = gae
-    returns = [advantage + value for advantage, value in zip(advantages, values, strict=True)]
-    return advantages, returns
+        next_value = values[index]
+    return advantages, [
+        advantage + value for advantage, value in zip(advantages, values, strict=True)
+    ]
 
 
-def _evaluate(policy: Any, device: Any, seeds: tuple[int, ...]) -> list[int]:
+def _evaluate(policy, device, seeds):
     import torch
 
     from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
@@ -82,7 +77,7 @@ def _evaluate(policy: Any, device: Any, seeds: tuple[int, ...]) -> list[int]:
             observation = environment.reset()
             done = False
             while not done:
-                state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+                state = torch.tensor(observation, dtype=torch.float32, device=device)[None]
                 action = int(torch.argmax(policy(state), dim=1).item())
                 observation, _, done = environment.step(action)
             lengths.append(len(environment.snake))
@@ -90,17 +85,17 @@ def _evaluate(policy: Any, device: Any, seeds: tuple[int, ...]) -> list[int]:
 
 
 def train(
-    output_dir: Path,
-    iterations: int = 600,
-    episodes_per_iteration: int = 4,
-    max_moves: int = 256,
-    update_epochs: int = 4,
-    batch_size: int = 64,
-    device_name: str = "auto",
-    seed: int = 0,
-    name: str | None = None,
-    author: str = "unknown",
-) -> dict[str, Any]:
+    output_dir,
+    iterations=600,
+    episodes_per_iteration=4,
+    max_moves=256,
+    update_epochs=4,
+    batch_size=64,
+    device_name="auto",
+    seed=0,
+    name=None,
+    author="unknown",
+):
     """Train the example Snake policy with PPO and write the submission files."""
     import torch
     from torch import nn
@@ -113,17 +108,12 @@ def train(
     torch.manual_seed(seed)
     random.seed(seed)
     device = _select_device(device_name)
-    logger.info("Training Snake example on %s", device)
+    logger.info(f"Training Snake example on {device}")
 
     policy = create_model().to(device)
-    value_net = nn.Sequential(
-        nn.Linear(INPUT_SIZE, 64),
-        nn.ReLU(),
-        nn.Linear(64, 64),
-        nn.ReLU(),
-        nn.Linear(64, 1),
-    ).to(device)
-    optimizer = torch.optim.Adam(list(policy.parameters()) + list(value_net.parameters()), lr=3e-4)
+    value_net = create_model(1).to(device)
+    parameters = list(policy.parameters()) + list(value_net.parameters())
+    optimizer = torch.optim.Adam(parameters, lr=3e-4)
     gamma = 0.99
     lam = 0.95
     clip = 0.2
@@ -137,7 +127,6 @@ def train(
         returns_all = []
         advantages_all = []
         episode_lengths = []
-        episode_food = []
         for episode in range(episodes_per_iteration):
             environment = SnakeEnvironment(
                 seed=seed + iteration * episodes_per_iteration + episode,
@@ -148,32 +137,30 @@ def train(
             episode_values = []
             episode_dones = []
             for _ in range(max_moves):
-                state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+                state = torch.tensor(observation, dtype=torch.float32, device=device)[None]
                 with torch.no_grad():
                     distribution = Categorical(logits=policy(state))
                     action = int(distribution.sample().item())
                     log_prob = distribution.log_prob(torch.tensor(action, device=device))
-                    value = float(value_net(state).item())
+                    value = value_net(state).item()
                 previous_distance = _distance(environment)
-                next_observation, reward, done = environment.step(action)
+                observation, reward, done = environment.step(action)
                 states.append(state.squeeze(0))
                 actions.append(action)
-                old_log_probs.append(float(log_prob.item()))
+                old_log_probs.append(log_prob.item())
                 episode_rewards.append(
                     _shape_reward(previous_distance, _distance(environment), reward)
                 )
                 episode_values.append(value)
                 episode_dones.append(done)
-                observation = next_observation
                 if done:
                     break
             advantages, returns = _gae(episode_rewards, episode_values, episode_dones, gamma, lam)
             returns_all.extend(returns)
             advantages_all.extend(advantages)
             episode_lengths.append(len(environment.snake))
-            episode_food.append(len(environment.snake) - 1)
 
-        states_t = torch.stack(states).to(device)
+        states_t = torch.stack(states)
         actions_t = torch.tensor(actions, dtype=torch.int64, device=device)
         old_log_probs_t = torch.tensor(old_log_probs, dtype=torch.float32, device=device)
         advantages_t = torch.tensor(advantages_all, dtype=torch.float32, device=device)
@@ -201,47 +188,39 @@ def train(
                 )
                 optimizer.zero_grad(set_to_none=True)
                 loss.backward()
-                nn.utils.clip_grad_norm_(
-                    list(policy.parameters()) + list(value_net.parameters()), 0.5
-                )
+                nn.utils.clip_grad_norm_(parameters, 0.5)
                 optimizer.step()
 
         if (iteration + 1) % 5 == 0 or iteration == 0:
+            mean_length = sum(episode_lengths) / len(episode_lengths)
             logger.info(
-                "iteration %d/%d length %.1f food %.2f",
-                iteration + 1,
-                iterations,
-                sum(episode_lengths) / len(episode_lengths),
-                sum(episode_food) / len(episode_food),
+                f"iteration {iteration + 1}/{iterations} length {mean_length:.1f} food {mean_length - 1:.2f}"
             )
 
     lengths = _evaluate(policy, device, DEFAULT_SEEDS)
     logger.info(
-        "Greedy evaluation: mean %.2f, std %.2f, lengths %s",
-        statistics.fmean(lengths),
-        statistics.pstdev(lengths),
-        lengths,
+        f"Greedy evaluation: mean {statistics.fmean(lengths):.2f}, std {statistics.pstdev(lengths):.2f}, lengths {lengths}"
     )
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    state_dict = {key: value.detach().cpu() for key, value in policy.state_dict().items()}
+    state_dict = {key: value.cpu() for key, value in policy.state_dict().items()}
     torch.save(state_dict, output_dir / "model.pt")
-    config = {
-        "benchmark": "snake",
-        "name": name or output_dir.name,
-        "author": author or "unknown",
-        "architecture": "mlp",
-        "input_size": INPUT_SIZE,
-        "output_size": OUTPUT_SIZE,
-        "hidden_sizes": list(HIDDEN_SIZES),
-        "activation": "relu",
-    }
+    config = dict(
+        benchmark="snake",
+        name=name or output_dir.name,
+        author=author or "unknown",
+        architecture="mlp",
+        input_size=INPUT_SIZE,
+        output_size=OUTPUT_SIZE,
+        hidden_sizes=list(HIDDEN_SIZES),
+        activation="relu",
+    )
     (output_dir / "config.json").write_text(json.dumps(config, indent=2) + "\n")
-    logger.info("Wrote %s", output_dir / "model.pt")
+    logger.info(f"Wrote {output_dir / 'model.pt'}")
     return state_dict
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv=None):
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("models/snake/example"))
