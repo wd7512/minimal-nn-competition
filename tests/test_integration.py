@@ -200,6 +200,31 @@ def test_render_site(tmp_path: Path) -> None:
     assert raw[2]["score_std"] == 0.5
 
 
+def test_render_near_perfect_failure_is_not_shown_as_100(tmp_path: Path) -> None:
+    near_miss = BenchmarkResult(
+        "mnist-near",
+        "mnist",
+        69_999 / 70_000,
+        False,
+        10,
+        {"samples": 70_000, "normalisation": False},
+    )
+    html = render_site([near_miss], tmp_path / "near").read_text()
+    assert "100.00%" not in html
+    assert "99.9986%" in html
+
+    perfect = BenchmarkResult(
+        "mnist-perfect",
+        "mnist",
+        1.0,
+        True,
+        10,
+        {"samples": 70_000, "normalisation": False},
+    )
+    html = render_site([perfect], tmp_path / "perfect").read_text()
+    assert "100.00%" in html
+
+
 def test_render_mnist_has_no_game_length_column(tmp_path: Path) -> None:
     results = [
         BenchmarkResult(
