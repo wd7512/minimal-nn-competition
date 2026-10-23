@@ -27,7 +27,7 @@ from minimal_nn_competition.internal.scoring import RULES_VERSION, count_tokens
 
 
 def test_rules_version_is_pinned() -> None:
-    assert RULES_VERSION == 1
+    assert RULES_VERSION == 2
 
 
 def test_score_is_deterministic() -> None:
@@ -82,6 +82,41 @@ def test_implicitly_concatenated_docstrings_are_ignored() -> None:
     assert count_tokens('def f():\n    """a""" """b"""\n    return 1\n') == count_tokens(
         "def f():\n    return 1\n"
     )
+
+
+@pytest.mark.parametrize(
+    ("annotated", "plain"),
+    [
+        (
+            "def f(value: int) -> str:\n    return str(value)",
+            "def f(value):\n    return str(value)",
+        ),
+        (
+            "def f(value: dict[str, list[int]] | None = None):\n    pass",
+            "def f(value=None):\n    pass",
+        ),
+        ("x: int = 1", "x = 1"),
+        ("class A:\n    x: list[int] = []", "class A:\n    x = []"),
+        ('def f(value: "int"):\n    pass', "def f(value):\n    pass"),
+        (
+            "def f(*args: int, **kwargs: str) -> None:\n    pass",
+            "def f(*args, **kwargs):\n    pass",
+        ),
+        (
+            "def f(value: dict[\n    str,\n    int,\n]):\n    pass",
+            "def f(value):\n    pass",
+        ),
+    ],
+)
+def test_type_annotations_do_not_change_score(annotated: str, plain: str) -> None:
+    assert count_tokens(annotated) == count_tokens(plain)
+
+
+def test_annotation_defaults_still_count() -> None:
+    assert count_tokens("def f(value: int = 1):\n    pass") == count_tokens(
+        "def f(value = 1):\n    pass"
+    )
+    assert count_tokens("x: list[int] = [1]") == count_tokens("x = [1]")
 
 
 def test_nondocstring_strings_count() -> None:
@@ -211,7 +246,7 @@ def test_ranking_shares_ties_and_drops_failures() -> None:
         entry("core", 90, "c2"),
         entry("core", 90, "c3"),
         entry("core", 0, "c4", status="fail"),
-        entry("snake", 50, "c1"),
+        entry("snake-simple-8x8", 50, "c1"),
     ]
     ranked = rank_internal_results(results)
     assert [(item.scope, item.tokens) for item in ranked] == [
@@ -219,7 +254,7 @@ def test_ranking_shares_ties_and_drops_failures() -> None:
         ("core", 90),
         ("core", 100),
         ("core", 0),
-        ("snake", 50),
+        ("snake-simple-8x8", 50),
     ]
     assert scope_rank(ranked[0], ranked) == 1
     assert scope_rank(ranked[1], ranked) == 1
@@ -229,7 +264,7 @@ def test_ranking_shares_ties_and_drops_failures() -> None:
 def test_upsert_replaces_same_scope_and_commit() -> None:
     old = InternalResult("core", 100, "c1", False, "", "", "")
     new = InternalResult("core", 90, "c1", False, "", "", "")
-    other = InternalResult("snake", 50, "c1", False, "", "", "")
+    other = InternalResult("snake-simple-8x8", 50, "c1", False, "", "", "")
     assert upsert_internal_result([old, other], new) == [other, new]
 
 
@@ -289,7 +324,7 @@ def test_internal_cli(tmp_path: Path) -> None:
         "core",
         "fashion-mnist",
         "mnist",
-        "snake",
+        "snake-simple-8x8",
     }
     assert all(result.status == "pass" for result in results)
     assert all(result.tokens > 0 for result in results)

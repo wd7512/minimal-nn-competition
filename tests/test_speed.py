@@ -49,6 +49,13 @@ def test_hamiltonian_cycle_is_valid() -> None:
         assert abs(next_x - x) + abs(next_y - y) == 1
 
 
+def test_hamiltonian_cycle_order_is_pinned() -> None:
+    assert "".join(f"{x}{y}" for x, y in HAMILTONIAN_CYCLE) == (
+        "4443424140506070717273747576776766656463626151525354555657474645"
+        "3536372726252423222111121314151617070605040302010010203031323334"
+    )
+
+
 def test_agent_fills_board_on_every_seed() -> None:
     for seed in range(100):
         engine = SnakeEngine(size=SIZE, seed=seed, max_moves=4096)
@@ -101,7 +108,7 @@ def test_render_speed_site(tmp_path: Path) -> None:
     result = _result("abc1234567890", 1_234_567.0, 12_345.0)
     index = render_speed_site([result], tmp_path)
     page = index.read_text()
-    assert "Snake Environment Speed" in page
+    assert "Snake Simple 8x8 Environment Speed" in page
     assert "noindex,nofollow" in page
     assert "abc1234" in page
     assert "2026-10-22 00:00:00 UTC" in page

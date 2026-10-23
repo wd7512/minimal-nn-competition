@@ -1,26 +1,21 @@
 """Load, save, rank, and update the self-applied speed leaderboard."""
 
-from __future__ import annotations
-
 import json
-from collections.abc import Iterable
 from dataclasses import asdict
-from pathlib import Path
-from typing import Any
 
 from minimal_nn_competition.speed.benchmark import SpeedResult
 
 
-def rank_speed_results(results: Iterable[SpeedResult]) -> list[SpeedResult]:
+def rank_speed_results(results):
     return sorted(results, key=lambda result: (-result.ticks_per_second, result.commit))
 
 
-def save_speed_results(path: Path, results: Iterable[SpeedResult]) -> None:
+def save_speed_results(path, results):
     payload = [asdict(result) for result in rank_speed_results(results)]
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
-def load_speed_results(path: Path) -> list[SpeedResult]:
+def load_speed_results(path):
     raw = json.loads(path.read_text())
     if not isinstance(raw, list):
         raise ValueError("Speed leaderboard must contain a JSON list")
@@ -32,7 +27,7 @@ def load_speed_results(path: Path) -> list[SpeedResult]:
     return rank_speed_results(results)
 
 
-def _load_speed_result(item: dict[str, Any]) -> SpeedResult:
+def _load_speed_result(item):
     run_ticks = [int(value) for value in item.get("run_ticks", [])]
     return SpeedResult(
         commit=str(item.get("commit", "unknown")),
@@ -53,5 +48,5 @@ def _load_speed_result(item: dict[str, Any]) -> SpeedResult:
     )
 
 
-def upsert_speed_result(results: Iterable[SpeedResult], result: SpeedResult) -> list[SpeedResult]:
+def upsert_speed_result(results, result):
     return [existing for existing in results if existing.commit != result.commit] + [result]

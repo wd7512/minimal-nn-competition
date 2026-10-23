@@ -16,7 +16,7 @@ is optional.
 
 Benchmark guides:
 
-- [Snake](how-to/how-to-make-a-snake-game-submission.md)
+- [Snake Simple 8x8](how-to/how-to-make-a-snake-simple-8x8-submission.md)
 - [MNIST](how-to/how-to-make-an-mnist-submission.md)
 - [Fashion-MNIST](how-to/how-to-make-a-fashion-mnist-submission.md)
 
@@ -30,7 +30,7 @@ protection when needed. Only submissions use the `submission` branch.
 
 ```bash
 uv sync --dev --locked
-uv run mnc list
+uv run mnnc list
 uv run ruff format --check
 uv run ruff check
 uv run ty check
@@ -40,13 +40,13 @@ uv build
 
 ## Hidden boards
 
-The site also publishes the Snake speed and internal token boards:
+The site also publishes the Snake Simple 8x8 speed and internal token boards:
 
 ```bash
-uv run mnc speed
-uv run mnc render-speed speed-leaderboard.json docs/internal
-uv run mnc internal
-uv run mnc render-internal internal-leaderboard.json docs
+uv run mnnc speed
+uv run mnnc render-speed speed-leaderboard.json docs/internal
+uv run mnnc internal
+uv run mnnc render-internal internal-leaderboard.json docs
 ```
 
 Pages deploys `docs/` on every push to `main`.

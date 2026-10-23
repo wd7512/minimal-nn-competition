@@ -30,13 +30,13 @@ def test_parameter_count_sums_tensor_values() -> None:
 def test_config_round_trip(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake","name":"example","author":"tester",'
+        '{"benchmark":"snake-simple-8x8","name":"example","author":"tester",'
         '"architecture":"mlp","input_size":24,'
         '"output_size":4,"hidden_sizes":[8,4],"activation":"relu",'
         '"normalisation":true,"description":"A tiny PPO policy."}'
     )
     config = SubmissionConfig.from_file(path)
-    assert config.benchmark == "snake"
+    assert config.benchmark == "snake-simple-8x8"
     assert config.name == "example"
     assert config.author == "tester"
     assert config.description == "A tiny PPO policy."
@@ -47,7 +47,7 @@ def test_config_round_trip(tmp_path: Path) -> None:
 def test_config_description_is_optional(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake","name":"example","author":"tester",'
+        '{"benchmark":"snake-simple-8x8","name":"example","author":"tester",'
         '"architecture":"linear","input_size":24,"output_size":4}'
     )
     config = SubmissionConfig.from_file(path)
@@ -57,7 +57,7 @@ def test_config_description_is_optional(tmp_path: Path) -> None:
 def test_config_accepts_input_indices(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake","name":"example","author":"tester",'
+        '{"benchmark":"snake-simple-8x8","name":"example","author":"tester",'
         '"architecture":"linear","input_size":5,'
         '"output_size":4,"input_indices":[0,1,2,4,7]}'
     )
@@ -68,7 +68,7 @@ def test_config_accepts_input_indices(tmp_path: Path) -> None:
 def test_config_rejects_duplicate_input_indices(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake","name":"example","author":"tester",'
+        '{"benchmark":"snake-simple-8x8","name":"example","author":"tester",'
         '"architecture":"linear","input_size":2,'
         '"output_size":4,"input_indices":[0,0]}'
     )
@@ -78,7 +78,9 @@ def test_config_rejects_duplicate_input_indices(tmp_path: Path) -> None:
 
 def test_config_rejects_missing_identity(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
-    path.write_text('{"benchmark":"snake","architecture":"mlp","input_size":24,"output_size":4}')
+    path.write_text(
+        '{"benchmark":"snake-simple-8x8","architecture":"mlp","input_size":24,"output_size":4}'
+    )
     with pytest.raises(SubmissionError, match="Invalid submission config"):
         SubmissionConfig.from_file(path)
 
@@ -86,7 +88,7 @@ def test_config_rejects_missing_identity(tmp_path: Path) -> None:
 def test_config_rejects_linear_hidden_sizes(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake","name":"example","author":"tester",'
+        '{"benchmark":"snake-simple-8x8","name":"example","author":"tester",'
         '"architecture":"linear","input_size":24,'
         '"output_size":4,"hidden_sizes":[8]}'
     )
@@ -114,15 +116,15 @@ def test_snake_can_move_into_vacating_tail() -> None:
 
 def test_registry_and_leaderboard_ranking() -> None:
     assert create_benchmark("fashion-mnist").name == "fashion-mnist"
-    assert create_benchmark("snake").name == "snake"
+    assert create_benchmark("snake-simple-8x8").name == "snake-simple-8x8"
     results = [
-        BenchmarkResult("a", "snake", 4, False, 1, {}),
-        BenchmarkResult("b", "snake", 2, True, 20, {}),
-        BenchmarkResult("c", "snake", 2, True, 10, {}),
+        BenchmarkResult("a", "snake-simple-8x8", 4, False, 1, {}),
+        BenchmarkResult("b", "snake-simple-8x8", 2, True, 20, {}),
+        BenchmarkResult("c", "snake-simple-8x8", 2, True, 10, {}),
         BenchmarkResult("d", "mnist", 0.9, False, 5, {}),
-        BenchmarkResult("e", "snake", 2, True, 10, {"seed_moves": [100, 200]}),
-        BenchmarkResult("f", "snake", 2, True, 10, {"seed_moves": [50, 50]}),
-        BenchmarkResult("g", "snake", 2, True, 9, {"seed_moves": [500]}),
+        BenchmarkResult("e", "snake-simple-8x8", 2, True, 10, {"seed_moves": [100, 200]}),
+        BenchmarkResult("f", "snake-simple-8x8", 2, True, 10, {"seed_moves": [50, 50]}),
+        BenchmarkResult("g", "snake-simple-8x8", 2, True, 9, {"seed_moves": [500]}),
     ]
     assert [result.submission for result in rank_results(results)] == [
         "d",
@@ -136,7 +138,9 @@ def test_registry_and_leaderboard_ranking() -> None:
 
 
 def test_leaderboard_round_trip(tmp_path: Path) -> None:
-    result = BenchmarkResult("example", "snake", 1, True, 8, {"seed_lengths": [1]}, score_std=0.5)
+    result = BenchmarkResult(
+        "example", "snake-simple-8x8", 1, True, 8, {"seed_lengths": [1]}, score_std=0.5
+    )
     path = tmp_path / "leaderboard.json"
     save_results(path, [result])
     assert load_results(path) == [result]
@@ -144,6 +148,6 @@ def test_leaderboard_round_trip(tmp_path: Path) -> None:
 
 def test_leaderboard_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     path = tmp_path / "leaderboard.json"
-    save_results(path, [BenchmarkResult("example", "snake", 1, True, 8, {})])
+    save_results(path, [BenchmarkResult("example", "snake-simple-8x8", 1, True, 8, {})])
     assert main(["leaderboard", str(path)]) == 0
-    assert '"benchmark": "snake"' in capsys.readouterr().out
+    assert '"benchmark": "snake-simple-8x8"' in capsys.readouterr().out

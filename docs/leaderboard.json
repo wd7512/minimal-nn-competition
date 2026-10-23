@@ -85,7 +85,7 @@
   },
   {
     "author": "muse spark 1.3 x hermes",
-    "benchmark": "snake",
+    "benchmark": "snake-simple-8x8",
     "details": {
       "max_length": 64,
       "seed_lengths": [
@@ -303,7 +303,7 @@
   },
   {
     "author": "muse spark 1.3 x hermes",
-    "benchmark": "snake",
+    "benchmark": "snake-simple-8x8",
     "details": {
       "max_length": 64,
       "seed_lengths": [
@@ -521,7 +521,7 @@
   },
   {
     "author": "muse spark 1.3 x hermes",
-    "benchmark": "snake",
+    "benchmark": "snake-simple-8x8",
     "details": {
       "max_length": 64,
       "seed_lengths": [
@@ -739,7 +739,7 @@
   },
   {
     "author": "example author",
-    "benchmark": "snake",
+    "benchmark": "snake-simple-8x8",
     "details": {
       "max_length": 64,
       "seed_lengths": [

@@ -1,1 +1,1 @@
-"""Self-applied Snake environment speed benchmark."""
+"""Self-applied Snake Simple 8x8 environment speed benchmark."""

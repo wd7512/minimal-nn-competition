@@ -80,17 +80,22 @@ def test_render_game_html() -> None:
 def _results() -> list[BenchmarkResult]:
     return [
         BenchmarkResult(
-            "example", "snake", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
+            "example",
+            "snake-simple-8x8",
+            8.0,
+            False,
+            20,
+            {"max_length": 64, "seed_moves": [10, 20]},
         ),
     ]
 
 
 def test_game_length_text() -> None:
     result = BenchmarkResult(
-        "example", "snake", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
+        "example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
     )
     assert _game_length_text(result) == "15.0 ± 5.0"
-    missing = BenchmarkResult("example", "snake", 8.0, False, 20, {"max_length": 64})
+    missing = BenchmarkResult("example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64})
     assert _game_length_text(missing) == "-"
 
 
@@ -121,7 +126,7 @@ def test_render_site_without_replays_has_no_replay_column(tmp_path: Path) -> Non
 
 def test_render_game_pages_uses_slug_lookup(tmp_path: Path) -> None:
     payload = record_game(_right_model())
-    result = BenchmarkResult("my model", "snake", 8.0, False, 20, {"max_length": 64})
+    result = BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64})
     links = render_game_pages([result], {"my_model": payload}, tmp_path)
     assert links == {"my model": "games/my_model.html"}
     assert (tmp_path / "games" / "my_model.html").is_file()
@@ -130,8 +135,8 @@ def test_render_game_pages_uses_slug_lookup(tmp_path: Path) -> None:
 def test_render_game_pages_rejects_slug_collisions(tmp_path: Path) -> None:
     payload = record_game(_right_model())
     results = [
-        BenchmarkResult("my model", "snake", 8.0, False, 20, {"max_length": 64}),
-        BenchmarkResult("my_model", "snake", 8.0, False, 20, {"max_length": 64}),
+        BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
+        BenchmarkResult("my_model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
     ]
     with pytest.raises(ValueError, match="collision"):
         render_game_pages(results, {"my_model": payload}, tmp_path)
@@ -152,7 +157,9 @@ def test_collect_reports_replay_dir_errors(
     import shutil
 
     models = tmp_path / "models"
-    shutil.copytree(Path("models/snake/example"), models / "snake" / "example")
+    shutil.copytree(
+        Path("models/snake-simple-8x8/example"), models / "snake-simple-8x8" / "example"
+    )
     replays = tmp_path / "replays"
     replays.write_text("not a directory")
     assert (
@@ -178,7 +185,9 @@ def test_collect_and_render_replay_cli(
     import shutil
 
     models = tmp_path / "models"
-    shutil.copytree(Path("models/snake/example"), models / "snake" / "example")
+    shutil.copytree(
+        Path("models/snake-simple-8x8/example"), models / "snake-simple-8x8" / "example"
+    )
     output = tmp_path / "leaderboard.json"
     replays = tmp_path / "replays"
     assert (
@@ -206,12 +215,12 @@ def test_collect_and_render_replay_cli(
 def test_collect_records_replay_for_selected_input_indices(
     tmp_path: Path, fast_snake_cli: None
 ) -> None:
-    directory = tmp_path / "models" / "snake" / "selected"
+    directory = tmp_path / "models" / "snake-simple-8x8" / "selected"
     directory.mkdir(parents=True)
     (directory / "config.json").write_text(
         json.dumps(
             {
-                "benchmark": "snake",
+                "benchmark": "snake-simple-8x8",
                 "name": "selected",
                 "author": "tester",
                 "architecture": "linear",
@@ -238,3 +247,65 @@ def test_collect_records_replay_for_selected_input_indices(
         == 0
     )
     assert (replays / "selected.json").is_file()
+
+
+def _reference_gae(
+    rewards: list[float],
+    values: list[float],
+    dones: list[bool],
+    gamma: float,
+    lam: float,
+) -> tuple[list[float], list[float]]:
+    advantages = [0.0] * len(rewards)
+    gae = 0.0
+    for index in range(len(rewards) - 1, -1, -1):
+        next_value = values[index + 1] if index + 1 < len(values) else 0.0
+        nonterminal = 0.0 if dones[index] else 1.0
+        delta = rewards[index] + gamma * next_value * nonterminal - values[index]
+        gae = delta + gamma * lam * nonterminal * gae
+        advantages[index] = gae
+    returns = [advantage + value for advantage, value in zip(advantages, values, strict=True)]
+    return advantages, returns
+
+
+def test_snake_training_writes_submission(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from minimal_nn_competition.examples import snake_submission
+
+    monkeypatch.setattr(snake_submission, "_evaluate", lambda *args: [1])
+    output = tmp_path / "submission"
+    state = snake_submission.train(
+        output,
+        iterations=1,
+        episodes_per_iteration=1,
+        max_moves=8,
+        update_epochs=1,
+        device_name="cpu",
+    )
+    config = json.loads((output / "config.json").read_text())
+    assert config["benchmark"] == "snake-simple-8x8"
+    assert config["name"] == "submission"
+    assert config["hidden_sizes"] == [64, 64]
+    assert state.keys() == torch.load(output / "model.pt", weights_only=True).keys()
+
+
+def test_gae_matches_literal_reference() -> None:
+    import random
+
+    from minimal_nn_competition.examples.snake_submission import _gae
+
+    rng = random.Random(7)
+    for length in range(11):
+        rewards = [rng.uniform(-1.0, 1.0) for _ in range(length)]
+        values = [rng.uniform(-1.0, 1.0) for _ in range(length)]
+        dones = [rng.random() < 0.25 for _ in range(length)]
+        expected_advantages, expected_returns = _reference_gae(rewards, values, dones, 0.99, 0.95)
+        advantages, returns = _gae(rewards, values, dones, 0.99, 0.95)
+        assert advantages == expected_advantages
+        assert returns == expected_returns
+
+
+def test_gae_keeps_strict_length_validation() -> None:
+    from minimal_nn_competition.examples.snake_submission import _gae
+
+    with pytest.raises(ValueError):
+        _gae([0.5, -1.0], [0.1, 0.2, 0.3], [False, True], 0.99, 0.95)

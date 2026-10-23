@@ -46,15 +46,15 @@ For several PRs, merge them all and evaluate once.
 
 ```bash
 uv sync --dev --locked
-uv run mnc download-mnist --output data
-uv run mnc download-fashion-mnist --output data
-uv run mnc evaluate <benchmark> models/<benchmark>/<name>
+uv run mnnc download-mnist --output data
+uv run mnnc download-fashion-mnist --output data
+uv run mnnc evaluate <benchmark> models/<benchmark>/<name>
 ```
 
 Image benchmarks use `data/mnist-test.pt` and
-`data/fashion-mnist-test.pt` by default. Snake needs no data.
+`data/fashion-mnist-test.pt` by default. Snake Simple 8x8 needs no data.
 
-Expected passes are `1.0` for MNIST and Fashion-MNIST, and `64.0` for Snake.
+Expected passes are `1.0` for MNIST and Fashion-MNIST, and `64.0` for Snake Simple 8x8.
 Confirm the score and parameter count match the PR description. A perfect
 Fashion-MNIST score is suspicious: verify it is not MNIST data.
 
@@ -63,22 +63,22 @@ If an entry fails, revert it on `submission` and do not promote it.
 ## 5. Rebuild the leaderboard
 
 ```bash
-uv run mnc collect --replay-dir replays
-uv run mnc render leaderboard.json docs --replays replays
+uv run mnnc collect --replay-dir replays
+uv run mnnc render leaderboard.json docs --replays replays
 ```
 
 `collect` re-evaluates every model and is the authoritative rebuild. It also
-records a seed-0 replay for each Snake submission. `replays/` is temporary;
+records a seed-0 replay for each Snake Simple 8x8 submission. `replays/` is temporary;
 commit only `leaderboard.json`, `docs/leaderboard.json`, and `docs/`.
 
 ## 6. Check the site
 
 ```bash
-rm -rf /tmp/mnc-site-check
-uv run mnc render leaderboard.json /tmp/mnc-site-check --replays docs/games
-uv run mnc render-speed speed-leaderboard.json /tmp/mnc-site-check/internal
-uv run mnc render-internal internal-leaderboard.json /tmp/mnc-site-check
-diff -ru docs /tmp/mnc-site-check
+rm -rf /tmp/mnnc-site-check
+uv run mnnc render leaderboard.json /tmp/mnnc-site-check --replays docs/games
+uv run mnnc render-speed speed-leaderboard.json /tmp/mnnc-site-check/internal
+uv run mnnc render-internal internal-leaderboard.json /tmp/mnnc-site-check
+diff -ru docs /tmp/mnnc-site-check
 ```
 
 Commit after the diff passes:

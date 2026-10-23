@@ -14,7 +14,7 @@ FAST_SEEDS = (0, 1, 2)
 @pytest.fixture
 def fast_snake_cli(monkeypatch: pytest.MonkeyPatch) -> None:
     def fast_create(name: str, **kwargs: Any) -> Any:
-        if name == "snake":
+        if name == "snake-simple-8x8":
             return SnakeBenchmark(seeds=FAST_SEEDS, **kwargs)
         return create_benchmark(name, **kwargs)
 

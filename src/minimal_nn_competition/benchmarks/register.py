@@ -1,14 +1,7 @@
 """Benchmark registry."""
 
-from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
-
-BenchmarkFactory = Callable[..., Any]
-
-
-def _factories() -> dict[str, BenchmarkFactory]:
+def _factories():
     from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import (
         FashionMnistBenchmark,
     )
@@ -18,15 +11,15 @@ def _factories() -> dict[str, BenchmarkFactory]:
     return {
         "fashion-mnist": FashionMnistBenchmark,
         "mnist": MnistBenchmark,
-        "snake": SnakeBenchmark,
+        "snake-simple-8x8": SnakeBenchmark,
     }
 
 
-def available_benchmarks() -> tuple[str, ...]:
+def available_benchmarks():
     return tuple(sorted(_factories()))
 
 
-def create_benchmark(name: str, **kwargs: Any) -> Any:
+def create_benchmark(name, **kwargs):
     try:
         factory = _factories()[name]
     except KeyError as exc:
