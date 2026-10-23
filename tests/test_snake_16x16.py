@@ -47,6 +47,7 @@ def test_registry_and_list_include_16x16(capsys: pytest.CaptureFixture[str]) -> 
         "chess-eval",
         "fashion-mnist",
         "mnist",
+        "snake-obstacles-8x8",
         "snake-simple-16x16",
         "snake-simple-8x8",
     ]
@@ -98,7 +99,13 @@ def test_16x16_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         size = 16
 
         def __init__(
-            self, size: int, seed: int, max_moves: int, input_indices: object = None
+            self,
+            size: int,
+            seed: int,
+            max_moves: int,
+            input_indices: object = None,
+            blocked: object = (),
+            loop_on_full: bool = False,
         ) -> None:
             self.snake = [(0, 0)] * 256
 

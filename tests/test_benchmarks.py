@@ -58,7 +58,13 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         size = 8
 
         def __init__(
-            self, size: int, seed: int, max_moves: int, input_indices: object = None
+            self,
+            size: int,
+            seed: int,
+            max_moves: int,
+            input_indices: object = None,
+            blocked: object = (),
+            loop_on_full: bool = False,
         ) -> None:
             self.snake = [(0, 0)] * 64
 
@@ -98,7 +104,13 @@ def test_snake_score_std_across_seeds(tmp_path: Path, monkeypatch: pytest.Monkey
         size = 8
 
         def __init__(
-            self, size: int, seed: int, max_moves: int, input_indices: object = None
+            self,
+            size: int,
+            seed: int,
+            max_moves: int,
+            input_indices: object = None,
+            blocked: object = (),
+            loop_on_full: bool = False,
         ) -> None:
             self.snake = [(0, 0)] * (64 if seed == 0 else 1)
 

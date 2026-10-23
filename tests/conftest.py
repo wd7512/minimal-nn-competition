@@ -8,6 +8,7 @@ import minimal_nn_competition.__main__ as cli
 from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import (
     SnakeBenchmark,
+    SnakeObstacles8x8Benchmark,
     SnakeSimple16x16Benchmark,
 )
 
@@ -21,6 +22,8 @@ def fast_snake_cli(monkeypatch: pytest.MonkeyPatch) -> None:
             return SnakeBenchmark(seeds=FAST_SEEDS, **kwargs)
         if name == "snake-simple-16x16":
             return SnakeSimple16x16Benchmark(seeds=FAST_SEEDS, **kwargs)
+        if name == "snake-obstacles-8x8":
+            return SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS, **kwargs)
         return create_benchmark(name, **kwargs)
 
     monkeypatch.setattr(cli, "create_benchmark", fast_create)

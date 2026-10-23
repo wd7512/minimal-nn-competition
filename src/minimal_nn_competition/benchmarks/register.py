@@ -9,6 +9,7 @@ def _factories():
     from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
     from minimal_nn_competition.benchmarks.snake.benchmark import (
         SnakeBenchmark,
+        SnakeObstacles8x8Benchmark,
         SnakeSimple16x16Benchmark,
     )
 
@@ -18,6 +19,7 @@ def _factories():
         "mnist": MnistBenchmark,
         "snake-simple-8x8": SnakeBenchmark,
         "snake-simple-16x16": SnakeSimple16x16Benchmark,
+        "snake-obstacles-8x8": SnakeObstacles8x8Benchmark,
     }
 
 

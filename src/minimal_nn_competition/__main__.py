@@ -54,6 +54,11 @@ def _parser():
     subparsers = parser.add_subparsers(dest="command", required=True)
     add = subparsers.add_parser
     add("list", help="List available benchmarks")
+    validate_obstacles = add(
+        "validate-snake-obstacles-8x8",
+        help="Prove every seeded obstacle layout has a closed tour and is passable",
+    )
+    validate_obstacles.add_argument("--seeds", type=int, default=100)
     evaluate = add("evaluate", help="Evaluate a submission directory")
     evaluate.add_argument("benchmark", choices=available_benchmarks())
     evaluate.add_argument("submission", type=Path)
@@ -140,7 +145,7 @@ def _record_replay(replay_dir, name, benchmark, submission):
             seed=REPLAY_SEED,
             max_moves=benchmark.max_moves,
             input_indices=selected_input_indices(submission.config, benchmark.name),
-            size=benchmark.size,
+            **benchmark.environment_options(REPLAY_SEED),
         ),
     )
 
@@ -162,6 +167,25 @@ def main(argv=None):
     if args.command == "list":
         _emit("\n".join(available_benchmarks()))
         return 0
+    if args.command == "validate-snake-obstacles-8x8":
+        from minimal_nn_competition.benchmarks.snake.layout import validate_seed
+
+        failures = 0
+        for seed in range(args.seeds):
+            try:
+                result = validate_seed(8, seed)
+            except (AssertionError, RuntimeError, ValueError) as exc:
+                logger.error("seed %d failed: %s", seed, exc)
+                failures += 1
+            else:
+                logger.info(
+                    "seed %d passed: %d blocked cells, tour %d, %d moves",
+                    seed,
+                    len(result["blocked"]),
+                    result["tour_length"],
+                    result["moves"],
+                )
+        return 1 if failures else 0
     if args.command == "leaderboard":
         try:
             results = rank_results(load_results(args.path))

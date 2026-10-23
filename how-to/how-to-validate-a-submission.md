@@ -65,6 +65,19 @@ parameter count match the PR description. A perfect image score is expected;
 verify the cache is the correct benchmark's data. There is no held-out split:
 an entry must fit all 70,000 image examples or all 10,000 chess positions.
 
+Snake Obstacles 8x8 uses two or four deterministically seeded blocked cells, so
+each seed has 62 or 60 free cells. A submission passes only when every seed fills
+its free cells and then completes one extra loop move into the vacating tail. The
+score is the mean final length; inspect `seed_passed` and `target_lengths` in the
+result rather than expecting a single fixed score. Validate the layouts separately:
+
+```bash
+uv run mnnc validate-snake-obstacles-8x8 --seeds 100
+```
+
+The command re-checks each closed Hamiltonian tour, simulates a tour-following
+policy with the same seed and blocked cells, and exits non-zero on any failure.
+
 If an entry fails, revert it on `submission` and do not promote it.
 
 ## 5. Rebuild the leaderboard

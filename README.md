@@ -4,8 +4,12 @@ Find the smallest possible neural network for a problem.
 
 **[View the leaderboard →](https://wd7512.github.io/minimal-nn-competition/)**
 
-Problems: **Snake Simple 8x8** and **Snake Simple 16x16** (fill the board) · **MNIST** and **Fashion-MNIST** (classify images) · **Chess evaluation** (predict Stockfish within 0.1 pawns).
+Problems: **Snake Simple 8x8**, **Snake Simple 16x16**, and **Snake Obstacles 8x8** (fill every free cell) · **MNIST** and **Fashion-MNIST** (classify images) · **Chess evaluation** (predict Stockfish within 0.1 pawns).
 Rules: feed-forward `linear` or `mlp` models, a standard activation, and a PyTorch `state_dict`.
+
+Snake Obstacles 8x8 places two or four deterministic blocked cells per seed. A
+run passes only after filling every free cell and then making one extra loop move
+into the vacating tail. Layouts are checked by a closed-tour validator.
 
 MNIST and Fashion-MNIST each use one 70,000-example dataset. Chess evaluation
 uses a fixed 10,000-position Stockfish set. There is no held-out split: train
@@ -19,6 +23,7 @@ dependencies, workflows, the leaderboard, or `docs/`.
 
 - [How to make a Snake Simple 8x8 submission](how-to/how-to-make-a-snake-simple-8x8-submission.md)
 - [How to make a Snake Simple 16x16 submission](how-to/how-to-make-a-snake-simple-16x16-submission.md)
+- [How to make a Snake Obstacles 8x8 submission](how-to/how-to-make-a-snake-obstacles-8x8-submission.md)
 - [How to make an MNIST submission](how-to/how-to-make-an-mnist-submission.md)
 - [How to make a Fashion-MNIST submission](how-to/how-to-make-a-fashion-mnist-submission.md)
 - [How to make a Chess evaluation submission](how-to/how-to-make-a-chess-eval-submission.md)
