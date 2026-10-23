@@ -274,6 +274,25 @@ def _loaded_mnist_submission(tmp_path: Path) -> object:
     return loaded
 
 
+def _loaded_fashion_mnist_submission(tmp_path: Path, normalisation: bool = False) -> object:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "fashion-mnist",
+            "architecture": "linear",
+            "input_size": 784,
+            "output_size": 10,
+            "normalisation": normalisation,
+        },
+        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+    )
+    loaded = materialize_submission(submission)
+    loaded.state_dict["weight"][0, 0] = 1
+    loaded.state_dict["weight"][1, 1] = 1
+    loaded.model.load_state_dict(loaded.state_dict)
+    return loaded
+
+
 def test_mnist_accepts_two_dimensional_labels(tmp_path: Path) -> None:
     data_path = tmp_path / "mnist.pt"
     inputs = torch.zeros((2, 784), dtype=torch.uint8)
@@ -317,9 +336,20 @@ def test_mnist_rejects_partial_dataset(tmp_path: Path) -> None:
         MnistBenchmark(data_path=data_path).evaluate(loaded)
 
 
+def test_mnist_rejects_legacy_test_cache(tmp_path: Path) -> None:
+    data_path = tmp_path / "mnist.pt"
+    inputs = torch.zeros((10_000, 784), dtype=torch.uint8)
+    torch.save((inputs, torch.zeros(10_000, dtype=torch.int64)), data_path)
+    loaded = _loaded_mnist_submission(tmp_path)
+    with pytest.raises(SubmissionError, match="exactly 70000 samples, found 10000"):
+        MnistBenchmark(data_path=data_path).evaluate(loaded)
+
+
 def test_image_benchmarks_expect_full_dataset() -> None:
     assert MnistBenchmark().expected_samples == 70_000
     assert FashionMnistBenchmark().expected_samples == 70_000
+    assert MnistBenchmark(expected_samples=None).expected_samples == 70_000
+    assert FashionMnistBenchmark(expected_samples=None).expected_samples == 70_000
 
 
 def test_mnist_requires_data_file(tmp_path: Path) -> None:
@@ -377,6 +407,71 @@ def test_fashion_mnist_evaluation_and_threshold(tmp_path: Path) -> None:
     assert score_std == 0.0
     assert passed is True
     assert details == {"samples": 2, "normalisation": False}
+
+
+def test_fashion_mnist_normalisation_flag(tmp_path: Path) -> None:
+    data_path = tmp_path / "fashion-mnist.pt"
+    _write_mnist_cache(data_path)
+    loaded = _loaded_fashion_mnist_submission(tmp_path, normalisation=True)
+    score, score_std, passed, details = FashionMnistBenchmark(
+        data_path=data_path, expected_samples=2
+    ).evaluate(loaded)
+    assert score == 1.0
+    assert score_std == 0.0
+    assert passed is True
+    assert details == {"samples": 2, "normalisation": True}
+
+
+def test_fashion_mnist_accepts_two_dimensional_labels(tmp_path: Path) -> None:
+    data_path = tmp_path / "fashion-mnist.pt"
+    inputs = torch.zeros((2, 784), dtype=torch.uint8)
+    inputs[0, 0] = 255
+    inputs[1, 1] = 255
+    _write_mnist_cache_with(data_path, inputs, torch.tensor([[0], [1]]))
+    loaded = _loaded_fashion_mnist_submission(tmp_path)
+    score, _, passed, details = FashionMnistBenchmark(
+        data_path=data_path, expected_samples=2
+    ).evaluate(loaded)
+    assert score == 1.0
+    assert passed is True
+    assert details == {"samples": 2, "normalisation": False}
+
+
+def test_fashion_mnist_rejects_length_mismatch(tmp_path: Path) -> None:
+    data_path = tmp_path / "fashion-mnist.pt"
+    _write_mnist_cache_with(
+        data_path, torch.zeros((2, 784), dtype=torch.uint8), torch.tensor([0, 1, 2])
+    )
+    loaded = _loaded_fashion_mnist_submission(tmp_path)
+    with pytest.raises(SubmissionError, match="must contain raw"):
+        FashionMnistBenchmark(data_path=data_path, expected_samples=2).evaluate(loaded)
+
+
+def test_fashion_mnist_rejects_wrong_input_width(tmp_path: Path) -> None:
+    data_path = tmp_path / "fashion-mnist.pt"
+    _write_mnist_cache_with(
+        data_path, torch.zeros((2, 10), dtype=torch.uint8), torch.tensor([0, 1])
+    )
+    loaded = _loaded_fashion_mnist_submission(tmp_path)
+    with pytest.raises(SubmissionError, match="must contain raw"):
+        FashionMnistBenchmark(data_path=data_path, expected_samples=2).evaluate(loaded)
+
+
+def test_fashion_mnist_rejects_partial_dataset(tmp_path: Path) -> None:
+    data_path = tmp_path / "fashion-mnist.pt"
+    _write_mnist_cache(data_path)
+    loaded = _loaded_fashion_mnist_submission(tmp_path)
+    with pytest.raises(SubmissionError, match="exactly 70000 samples, found 2"):
+        FashionMnistBenchmark(data_path=data_path).evaluate(loaded)
+
+
+def test_fashion_mnist_rejects_legacy_test_cache(tmp_path: Path) -> None:
+    data_path = tmp_path / "fashion-mnist.pt"
+    inputs = torch.zeros((10_000, 784), dtype=torch.uint8)
+    torch.save((inputs, torch.zeros(10_000, dtype=torch.int64)), data_path)
+    loaded = _loaded_fashion_mnist_submission(tmp_path)
+    with pytest.raises(SubmissionError, match="exactly 70000 samples, found 10000"):
+        FashionMnistBenchmark(data_path=data_path).evaluate(loaded)
 
 
 def test_fashion_mnist_requires_data_file(tmp_path: Path) -> None:
