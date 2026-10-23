@@ -180,15 +180,23 @@ def test_unparseable_source_is_rejected() -> None:
         count_tokens("def broken(:\n")
 
 
-def test_scope_files_partition_src() -> None:
+def test_scope_files_cover_src() -> None:
+    from minimal_nn_competition.internal import _SHARED_IMAGE_FILES
+
     root = Path(__file__).resolve().parent.parent
-    covered: dict[Path, str] = {}
+    shared = {(root / source).resolve() for source in _SHARED_IMAGE_FILES}
+    covered: dict[Path, set[str]] = {}
     for scope in SCOPES:
         for path in scope_files(scope, root):
-            assert path not in covered, f"{path} in scopes {covered[path]} and {scope.name}"
-            covered[path] = scope.name
-    every = {path for path in (root / "src").rglob("*.py") if "__pycache__" not in path.parts}
+            covered.setdefault(path.resolve(), set()).add(scope.name)
+    every = {
+        path.resolve() for path in (root / "src").rglob("*.py") if "__pycache__" not in path.parts
+    }
     assert set(covered) == every
+    for path, scopes in covered.items():
+        if len(scopes) > 1:
+            assert scopes == {"mnist", "fashion-mnist"}
+            assert path in shared
 
 
 def test_scope_tests_cover_suite_exactly_once() -> None:
@@ -321,6 +329,7 @@ def test_internal_cli(tmp_path: Path) -> None:
     assert main(["internal", "--root", str(root), "--output", str(output)]) == 0
     results = load_internal_results(output)
     assert {result.scope for result in results} == {
+        "chess-eval",
         "core",
         "fashion-mnist",
         "mnist",

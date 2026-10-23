@@ -44,6 +44,7 @@ def test_registry_and_list_include_16x16(capsys: pytest.CaptureFixture[str]) -> 
     assert benchmark.size == 16
     assert main(["list"]) == 0
     assert capsys.readouterr().out.splitlines() == [
+        "chess-eval",
         "fashion-mnist",
         "mnist",
         "snake-obstacles-8x8",

@@ -5,8 +5,14 @@ from typing import Any
 import pytest
 import torch
 
+from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
+    ChessEvalBenchmark,
+    encode,
+    load_tensors,
+)
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
 from minimal_nn_competition.model.entry import (
@@ -519,3 +525,85 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
         FashionMnistBenchmark().load_submission(submission)
+
+
+def _write_chess_data(tmp_path: Path, rows: list[tuple[str, int]]) -> Path:
+    path = tmp_path / "positions.jsonl"
+    path.write_text("".join(json.dumps({"fen": fen, "cp": cp}) + "\n" for fen, cp in rows))
+    return path
+
+
+def _chess_submission(tmp_path: Path, *, input_size: int = 769, output_size: int = 1) -> Submission:
+    return _write_submission(
+        tmp_path,
+        {
+            "benchmark": "chess-eval",
+            "architecture": "linear",
+            "input_size": input_size,
+            "output_size": output_size,
+        },
+        {"weight": torch.zeros((output_size, input_size)), "bias": torch.zeros(output_size)},
+    )
+
+
+START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -"
+BLACK = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq -"
+
+
+def test_chess_eval_registers_by_name() -> None:
+    assert create_benchmark("chess-eval").name == "chess-eval"
+
+
+def test_chess_eval_encodes_fen() -> None:
+    inputs = encode(START)
+    assert len(inputs) == 769
+    assert inputs[48] == 1.0
+    assert inputs[5 * 64 + 60] == 1.0
+    assert inputs[10 * 64 + 3] == 1.0
+    assert inputs[11 * 64 + 4] == 1.0
+    assert inputs[768] == 1.0
+    assert encode(BLACK)[768] == -1.0
+
+
+def test_chess_eval_load_tensors(tmp_path: Path) -> None:
+    data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 60)])
+    inputs, targets = load_tensors(data)
+    assert inputs.shape == (2, 769)
+    assert targets.tolist() == pytest.approx([0.0, 0.6])
+
+
+def test_chess_eval_evaluate_dummy_passes(tmp_path: Path) -> None:
+    data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 0)])
+    loaded = materialize_submission(_chess_submission(tmp_path))
+    score, score_std, passed, details = ChessEvalBenchmark(data_path=data, folds=2).evaluate(loaded)
+    assert score == 1.0
+    assert score_std == 0.0
+    assert passed is True
+    assert details["samples"] == 2
+
+
+def test_chess_eval_evaluate_dummy_fails(tmp_path: Path) -> None:
+    data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 60)])
+    loaded = materialize_submission(_chess_submission(tmp_path))
+    score, score_std, passed, details = ChessEvalBenchmark(data_path=data, folds=2).evaluate(loaded)
+    assert score == 0.5
+    assert score_std >= 0.0
+    assert passed is False
+    assert details["tolerance_pawns"] == 0.1
+
+
+def test_chess_eval_rejects_wrong_shape(tmp_path: Path) -> None:
+    wrong_input = _chess_submission(tmp_path, input_size=768)
+    with pytest.raises(ValueError, match="input_size 769"):
+        ChessEvalBenchmark().load_submission(wrong_input)
+    second = tmp_path / "second"
+    second.mkdir()
+    wrong_output = _chess_submission(second, output_size=2)
+    with pytest.raises(ValueError, match="output_size 1"):
+        ChessEvalBenchmark().load_submission(wrong_output)
+
+
+def test_chess_eval_requires_data_file(tmp_path: Path) -> None:
+    loaded = materialize_submission(_chess_submission(tmp_path))
+    with pytest.raises(FileNotFoundError, match="Chess evaluation data is unavailable"):
+        ChessEvalBenchmark(data_path=tmp_path / "missing.jsonl").evaluate(loaded)

@@ -116,6 +116,15 @@ def _parser():
         train_snake.add_argument("--iterations", type=int, default=600)
         train_snake.add_argument("--max-moves", type=int, default=None)
         _train_common(train_snake)
+    train_chess = add("train-chess-eval", help="Train the Chess evaluation example submission")
+    train_chess.add_argument("--output", type=Path, default=Path("models/chess-eval/example"))
+    train_chess.add_argument("--data-path", type=Path, default=None)
+    train_chess.add_argument("--epochs", type=int, default=16_000)
+    train_chess.add_argument("--batch-size", type=int, default=256)
+    train_chess.add_argument("--learning-rate", type=float, default=1e-3)
+    train_chess.add_argument("--hidden-sizes", type=int, nargs="+", default=[64, 64])
+    train_chess.add_argument("--seed", type=int, default=0)
+    _train_common(train_chess)
     return parser
 
 
@@ -314,8 +323,29 @@ def main(argv=None):
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
+    if args.command == "train-chess-eval":
+        from minimal_nn_competition.examples.chess_eval_submission import train
+
+        try:
+            train(
+                args.output,
+                data_path=args.data_path,
+                epochs=args.epochs,
+                batch_size=args.batch_size,
+                learning_rate=args.learning_rate,
+                hidden_sizes=tuple(args.hidden_sizes),
+                device_name=args.device,
+                seed=args.seed,
+                name=args.name,
+                author=args.author,
+            )
+        except (OSError, RuntimeError, ValueError) as exc:
+            return _fail(exc)
+        return 0
     if args.data_path is not None and args.benchmark in SNAKE_BENCHMARKS:
-        logger.error("--data-path is only supported for the mnist and fashion-mnist benchmarks")
+        logger.error(
+            "--data-path is only supported for the mnist, fashion-mnist, and chess-eval benchmarks"
+        )
         return 2
     kwargs = {}
     if args.data_path is not None:

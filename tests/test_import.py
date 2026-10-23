@@ -12,6 +12,7 @@ def test_main_callable() -> None:
 def test_main_lists_benchmarks(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["list"]) == 0
     assert capsys.readouterr().out.splitlines() == [
+        "chess-eval",
         "fashion-mnist",
         "mnist",
         "snake-obstacles-8x8",

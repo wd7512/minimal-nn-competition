@@ -18,15 +18,26 @@ logger = logging.getLogger(__name__)
 _NESTED_ENV_VAR = "MINIMAL_NN_COMPETITION_INTERNAL"
 
 PACKAGE = "src/minimal_nn_competition"
-_MNIST_FILES = (f"{PACKAGE}/benchmarks/mnist", f"{PACKAGE}/examples/mnist_submission.py")
-_FASHION_FILES = (
-    f"{PACKAGE}/benchmarks/fashion_mnist",
+_SHARED_IMAGE_FILES = (
     f"{PACKAGE}/benchmarks/idx.py",
     f"{PACKAGE}/benchmarks/image_classification.py",
     f"{PACKAGE}/examples/classifier_submission.py",
+)
+_MNIST_FILES = (
+    f"{PACKAGE}/benchmarks/mnist",
+    *_SHARED_IMAGE_FILES,
+    f"{PACKAGE}/examples/mnist_submission.py",
+)
+_FASHION_FILES = (
+    f"{PACKAGE}/benchmarks/fashion_mnist",
+    *_SHARED_IMAGE_FILES,
     f"{PACKAGE}/examples/fashion_mnist_submission.py",
 )
 _SNAKE_FILES = (f"{PACKAGE}/benchmarks/snake", f"{PACKAGE}/examples/snake_submission.py")
+_CHESS_FILES = (
+    f"{PACKAGE}/benchmarks/chess_eval",
+    f"{PACKAGE}/examples/chess_eval_submission.py",
+)
 
 
 @dataclass(frozen=True)
@@ -104,6 +115,21 @@ tests/test_snake_obstacles.py""".splitlines()
         ),
     ),
     Scope(
+        "chess-eval",
+        _CHESS_FILES,
+        tuple(
+            """tests/test_benchmarks.py::test_chess_eval_registers_by_name
+tests/test_benchmarks.py::test_chess_eval_encodes_fen
+tests/test_benchmarks.py::test_chess_eval_load_tensors
+tests/test_benchmarks.py::test_chess_eval_evaluate_dummy_passes
+tests/test_benchmarks.py::test_chess_eval_evaluate_dummy_fails
+tests/test_benchmarks.py::test_chess_eval_rejects_wrong_shape
+tests/test_benchmarks.py::test_chess_eval_requires_data_file
+tests/test_integration.py::test_evaluate_chess_eval_cli
+tests/test_chess_eval_data.py""".splitlines()
+        ),
+    ),
+    Scope(
         "core",
         (PACKAGE,),
         tuple(
@@ -122,7 +148,9 @@ tests/test_import.py
 tests/test_configs.py
 tests/test_integration.py::test_checked_in_examples_load
 tests/test_integration.py::test_render_site
+tests/test_integration.py::test_render_near_perfect_failure_is_not_shown_as_100
 tests/test_integration.py::test_render_mnist_has_no_game_length_column
+tests/test_integration.py::test_render_chess_eval
 tests/test_integration.py::test_render_cli
 tests/test_integration.py::test_render_shows_name_and_author
 tests/test_integration.py::test_collect_cli
@@ -149,7 +177,9 @@ def expand_scope_tests(scope, collected):
 
 def scope_files(scope, root):
     """Resolve a scope's source prefixes to Python files under ``root``."""
-    excluded = [root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES]
+    excluded = [
+        root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES + _CHESS_FILES
+    ]
     files = []
     for source in scope.sources:
         path = root / source
