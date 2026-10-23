@@ -1,12 +1,9 @@
 """Train a minimal MLP parity submission and write it to disk."""
 
-from __future__ import annotations
-
 import argparse
 import json
 import logging
 from pathlib import Path
-from typing import Any
 
 from minimal_nn_competition.benchmarks.parity.benchmark import sample_dataset
 
@@ -17,7 +14,7 @@ OUTPUT_SIZE = 2
 HIDDEN_SIZE = 128
 
 
-def create_model(n_bits: int = N_BITS, seed: int = 0) -> Any:
+def create_model(n_bits=N_BITS, seed=0):
     """Return the MLP shape used by the example submission."""
     import torch
     from torch import nn
@@ -30,22 +27,16 @@ def create_model(n_bits: int = N_BITS, seed: int = 0) -> Any:
     )
 
 
-def train(
-    output_dir: Path,
-    n_bits: int = N_BITS,
-    steps: int = 200,
-    seed: int = 0,
-    name: str | None = None,
-) -> dict[str, Any]:
+def train(output_dir, n_bits=N_BITS, steps=200, seed=0, name=None):
     """Train briefly on sampled parity data, then write config and model."""
     import torch
 
-    model = create_model(n_bits=n_bits, seed=seed)
+    model = create_model(n_bits, seed)
     optimizer = torch.optim.Adam(model.parameters())
     loss_fn = torch.nn.CrossEntropyLoss()
     model.train()
     for step in range(steps):
-        inputs, labels = sample_dataset(n_bits, seed + step, count=512)
+        inputs, labels = sample_dataset(n_bits, seed + step, 512)
         batch = torch.tensor(inputs, dtype=torch.float32)
         expected = torch.tensor(labels, dtype=torch.long)
         loss = loss_fn(model(batch), expected)
@@ -62,13 +53,13 @@ def train(
         "output_size": OUTPUT_SIZE,
         "hidden_sizes": [HIDDEN_SIZE],
     }
-    (output_dir / "config.json").write_text(json.dumps(config, indent=2))
+    (output_dir / "config.json").write_text(json.dumps(config))
     torch.save(model.state_dict(), output_dir / "model.pt")
     logger.info("Wrote parity example submission to %s", output_dir)
     return config
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv=None):
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("models/parity/example"))
@@ -77,7 +68,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--name", default=None, help="Display name (defaults to output dir)")
     args = parser.parse_args(argv)
-    train(args.output, n_bits=args.n_bits, steps=args.steps, seed=args.seed, name=args.name)
+    train(args.output, args.n_bits, args.steps, args.seed, args.name)
     return 0
 
 
