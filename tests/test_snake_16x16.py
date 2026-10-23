@@ -237,7 +237,8 @@ def test_train_16x16_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
 def test_16x16_defaults_are_100_seeds_and_4096_moves() -> None:
     benchmark = SnakeSimple16x16Benchmark()
     assert benchmark.seeds == tuple(range(100))
-    assert benchmark.max_moves == 4096
+    assert benchmark.max_moves == 65536
+    assert benchmark.moves_per_food == 2 * 16 * 16
     assert benchmark.size == 16
 
 

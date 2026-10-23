@@ -36,11 +36,18 @@ class SnakeBenchmark:
     name = "snake-simple-8x8"
     size = 8
     loop_on_full = False
+    # Per-food tick budget (None = no per-food limit). When set, a seed fails
+    # if the snake goes this many ticks without growing: it stalls loops
+    # without punishing slow-but-correct play.
+    moves_per_food = None
+    max_moves_default = 4096
 
-    def __init__(self, seeds=DEFAULT_SEEDS, max_moves=4096):
+    def __init__(self, seeds=DEFAULT_SEEDS, max_moves=None):
         label = self.name
         if not seeds:
             raise ValueError(f"{label} benchmark requires at least one seed")
+        if max_moves is None:
+            max_moves = self.max_moves_default
         if max_moves <= 0:
             raise ValueError(f"{label} benchmark max_moves must be positive")
         self.seeds = seeds
@@ -101,6 +108,8 @@ class SnakeBenchmark:
                 observation = environment.reset()
                 done = False
                 ticks = 0
+                last_length = len(environment.snake)
+                since_eat = 0
                 while not done:
                     action = (
                         submission.model(torch.tensor(observation, dtype=torch.float32)[None])
@@ -109,6 +118,13 @@ class SnakeBenchmark:
                     )
                     observation, _, done = environment.step(action)
                     ticks += 1
+                    if len(environment.snake) > last_length:
+                        last_length = len(environment.snake)
+                        since_eat = 0
+                    else:
+                        since_eat += 1
+                        if self.moves_per_food is not None and since_eat > self.moves_per_food:
+                            done = True
                 length = len(environment.snake)
                 won = bool(getattr(environment, "won", False))
                 lengths.append(length)
@@ -142,12 +158,18 @@ class SnakeBenchmark:
 class SnakeSimple16x16Benchmark(SnakeBenchmark):
     name = "snake-simple-16x16"
     size = 16
+    # Correct play needs ~16 ticks/food, not 256: cap each feed at 2x the
+    # board and lift the total backstop so the clock never decides a fill.
+    moves_per_food = 2 * 16 * 16
+    max_moves_default = 65536
 
 
 class SnakeObstacles8x8Benchmark(SnakeBenchmark):
     name = "snake-obstacles-8x8"
     size = 8
     loop_on_full = True
+    moves_per_food = 2 * 8 * 8
+    max_moves_default = 16384
 
     def obstacles(self, seed):
         return obstacles_for_seed(self.size, seed)
