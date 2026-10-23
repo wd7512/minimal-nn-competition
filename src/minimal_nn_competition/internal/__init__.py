@@ -27,6 +27,10 @@ _FASHION_FILES = (
     f"{PACKAGE}/examples/fashion_mnist_submission.py",
 )
 _SNAKE_FILES = (f"{PACKAGE}/benchmarks/snake", f"{PACKAGE}/examples/snake_submission.py")
+_CONNECT4_FILES = (
+    f"{PACKAGE}/benchmarks/connect4",
+    f"{PACKAGE}/examples/connect4_submission.py",
+)
 
 
 @dataclass(frozen=True)
@@ -84,6 +88,17 @@ SCOPES = (
         ),
     ),
     Scope(
+        "connect4",
+        _CONNECT4_FILES,
+        (
+            "tests/test_benchmarks.py::test_connect4_registers_by_name",
+            "tests/test_benchmarks.py::test_connect4_win_detection",
+            "tests/test_benchmarks.py::test_connect4_opponent_blocks_immediate_win",
+            "tests/test_benchmarks.py::test_connect4_evaluate_dummy_linear",
+            "tests/test_benchmarks.py::test_connect4_rejects_wrong_shape",
+        ),
+    ),
+    Scope(
         "core",
         (PACKAGE,),
         (
@@ -128,7 +143,9 @@ def expand_scope_tests(scope, collected):
 
 def scope_files(scope, root):
     """Resolve a scope's source prefixes to Python files under ``root``."""
-    excluded = [root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES]
+    excluded = [
+        root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES + _CONNECT4_FILES
+    ]
     files = []
     for source in scope.sources:
         path = root / source

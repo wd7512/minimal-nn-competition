@@ -5,8 +5,15 @@ from typing import Any
 import pytest
 import torch
 
+from minimal_nn_competition.benchmarks.connect4.benchmark import Connect4Benchmark
+from minimal_nn_competition.benchmarks.connect4.engine import (
+    legal_moves,
+    opponent_move,
+    winner,
+)
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
 from minimal_nn_competition.model.entry import Submission, materialize_submission
@@ -326,3 +333,74 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
         FashionMnistBenchmark().load_submission(submission)
+
+
+def _connect4_board(cells: dict[tuple[int, int], int]) -> tuple[int, ...]:
+    board = [0] * 42
+    for (row, col), player in cells.items():
+        board[row * 7 + col] = player
+    return tuple(board)
+
+
+def test_connect4_registers_by_name() -> None:
+    assert create_benchmark("connect4").name == "connect4"
+    assert Connect4Benchmark().seeds == tuple(range(20))
+
+
+def test_connect4_win_detection() -> None:
+    horizontal = _connect4_board({(5, 0): 1, (5, 1): 1, (5, 2): 1, (5, 3): 1})
+    assert winner(horizontal) == 1
+    vertical = _connect4_board({(5, 0): -1, (4, 0): -1, (3, 0): -1, (2, 0): -1})
+    assert winner(vertical) == -1
+    diagonal = _connect4_board({(2, 0): 1, (3, 1): 1, (4, 2): 1, (5, 3): 1})
+    assert winner(diagonal) == 1
+    assert winner((0,) * 42) is None
+    full_column = _connect4_board({(row, 0): 1 if row % 2 == 0 else -1 for row in range(6)})
+    assert 0 not in legal_moves(full_column)
+    assert legal_moves((0,) * 42) == list(range(7))
+
+
+def test_connect4_opponent_blocks_immediate_win() -> None:
+    threat = _connect4_board({(5, 0): 1, (5, 1): 1, (5, 2): 1})
+    assert opponent_move(threat) == 3
+    winning = _connect4_board({(5, 0): -1, (5, 1): -1, (5, 2): -1})
+    assert opponent_move(winning) == 3
+    assert opponent_move((0,) * 42) == 3
+    assert opponent_move((1,) * 42) is None
+
+
+def test_connect4_evaluate_dummy_linear(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "connect4",
+            "architecture": "linear",
+            "input_size": 42,
+            "output_size": 7,
+        },
+        {"weight": torch.zeros((7, 42)), "bias": torch.zeros(7)},
+    )
+    score, score_std, passed, details = Connect4Benchmark(seeds=(0, 1)).evaluate(
+        materialize_submission(submission)
+    )
+    assert isinstance(score, float)
+    assert isinstance(score_std, float)
+    assert isinstance(passed, bool)
+    assert details["seeds"] == 2
+    assert len(details["scores"]) == 2
+    assert set(details["results"]) <= {"win", "draw", "loss"}
+
+
+def test_connect4_rejects_wrong_shape(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "connect4",
+            "architecture": "linear",
+            "input_size": 24,
+            "output_size": 7,
+        },
+        {"weight": torch.zeros((7, 24)), "bias": torch.zeros(7)},
+    )
+    with pytest.raises(ValueError, match="input_size 42"):
+        Connect4Benchmark().load_submission(submission)
