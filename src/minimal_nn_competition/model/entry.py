@@ -18,6 +18,8 @@ from pydantic import (
     model_validator,
 )
 
+from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+
 ARCHITECTURES = ("linear", "mlp")
 ACTIVATIONS = ("relu", "identity")
 
@@ -83,8 +85,8 @@ class SubmissionConfig(BaseModel):
     def _validate_cross_fields(self):
         if self.architecture == "linear" and self.hidden_sizes:
             raise ValueError("linear submissions must not declare hidden_sizes")
-        if self.benchmark != "snake-simple-8x8" and self.input_indices is not None:
-            raise ValueError("input_indices is only supported for the snake-simple-8x8 benchmark")
+        if self.benchmark not in SNAKE_BENCHMARKS and self.input_indices is not None:
+            raise ValueError("input_indices is only supported for snake benchmarks")
         return self
 
     @classmethod

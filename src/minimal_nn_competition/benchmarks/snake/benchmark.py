@@ -1,4 +1,4 @@
-"""Snake Simple 8x8 benchmark: pass/fail on filling the board, then minimum parameters."""
+"""Snake benchmarks: pass/fail on filling the board, then minimum parameters."""
 
 import statistics
 
@@ -6,70 +6,80 @@ from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
 from minimal_nn_competition.benchmarks.snake.observation import OBSERVATION_SIZE
 from minimal_nn_competition.model.entry import materialize_submission
 
-# Be an 8x8 grid and an agent passes if it can fill out the 8x8 grid. If it does
-# not it gets a secondary score which allows it to be placed on the leaderboard.
-# Therefore we should have {score = snake size (max 64), network_size = network size}
-# and the ranking is score first and network size second.
+# An agent passes if it can fill the board. If it does not it gets a secondary
+# score which allows it to be placed on the leaderboard. Therefore we should have
+# {score = snake size (max size * size), network_size = network size} and the
+# ranking is score first and network size second.
 
 DEFAULT_SEEDS = tuple(range(100))
 
 
-def selected_input_indices(config):
+def selected_input_indices(config, label=None):
     """Resolve the optional submission feature selection.
 
     ``None`` or ``true`` means all 24 features. A list selects those features in
     order, matching the model's first-layer input width.
     """
+    label = label or config.benchmark
     indices = config.input_indices
     if indices is None or indices is True:
         return None
     if indices is False:
-        raise ValueError("Snake Simple 8x8 input_indices must be true or a list of feature indices")
+        raise ValueError(f"{label} input_indices must be true or a list of feature indices")
     if any(index >= OBSERVATION_SIZE for index in indices):
-        raise ValueError(f"Snake Simple 8x8 input_indices must be in 0..{OBSERVATION_SIZE - 1}")
+        raise ValueError(f"{label} input_indices must be in 0..{OBSERVATION_SIZE - 1}")
     return tuple(indices)
 
 
 class SnakeBenchmark:
     name = "snake-simple-8x8"
+    size = 8
+    loop_on_full = False
 
     def __init__(self, seeds=DEFAULT_SEEDS, max_moves=4096):
+        label = self.name
         if not seeds:
-            raise ValueError("Snake Simple 8x8 benchmark requires at least one seed")
+            raise ValueError(f"{label} benchmark requires at least one seed")
         if max_moves <= 0:
-            raise ValueError("Snake Simple 8x8 benchmark max_moves must be positive")
+            raise ValueError(f"{label} benchmark max_moves must be positive")
         self.seeds = seeds
         self.max_moves = max_moves
 
+    def _environment(self, seed, input_indices):
+        return SnakeEnvironment(
+            size=self.size,
+            seed=seed,
+            max_moves=self.max_moves,
+            input_indices=input_indices,
+        )
+
     def load_submission(self, submission):
+        label = self.name
         if submission.config.benchmark != self.name:
-            raise ValueError("Submission benchmark does not match Snake Simple 8x8")
-        indices = selected_input_indices(submission.config)
+            raise ValueError(f"Submission benchmark does not match {label}")
+        indices = selected_input_indices(submission.config, label)
         expected_input = OBSERVATION_SIZE if indices is None else len(indices)
         if submission.config.input_size != expected_input:
             raise ValueError(
-                f"Snake Simple 8x8 submissions must declare input_size {expected_input} "
+                f"{label} submissions must declare input_size {expected_input} "
                 f"for the selected observation features"
             )
         if submission.config.output_size != 4:
-            raise ValueError("Snake Simple 8x8 submissions must declare output_size 4")
+            raise ValueError(f"{label} submissions must declare output_size 4")
         return materialize_submission(submission)
 
     def evaluate(self, submission):
+        label = self.name
         try:
             import torch
         except ImportError as exc:
-            raise RuntimeError("PyTorch is required for Snake Simple 8x8 evaluation") from exc
-        indices = selected_input_indices(submission.config)
+            raise RuntimeError(f"PyTorch is required for {label} evaluation") from exc
+        indices = selected_input_indices(submission.config, label)
         lengths = []
         moves = []
         with torch.no_grad():
             for seed in self.seeds:
-                environment = SnakeEnvironment(
-                    seed=seed,
-                    max_moves=self.max_moves,
-                    input_indices=indices,
-                )
+                environment = self._environment(seed, indices)
                 observation = environment.reset()
                 done = False
                 ticks = 0
@@ -97,3 +107,8 @@ class SnakeBenchmark:
                 "seeds": len(self.seeds),
             },
         )
+
+
+class SnakeSimple16x16Benchmark(SnakeBenchmark):
+    name = "snake-simple-16x16"
+    size = 16

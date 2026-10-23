@@ -15,5 +15,6 @@ def test_main_lists_benchmarks(capsys: pytest.CaptureFixture[str]) -> None:
         "chess-eval",
         "fashion-mnist",
         "mnist",
+        "snake-simple-16x16",
         "snake-simple-8x8",
     ]
