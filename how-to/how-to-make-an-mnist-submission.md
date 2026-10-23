@@ -68,7 +68,8 @@ uv run mnnc evaluate mnist models/mnist/example
 The download writes a single `data/mnist.pt` cache with all 70,000 examples.
 The cache stores raw `(inputs, labels)` tensors, with inputs flattened to 784
 values. The evaluator rejects caches that do not contain exactly 70,000
-samples.
+samples. Older `data/mnist-train.pt` and `data/mnist-test.pt` caches are no
+longer written and can be deleted.
 
 ## Scoring
 

@@ -2,8 +2,10 @@ import gzip
 import struct
 from pathlib import Path
 
+import pytest
 import torch
 
+from minimal_nn_competition.__main__ import main
 from minimal_nn_competition.benchmarks.fashion_mnist import data_loader as fashion_loader
 from minimal_nn_competition.benchmarks.idx import read_idx
 from minimal_nn_competition.benchmarks.mnist import data_loader
@@ -20,6 +22,31 @@ def _label_bytes(labels: list[int]) -> bytes:
 
 def _write_gzip(path: Path, payload: bytes) -> None:
     path.write_bytes(gzip.compress(payload))
+
+
+def _fixtures(tmp_path: Path) -> Path:
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    _write_gzip(fixtures / "train-images-idx3-ubyte.gz", _image_bytes([[1, 2, 3, 4]], 2, 2))
+    _write_gzip(fixtures / "train-labels-idx1-ubyte.gz", _label_bytes([1]))
+    _write_gzip(fixtures / "t10k-images-idx3-ubyte.gz", _image_bytes([[5, 6, 7, 8]], 2, 2))
+    _write_gzip(fixtures / "t10k-labels-idx1-ubyte.gz", _label_bytes([2]))
+    return fixtures
+
+
+def _fake_download(fixtures: Path):
+    def download(url: str, path: Path) -> None:
+        path.write_bytes((fixtures / Path(url).name).read_bytes())
+
+    return download
+
+
+def _recording_download(fixtures: Path, calls: list[str]):
+    def download(url: str, path: Path) -> None:
+        calls.append(Path(url).name)
+        path.write_bytes((fixtures / Path(url).name).read_bytes())
+
+    return download
 
 
 def test_parsers_read_idx_data(tmp_path: Path) -> None:
@@ -99,3 +126,51 @@ def test_image_caches_use_distinct_raw_files(tmp_path: Path, monkeypatch) -> Non
         [9, 10, 11, 12],
         [13, 14, 15, 16],
     ]
+
+
+def test_download_mnist_reuses_cache(tmp_path: Path, monkeypatch) -> None:
+    fixtures = _fixtures(tmp_path)
+    calls: list[str] = []
+    monkeypatch.setattr(data_loader, "_download", _recording_download(fixtures, calls))
+    destination = tmp_path / "data"
+
+    first = data_loader.download_mnist(destination)
+    calls.clear()
+
+    assert data_loader.download_mnist(destination) == first
+    assert calls == []
+
+
+def test_download_mnist_force_rebuilds_cache(tmp_path: Path, monkeypatch) -> None:
+    fixtures = _fixtures(tmp_path)
+    calls: list[str] = []
+    monkeypatch.setattr(data_loader, "_download", _recording_download(fixtures, calls))
+    destination = tmp_path / "data"
+
+    first = data_loader.download_mnist(destination)
+    calls.clear()
+
+    assert data_loader.download_mnist(destination, force=True) == first
+    assert len(calls) == 4
+
+
+def test_download_mnist_does_not_write_split_caches(tmp_path: Path, monkeypatch) -> None:
+    fixtures = _fixtures(tmp_path)
+    monkeypatch.setattr(data_loader, "_download", _fake_download(fixtures))
+    destination = tmp_path / "data"
+
+    data_loader.download_mnist(destination)
+
+    assert not (destination / "mnist-train.pt").exists()
+    assert not (destination / "mnist-test.pt").exists()
+
+
+def test_download_mnist_cli_prints_cache_path(
+    tmp_path: Path, monkeypatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    fixtures = _fixtures(tmp_path)
+    monkeypatch.setattr(data_loader, "_download", _fake_download(fixtures))
+    destination = tmp_path / "data"
+
+    assert main(["download-mnist", "--output", str(destination)]) == 0
+    assert capsys.readouterr().out.strip() == str(destination / "mnist.pt")

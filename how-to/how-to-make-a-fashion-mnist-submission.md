@@ -69,7 +69,8 @@ uv run mnnc evaluate fashion-mnist models/fashion-mnist/example
 The download writes a single `data/fashion-mnist.pt` cache with all 70,000
 examples. The cache stores raw `(inputs, labels)` tensors, with inputs flattened
 to 784 values. The evaluator rejects caches that do not contain exactly 70,000
-samples.
+samples. Older `data/fashion-mnist-train.pt` and `data/fashion-mnist-test.pt`
+caches are no longer written and can be deleted.
 
 ## Scoring
 

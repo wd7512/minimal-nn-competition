@@ -53,7 +53,8 @@ uv run mnnc evaluate <benchmark> models/<benchmark>/<name>
 
 Image benchmarks use `data/mnist.pt` and `data/fashion-mnist.pt` by default;
 each cache contains all 70,000 examples. The evaluator rejects caches that do
-not contain exactly 70,000 samples. Snake Simple 8x8 needs no data.
+not contain exactly 70,000 samples. Legacy `*-train.pt` / `*-test.pt` caches are
+not used. Snake Simple 8x8 needs no data.
 
 Expected passes are `1.0` for MNIST and Fashion-MNIST, and `64.0` for Snake Simple 8x8.
 Confirm the score and parameter count match the PR description. A perfect
