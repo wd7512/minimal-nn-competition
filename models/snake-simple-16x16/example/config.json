@@ -1,0 +1,13 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "example",
+  "author": "example author",
+  "architecture": "mlp",
+  "input_size": 24,
+  "output_size": 4,
+  "hidden_sizes": [
+    64,
+    64
+  ],
+  "activation": "relu"
+}
