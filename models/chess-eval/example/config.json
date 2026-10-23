@@ -1,0 +1,14 @@
+{
+  "benchmark": "chess-eval",
+  "name": "chess-mlp-64",
+  "author": "example author",
+  "architecture": "mlp",
+  "input_size": 769,
+  "output_size": 1,
+  "hidden_sizes": [
+    64,
+    64
+  ],
+  "activation": "relu",
+  "description": "Trained on the fixed Lichess Stockfish evaluation dataset."
+}

@@ -1,6 +1,44 @@
 [
   {
     "author": "example author",
+    "benchmark": "chess-eval",
+    "details": {
+      "fold_scores": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "folds": 20,
+      "mae": 0.010310436598956585,
+      "samples": 10000,
+      "tolerance_pawns": 0.1
+    },
+    "name": "chess-mlp-64",
+    "parameter_count": 53505,
+    "passed": true,
+    "score": 1.0,
+    "score_std": 0.0,
+    "submission": "example"
+  },
+  {
+    "author": "example author",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": false,
