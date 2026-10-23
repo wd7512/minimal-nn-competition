@@ -9,7 +9,7 @@ train = partial(train_classifier, benchmark="mnist")
 
 
 def main(argv=None):
-    return run("MNIST", "data/mnist-train.pt", "models/mnist/example", argv)
+    return run("MNIST", "data/mnist.pt", "models/mnist/example", argv)
 
 
 if __name__ == "__main__":

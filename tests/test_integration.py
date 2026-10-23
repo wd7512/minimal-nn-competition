@@ -31,8 +31,13 @@ def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: 
     assert '"author": "example author"' in out
 
 
-def test_evaluate_fashion_mnist_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    data_path = tmp_path / "fashion-mnist-test.pt"
+def test_evaluate_fashion_mnist_cli(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(FashionMnistBenchmark, "expected_samples", 2)
+    data_path = tmp_path / "fashion-mnist.pt"
     inputs = torch.zeros((2, 784), dtype=torch.uint8)
     torch.save((inputs, torch.tensor([0, 1])), data_path)
     assert (
@@ -47,6 +52,66 @@ def test_evaluate_fashion_mnist_cli(tmp_path: Path, capsys: pytest.CaptureFixtur
         )
         == 0
     )
+    assert '"benchmark": "fashion-mnist"' in capsys.readouterr().out
+
+
+def test_evaluate_mnist_cli(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(MnistBenchmark, "expected_samples", 2)
+    data_path = tmp_path / "mnist.pt"
+    inputs = torch.zeros((2, 784), dtype=torch.uint8)
+    torch.save((inputs, torch.tensor([0, 1])), data_path)
+    assert (
+        main(
+            [
+                "evaluate",
+                "mnist",
+                "models/mnist/example",
+                "--data-path",
+                str(data_path),
+            ]
+        )
+        == 0
+    )
+    assert '"benchmark": "mnist"' in capsys.readouterr().out
+
+
+def test_evaluate_mnist_uses_default_data_path(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(MnistBenchmark, "expected_samples", 2)
+    submission = Path("models/mnist/example").resolve()
+    monkeypatch.chdir(tmp_path)
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    torch.save(
+        (torch.zeros((2, 784), dtype=torch.uint8), torch.tensor([0, 1])),
+        data_dir / "mnist.pt",
+    )
+    assert main(["evaluate", "mnist", str(submission)]) == 0
+    assert '"benchmark": "mnist"' in capsys.readouterr().out
+
+
+def test_evaluate_fashion_mnist_uses_default_data_path(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(FashionMnistBenchmark, "expected_samples", 2)
+    submission = Path("models/fashion-mnist/example").resolve()
+    monkeypatch.chdir(tmp_path)
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    torch.save(
+        (torch.zeros((2, 784), dtype=torch.uint8), torch.tensor([0, 1])),
+        data_dir / "fashion-mnist.pt",
+    )
+    assert main(["evaluate", "fashion-mnist", str(submission)]) == 0
     assert '"benchmark": "fashion-mnist"' in capsys.readouterr().out
 
 
@@ -180,12 +245,17 @@ def test_collect_cli(
     assert capsys.readouterr().out.strip() == str(output)
 
 
-def test_collect_fashion_mnist_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_collect_fashion_mnist_cli(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     import shutil
 
+    monkeypatch.setattr(FashionMnistBenchmark, "expected_samples", 2)
     models = tmp_path / "models"
     shutil.copytree(Path("models/fashion-mnist/example"), models / "fashion-mnist" / "example")
-    data_path = tmp_path / "fashion-mnist-test.pt"
+    data_path = tmp_path / "fashion-mnist.pt"
     inputs = torch.zeros((2, 784), dtype=torch.uint8)
     torch.save((inputs, torch.tensor([0, 1])), data_path)
     output = tmp_path / "leaderboard.json"
@@ -207,3 +277,79 @@ def test_collect_fashion_mnist_cli(tmp_path: Path, capsys: pytest.CaptureFixture
     assert results[0]["benchmark"] == "fashion-mnist"
     assert results[0]["submission"] == "example"
     assert capsys.readouterr().out.strip() == str(output)
+
+
+def test_collect_mnist_cli(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import shutil
+
+    monkeypatch.setattr(MnistBenchmark, "expected_samples", 2)
+    models = tmp_path / "models"
+    shutil.copytree(Path("models/mnist/example"), models / "mnist" / "example")
+    data_path = tmp_path / "mnist.pt"
+    inputs = torch.zeros((2, 784), dtype=torch.uint8)
+    torch.save((inputs, torch.tensor([0, 1])), data_path)
+    output = tmp_path / "leaderboard.json"
+    assert (
+        main(
+            [
+                "collect",
+                "--models",
+                str(models),
+                "--output",
+                str(output),
+                "--data-path",
+                str(data_path),
+            ]
+        )
+        == 0
+    )
+    results = json.loads(output.read_text())
+    assert results[0]["benchmark"] == "mnist"
+    assert results[0]["submission"] == "example"
+    assert capsys.readouterr().out.strip() == str(output)
+
+
+def test_collect_rejects_partial_mnist_dataset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import shutil
+
+    submission = Path("models/mnist/example").resolve()
+    monkeypatch.chdir(tmp_path)
+    models = tmp_path / "models"
+    shutil.copytree(submission, models / "mnist" / "example")
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    torch.save(
+        (torch.zeros((2, 784), dtype=torch.uint8), torch.tensor([0, 1])),
+        data_dir / "mnist.pt",
+    )
+    output = tmp_path / "leaderboard.json"
+
+    assert main(["collect", "--models", str(models), "--output", str(output)]) == 2
+    assert not output.exists()
+
+
+def test_collect_rejects_partial_fashion_mnist_dataset(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import shutil
+
+    submission = Path("models/fashion-mnist/example").resolve()
+    monkeypatch.chdir(tmp_path)
+    models = tmp_path / "models"
+    shutil.copytree(submission, models / "fashion-mnist" / "example")
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    torch.save(
+        (torch.zeros((2, 784), dtype=torch.uint8), torch.tensor([0, 1])),
+        data_dir / "fashion-mnist.pt",
+    )
+    output = tmp_path / "leaderboard.json"
+
+    assert main(["collect", "--models", str(models), "--output", str(output)]) == 2
+    assert not output.exists()

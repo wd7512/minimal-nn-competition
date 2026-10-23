@@ -1,7 +1,9 @@
 # How to make a Fashion-MNIST submission
 
 Fashion-MNIST uses 784 flattened pixel inputs and 10 outputs. The score is
-test-set accuracy; a submission passes at 100%.
+accuracy on all 70,000 Fashion-MNIST examples (the official 60,000 training and
+10,000 test images combined); a submission passes at 100%. There is no held-out
+split.
 
 ## 1. Create the submission
 
@@ -56,24 +58,26 @@ checkpoint.
 
 ## 4. Evaluate locally
 
-Download the official Fashion-MNIST caches, then evaluate the example:
+Download the official Fashion-MNIST dataset, then evaluate the example:
 
 ```bash
 uv sync --dev --locked
 uv run mnnc download-fashion-mnist --output data
-uv run mnnc evaluate fashion-mnist models/fashion-mnist/example \
-  --data-path data/fashion-mnist-test.pt
+uv run mnnc evaluate fashion-mnist models/fashion-mnist/example
 ```
 
-The cache stores raw `(inputs, labels)` tensors, with inputs flattened to 784
-values.
+The download writes a single `data/fashion-mnist.pt` cache with all 70,000
+examples. The cache stores raw `(inputs, labels)` tensors, with inputs flattened
+to 784 values. The evaluator rejects caches that do not contain exactly 70,000
+samples. Older `data/fashion-mnist-train.pt` and `data/fashion-mnist-test.pt`
+caches are no longer written and can be deleted.
 
 ## Scoring
 
-Fashion-MNIST evaluates the full 10,000-sample test set. The score is accuracy
-shown as a percentage; a submission passes at 100%. Results rank passing
-submissions before failing submissions, then by descending score and ascending
-parameter count.
+Fashion-MNIST evaluates all 70,000 examples. Train on the same data you are
+scored on and fit every example exactly. The score is accuracy shown as a
+percentage; a submission passes at 100%. Results rank passing submissions before
+failing submissions, then by descending score and ascending parameter count.
 
 ## Train the example
 
@@ -85,8 +89,8 @@ uv run mnnc train-fashion-mnist
 ```
 
 Training uses Apple MPS automatically when available and takes only a few
-minutes. The example is trained on raw `0-255` pixels; pass `--normalise` to
-train a normalised variant instead.
+minutes. The example trains on all 70,000 examples using raw `0-255` pixels;
+pass `--normalise` to train a normalised variant instead.
 
 ## 5. Open the pull request
 
