@@ -100,4 +100,5 @@ minutes.
 ## 5. Open the pull request
 
 Target the `submission` branch and include only `config.json` and `model.pt`.
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for the review flow.
+See [How to validate a submission](how-to-validate-a-submission.md) for the
+review flow.
