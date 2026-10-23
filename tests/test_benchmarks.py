@@ -7,8 +7,10 @@ import torch
 
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
+from minimal_nn_competition.benchmarks.snake_hard.benchmark import SnakeHardBenchmark
 from minimal_nn_competition.model.entry import Submission, materialize_submission
 
 
@@ -326,3 +328,27 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
         FashionMnistBenchmark().load_submission(submission)
+
+
+def test_snake_hard_registers_by_name() -> None:
+    assert create_benchmark("snake-hard").name == "snake-hard"
+    assert SnakeHardBenchmark().seeds == tuple(range(20))
+
+
+def test_snake_hard_evaluate_dummy_linear(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake-hard",
+            "architecture": "linear",
+            "input_size": 24,
+            "output_size": 4,
+        },
+        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
+    )
+    score, _, passed, details = SnakeHardBenchmark(seeds=(0, 1, 2)).evaluate(
+        materialize_submission(submission)
+    )
+    assert isinstance(score, float)
+    assert passed is False
+    assert details["board_sizes"] == [6, 8, 10]

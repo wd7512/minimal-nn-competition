@@ -290,6 +290,7 @@ def test_internal_cli(tmp_path: Path) -> None:
         "fashion-mnist",
         "mnist",
         "snake",
+        "snake-hard",
     }
     assert all(result.status == "pass" for result in results)
     assert all(result.tokens > 0 for result in results)
