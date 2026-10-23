@@ -246,7 +246,7 @@ def test_ranking_shares_ties_and_drops_failures() -> None:
         entry("core", 90, "c2"),
         entry("core", 90, "c3"),
         entry("core", 0, "c4", status="fail"),
-        entry("snake", 50, "c1"),
+        entry("snake-simple-8x8", 50, "c1"),
     ]
     ranked = rank_internal_results(results)
     assert [(item.scope, item.tokens) for item in ranked] == [
@@ -254,7 +254,7 @@ def test_ranking_shares_ties_and_drops_failures() -> None:
         ("core", 90),
         ("core", 100),
         ("core", 0),
-        ("snake", 50),
+        ("snake-simple-8x8", 50),
     ]
     assert scope_rank(ranked[0], ranked) == 1
     assert scope_rank(ranked[1], ranked) == 1
@@ -264,7 +264,7 @@ def test_ranking_shares_ties_and_drops_failures() -> None:
 def test_upsert_replaces_same_scope_and_commit() -> None:
     old = InternalResult("core", 100, "c1", False, "", "", "")
     new = InternalResult("core", 90, "c1", False, "", "", "")
-    other = InternalResult("snake", 50, "c1", False, "", "", "")
+    other = InternalResult("snake-simple-8x8", 50, "c1", False, "", "", "")
     assert upsert_internal_result([old, other], new) == [other, new]
 
 
@@ -324,7 +324,7 @@ def test_internal_cli(tmp_path: Path) -> None:
         "core",
         "fashion-mnist",
         "mnist",
-        "snake",
+        "snake-simple-8x8",
     }
     assert all(result.status == "pass" for result in results)
     assert all(result.tokens > 0 for result in results)

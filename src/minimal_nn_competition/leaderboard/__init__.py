@@ -8,7 +8,7 @@ from minimal_nn_competition.runner.entry import BenchmarkResult
 
 
 def _game_length(result):
-    if result.benchmark != "snake":
+    if result.benchmark != "snake-simple-8x8":
         return 0.0
     moves = result.details.get("seed_moves")
     if not isinstance(moves, list) or not moves:
@@ -17,8 +17,8 @@ def _game_length(result):
 
 
 def rank_results(results):
-    """Rank by passing status, score, parameter count, then Snake game length."""
-    # For the snake competition it would be nice to have some renderings of the games.
+    """Rank by passing status, score, parameter count, then Snake Simple 8x8 game length."""
+    # For the Snake Simple 8x8 competition it would be nice to have some renderings of the games.
     return sorted(
         results,
         key=lambda result: (

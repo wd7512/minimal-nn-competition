@@ -31,7 +31,7 @@ def test_snake_partial_run_does_not_pass(tmp_path: Path) -> None:
     submission = _write_submission(
         tmp_path,
         {
-            "benchmark": "snake",
+            "benchmark": "snake-simple-8x8",
             "architecture": "linear",
             "input_size": 24,
             "output_size": 4,
@@ -64,7 +64,7 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     submission = _write_submission(
         tmp_path,
         {
-            "benchmark": "snake",
+            "benchmark": "snake-simple-8x8",
             "architecture": "linear",
             "input_size": 24,
             "output_size": 4,
@@ -102,7 +102,7 @@ def test_snake_score_std_across_seeds(tmp_path: Path, monkeypatch: pytest.Monkey
     submission = _write_submission(
         tmp_path,
         {
-            "benchmark": "snake",
+            "benchmark": "snake-simple-8x8",
             "architecture": "linear",
             "input_size": 24,
             "output_size": 4,
@@ -123,7 +123,7 @@ def test_snake_rejects_wrong_config(tmp_path: Path) -> None:
     submission = _write_submission(
         tmp_path,
         {
-            "benchmark": "snake",
+            "benchmark": "snake-simple-8x8",
             "architecture": "linear",
             "input_size": 8,
             "output_size": 4,
@@ -138,7 +138,7 @@ def test_snake_selected_input_indices_build_smaller_model(tmp_path: Path) -> Non
     submission = _write_submission(
         tmp_path,
         {
-            "benchmark": "snake",
+            "benchmark": "snake-simple-8x8",
             "architecture": "linear",
             "input_size": 5,
             "output_size": 4,
@@ -154,7 +154,7 @@ def test_snake_selected_inputs_evaluate(tmp_path: Path) -> None:
     submission = _write_submission(
         tmp_path,
         {
-            "benchmark": "snake",
+            "benchmark": "snake-simple-8x8",
             "architecture": "linear",
             "input_size": 5,
             "output_size": 4,
@@ -174,7 +174,7 @@ def test_snake_rejects_out_of_range_input_indices(tmp_path: Path) -> None:
     submission = _write_submission(
         tmp_path,
         {
-            "benchmark": "snake",
+            "benchmark": "snake-simple-8x8",
             "architecture": "linear",
             "input_size": 1,
             "output_size": 4,

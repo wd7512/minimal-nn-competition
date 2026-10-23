@@ -1,4 +1,4 @@
-"""Snake benchmark: pass/fail on filling the board, then minimum parameters."""
+"""Snake Simple 8x8 benchmark: pass/fail on filling the board, then minimum parameters."""
 
 import statistics
 
@@ -24,42 +24,42 @@ def selected_input_indices(config):
     if indices is None or indices is True:
         return None
     if indices is False:
-        raise ValueError("Snake input_indices must be true or a list of feature indices")
+        raise ValueError("Snake Simple 8x8 input_indices must be true or a list of feature indices")
     if any(index >= OBSERVATION_SIZE for index in indices):
-        raise ValueError(f"Snake input_indices must be in 0..{OBSERVATION_SIZE - 1}")
+        raise ValueError(f"Snake Simple 8x8 input_indices must be in 0..{OBSERVATION_SIZE - 1}")
     return tuple(indices)
 
 
 class SnakeBenchmark:
-    name = "snake"
+    name = "snake-simple-8x8"
 
     def __init__(self, seeds=DEFAULT_SEEDS, max_moves=4096):
         if not seeds:
-            raise ValueError("Snake benchmark requires at least one seed")
+            raise ValueError("Snake Simple 8x8 benchmark requires at least one seed")
         if max_moves <= 0:
-            raise ValueError("Snake benchmark max_moves must be positive")
+            raise ValueError("Snake Simple 8x8 benchmark max_moves must be positive")
         self.seeds = seeds
         self.max_moves = max_moves
 
     def load_submission(self, submission):
         if submission.config.benchmark != self.name:
-            raise ValueError("Submission benchmark does not match Snake")
+            raise ValueError("Submission benchmark does not match Snake Simple 8x8")
         indices = selected_input_indices(submission.config)
         expected_input = OBSERVATION_SIZE if indices is None else len(indices)
         if submission.config.input_size != expected_input:
             raise ValueError(
-                f"Snake submissions must declare input_size {expected_input} "
+                f"Snake Simple 8x8 submissions must declare input_size {expected_input} "
                 f"for the selected observation features"
             )
         if submission.config.output_size != 4:
-            raise ValueError("Snake submissions must declare output_size 4")
+            raise ValueError("Snake Simple 8x8 submissions must declare output_size 4")
         return materialize_submission(submission)
 
     def evaluate(self, submission):
         try:
             import torch
         except ImportError as exc:
-            raise RuntimeError("PyTorch is required for Snake evaluation") from exc
+            raise RuntimeError("PyTorch is required for Snake Simple 8x8 evaluation") from exc
         indices = selected_input_indices(submission.config)
         lengths = []
         moves = []

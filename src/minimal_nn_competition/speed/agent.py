@@ -1,4 +1,4 @@
-"""Fixed perfect-play agent used by the Snake environment speed benchmark."""
+"""Fixed perfect-play agent used by the Snake Simple 8x8 environment speed benchmark."""
 
 from minimal_nn_competition.benchmarks.snake.engine import DIRECTIONS
 

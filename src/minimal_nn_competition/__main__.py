@@ -65,14 +65,14 @@ def _parser():
         "--replays",
         type=Path,
         default=None,
-        help="Directory of snake replay JSON files recorded by collect",
+        help="Directory of Snake Simple 8x8 replay JSON files recorded by collect",
     )
-    speed = add("speed", help="Benchmark the local Snake environment")
+    speed = add("speed", help="Benchmark the local Snake Simple 8x8 environment")
     speed.add_argument("--duration", type=float, default=1.0)
     speed.add_argument("--runs", type=int, default=10)
     speed.add_argument("--warmup", type=float, default=1.0)
     speed.add_argument("--output", type=Path, default=Path("speed-leaderboard.json"))
-    render_speed = add("render-speed", help="Render the hidden Snake speed leaderboard")
+    render_speed = add("render-speed", help="Render the hidden Snake Simple 8x8 speed leaderboard")
     _render_args(render_speed)
     internal = add("internal", help="Score this repo's own code against its test scopes")
     internal.add_argument("--root", type=Path, default=Path("."))
@@ -92,7 +92,7 @@ def _parser():
         "--replay-dir",
         type=Path,
         default=None,
-        help="Record one seed-0 snake game per submission into this directory",
+        help="Record one seed-0 Snake Simple 8x8 game per submission into this directory",
     )
     download = add("download-mnist", help="Download the official MNIST caches")
     _download_args(download)
@@ -106,8 +106,10 @@ def _parser():
     _classifier_train_args(
         train_fashion, "data/fashion-mnist-train.pt", "models/fashion-mnist/example"
     )
-    train_snake = add("train-snake", help="Train the Snake example submission")
-    train_snake.add_argument("--output", type=Path, default=Path("models/snake/example"))
+    train_snake = add(
+        "train-snake-simple-8x8", help="Train the Snake Simple 8x8 example submission"
+    )
+    train_snake.add_argument("--output", type=Path, default=Path("models/snake-simple-8x8/example"))
     train_snake.add_argument("--iterations", type=int, default=600)
     _train_common(train_snake)
     return parser
@@ -230,7 +232,10 @@ def main(argv=None):
                     kwargs["data_path"] = args.fashion_mnist_data_path
                 benchmark = create_benchmark(submission.config.benchmark, **kwargs)
                 results.append(evaluate_submission(submission, benchmark))
-                if args.replay_dir is not None and submission.config.benchmark == "snake":
+                if (
+                    args.replay_dir is not None
+                    and submission.config.benchmark == "snake-simple-8x8"
+                ):
                     _record_replay(args.replay_dir, config_path.parent.name, benchmark, submission)
             except (OSError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:
                 logger.error("%s: %s", config_path.parent, exc)
@@ -272,7 +277,7 @@ def main(argv=None):
         except (FileNotFoundError, OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
-    if args.command == "train-snake":
+    if args.command == "train-snake-simple-8x8":
         from minimal_nn_competition.examples.snake_submission import train
 
         try:
@@ -286,7 +291,7 @@ def main(argv=None):
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
-    if args.data_path is not None and args.benchmark == "snake":
+    if args.data_path is not None and args.benchmark == "snake-simple-8x8":
         logger.error("--data-path is only supported for the mnist and fashion-mnist benchmarks")
         return 2
     kwargs = {}

@@ -7,6 +7,8 @@ from itertools import groupby
 
 from minimal_nn_competition.internal import rank_internal_results, scope_rank
 
+_SCOPE_TITLES = {"snake-simple-8x8": "SNAKE SIMPLE 8X8"}
+
 _STYLE = """
 :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
 body { margin: 0 auto; max-width: 72rem; padding: 2rem; line-height: 1.5; }
@@ -37,7 +39,7 @@ def render_internal_html(results):
     for scope, group in groupby(ranked, key=lambda result: result.scope):
         entries = list(group)
         sections.append(
-            f"""<section><h2>{html.escape(scope.upper())}</h2><p class="muted">{sum(1 for result in entries if result.status == "pass")} scored run(s), ranked by ascending token count. Lower is better; equal counts share a rank.</p>{_table(entries)}</section>"""
+            f"""<section><h2>{html.escape(_SCOPE_TITLES.get(scope, scope.upper()))}</h2><p class="muted">{sum(1 for result in entries if result.status == "pass")} scored run(s), ranked by ascending token count. Lower is better; equal counts share a rank.</p>{_table(entries)}</section>"""
         )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Internal Token Leaderboard</title><style>{_STYLE}</style></head><body><header><h1>Internal Token Leaderboard</h1><p>Syntactic compactness of this repo's own code: keywords, operators, and literals count; identifiers, comments, whitespace, docstrings, and type annotations do not. A scope scores only when all of its mapped tests pass.</p><p><a href="../">Main leaderboard</a> · <a href="speed/">Speed board</a> · <a href="leaderboard.json">Raw internal JSON</a></p></header>{"".join(sections) or "<p>No internal results have been recorded yet.</p>"}</body></html>
 """

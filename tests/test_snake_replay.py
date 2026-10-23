@@ -80,17 +80,22 @@ def test_render_game_html() -> None:
 def _results() -> list[BenchmarkResult]:
     return [
         BenchmarkResult(
-            "example", "snake", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
+            "example",
+            "snake-simple-8x8",
+            8.0,
+            False,
+            20,
+            {"max_length": 64, "seed_moves": [10, 20]},
         ),
     ]
 
 
 def test_game_length_text() -> None:
     result = BenchmarkResult(
-        "example", "snake", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
+        "example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
     )
     assert _game_length_text(result) == "15.0 ± 5.0"
-    missing = BenchmarkResult("example", "snake", 8.0, False, 20, {"max_length": 64})
+    missing = BenchmarkResult("example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64})
     assert _game_length_text(missing) == "-"
 
 
@@ -121,7 +126,7 @@ def test_render_site_without_replays_has_no_replay_column(tmp_path: Path) -> Non
 
 def test_render_game_pages_uses_slug_lookup(tmp_path: Path) -> None:
     payload = record_game(_right_model())
-    result = BenchmarkResult("my model", "snake", 8.0, False, 20, {"max_length": 64})
+    result = BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64})
     links = render_game_pages([result], {"my_model": payload}, tmp_path)
     assert links == {"my model": "games/my_model.html"}
     assert (tmp_path / "games" / "my_model.html").is_file()
@@ -130,8 +135,8 @@ def test_render_game_pages_uses_slug_lookup(tmp_path: Path) -> None:
 def test_render_game_pages_rejects_slug_collisions(tmp_path: Path) -> None:
     payload = record_game(_right_model())
     results = [
-        BenchmarkResult("my model", "snake", 8.0, False, 20, {"max_length": 64}),
-        BenchmarkResult("my_model", "snake", 8.0, False, 20, {"max_length": 64}),
+        BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
+        BenchmarkResult("my_model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
     ]
     with pytest.raises(ValueError, match="collision"):
         render_game_pages(results, {"my_model": payload}, tmp_path)
@@ -152,7 +157,9 @@ def test_collect_reports_replay_dir_errors(
     import shutil
 
     models = tmp_path / "models"
-    shutil.copytree(Path("models/snake/example"), models / "snake" / "example")
+    shutil.copytree(
+        Path("models/snake-simple-8x8/example"), models / "snake-simple-8x8" / "example"
+    )
     replays = tmp_path / "replays"
     replays.write_text("not a directory")
     assert (
@@ -178,7 +185,9 @@ def test_collect_and_render_replay_cli(
     import shutil
 
     models = tmp_path / "models"
-    shutil.copytree(Path("models/snake/example"), models / "snake" / "example")
+    shutil.copytree(
+        Path("models/snake-simple-8x8/example"), models / "snake-simple-8x8" / "example"
+    )
     output = tmp_path / "leaderboard.json"
     replays = tmp_path / "replays"
     assert (
@@ -206,12 +215,12 @@ def test_collect_and_render_replay_cli(
 def test_collect_records_replay_for_selected_input_indices(
     tmp_path: Path, fast_snake_cli: None
 ) -> None:
-    directory = tmp_path / "models" / "snake" / "selected"
+    directory = tmp_path / "models" / "snake-simple-8x8" / "selected"
     directory.mkdir(parents=True)
     (directory / "config.json").write_text(
         json.dumps(
             {
-                "benchmark": "snake",
+                "benchmark": "snake-simple-8x8",
                 "name": "selected",
                 "author": "tester",
                 "architecture": "linear",
@@ -273,7 +282,7 @@ def test_snake_training_writes_submission(tmp_path: Path, monkeypatch: pytest.Mo
         device_name="cpu",
     )
     config = json.loads((output / "config.json").read_text())
-    assert config["benchmark"] == "snake"
+    assert config["benchmark"] == "snake-simple-8x8"
     assert config["name"] == "submission"
     assert config["hidden_sizes"] == [64, 64]
     assert state.keys() == torch.load(output / "model.pt", weights_only=True).keys()

@@ -11,7 +11,7 @@ def _factories():
     return {
         "fashion-mnist": FashionMnistBenchmark,
         "mnist": MnistBenchmark,
-        "snake": SnakeBenchmark,
+        "snake-simple-8x8": SnakeBenchmark,
     }
 
 

@@ -108,7 +108,7 @@ def test_render_speed_site(tmp_path: Path) -> None:
     result = _result("abc1234567890", 1_234_567.0, 12_345.0)
     index = render_speed_site([result], tmp_path)
     page = index.read_text()
-    assert "Snake Environment Speed" in page
+    assert "Snake Simple 8x8 Environment Speed" in page
     assert "noindex,nofollow" in page
     assert "abc1234" in page
     assert "2026-10-22 00:00:00 UTC" in page

@@ -17,16 +17,16 @@ from minimal_nn_competition.runner.entry import BenchmarkResult
 def test_checked_in_examples_load() -> None:
     fashion_mnist = Submission.from_directory(Path("models/fashion-mnist/example"))
     mnist = Submission.from_directory(Path("models/mnist/example"))
-    snake = Submission.from_directory(Path("models/snake/example"))
+    snake = Submission.from_directory(Path("models/snake-simple-8x8/example"))
     assert FashionMnistBenchmark().load_submission(fashion_mnist).model is not None
     assert MnistBenchmark().load_submission(mnist).model is not None
     assert SnakeBenchmark().load_submission(snake).model is not None
 
 
 def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: None) -> None:
-    assert main(["evaluate", "snake", "models/snake/example"]) == 0
+    assert main(["evaluate", "snake-simple-8x8", "models/snake-simple-8x8/example"]) == 0
     out = capsys.readouterr().out
-    assert '"benchmark": "snake"' in out
+    assert '"benchmark": "snake-simple-8x8"' in out
     assert '"name": "example"' in out
     assert '"author": "example author"' in out
 
@@ -51,7 +51,18 @@ def test_evaluate_fashion_mnist_cli(tmp_path: Path, capsys: pytest.CaptureFixtur
 
 
 def test_data_path_rejected_for_snake(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["evaluate", "snake", "models/snake/example", "--data-path", "data.pt"]) == 2
+    assert (
+        main(
+            [
+                "evaluate",
+                "snake-simple-8x8",
+                "models/snake-simple-8x8/example",
+                "--data-path",
+                "data.pt",
+            ]
+        )
+        == 2
+    )
     assert capsys.readouterr().out == ""
 
 
@@ -59,7 +70,7 @@ def test_render_shows_name_and_author(tmp_path: Path) -> None:
     results = [
         BenchmarkResult(
             "example",
-            "snake",
+            "snake-simple-8x8",
             8.0,
             False,
             20,
@@ -90,7 +101,7 @@ def test_render_site(tmp_path: Path) -> None:
         ),
         BenchmarkResult(
             "snake-example",
-            "snake",
+            "snake-simple-8x8",
             1.0,
             False,
             20,
@@ -102,7 +113,7 @@ def test_render_site(tmp_path: Path) -> None:
     html = index.read_text()
     assert "FASHION-MNIST COMPRESSION" in html
     assert "MNIST COMPRESSION" in html
-    assert "SNAKE GAME" in html
+    assert "SNAKE SIMPLE 8X8" in html
     assert "fashion-example" in html
     assert "mnist-example" in html
     assert 'href="internal/speed/"' in html
@@ -140,7 +151,11 @@ def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     results_path = tmp_path / "leaderboard.json"
     save_results(
         results_path,
-        [BenchmarkResult("snake-example", "snake", 1.0, False, 20, {"seed_lengths": [1]})],
+        [
+            BenchmarkResult(
+                "snake-example", "snake-simple-8x8", 1.0, False, 20, {"seed_lengths": [1]}
+            )
+        ],
     )
     output = tmp_path / "docs"
     assert main(["render", str(results_path), str(output)]) == 0
@@ -154,11 +169,13 @@ def test_collect_cli(
     import shutil
 
     models = tmp_path / "models"
-    shutil.copytree(Path("models/snake/example"), models / "snake" / "example")
+    shutil.copytree(
+        Path("models/snake-simple-8x8/example"), models / "snake-simple-8x8" / "example"
+    )
     output = tmp_path / "leaderboard.json"
     assert main(["collect", "--models", str(models), "--output", str(output)]) == 0
     results = json.loads(output.read_text())
-    assert results[0]["benchmark"] == "snake"
+    assert results[0]["benchmark"] == "snake-simple-8x8"
     assert results[0]["submission"] == "example"
     assert capsys.readouterr().out.strip() == str(output)
 

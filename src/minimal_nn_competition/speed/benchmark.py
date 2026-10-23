@@ -1,4 +1,4 @@
-"""Measure Snake environment throughput with a fixed deterministic agent."""
+"""Measure Snake Simple 8x8 environment throughput with a fixed deterministic agent."""
 
 import json
 import platform
@@ -13,7 +13,7 @@ from pathlib import Path
 from minimal_nn_competition.benchmarks.snake.engine import SnakeEngine
 from minimal_nn_competition.speed.agent import ACTIONS_BY_CELL, AGENT_NAME, BOARD_SIZE, SIZE
 
-HARNESS_VERSION = "snake-speed-v2"
+HARNESS_VERSION = "snake-simple-8x8-speed-v2"
 DEFAULT_DURATION = 1.0
 DEFAULT_RUNS = 10
 DEFAULT_WARMUP = 1.0

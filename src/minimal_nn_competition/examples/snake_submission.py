@@ -96,7 +96,7 @@ def train(
     name=None,
     author="unknown",
 ):
-    """Train the example Snake policy with PPO and write the submission files."""
+    """Train the example Snake Simple 8x8 policy with PPO and write the submission files."""
     import torch
     from torch import nn
     from torch.distributions import Categorical
@@ -108,7 +108,7 @@ def train(
     torch.manual_seed(seed)
     random.seed(seed)
     device = _select_device(device_name)
-    logger.info(f"Training Snake example on {device}")
+    logger.info(f"Training Snake Simple 8x8 example on {device}")
 
     policy = create_model().to(device)
     value_net = create_model(1).to(device)
@@ -206,7 +206,7 @@ def train(
     state_dict = {key: value.cpu() for key, value in policy.state_dict().items()}
     torch.save(state_dict, output_dir / "model.pt")
     config = dict(
-        benchmark="snake",
+        benchmark="snake-simple-8x8",
         name=name or output_dir.name,
         author=author or "unknown",
         architecture="mlp",
@@ -223,7 +223,7 @@ def train(
 def main(argv=None):
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=Path("models/snake/example"))
+    parser.add_argument("--output", type=Path, default=Path("models/snake-simple-8x8/example"))
     parser.add_argument("--iterations", type=int, default=600)
     parser.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
     parser.add_argument(

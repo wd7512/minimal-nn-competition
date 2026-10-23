@@ -67,7 +67,7 @@ tests/test_training.py""".splitlines()
         ),
     ),
     Scope(
-        "snake",
+        "snake-simple-8x8",
         _SNAKE_FILES,
         tuple(
             """tests/test_benchmarks.py::test_snake_partial_run_does_not_pass

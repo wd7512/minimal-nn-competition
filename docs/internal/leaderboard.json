@@ -211,7 +211,7 @@
     "measured_at": "2026-10-23T09:49:13+00:00",
     "python_version": "3.12.14",
     "rules_version": 2,
-    "scope": "snake",
+    "scope": "snake-simple-8x8",
     "status": "pass",
     "tokens": 2412
   },
@@ -223,7 +223,7 @@
     "measured_at": "2026-10-22T22:16:57+00:00",
     "python_version": "3.12.14",
     "rules_version": 1,
-    "scope": "snake",
+    "scope": "snake-simple-8x8",
     "status": "pass",
     "tokens": 3172
   },
@@ -235,7 +235,7 @@
     "measured_at": "2026-10-22T23:47:06+00:00",
     "python_version": "3.12.14",
     "rules_version": 1,
-    "scope": "snake",
+    "scope": "snake-simple-8x8",
     "status": "pass",
     "tokens": 3199
   },
@@ -247,7 +247,7 @@
     "measured_at": "2026-10-22T23:30:50+00:00",
     "python_version": "3.12.14",
     "rules_version": 1,
-    "scope": "snake",
+    "scope": "snake-simple-8x8",
     "status": "pass",
     "tokens": 3199
   },
@@ -259,7 +259,7 @@
     "measured_at": "2026-10-22T23:39:06+00:00",
     "python_version": "3.12.14",
     "rules_version": 1,
-    "scope": "snake",
+    "scope": "snake-simple-8x8",
     "status": "pass",
     "tokens": 3199
   },
@@ -271,7 +271,7 @@
     "measured_at": "2026-10-22T23:33:48+00:00",
     "python_version": "3.12.14",
     "rules_version": 1,
-    "scope": "snake",
+    "scope": "snake-simple-8x8",
     "status": "pass",
     "tokens": 3199
   }

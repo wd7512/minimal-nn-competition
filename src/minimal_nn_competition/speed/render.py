@@ -1,4 +1,4 @@
-"""Render the hidden self-applied Snake speed leaderboard."""
+"""Render the hidden self-applied Snake Simple 8x8 speed leaderboard."""
 
 import html
 import json
@@ -28,7 +28,7 @@ def _table(results):
 
 
 def render_speed_html(results):
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Snake Environment Speed</title><style>{_STYLE}</style></head><body><header><h1>Snake Environment Speed</h1><p>You found the hidden board. A fixed Hamiltonian-cycle agent plays the same 8x8 Snake environment, always filling the board. Each commit is measured with ten one-second runs; the ± value is the population standard deviation. Higher is better.</p><p class="muted">A tick is one SnakeEngine.step() call (game engine only, excluding observation encoding). Older snake-speed-v1 entries include the 7-feature observation encoding, so compare within a harness version.</p><p><a href="../../">Main leaderboard</a> · <a href="../">Internal tokens</a> · <a href="leaderboard.json">Raw speed JSON</a></p></header>{_table(results) if results else "<p>No speed results have been recorded yet.</p>"}</body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Snake Simple 8x8 Environment Speed</title><style>{_STYLE}</style></head><body><header><h1>Snake Simple 8x8 Environment Speed</h1><p>You found the hidden board. A fixed Hamiltonian-cycle agent plays the same Snake Simple 8x8 environment, always filling the board. Each commit is measured with ten one-second runs; the ± value is the population standard deviation. Higher is better.</p><p class="muted">A tick is one SnakeEngine.step() call (game engine only, excluding observation encoding). Older snake-simple-8x8-speed-v1 entries include the 7-feature observation encoding, so compare within a harness version.</p><p><a href="../../">Main leaderboard</a> · <a href="../">Internal tokens</a> · <a href="leaderboard.json">Raw speed JSON</a></p></header>{_table(results) if results else "<p>No speed results have been recorded yet.</p>"}</body></html>
 """
 
 

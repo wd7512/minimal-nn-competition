@@ -83,7 +83,9 @@ def test_single_file_is_rejected(tmp_path: Path) -> None:
 
 
 def test_benchmark_must_match_directory(tmp_path: Path) -> None:
-    directory = _write_submission(tmp_path, config={"benchmark": "snake", "architecture": "mlp"})
+    directory = _write_submission(
+        tmp_path, config={"benchmark": "snake-simple-8x8", "architecture": "mlp"}
+    )
     diff = _diff(
         f"models/mnist/{directory.name}/config.json",
         f"models/mnist/{directory.name}/model.pt",
@@ -121,9 +123,9 @@ def test_missing_identity_is_rejected(tmp_path: Path) -> None:
 def test_valid_input_indices_pass(tmp_path: Path) -> None:
     _write_submission(
         tmp_path,
-        benchmark="snake",
+        benchmark="snake-simple-8x8",
         config={
-            "benchmark": "snake",
+            "benchmark": "snake-simple-8x8",
             "name": "tiny",
             "author": "tester",
             "architecture": "mlp",
@@ -134,7 +136,10 @@ def test_valid_input_indices_pass(tmp_path: Path) -> None:
             "input_indices": [0, 1, 2, 4, 7],
         },
     )
-    diff = _diff("models/snake/tiny/config.json", "models/snake/tiny/model.pt")
+    diff = _diff(
+        "models/snake-simple-8x8/tiny/config.json",
+        "models/snake-simple-8x8/tiny/model.pt",
+    )
     assert _load_script().validate_diff(diff, tmp_path) == []
 
 

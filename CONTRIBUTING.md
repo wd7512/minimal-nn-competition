@@ -16,7 +16,7 @@ is optional.
 
 Benchmark guides:
 
-- [Snake](how-to/how-to-make-a-snake-game-submission.md)
+- [Snake Simple 8x8](how-to/how-to-make-a-snake-simple-8x8-submission.md)
 - [MNIST](how-to/how-to-make-an-mnist-submission.md)
 - [Fashion-MNIST](how-to/how-to-make-a-fashion-mnist-submission.md)
 
@@ -40,7 +40,7 @@ uv build
 
 ## Hidden boards
 
-The site also publishes the Snake speed and internal token boards:
+The site also publishes the Snake Simple 8x8 speed and internal token boards:
 
 ```bash
 uv run mnnc speed

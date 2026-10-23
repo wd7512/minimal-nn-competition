@@ -52,9 +52,9 @@ uv run mnnc evaluate <benchmark> models/<benchmark>/<name>
 ```
 
 Image benchmarks use `data/mnist-test.pt` and
-`data/fashion-mnist-test.pt` by default. Snake needs no data.
+`data/fashion-mnist-test.pt` by default. Snake Simple 8x8 needs no data.
 
-Expected passes are `1.0` for MNIST and Fashion-MNIST, and `64.0` for Snake.
+Expected passes are `1.0` for MNIST and Fashion-MNIST, and `64.0` for Snake Simple 8x8.
 Confirm the score and parameter count match the PR description. A perfect
 Fashion-MNIST score is suspicious: verify it is not MNIST data.
 
@@ -68,7 +68,7 @@ uv run mnnc render leaderboard.json docs --replays replays
 ```
 
 `collect` re-evaluates every model and is the authoritative rebuild. It also
-records a seed-0 replay for each Snake submission. `replays/` is temporary;
+records a seed-0 replay for each Snake Simple 8x8 submission. `replays/` is temporary;
 commit only `leaderboard.json`, `docs/leaderboard.json`, and `docs/`.
 
 ## 6. Check the site
