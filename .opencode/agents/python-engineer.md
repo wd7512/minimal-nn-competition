@@ -2,9 +2,9 @@
 description: Implements small, well-tested Python changes using TDD, SOLID, uv, ruff, ty, and pytest.
 mode: subagent
 permission:
-  read: allow
-  edit: allow
-  bash: ask
+  crossref_*: deny
+  openalex_*: deny
+  pubmed_*: deny
 ---
 
 # Python Engineer
