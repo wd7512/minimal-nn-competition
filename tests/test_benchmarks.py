@@ -7,9 +7,16 @@ import torch
 
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+from minimal_nn_competition.benchmarks.parity.benchmark import ParityBenchmark, sample_dataset
+from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
-from minimal_nn_competition.model.entry import Submission, materialize_submission
+from minimal_nn_competition.model.entry import (
+    LoadedSubmission,
+    Submission,
+    SubmissionConfig,
+    materialize_submission,
+)
 
 
 def _write_submission(
@@ -326,3 +333,85 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
         FashionMnistBenchmark().load_submission(submission)
+
+
+class _ParityOracle(torch.nn.Module):
+    """Predict the exact parity label for any batch of bit-strings."""
+
+    def forward(self, batch: torch.Tensor) -> torch.Tensor:
+        labels = (batch.sum(dim=1) % 2).long()
+        return torch.nn.functional.one_hot(labels, num_classes=2).float()
+
+
+def _oracle_submission(n_bits: int) -> LoadedSubmission:
+    config = SubmissionConfig(
+        benchmark="parity",
+        name="oracle",
+        author="tester",
+        architecture="linear",
+        input_size=n_bits,
+        output_size=2,
+    )
+    return LoadedSubmission(config, {}, _ParityOracle())
+
+
+def test_parity_registers_by_name() -> None:
+    assert create_benchmark("parity").name == "parity"
+    assert ParityBenchmark().seeds == tuple(range(100))
+    assert ParityBenchmark().n_bits == 16
+
+
+def test_parity_dataset_is_deterministic() -> None:
+    first = sample_dataset(4, 0)
+    assert first == sample_dataset(4, 0)
+    assert first != sample_dataset(4, 1)
+    inputs, labels = first
+    assert len(inputs) == len(labels) == 1024
+    assert all(label == int(sum(row)) % 2 for row, label in zip(inputs, labels, strict=True))
+
+
+def test_parity_evaluate_oracle_passes() -> None:
+    score, score_std, passed, details = ParityBenchmark(n_bits=4, seeds=(0, 1)).evaluate(
+        _oracle_submission(4)
+    )
+    assert (score, score_std, passed) == (1.0, 0.0, True)
+    assert details["seed_accuracies"] == [1.0, 1.0]
+    assert details["seeds"] == 2
+    assert details["n_bits"] == 4
+    assert details["samples_per_seed"] == 1024
+
+
+def test_parity_evaluate_dummy_fails(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "parity",
+            "architecture": "linear",
+            "input_size": 4,
+            "output_size": 2,
+        },
+        {"weight": torch.zeros((2, 4)), "bias": torch.zeros(2)},
+    )
+    score, score_std, passed, details = ParityBenchmark(n_bits=4, seeds=(0, 1)).evaluate(
+        materialize_submission(submission)
+    )
+    assert 0.0 <= score < 1.0
+    assert score_std >= 0.0
+    assert passed is False
+    assert len(details["seed_accuracies"]) == 2
+    assert details["seeds"] == 2
+
+
+def test_parity_rejects_wrong_shape(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "parity",
+            "architecture": "linear",
+            "input_size": 8,
+            "output_size": 2,
+        },
+        {"weight": torch.zeros((2, 8)), "bias": torch.zeros(2)},
+    )
+    with pytest.raises(ValueError, match="input_size 16"):
+        ParityBenchmark().load_submission(submission)
