@@ -15,18 +15,39 @@ def replay_slug(submission):
     return _SLUG_RE.sub("_", submission).strip("_") or "game"
 
 
-def record_game(model, seed=REPLAY_SEED, max_moves=4096, input_indices=None):
+def replay_stem(benchmark, submission):
+    """Return a replay file stem that is unique across Snake benchmarks."""
+    return f"{replay_slug(benchmark)}--{replay_slug(submission)}"
+
+
+def record_game(
+    model,
+    seed=REPLAY_SEED,
+    max_moves=4096,
+    input_indices=None,
+    size=8,
+    blocked=(),
+    loop_on_full=False,
+):
     """Play one game and return a JSON-serialisable replay payload."""
     try:
         import torch
     except ImportError as exc:
         raise RuntimeError("PyTorch is required for Snake replays") from exc
-    environment = SnakeEnvironment(seed=seed, max_moves=max_moves, input_indices=input_indices)
+    environment = SnakeEnvironment(
+        size=size,
+        seed=seed,
+        max_moves=max_moves,
+        input_indices=input_indices,
+        blocked=blocked,
+        loop_on_full=loop_on_full,
+    )
 
     def frame():
+        food = environment.food
         return {
             "snake": [list(cell) for cell in environment.snake],
-            "food": list(environment.food),
+            "food": None if food is None else list(food),
         }
 
     observation = environment.reset()
@@ -40,6 +61,7 @@ def record_game(model, seed=REPLAY_SEED, max_moves=4096, input_indices=None):
     return {
         "seed": seed,
         "size": environment.size,
+        "blocked": [list(cell) for cell in environment.blocked],
         "length": len(environment.snake),
         "moves": len(frames) - 1,
         "frames": frames,

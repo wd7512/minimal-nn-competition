@@ -9,8 +9,22 @@ __all__ = ["DIRECTIONS", "SnakeEngine", "SnakeEnvironment"]
 class SnakeEnvironment:
     """Engine plus observation wrapper used by evaluation and training."""
 
-    def __init__(self, size=8, seed=0, max_moves=512, input_indices=None):
-        self.engine = SnakeEngine(size=size, seed=seed, max_moves=max_moves)
+    def __init__(
+        self,
+        size=8,
+        seed=0,
+        max_moves=512,
+        input_indices=None,
+        blocked=(),
+        loop_on_full=False,
+    ):
+        self.engine = SnakeEngine(
+            size=size,
+            seed=seed,
+            max_moves=max_moves,
+            blocked=blocked,
+            loop_on_full=loop_on_full,
+        )
         self.input_indices = tuple(input_indices) if input_indices is not None else None
 
     @property

@@ -6,6 +6,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from minimal_nn_competition.benchmarks.register import available_benchmarks, create_benchmark
+from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.leaderboard import load_results, rank_results, save_results
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission, SubmissionError
@@ -53,6 +54,11 @@ def _parser():
     subparsers = parser.add_subparsers(dest="command", required=True)
     add = subparsers.add_parser
     add("list", help="List available benchmarks")
+    validate_obstacles = add(
+        "validate-snake-obstacles-8x8",
+        help="Prove every seeded obstacle layout has a closed tour and is passable",
+    )
+    validate_obstacles.add_argument("--seeds", type=int, default=100)
     evaluate = add("evaluate", help="Evaluate a submission directory")
     evaluate.add_argument("benchmark", choices=available_benchmarks())
     evaluate.add_argument("submission", type=Path)
@@ -65,7 +71,7 @@ def _parser():
         "--replays",
         type=Path,
         default=None,
-        help="Directory of Snake Simple 8x8 replay JSON files recorded by collect",
+        help="Directory of Snake replay JSON files recorded by collect",
     )
     speed = add("speed", help="Benchmark the local Snake Simple 8x8 environment")
     speed.add_argument("--duration", type=float, default=1.0)
@@ -92,7 +98,7 @@ def _parser():
         "--replay-dir",
         type=Path,
         default=None,
-        help="Record one seed-0 Snake Simple 8x8 game per submission into this directory",
+        help="Record one seed-0 Snake game per submission into this directory",
     )
     download = add("download-mnist", help="Download the official MNIST dataset")
     _download_args(download)
@@ -104,12 +110,12 @@ def _parser():
     _classifier_train_args(train_mnist, "data/mnist.pt", "models/mnist/example")
     train_fashion = add("train-fashion-mnist", help="Train the Fashion-MNIST example submission")
     _classifier_train_args(train_fashion, "data/fashion-mnist.pt", "models/fashion-mnist/example")
-    train_snake = add(
-        "train-snake-simple-8x8", help="Train the Snake Simple 8x8 example submission"
-    )
-    train_snake.add_argument("--output", type=Path, default=Path("models/snake-simple-8x8/example"))
-    train_snake.add_argument("--iterations", type=int, default=600)
-    _train_common(train_snake)
+    for benchmark in SNAKE_BENCHMARKS:
+        train_snake = add(f"train-{benchmark}", help=f"Train the {benchmark} example submission")
+        train_snake.add_argument("--output", type=Path, default=Path(f"models/{benchmark}/example"))
+        train_snake.add_argument("--iterations", type=int, default=600)
+        train_snake.add_argument("--max-moves", type=int, default=None)
+        _train_common(train_snake)
     train_chess = add("train-chess-eval", help="Train the Chess evaluation example submission")
     train_chess.add_argument("--output", type=Path, default=Path("models/chess-eval/example"))
     train_chess.add_argument("--data-path", type=Path, default=None)
@@ -127,18 +133,19 @@ def _record_replay(replay_dir, name, benchmark, submission):
     from minimal_nn_competition.benchmarks.snake.replay import (
         REPLAY_SEED,
         record_game,
-        replay_slug,
+        replay_stem,
         save_replay,
     )
 
     loaded = benchmark.load_submission(submission)
     save_replay(
-        replay_dir / f"{replay_slug(name)}.json",
+        replay_dir / f"{replay_stem(benchmark.name, name)}.json",
         record_game(
             loaded.model,
             seed=REPLAY_SEED,
             max_moves=benchmark.max_moves,
-            input_indices=selected_input_indices(submission.config),
+            input_indices=selected_input_indices(submission.config, benchmark.name),
+            **benchmark.environment_options(REPLAY_SEED),
         ),
     )
 
@@ -160,6 +167,25 @@ def main(argv=None):
     if args.command == "list":
         _emit("\n".join(available_benchmarks()))
         return 0
+    if args.command == "validate-snake-obstacles-8x8":
+        from minimal_nn_competition.benchmarks.snake.layout import validate_seed
+
+        failures = 0
+        for seed in range(args.seeds):
+            try:
+                result = validate_seed(8, seed)
+            except (AssertionError, RuntimeError, ValueError) as exc:
+                logger.error("seed %d failed: %s", seed, exc)
+                failures += 1
+            else:
+                logger.info(
+                    "seed %d passed: %d blocked cells, tour %d, %d moves",
+                    seed,
+                    len(result["blocked"]),
+                    result["tour_length"],
+                    result["moves"],
+                )
+        return 1 if failures else 0
     if args.command == "leaderboard":
         try:
             results = rank_results(load_results(args.path))
@@ -239,10 +265,7 @@ def main(argv=None):
                     kwargs["data_path"] = args.fashion_mnist_data_path
                 benchmark = create_benchmark(submission.config.benchmark, **kwargs)
                 results.append(evaluate_submission(submission, benchmark))
-                if (
-                    args.replay_dir is not None
-                    and submission.config.benchmark == "snake-simple-8x8"
-                ):
+                if args.replay_dir is not None and submission.config.benchmark in SNAKE_BENCHMARKS:
                     _record_replay(args.replay_dir, config_path.parent.name, benchmark, submission)
             except (OSError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:
                 logger.error("%s: %s", config_path.parent, exc)
@@ -284,16 +307,18 @@ def main(argv=None):
         except (FileNotFoundError, OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
-    if args.command == "train-snake-simple-8x8":
+    if args.command in tuple(f"train-{name}" for name in SNAKE_BENCHMARKS):
         from minimal_nn_competition.examples.snake_submission import train
 
         try:
             train(
                 args.output,
                 iterations=args.iterations,
+                max_moves=args.max_moves,
                 device_name=args.device,
                 name=args.name,
                 author=args.author,
+                benchmark=args.command.removeprefix("train-"),
             )
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
@@ -317,7 +342,7 @@ def main(argv=None):
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
-    if args.data_path is not None and args.benchmark == "snake-simple-8x8":
+    if args.data_path is not None and args.benchmark in SNAKE_BENCHMARKS:
         logger.error(
             "--data-path is only supported for the mnist, fashion-mnist, and chess-eval benchmarks"
         )

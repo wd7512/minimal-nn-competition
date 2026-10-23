@@ -36,8 +36,11 @@ def _select_device(requested):
 
 
 def _distance(environment):
+    food = environment.food
+    if food is None:
+        return 0
     head_x, head_y = environment.snake[0]
-    food_x, food_y = environment.food
+    food_x, food_y = food
     return abs(head_x - food_x) + abs(head_y - food_y)
 
 
@@ -65,15 +68,20 @@ def _gae(rewards, values, dones, gamma, lam):
     ]
 
 
-def _evaluate(policy, device, seeds):
+def _evaluate(policy, device, seeds, benchmark):
     import torch
 
     from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
 
     lengths = []
+    wins = []
     with torch.no_grad():
         for seed in seeds:
-            environment = SnakeEnvironment(seed=seed, max_moves=4096)
+            environment = SnakeEnvironment(
+                seed=seed,
+                max_moves=4096,
+                **benchmark.environment_options(seed),
+            )
             observation = environment.reset()
             done = False
             while not done:
@@ -81,6 +89,8 @@ def _evaluate(policy, device, seeds):
                 action = int(torch.argmax(policy(state), dim=1).item())
                 observation, _, done = environment.step(action)
             lengths.append(len(environment.snake))
+            wins.append(bool(getattr(environment, "won", False)))
+    logging.getLogger(__name__).info("Greedy evaluation wins %d/%d", sum(wins), len(wins))
     return lengths
 
 
@@ -88,27 +98,36 @@ def train(
     output_dir,
     iterations=600,
     episodes_per_iteration=4,
-    max_moves=256,
+    max_moves=None,
     update_epochs=4,
     batch_size=64,
     device_name="auto",
     seed=0,
     name=None,
     author="unknown",
+    benchmark="snake-simple-8x8",
 ):
-    """Train the example Snake Simple 8x8 policy with PPO and write the submission files."""
+    """Train the example Snake policy with PPO and write the submission files."""
     import torch
     from torch import nn
     from torch.distributions import Categorical
 
+    from minimal_nn_competition.benchmarks.register import create_benchmark
     from minimal_nn_competition.benchmarks.snake.benchmark import DEFAULT_SEEDS
     from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
+    from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+
+    if benchmark not in SNAKE_BENCHMARKS:
+        raise ValueError(f"Unknown Snake benchmark {benchmark!r}")
+    benchmark_instance = create_benchmark(benchmark)
+    size = benchmark_instance.size
+    max_moves = max_moves or size * size * 4
 
     logger = logging.getLogger(__name__)
     torch.manual_seed(seed)
     random.seed(seed)
     device = _select_device(device_name)
-    logger.info(f"Training Snake Simple 8x8 example on {device}")
+    logger.info(f"Training {benchmark} example on {device}")
 
     policy = create_model().to(device)
     value_net = create_model(1).to(device)
@@ -128,9 +147,11 @@ def train(
         advantages_all = []
         episode_lengths = []
         for episode in range(episodes_per_iteration):
+            episode_seed = seed + iteration * episodes_per_iteration + episode
             environment = SnakeEnvironment(
-                seed=seed + iteration * episodes_per_iteration + episode,
+                seed=episode_seed,
                 max_moves=max_moves,
+                **benchmark_instance.environment_options(episode_seed),
             )
             observation = environment.reset()
             episode_rewards = []
@@ -145,12 +166,13 @@ def train(
                     value = value_net(state).item()
                 previous_distance = _distance(environment)
                 observation, reward, done = environment.step(action)
+                shaped_reward = _shape_reward(previous_distance, _distance(environment), reward)
+                if done and getattr(environment, "won", False):
+                    shaped_reward += 1.0
                 states.append(state.squeeze(0))
                 actions.append(action)
                 old_log_probs.append(log_prob.item())
-                episode_rewards.append(
-                    _shape_reward(previous_distance, _distance(environment), reward)
-                )
+                episode_rewards.append(shaped_reward)
                 episode_values.append(value)
                 episode_dones.append(done)
                 if done:
@@ -197,7 +219,7 @@ def train(
                 f"iteration {iteration + 1}/{iterations} length {mean_length:.1f} food {mean_length - 1:.2f}"
             )
 
-    lengths = _evaluate(policy, device, DEFAULT_SEEDS)
+    lengths = _evaluate(policy, device, DEFAULT_SEEDS, benchmark_instance)
     logger.info(
         f"Greedy evaluation: mean {statistics.fmean(lengths):.2f}, std {statistics.pstdev(lengths):.2f}, lengths {lengths}"
     )
@@ -206,7 +228,7 @@ def train(
     state_dict = {key: value.cpu() for key, value in policy.state_dict().items()}
     torch.save(state_dict, output_dir / "model.pt")
     config = dict(
-        benchmark="snake-simple-8x8",
+        benchmark=benchmark,
         name=name or output_dir.name,
         author=author or "unknown",
         architecture="mlp",
@@ -225,6 +247,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("models/snake-simple-8x8/example"))
     parser.add_argument("--iterations", type=int, default=600)
+    parser.add_argument("--max-moves", type=int, default=None)
     parser.add_argument("--device", default="auto", choices=("auto", "mps", "cpu"))
     parser.add_argument(
         "--name", default=None, help="Display name (defaults to the output directory)"
@@ -234,6 +257,7 @@ def main(argv=None):
     train(
         args.output,
         iterations=args.iterations,
+        max_moves=args.max_moves,
         device_name=args.device,
         name=args.name,
         author=args.author,
