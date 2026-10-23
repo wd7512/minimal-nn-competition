@@ -13,5 +13,5 @@
   ],
   "activation": "relu",
   "normalisation": true,
-  "description": "MNIST test cache memorized by a 784-4-16-16-16-10 ReLU MLP; 100% accuracy."
+  "description": "784-4-16-16-16-10 ReLU MLP; scores 80.44% on the full 70,000-example MNIST dataset."
 }
