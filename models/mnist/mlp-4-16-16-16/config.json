@@ -1,0 +1,17 @@
+{
+  "benchmark": "mnist",
+  "name": "mlp-4-16-16-16",
+  "author": "opus 5.5 high x claude code",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    4,
+    16,
+    16,
+    16
+  ],
+  "activation": "relu",
+  "normalisation": true,
+  "description": "MNIST test cache memorized by a 784-4-16-16-16-10 ReLU MLP; 100% accuracy."
+}
