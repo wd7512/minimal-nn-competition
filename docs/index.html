@@ -1,12 +1,385 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>
-:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
-body { margin: 0 auto; max-width: 72rem; padding: 2rem; line-height: 1.5; }
-table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
-th, td { border-bottom: 1px solid #8884; padding: 0.5rem; text-align: left; }
-th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
-tr.passed td { font-weight: 600; }
-.muted { opacity: 0.65; }
-footer { margin-top: 2rem; text-align: right; }
-.version { color: inherit; opacity: 0.35; text-decoration: none; font-size: 0.8rem; }
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>
+:root {
+  color-scheme: light dark;
+  --bg: #f4f6f4;
+  --surface: #fbfcfa;
+  --ink: #17231f;
+  --muted: #63706b;
+  --rule: #d9e0db;
+  --rule-strong: #aebbb5;
+  --hover: #edf2ef;
+  --pass: #1f6b43;
+  --fail: #8a3434;
+  --focus: #2f5f57;
+  --accent-snake: #256b66;
+  --accent-mnist: #8a5b16;
+  --accent-chess: #3f5f86;
+  --display: ui-serif, Georgia, "Times New Roman", serif;
+  --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1513;
+    --surface: #131d1a;
+    --ink: #e7efeb;
+    --muted: #9aaba4;
+    --rule: #273631;
+    --rule-strong: #40534c;
+    --hover: #182622;
+    --pass: #74cf9b;
+    --fail: #f09b91;
+    --focus: #8bcacb;
+    --accent-snake: #7fcac1;
+    --accent-mnist: #e0b76b;
+    --accent-chess: #9bb9df;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+}
+a { color: inherit; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+[data-accent="snake"] { --accent: var(--accent-snake); }
+[data-accent="mnist"] { --accent: var(--accent-mnist); }
+[data-accent="chess"] { --accent: var(--accent-chess); }
+[data-accent="default"] { --accent: var(--accent-snake); }
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 9px/1 var(--mono);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.status::before { content: ""; width: 5px; height: 5px; background: currentColor; flex: none; }
+.status--pass { color: var(--pass); }
+.status--fail { color: var(--fail); }
+
+.shell {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px 32px 80px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 64px;
+}
+.rail { position: sticky; top: 32px; align-self: start; }
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font: 700 11px/1.4 var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.brand-dots { display: inline-flex; gap: 3px; }
+.brand-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.brand-dots span:nth-child(1) { background: var(--accent-snake); }
+.brand-dots span:nth-child(2) { background: var(--accent-mnist); }
+.brand-dots span:nth-child(3) { background: var(--accent-chess); }
+.rail__label {
+  margin: 24px 0 8px;
+  font: 700 10px/1.4 var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rail nav { display: grid; border-top: 1px solid var(--rule); }
+.rail a {
+  display: grid;
+  grid-template-columns: 6px 22px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink);
+  text-decoration: none;
+}
+.rail__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.rail__index { font: 10px/1.4 var(--mono); color: var(--muted); }
+.rail a strong { font-weight: 600; }
+.rail a:hover strong { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.rail a small { font: 10px/1.4 var(--mono); color: var(--muted); white-space: nowrap; }
+.rail__note { margin: 20px 0 0; font: 11px/1.5 var(--mono); color: var(--muted); }
+.main { min-width: 0; }
+.masthead { border-bottom: 1px solid var(--rule-strong); padding-bottom: 32px; }
+.eyebrow {
+  margin: 0;
+  font: 700 10px/1.4 var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+h1 {
+  margin: 16px 0 0;
+  font: 400 clamp(2.8rem, 5vw, 4.8rem)/.96 var(--display);
+  letter-spacing: -.04em;
+  max-width: 13ch;
+}
+.lead { margin: 20px 0 0; max-width: 58ch; color: var(--muted); font-size: 18px; }
+.links {
+  margin: 16px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font: 11px/1.4 var(--mono);
+}
+.links span { color: var(--muted); }
+.group { padding: 48px 0 24px; }
+.group + .group { border-top: 1px solid var(--rule); padding-top: 48px; }
+.group:last-child { padding-bottom: 48px; }
+.group__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 32px;
+  align-items: start;
+}
+.group__index { color: var(--accent); }
+.group__title {
+  margin: 8px 0 0;
+  font: 400 clamp(2rem, 3.6vw, 3.2rem)/1 var(--display);
+  letter-spacing: -.03em;
+}
+.group__title-trigger {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.js .group__title-trigger.is-clickable { cursor: pointer; }
+.js .group__title-trigger.is-clickable:hover .group__title-text {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 5px;
+}
+.cycle { display: none; font: 12px/1 var(--mono); color: var(--accent); }
+.js .cycle { display: inline; }
+.group__desc { margin: 12px 0 0; max-width: 58ch; color: var(--muted); }
+.group__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font: 11px/1.4 var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.group__stats strong {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.version-row {
+  display: none;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+.js .version-row { display: flex; }
+.version-row__label {
+  margin: 0;
+  font: 700 10px/1.4 var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.version-links { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline; }
+.version-link {
+  appearance: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  padding: 0 0 3px;
+  font: 600 13px/1.4 var(--mono);
+  cursor: pointer;
+}
+.version-link:hover { color: var(--ink); }
+.version-link.is-active { color: var(--ink); border-bottom-color: var(--accent); }
+.version-hint { margin: 0; font: 10px/1.4 var(--mono); color: var(--muted); }
+.version-panel { margin-top: 20px; }
+.version-panel + .version-panel { margin-top: 40px; }
+.js .version-panel:not(.is-active) { display: none; }
+.table-note { margin: 0 0 8px; font: 10px/1.4 var(--mono); color: var(--muted); }
+.table-note strong { color: var(--ink); font-weight: 600; }
+.table-wrap {
+  overflow-x: auto;
+  border-top: 1px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule-strong);
+  -webkit-overflow-scrolling: touch;
+}
+table.results { width: 100%; border-collapse: collapse; min-width: 40rem; }
+.results th, .results td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+.results thead th {
+  background: var(--surface);
+  font: 700 9px/1.4 var(--mono);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.results tbody tr:last-child td { border-bottom: 0; }
+.results tbody tr:hover td { background: var(--hover); }
+.results th:first-child, .results td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+.results thead th:first-child { background: var(--surface); z-index: 3; }
+.results tbody tr:hover td:first-child { background: var(--hover); }
+td.rank { font: 11px/1.4 var(--mono); color: var(--muted); }
+td.submission a {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 3px;
+}
+td.submission a:hover { text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+.submission__name { font-weight: 600; }
+.submission__id { font: 10px/1.35 var(--mono); color: var(--muted); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.num { font-family: var(--mono); font-size: 12px; }
+td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: baseline;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule-strong);
+  color: var(--muted);
+  font: 10px/1.5 var(--mono);
+}
+.footer p { margin: 0; }
+.version { color: inherit; opacity: .55; text-decoration: none; }
 .version:hover, .version:focus-visible { opacity: 1; }
-</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, Snake benchmarks, and Chess evaluation.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header><section><h2>CHESS EVALUATION</h2><p class="muted">2 result(s), ranked by pass status, score, then parameter count.</p><table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th><th>Score</th><th>Status</th><th>Normalisation</th><th>Parameters</th></tr></thead><tbody><tr class="passed"><td>1</td><td>mlp-47-16</td><td>mlp-47-16</td><td>muse spark 1.3 x hermes</td><td>100.00% ± 0.00%</td><td>pass</td><td>-</td><td>36975</td></tr><tr class="passed"><td>2</td><td>example</td><td>chess-mlp-64</td><td>example author</td><td>100.00% ± 0.00%</td><td>pass</td><td>-</td><td>53505</td></tr></tbody></table></section><section><h2>FASHION-MNIST COMPRESSION</h2><p class="muted">3 result(s), ranked by pass status, score, then parameter count.</p><table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th><th>Score</th><th>Status</th><th>Normalisation</th><th>Parameters</th></tr></thead><tbody><tr><td>1</td><td>example</td><td>example</td><td>example author</td><td>89.62%</td><td>fail</td><td>false</td><td>50890</td></tr><tr><td>2</td><td>mlp-13</td><td>mlp-13</td><td>muse spark 1.3 x hermes</td><td>82.82%</td><td>fail</td><td>true</td><td>10345</td></tr><tr><td>3</td><td>mlp-13-8</td><td>mlp-13-8</td><td>muse spark 1.3 x hermes</td><td>82.22%</td><td>fail</td><td>true</td><td>10407</td></tr></tbody></table></section><section><h2>MNIST COMPRESSION</h2><p class="muted">4 result(s), ranked by pass status, score, then parameter count.</p><table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th><th>Score</th><th>Status</th><th>Normalisation</th><th>Parameters</th></tr></thead><tbody><tr><td>1</td><td>example</td><td>example</td><td>example author</td><td>98.95%</td><td>fail</td><td>false</td><td>50890</td></tr><tr><td>2</td><td>mlp-7-7</td><td>mlp-7-7</td><td>muse spark 1.3 x hermes</td><td>87.38%</td><td>fail</td><td>true</td><td>5631</td></tr><tr><td>3</td><td>mlp-6-6</td><td>mlp-6-6</td><td>muse spark 1.3 x hermes</td><td>85.34%</td><td>fail</td><td>true</td><td>4822</td></tr><tr><td>4</td><td>mlp-4-16-16-16</td><td>mlp-4-16-16-16</td><td>opus 5.5 high x claude code</td><td>80.44%</td><td>fail</td><td>true</td><td>3934</td></tr></tbody></table></section><section><h2>SNAKE OBSTACLES 8X8</h2><p class="muted">1 result(s), ranked by pass status, score, parameter count, then game length.</p><table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th><th>Score</th><th>Game length</th><th>Status</th><th>Normalisation</th><th>Parameters</th><th>Replay</th></tr></thead><tbody><tr><td>1</td><td>example</td><td>example</td><td>example author</td><td>1.82% ± 0.57%</td><td>5.1 ± 3.4</td><td>fail</td><td>-</td><td>6020</td><td><a href="games/snake-obstacles-8x8--example.html">view game</a></td></tr></tbody></table></section><section><h2>SNAKE SIMPLE 16X16</h2><p class="muted">1 result(s), ranked by pass status, score, parameter count, then game length.</p><table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th><th>Score</th><th>Game length</th><th>Status</th><th>Normalisation</th><th>Parameters</th><th>Replay</th></tr></thead><tbody><tr><td>1</td><td>example</td><td>example</td><td>example author</td><td>0.44% ± 0.14%</td><td>10.8 ± 10.9</td><td>fail</td><td>-</td><td>6020</td><td><a href="games/snake-simple-16x16--example.html">view game</a></td></tr></tbody></table></section><section><h2>SNAKE SIMPLE 8X8</h2><p class="muted">10 result(s), ranked by pass status, score, parameter count, then game length.</p><table><thead><tr><th>#</th><th>Submission</th><th>Name</th><th>Author</th><th>Score</th><th>Game length</th><th>Status</th><th>Normalisation</th><th>Parameters</th><th>Replay</th></tr></thead><tbody><tr class="passed"><td>1</td><td>hamiltonian-3-h6</td><td>hamiltonian-3-h6</td><td>opus 5.5 high x claude code</td><td>100.00% ± 0.00%</td><td>1027.8 ± 79.1</td><td>pass</td><td>-</td><td>37</td><td><a href="games/snake-simple-8x8--hamiltonian-3-h6.html">view game</a></td></tr><tr class="passed"><td>2</td><td>serpentine-8-h6</td><td>serpentine-8-h6</td><td>muse spark 1.3 x hermes</td><td>100.00% ± 0.00%</td><td>1041.6 ± 78.2</td><td>pass</td><td>-</td><td>92</td><td><a href="games/snake-simple-8x8--serpentine-8-h6.html">view game</a></td></tr><tr class="passed"><td>3</td><td>serpentine-6-6-fs14</td><td>serpentine-6-6-fs14</td><td>muse spark 1.3 x hermes</td><td>100.00% ± 0.00%</td><td>1041.6 ± 78.2</td><td>pass</td><td>-</td><td>160</td><td><a href="games/snake-simple-8x8--serpentine-6-6-fs14.html">view game</a></td></tr><tr class="passed"><td>4</td><td>hamiltonian-8-8-fs14</td><td>hamiltonian-8-8-fs14</td><td>gemini 3.6 flash x jules</td><td>100.00% ± 0.00%</td><td>1039.7 ± 93.0</td><td>pass</td><td>-</td><td>228</td><td><a href="games/snake-simple-8x8--hamiltonian-8-8-fs14.html">view game</a></td></tr><tr class="passed"><td>5</td><td>serpentine-8-8-fs14</td><td>serpentine-8-8-fs14</td><td>muse spark 1.3 x hermes</td><td>100.00% ± 0.00%</td><td>1041.6 ± 78.2</td><td>pass</td><td>-</td><td>228</td><td><a href="games/snake-simple-8x8--serpentine-8-8-fs14.html">view game</a></td></tr><tr class="passed"><td>6</td><td>hamiltonian-20-16-fs14</td><td>hamiltonian-20-16-fs14</td><td>muse spark 1.3 x hermes</td><td>100.00% ± 0.00%</td><td>1042.0 ± 81.3</td><td>pass</td><td>-</td><td>704</td><td><a href="games/snake-simple-8x8--hamiltonian-20-16-fs14.html">view game</a></td></tr><tr class="passed"><td>7</td><td>shortcut-16-16-fs22</td><td>shortcut-16-16-fs22</td><td>opus 5.5 high x claude code</td><td>100.00% ± 0.00%</td><td>805.4 ± 72.3</td><td>pass</td><td>-</td><td>708</td><td><a href="games/snake-simple-8x8--shortcut-16-16-fs22.html">view game</a></td></tr><tr class="passed"><td>8</td><td>hamiltonian-24-16</td><td>hamiltonian-24-16</td><td>muse spark 1.3 x hermes</td><td>100.00% ± 0.00%</td><td>1042.0 ± 81.3</td><td>pass</td><td>-</td><td>1068</td><td><a href="games/snake-simple-8x8--hamiltonian-24-16.html">view game</a></td></tr><tr class="passed"><td>9</td><td>table-128-128</td><td>table-128-128</td><td>muse spark 1.3 x hermes</td><td>100.00% ± 0.00%</td><td>706.8 ± 53.7</td><td>pass</td><td>-</td><td>18948</td><td><a href="games/snake-simple-8x8--table-128-128.html">view game</a></td></tr><tr><td>10</td><td>example</td><td>example</td><td>example author</td><td>11.42% ± 8.44%</td><td>2170.5 ± 2004.4</td><td>fail</td><td>-</td><td>6020</td><td><a href="games/snake-simple-8x8--example.html">view game</a></td></tr></tbody></table></section><footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v0.0.2</a></footer></body></html>
+.js-only { display: none; }
+.js .js-only { display: inline; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+@media (max-width: 1024px) {
+  .shell { grid-template-columns: 1fr; gap: 32px; padding: 32px 24px 64px; }
+  .rail { position: static; }
+  .rail nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rail a { grid-template-columns: 6px 20px minmax(0, 1fr); border-bottom: 0; padding: 10px 12px 10px 0; }
+  .rail a + a { border-left: 1px solid var(--rule); padding-left: 12px; }
+  .rail a small { grid-column: 3; }
+  .rail__note { display: none; }
+}
+@media (max-width: 700px) {
+  .shell { padding: 24px 16px 56px; }
+  .rail nav { grid-template-columns: 1fr; }
+  .rail a { border-left: 0; border-bottom: 1px solid var(--rule); padding-left: 0; }
+  .rail a + a { border-left: 0; padding-left: 0; }
+  .group__head { grid-template-columns: 1fr; }
+  .group__stats { flex-direction: row; align-items: baseline; gap: 16px; }
+  .footer { flex-direction: column; gap: 8px; }
+}
+</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups"><a href="#snake" data-accent="snake"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">01</span><strong>Snake</strong><small>12 runs</small></a><a href="#mnist" data-accent="mnist"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">02</span><strong>MNIST</strong><small>7 runs</small></a><a href="#chess" data-accent="chess"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">03</span><strong>Chess evaluation</strong><small>1 run</small></a></nav><p class="rail__note">20 runs · 10 pass<br><span class="js-only">Click a group title to cycle its versions.</span></p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Small PyTorch state-dict submissions for image classification, Snake variants, and chess evaluation.</p><p class="links"><a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit a model</a><span>·</span><a href="leaderboard.json">Raw leaderboard JSON</a></p></header><section class="group" id="snake" data-group-section data-accent="snake" data-title="Snake" aria-labelledby="snake-title"><div class="group__head"><div><p class="eyebrow"><span class="group__index">01</span> / Games</p><h2 class="group__title" id="snake-title"><span class="group__title-trigger" data-cycle-trigger><span class="group__title-text">Snake</span><span class="cycle" aria-hidden="true">↻</span></span></h2><p class="group__desc">Three board variants: open 8×8, open 16×16, and 8×8 with deterministic blocked cells.</p></div><div class="group__stats"><span><strong data-count>12</strong> <span data-count-word>runs</span></span><span><strong data-pass>9</strong> pass</span></div></div><div class="version-row"><p class="version-row__label">Version</p><div class="version-links" role="group" aria-label="Snake versions"><button type="button" class="version-link is-active" data-version-button data-version="snake-simple-8x8" aria-controls="panel-snake-simple-8x8" aria-pressed="true">Simple 8×8</button><button type="button" class="version-link" data-version-button data-version="snake-simple-16x16" aria-controls="panel-snake-simple-16x16" aria-pressed="false">Simple 16×16</button><button type="button" class="version-link" data-version-button data-version="snake-obstacles-8x8" aria-controls="panel-snake-obstacles-8x8" aria-pressed="false">Obstacles 8×8</button></div><p class="version-hint"><span data-current aria-live="polite">Simple 8×8 · 1 of 3</span> · click the title to cycle</p></div><div class="version-panel is-active" id="panel-snake-simple-8x8" data-version="snake-simple-8x8" data-label="Simple 8×8" data-count="10" data-pass="9"><p class="table-note"><strong>Simple 8×8</strong> · 64-cell open board · Ranked by pass status, score, parameter count, then game length. · Select a submission for full details.</p><div class="table-wrap" role="region" tabindex="0" aria-label="Simple 8×8 results"><table class="results"><caption class="sr-only">Simple 8×8 results, ranked by pass status, score, parameter count, then game length.</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Submission</th><th scope="col" class="num">Score</th><th scope="col">Status</th><th scope="col" class="num">Parameters</th></tr></thead><tbody><tr><td class="rank">1</td><td class="submission"><a href="submissions/snake-simple-8x8--hamiltonian-3-h6.html" aria-label="View details for hamiltonian-3-h6"><span class="submission__name">hamiltonian-3-h6</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">37</td></tr><tr><td class="rank">2</td><td class="submission"><a href="submissions/snake-simple-8x8--serpentine-8-h6.html" aria-label="View details for serpentine-8-h6"><span class="submission__name">serpentine-8-h6</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">92</td></tr><tr><td class="rank">3</td><td class="submission"><a href="submissions/snake-simple-8x8--serpentine-6-6-fs14.html" aria-label="View details for serpentine-6-6-fs14"><span class="submission__name">serpentine-6-6-fs14</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">160</td></tr><tr><td class="rank">4</td><td class="submission"><a href="submissions/snake-simple-8x8--hamiltonian-8-8-fs14.html" aria-label="View details for hamiltonian-8-8-fs14"><span class="submission__name">hamiltonian-8-8-fs14</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">228</td></tr><tr><td class="rank">5</td><td class="submission"><a href="submissions/snake-simple-8x8--serpentine-8-8-fs14.html" aria-label="View details for serpentine-8-8-fs14"><span class="submission__name">serpentine-8-8-fs14</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">228</td></tr><tr><td class="rank">6</td><td class="submission"><a href="submissions/snake-simple-8x8--hamiltonian-20-16-fs14.html" aria-label="View details for hamiltonian-20-16-fs14"><span class="submission__name">hamiltonian-20-16-fs14</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">704</td></tr><tr><td class="rank">7</td><td class="submission"><a href="submissions/snake-simple-8x8--shortcut-16-16-fs22.html" aria-label="View details for shortcut-16-16-fs22"><span class="submission__name">shortcut-16-16-fs22</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">708</td></tr><tr><td class="rank">8</td><td class="submission"><a href="submissions/snake-simple-8x8--hamiltonian-24-16.html" aria-label="View details for hamiltonian-24-16"><span class="submission__name">hamiltonian-24-16</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">1,068</td></tr><tr><td class="rank">9</td><td class="submission"><a href="submissions/snake-simple-8x8--table-128-128.html" aria-label="View details for table-128-128"><span class="submission__name">table-128-128</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">18,948</td></tr><tr><td class="rank">10</td><td class="submission"><a href="submissions/snake-simple-8x8--example.html" aria-label="View details for example"><span class="submission__name">example</span></a></td><td class="num score">11.42% ± 8.44%</td><td><span class="status status--fail">fail</span></td><td class="num">6,020</td></tr></tbody></table></div></div><div class="version-panel" id="panel-snake-simple-16x16" data-version="snake-simple-16x16" data-label="Simple 16×16" data-count="1" data-pass="0"><p class="table-note"><strong>Simple 16×16</strong> · 256-cell open board · Ranked by pass status, score, parameter count, then game length. · Select a submission for full details.</p><div class="table-wrap" role="region" tabindex="0" aria-label="Simple 16×16 results"><table class="results"><caption class="sr-only">Simple 16×16 results, ranked by pass status, score, parameter count, then game length.</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Submission</th><th scope="col" class="num">Score</th><th scope="col">Status</th><th scope="col" class="num">Parameters</th></tr></thead><tbody><tr><td class="rank">1</td><td class="submission"><a href="submissions/snake-simple-16x16--example.html" aria-label="View details for example"><span class="submission__name">example</span></a></td><td class="num score">0.44% ± 0.14%</td><td><span class="status status--fail">fail</span></td><td class="num">6,020</td></tr></tbody></table></div></div><div class="version-panel" id="panel-snake-obstacles-8x8" data-version="snake-obstacles-8x8" data-label="Obstacles 8×8" data-count="1" data-pass="0"><p class="table-note"><strong>Obstacles 8×8</strong> · Blocked cells, closed-tour validation · Ranked by pass status, score, parameter count, then game length. · Select a submission for full details.</p><div class="table-wrap" role="region" tabindex="0" aria-label="Obstacles 8×8 results"><table class="results"><caption class="sr-only">Obstacles 8×8 results, ranked by pass status, score, parameter count, then game length.</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Submission</th><th scope="col" class="num">Score</th><th scope="col">Status</th><th scope="col" class="num">Parameters</th></tr></thead><tbody><tr><td class="rank">1</td><td class="submission"><a href="submissions/snake-obstacles-8x8--example.html" aria-label="View details for example"><span class="submission__name">example</span></a></td><td class="num score">1.82% ± 0.57%</td><td><span class="status status--fail">fail</span></td><td class="num">6,020</td></tr></tbody></table></div></div></section><section class="group" id="mnist" data-group-section data-accent="mnist" data-title="MNIST" aria-labelledby="mnist-title"><div class="group__head"><div><p class="eyebrow"><span class="group__index">02</span> / Vision</p><h2 class="group__title" id="mnist-title"><span class="group__title-trigger" data-cycle-trigger><span class="group__title-text">MNIST</span><span class="cycle" aria-hidden="true">↻</span></span></h2><p class="group__desc">Two 70,000-example image classification tasks.</p></div><div class="group__stats"><span><strong data-count>7</strong> <span data-count-word>runs</span></span><span><strong data-pass>0</strong> pass</span></div></div><div class="version-row"><p class="version-row__label">Version</p><div class="version-links" role="group" aria-label="MNIST versions"><button type="button" class="version-link is-active" data-version-button data-version="mnist" aria-controls="panel-mnist" aria-pressed="true">MNIST</button><button type="button" class="version-link" data-version-button data-version="fashion-mnist" aria-controls="panel-fashion-mnist" aria-pressed="false">Fashion-MNIST</button></div><p class="version-hint"><span data-current aria-live="polite">MNIST · 1 of 2</span> · click the title to cycle</p></div><div class="version-panel is-active" id="panel-mnist" data-version="mnist" data-label="MNIST" data-count="4" data-pass="0"><p class="table-note"><strong>MNIST</strong> · Handwritten digits · Ranked by pass status, score, then parameter count. · Select a submission for full details.</p><div class="table-wrap" role="region" tabindex="0" aria-label="MNIST results"><table class="results"><caption class="sr-only">MNIST results, ranked by pass status, score, then parameter count.</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Submission</th><th scope="col" class="num">Score</th><th scope="col">Status</th><th scope="col" class="num">Parameters</th></tr></thead><tbody><tr><td class="rank">1</td><td class="submission"><a href="submissions/mnist--example.html" aria-label="View details for example"><span class="submission__name">example</span></a></td><td class="num score">98.95%</td><td><span class="status status--fail">fail</span></td><td class="num">50,890</td></tr><tr><td class="rank">2</td><td class="submission"><a href="submissions/mnist--mlp-7-7.html" aria-label="View details for mlp-7-7"><span class="submission__name">mlp-7-7</span></a></td><td class="num score">87.38%</td><td><span class="status status--fail">fail</span></td><td class="num">5,631</td></tr><tr><td class="rank">3</td><td class="submission"><a href="submissions/mnist--mlp-6-6.html" aria-label="View details for mlp-6-6"><span class="submission__name">mlp-6-6</span></a></td><td class="num score">85.34%</td><td><span class="status status--fail">fail</span></td><td class="num">4,822</td></tr><tr><td class="rank">4</td><td class="submission"><a href="submissions/mnist--mlp-4-16-16-16.html" aria-label="View details for mlp-4-16-16-16"><span class="submission__name">mlp-4-16-16-16</span></a></td><td class="num score">80.44%</td><td><span class="status status--fail">fail</span></td><td class="num">3,934</td></tr></tbody></table></div></div><div class="version-panel" id="panel-fashion-mnist" data-version="fashion-mnist" data-label="Fashion-MNIST" data-count="3" data-pass="0"><p class="table-note"><strong>Fashion-MNIST</strong> · Garment categories · Ranked by pass status, score, then parameter count. · Select a submission for full details.</p><div class="table-wrap" role="region" tabindex="0" aria-label="Fashion-MNIST results"><table class="results"><caption class="sr-only">Fashion-MNIST results, ranked by pass status, score, then parameter count.</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Submission</th><th scope="col" class="num">Score</th><th scope="col">Status</th><th scope="col" class="num">Parameters</th></tr></thead><tbody><tr><td class="rank">1</td><td class="submission"><a href="submissions/fashion-mnist--example.html" aria-label="View details for example"><span class="submission__name">example</span></a></td><td class="num score">89.62%</td><td><span class="status status--fail">fail</span></td><td class="num">50,890</td></tr><tr><td class="rank">2</td><td class="submission"><a href="submissions/fashion-mnist--mlp-13.html" aria-label="View details for mlp-13"><span class="submission__name">mlp-13</span></a></td><td class="num score">82.82%</td><td><span class="status status--fail">fail</span></td><td class="num">10,345</td></tr><tr><td class="rank">3</td><td class="submission"><a href="submissions/fashion-mnist--mlp-13-8.html" aria-label="View details for mlp-13-8"><span class="submission__name">mlp-13-8</span></a></td><td class="num score">82.22%</td><td><span class="status status--fail">fail</span></td><td class="num">10,407</td></tr></tbody></table></div></div></section><section class="group" id="chess" data-group-section data-accent="chess" data-title="Chess evaluation" aria-labelledby="chess-title"><div class="group__head"><div><p class="eyebrow"><span class="group__index">03</span> / Regression</p><h2 class="group__title" id="chess-title"><span class="group__title-text">Chess evaluation</span></h2><p class="group__desc">Predict Stockfish evaluation within 0.1 pawns on 10,000 positions.</p></div><div class="group__stats"><span><strong data-count>1</strong> <span data-count-word>run</span></span><span><strong data-pass>1</strong> pass</span></div></div><div class="version-row"><p class="version-row__label">Version</p><p class="version-hint"><span>Stockfish 0.1 pawn · 1 of 1</span></p></div><div class="version-panel is-active" id="panel-chess-eval" data-version="chess-eval" data-label="Stockfish 0.1 pawn" data-count="1" data-pass="1"><p class="table-note"><strong>Stockfish 0.1 pawn</strong> · 10,000 fixed positions · Ranked by pass status, score, then parameter count. · Select a submission for full details.</p><div class="table-wrap" role="region" tabindex="0" aria-label="Stockfish 0.1 pawn results"><table class="results"><caption class="sr-only">Stockfish 0.1 pawn results, ranked by pass status, score, then parameter count.</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Submission</th><th scope="col" class="num">Score</th><th scope="col">Status</th><th scope="col" class="num">Parameters</th></tr></thead><tbody><tr><td class="rank">1</td><td class="submission"><a href="submissions/chess-eval--example.html" aria-label="View details for chess-mlp-64"><span class="submission__name">chess-mlp-64</span><span class="submission__id">example</span></a></td><td class="num score">100.00% ± 0.00%</td><td><span class="status status--pass">pass</span></td><td class="num">53,505</td></tr></tbody></table></div></div></section><footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v0.0.2</a></footer></main></div><script>
+(function () {
+  const groups = Array.from(document.querySelectorAll("[data-group-section]"));
+  groups.forEach(function (group) {
+    const panels = Array.from(group.querySelectorAll(".version-panel"));
+    if (!panels.length) return;
+    const versions = panels.map(function (panel) { return panel.dataset.version; });
+    const links = Array.from(group.querySelectorAll("[data-version-button]"));
+    const trigger = group.querySelector("[data-cycle-trigger]");
+    const current = group.querySelector("[data-current]");
+    const count = group.querySelector("[data-count]");
+    const countWord = group.querySelector("[data-count-word]");
+    const pass = group.querySelector("[data-pass]");
+    function select(id) {
+      const panel = panels.find(function (item) { return item.dataset.version === id; });
+      if (!panel) return;
+      const index = versions.indexOf(id) + 1;
+      panels.forEach(function (item) {
+        item.hidden = item !== panel;
+        item.classList.toggle("is-active", item === panel);
+      });
+      links.forEach(function (link) {
+        const on = link.dataset.version === id;
+        link.classList.toggle("is-active", on);
+        link.setAttribute("aria-pressed", String(on));
+      });
+      if (current) {
+        current.textContent = (panel.dataset.label || "") + " · " + index + " of " + versions.length;
+      }
+      if (count) count.textContent = panel.dataset.count || "";
+      if (countWord) countWord.textContent = Number(panel.dataset.count) === 1 ? "run" : "runs";
+      if (pass) pass.textContent = panel.dataset.pass || "";
+      if (trigger) {
+        trigger.setAttribute(
+          "aria-label",
+          "Switch " + group.dataset.title + " version. Current: " +
+            (panel.dataset.label || "") + ". " + index + " of " + versions.length + "."
+        );
+      }
+    }
+    links.forEach(function (link) {
+      link.addEventListener("click", function () { select(link.dataset.version); });
+    });
+    if (trigger && versions.length > 1) {
+      trigger.classList.add("is-clickable");
+      trigger.setAttribute("role", "button");
+      trigger.setAttribute("tabindex", "0");
+      const next = function () {
+        const active = panels.find(function (panel) { return !panel.hidden; }) || panels[0];
+        const index = versions.indexOf(active.dataset.version);
+        select(versions[(index + 1) % versions.length]);
+      };
+      trigger.addEventListener("click", next);
+      trigger.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          next();
+        }
+      });
+    }
+    const initial = panels.find(function (panel) {
+      return panel.classList.contains("is-active");
+    }) || panels[0];
+    select(initial.dataset.version);
+    const fromHash = window.location.hash.slice(1);
+    if (versions.indexOf(fromHash) !== -1) select(fromHash);
+  });
+})();
+</script></body></html>

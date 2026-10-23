@@ -10,7 +10,11 @@ from minimal_nn_competition.benchmarks.register import create_benchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeSimple16x16Benchmark
 from minimal_nn_competition.benchmarks.snake.replay import record_game, replay_stem
-from minimal_nn_competition.leaderboard.render import _score_text, render_game_pages, render_site
+from minimal_nn_competition.leaderboard.render import (
+    _score_text,
+    render_site,
+    render_submission_pages,
+)
 from minimal_nn_competition.model.entry import (
     Submission,
     SubmissionConfig,
@@ -157,13 +161,15 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
     payload = record_game(_right_model(), size=16)
     index = render_site([result], tmp_path, {"snake-simple-16x16--example": payload})
     html = index.read_text()
-    assert "SNAKE SIMPLE 16X16" in html
+    assert "Simple 16×16" in html
     assert "50.00% ± 0.00%" in html
-    assert "<th>Game length</th>" in html
-    assert "15.0 ± 5.0" in html
-    assert "<th>Replay</th>" in html
-    game_page = (tmp_path / "games" / "snake-simple-16x16--example.html").read_text()
-    assert "Snake Simple 16x16 replay" in game_page
+    assert "Game length</th>" not in html
+    assert "Replay</th>" not in html
+    assert "submissions/snake-simple-16x16--example.html" in html
+    game_page = (tmp_path / "submissions" / "snake-simple-16x16--example.html").read_text()
+    assert "Simple 16×16" in game_page
+    assert "Replay" in game_page
+    assert "15.0 ± 5.0" in game_page
     assert 'width="640" height="640"' in game_page
 
 
@@ -254,7 +260,7 @@ def test_replay_links_are_scoped_by_benchmark(tmp_path: Path) -> None:
         BenchmarkResult("example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
         BenchmarkResult("example", "snake-simple-16x16", 128.0, False, 20, {"max_length": 256}),
     ]
-    links = render_game_pages(
+    links = render_submission_pages(
         results,
         {
             replay_stem("snake-simple-8x8", "example"): payload_8,
@@ -262,8 +268,10 @@ def test_replay_links_are_scoped_by_benchmark(tmp_path: Path) -> None:
         },
         tmp_path,
     )
-    assert links[("snake-simple-8x8", "example")] == "games/snake-simple-8x8--example.html"
-    assert links[("snake-simple-16x16", "example")] == "games/snake-simple-16x16--example.html"
+    assert links[("snake-simple-8x8", "example")] == "submissions/snake-simple-8x8--example.html"
+    assert links[("snake-simple-16x16", "example")] == (
+        "submissions/snake-simple-16x16--example.html"
+    )
     assert (tmp_path / links[("snake-simple-8x8", "example")]).is_file()
     assert (tmp_path / links[("snake-simple-16x16", "example")]).is_file()
 
