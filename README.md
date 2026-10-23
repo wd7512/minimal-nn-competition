@@ -4,12 +4,12 @@ Find the smallest possible neural network for a problem.
 
 **[View the leaderboard →](https://wd7512.github.io/minimal-nn-competition/)**
 
-Problems: **Snake Simple 8x8** (fill an 8×8 board) · **MNIST** and **Fashion-MNIST** (classify images).
+Problems: **Snake Simple 8x8** (fill an 8×8 board) · **MNIST** and **Fashion-MNIST** (classify images) · **Chess evaluation** (predict Stockfish within 0.1 pawns).
 Rules: feed-forward `linear` or `mlp` models, a standard activation, and a PyTorch `state_dict`.
 
-MNIST and Fashion-MNIST each use one 70,000-example dataset. There is no
-held-out split: train on the same examples you are scored on and fit every
-example exactly.
+MNIST and Fashion-MNIST each use one 70,000-example dataset. Chess evaluation
+uses a fixed 10,000-position Stockfish set. There is no held-out split: train
+on the same examples you are scored on and fit every example exactly.
 
 ## Submit
 
@@ -20,6 +20,7 @@ dependencies, workflows, the leaderboard, or `docs/`.
 - [How to make a Snake Simple 8x8 submission](how-to/how-to-make-a-snake-simple-8x8-submission.md)
 - [How to make an MNIST submission](how-to/how-to-make-an-mnist-submission.md)
 - [How to make a Fashion-MNIST submission](how-to/how-to-make-a-fashion-mnist-submission.md)
+- [How to make a Chess evaluation submission](how-to/how-to-make-a-chess-eval-submission.md)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and
 [how to validate a submission](how-to/how-to-validate-a-submission.md).

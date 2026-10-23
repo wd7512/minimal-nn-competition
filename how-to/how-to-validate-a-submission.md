@@ -54,12 +54,15 @@ uv run mnnc evaluate <benchmark> models/<benchmark>/<name>
 Image benchmarks use `data/mnist.pt` and `data/fashion-mnist.pt` by default;
 each cache contains all 70,000 examples. The evaluator rejects caches that do
 not contain exactly 70,000 samples. Legacy `*-train.pt` / `*-test.pt` caches are
-not used. Snake Simple 8x8 needs no data.
+not used. Snake Simple 8x8 and Chess evaluation need no data download; Chess
+evaluation uses its committed 10,000-position Stockfish set.
 
-Expected passes are `1.0` for MNIST and Fashion-MNIST, and `64.0` for Snake Simple 8x8.
-Confirm the score and parameter count match the PR description. A perfect
-image score is expected; verify the cache is the correct benchmark's data.
-There is no held-out split: an entry must fit all 70,000 examples.
+Expected passes are `1.0` for MNIST and Fashion-MNIST, `64.0` for Snake Simple
+8x8, and `1.0` for Chess evaluation. A Chess score of `1.0` means every position
+is within 0.1 pawns of Stockfish. Confirm the score and parameter count match
+the PR description. A perfect image score is expected; verify the cache is the
+correct benchmark's data. There is no held-out split: an entry must fit all
+70,000 image examples or all 10,000 chess positions.
 
 If an entry fails, revert it on `submission` and do not promote it.
 
