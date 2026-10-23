@@ -87,6 +87,12 @@ class SubmissionConfig(BaseModel):
             raise ValueError("linear submissions must not declare hidden_sizes")
         return self
 
+    @model_validator(mode="after")
+    def _validate_input_indices_scope(self) -> SubmissionConfig:
+        if self.benchmark != "snake" and self.input_indices is not None:
+            raise ValueError("input_indices is only supported for the snake benchmark")
+        return self
+
     @classmethod
     def from_file(cls, path: Path) -> SubmissionConfig:
         try:
