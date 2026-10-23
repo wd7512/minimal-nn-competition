@@ -51,12 +51,14 @@ uv run mnnc download-fashion-mnist --output data
 uv run mnnc evaluate <benchmark> models/<benchmark>/<name>
 ```
 
-Image benchmarks use `data/mnist-test.pt` and
-`data/fashion-mnist-test.pt` by default. Snake Simple 8x8 needs no data.
+Image benchmarks use `data/mnist.pt` and `data/fashion-mnist.pt` by default;
+each cache contains all 70,000 examples. The evaluator rejects caches that do
+not contain exactly 70,000 samples. Snake Simple 8x8 needs no data.
 
 Expected passes are `1.0` for MNIST and Fashion-MNIST, and `64.0` for Snake Simple 8x8.
 Confirm the score and parameter count match the PR description. A perfect
-Fashion-MNIST score is suspicious: verify it is not MNIST data.
+image score is expected; verify the cache is the correct benchmark's data.
+There is no held-out split: an entry must fit all 70,000 examples.
 
 If an entry fails, revert it on `submission` and do not promote it.
 

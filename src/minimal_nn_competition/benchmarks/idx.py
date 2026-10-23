@@ -35,21 +35,21 @@ def read_idx(path, labels=False):
 
 
 def download_dataset(destination, base_url, prefix, cache, force=False, download=download_file):
-    """Download IDX files into raw caches and save ``(inputs, labels)`` tensors."""
+    """Download IDX files and save one ``(inputs, labels)`` cache with every example."""
     import torch
 
     destination.mkdir(parents=True, exist_ok=True)
-    train_path = destination / f"{cache}-train.pt"
-    test_path = destination / f"{cache}-test.pt"
-    if train_path.is_file() and test_path.is_file() and not force:
-        return train_path, test_path
+    cache_path = destination / f"{cache}.pt"
+    if cache_path.is_file() and not force:
+        return cache_path
     train_images, train_labels, test_images, test_labels = (
         destination / f"{prefix}-{name}" for name in FILES
     )
     for name in FILES:
         download(base_url + name, destination / f"{prefix}-{name}")
-    train = (read_idx(train_images), read_idx(train_labels, True))
-    test = (read_idx(test_images), read_idx(test_labels, True))
-    torch.save(train, train_path)
-    torch.save(test, test_path)
-    return train_path, test_path
+    inputs = torch.cat((read_idx(train_images), read_idx(test_images)))
+    labels = torch.cat((read_idx(train_labels, True), read_idx(test_labels, True)))
+    if len(inputs) != len(labels):
+        raise ValueError(f"{cache} inputs and labels must have the same length")
+    torch.save((inputs, labels), cache_path)
+    return cache_path

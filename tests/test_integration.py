@@ -31,8 +31,13 @@ def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: 
     assert '"author": "example author"' in out
 
 
-def test_evaluate_fashion_mnist_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    data_path = tmp_path / "fashion-mnist-test.pt"
+def test_evaluate_fashion_mnist_cli(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(FashionMnistBenchmark, "expected_samples", 2)
+    data_path = tmp_path / "fashion-mnist.pt"
     inputs = torch.zeros((2, 784), dtype=torch.uint8)
     torch.save((inputs, torch.tensor([0, 1])), data_path)
     assert (
@@ -180,12 +185,17 @@ def test_collect_cli(
     assert capsys.readouterr().out.strip() == str(output)
 
 
-def test_collect_fashion_mnist_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_collect_fashion_mnist_cli(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     import shutil
 
+    monkeypatch.setattr(FashionMnistBenchmark, "expected_samples", 2)
     models = tmp_path / "models"
     shutil.copytree(Path("models/fashion-mnist/example"), models / "fashion-mnist" / "example")
-    data_path = tmp_path / "fashion-mnist-test.pt"
+    data_path = tmp_path / "fashion-mnist.pt"
     inputs = torch.zeros((2, 784), dtype=torch.uint8)
     torch.save((inputs, torch.tensor([0, 1])), data_path)
     output = tmp_path / "leaderboard.json"
