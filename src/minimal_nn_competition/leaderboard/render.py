@@ -13,6 +13,7 @@ from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
 
 _SECTION_TITLES = {
+    "chess-eval": "CHESS EVALUATION",
     "fashion-mnist": "FASHION-MNIST COMPRESSION",
     "mnist": "MNIST COMPRESSION",
     "snake-simple-8x8": "SNAKE SIMPLE 8X8",
@@ -42,14 +43,15 @@ footer { margin-top: 2rem; text-align: right; }
 
 
 def _score_text(result):
-    if result.benchmark not in SNAKE_BENCHMARKS:
-        maximum = result.details.get("max_length", 1)
+    if result.benchmark in SNAKE_BENCHMARKS:
+        maximum = result.details.get("max_length", _SNAKE_MAX_LENGTH.get(result.benchmark, 64))
         mean = result.score / maximum * 100
-        digits = 4 if not result.passed and mean >= 99.995 else 2
-        return f"{mean:.{digits}f}%"
-    maximum = result.details.get("max_length", _SNAKE_MAX_LENGTH.get(result.benchmark, 64))
-    mean = result.score / maximum * 100
-    return f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
+        return f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
+    mean = result.score * 100
+    if result.benchmark == "chess-eval":
+        return f"{mean:.2f}% ± {result.score_std * 100:.2f}%"
+    digits = 4 if not result.passed and mean >= 99.995 else 2
+    return f"{mean:.{digits}f}%"
 
 
 def _game_length_text(result):
@@ -204,7 +206,7 @@ def render_html(results, replay_links=None):
         sections.append(
             f"""<section><h2>{html.escape(_SECTION_TITLES.get(benchmark, benchmark.upper()))}</h2><p class="muted">{len(entries)} result(s), ranked by {ranking}.</p>{_table(entries, replay_links if benchmark in SNAKE_BENCHMARKS else None)}</section>"""
         )
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>{_STYLE}</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, and Snake benchmarks.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{"".join(sections) or "<p>No results have been recorded yet.</p>"}<footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>{_STYLE}</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, Snake benchmarks, and Chess evaluation.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{"".join(sections) or "<p>No results have been recorded yet.</p>"}<footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></body></html>
 """
 
 

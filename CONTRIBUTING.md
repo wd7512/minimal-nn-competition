@@ -20,6 +20,7 @@ Benchmark guides:
 - [Snake Simple 16x16](how-to/how-to-make-a-snake-simple-16x16-submission.md)
 - [MNIST](how-to/how-to-make-an-mnist-submission.md)
 - [Fashion-MNIST](how-to/how-to-make-a-fashion-mnist-submission.md)
+- [Chess evaluation](how-to/how-to-make-a-chess-eval-submission.md)
 
 Maintainers: follow [How to validate a submission](how-to/how-to-validate-a-submission.md).
 

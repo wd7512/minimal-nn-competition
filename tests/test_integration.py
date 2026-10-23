@@ -6,6 +6,7 @@ import torch
 
 from minimal_nn_competition import __version__
 from minimal_nn_competition.__main__ import main
+from minimal_nn_competition.benchmarks.chess_eval.benchmark import ChessEvalBenchmark
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
@@ -15,9 +16,11 @@ from minimal_nn_competition.runner.entry import BenchmarkResult
 
 
 def test_checked_in_examples_load() -> None:
+    chess = Submission.from_directory(Path("models/chess-eval/example"))
     fashion_mnist = Submission.from_directory(Path("models/fashion-mnist/example"))
     mnist = Submission.from_directory(Path("models/mnist/example"))
     snake = Submission.from_directory(Path("models/snake-simple-8x8/example"))
+    assert ChessEvalBenchmark().load_submission(chess).model is not None
     assert FashionMnistBenchmark().load_submission(fashion_mnist).model is not None
     assert MnistBenchmark().load_submission(mnist).model is not None
     assert SnakeBenchmark().load_submission(snake).model is not None
@@ -29,6 +32,15 @@ def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: 
     assert '"benchmark": "snake-simple-8x8"' in out
     assert '"name": "example"' in out
     assert '"author": "example author"' in out
+
+
+def test_evaluate_chess_eval_cli(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["evaluate", "chess-eval", "models/chess-eval/example"]) == 0
+    out = capsys.readouterr().out
+    assert '"benchmark": "chess-eval"' in out
+    assert '"name": "chess-mlp-64"' in out
+    assert '"author": "example author"' in out
+    assert '"passed": true' in out
 
 
 def test_evaluate_fashion_mnist_cli(
@@ -200,6 +212,31 @@ def test_render_site(tmp_path: Path) -> None:
     assert raw[2]["score_std"] == 0.5
 
 
+def test_render_near_perfect_failure_is_not_shown_as_100(tmp_path: Path) -> None:
+    near_miss = BenchmarkResult(
+        "mnist-near",
+        "mnist",
+        69_999 / 70_000,
+        False,
+        10,
+        {"samples": 70_000, "normalisation": False},
+    )
+    html = render_site([near_miss], tmp_path / "near").read_text()
+    assert "100.00%" not in html
+    assert "99.9986%" in html
+
+    perfect = BenchmarkResult(
+        "mnist-perfect",
+        "mnist",
+        1.0,
+        True,
+        10,
+        {"samples": 70_000, "normalisation": False},
+    )
+    html = render_site([perfect], tmp_path / "perfect").read_text()
+    assert "100.00%" in html
+
+
 def test_render_mnist_has_no_game_length_column(tmp_path: Path) -> None:
     results = [
         BenchmarkResult(
@@ -208,6 +245,25 @@ def test_render_mnist_has_no_game_length_column(tmp_path: Path) -> None:
     ]
     html = render_site(results, tmp_path).read_text()
     assert "<th>Game length</th>" not in html
+
+
+def test_render_chess_eval(tmp_path: Path) -> None:
+    results = [
+        BenchmarkResult(
+            "chess-example",
+            "chess-eval",
+            1.0,
+            True,
+            53_505,
+            {"tolerance_pawns": 0.1},
+            name="chess-mlp-64",
+            author="tester",
+        )
+    ]
+    html = render_site(results, tmp_path).read_text()
+    assert "CHESS EVALUATION" in html
+    assert "100.00% ± 0.00%" in html
+    assert "chess-example" in html
 
 
 def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
