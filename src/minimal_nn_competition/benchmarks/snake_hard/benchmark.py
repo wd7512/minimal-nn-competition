@@ -1,22 +1,15 @@
 """Snake-hard benchmark: same Snake engine, board size shifts per seed."""
 
-from __future__ import annotations
-
 import statistics
-from typing import Any
 
-from minimal_nn_competition.benchmarks.snake.benchmark import (
-    SnakeBenchmark,
-    selected_input_indices,
-)
+from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark, selected_input_indices
 from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
-from minimal_nn_competition.model.entry import LoadedSubmission
 
 DEFAULT_SEEDS = tuple(range(20))
-BOARD_SIZES = (6, 8, 10)
+BOARD_SIZES = 6, 8, 10
 
 
-def board_size_for_seed(seed: int) -> int:
+def board_size_for_seed(seed):
     """Cycle board sizes 6/8/10 by seed; that cycle is the whole shift."""
     return BOARD_SIZES[seed % len(BOARD_SIZES)]
 
@@ -24,10 +17,10 @@ def board_size_for_seed(seed: int) -> int:
 class SnakeHardBenchmark(SnakeBenchmark):
     name = "snake-hard"
 
-    def __init__(self, seeds: tuple[int, ...] = DEFAULT_SEEDS, max_moves: int = 4096) -> None:
-        super().__init__(seeds=seeds, max_moves=max_moves)
+    def __init__(self, seeds=DEFAULT_SEEDS, max_moves=4096):
+        super().__init__(seeds, max_moves)
 
-    def evaluate(self, submission: LoadedSubmission) -> tuple[float, float, bool, dict[str, Any]]:
+    def evaluate(self, submission):
         try:
             import torch
         except ImportError as exc:
@@ -61,7 +54,7 @@ class SnakeHardBenchmark(SnakeBenchmark):
         return (
             statistics.fmean(lengths),
             statistics.pstdev(lengths),
-            all(length == size * size for length, size in zip(lengths, sizes, strict=True)),
+            lengths == [size * size for size in sizes],
             {
                 "seed_lengths": lengths,
                 "seed_moves": moves,
