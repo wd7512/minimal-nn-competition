@@ -238,3 +238,65 @@ def test_collect_records_replay_for_selected_input_indices(
         == 0
     )
     assert (replays / "selected.json").is_file()
+
+
+def _reference_gae(
+    rewards: list[float],
+    values: list[float],
+    dones: list[bool],
+    gamma: float,
+    lam: float,
+) -> tuple[list[float], list[float]]:
+    advantages = [0.0] * len(rewards)
+    gae = 0.0
+    for index in range(len(rewards) - 1, -1, -1):
+        next_value = values[index + 1] if index + 1 < len(values) else 0.0
+        nonterminal = 0.0 if dones[index] else 1.0
+        delta = rewards[index] + gamma * next_value * nonterminal - values[index]
+        gae = delta + gamma * lam * nonterminal * gae
+        advantages[index] = gae
+    returns = [advantage + value for advantage, value in zip(advantages, values, strict=True)]
+    return advantages, returns
+
+
+def test_snake_training_writes_submission(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from minimal_nn_competition.examples import snake_submission
+
+    monkeypatch.setattr(snake_submission, "_evaluate", lambda *args: [1])
+    output = tmp_path / "submission"
+    state = snake_submission.train(
+        output,
+        iterations=1,
+        episodes_per_iteration=1,
+        max_moves=8,
+        update_epochs=1,
+        device_name="cpu",
+    )
+    config = json.loads((output / "config.json").read_text())
+    assert config["benchmark"] == "snake"
+    assert config["name"] == "submission"
+    assert config["hidden_sizes"] == [64, 64]
+    assert state.keys() == torch.load(output / "model.pt", weights_only=True).keys()
+
+
+def test_gae_matches_literal_reference() -> None:
+    import random
+
+    from minimal_nn_competition.examples.snake_submission import _gae
+
+    rng = random.Random(7)
+    for length in range(11):
+        rewards = [rng.uniform(-1.0, 1.0) for _ in range(length)]
+        values = [rng.uniform(-1.0, 1.0) for _ in range(length)]
+        dones = [rng.random() < 0.25 for _ in range(length)]
+        expected_advantages, expected_returns = _reference_gae(rewards, values, dones, 0.99, 0.95)
+        advantages, returns = _gae(rewards, values, dones, 0.99, 0.95)
+        assert advantages == expected_advantages
+        assert returns == expected_returns
+
+
+def test_gae_keeps_strict_length_validation() -> None:
+    from minimal_nn_competition.examples.snake_submission import _gae
+
+    with pytest.raises(ValueError):
+        _gae([0.5, -1.0], [0.1, 0.2, 0.3], [False, True], 0.99, 0.95)

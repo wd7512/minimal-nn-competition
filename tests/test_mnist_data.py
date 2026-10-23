@@ -5,6 +5,7 @@ from pathlib import Path
 import torch
 
 from minimal_nn_competition.benchmarks.fashion_mnist import data_loader as fashion_loader
+from minimal_nn_competition.benchmarks.idx import read_idx
 from minimal_nn_competition.benchmarks.mnist import data_loader
 
 
@@ -27,8 +28,8 @@ def test_parsers_read_idx_data(tmp_path: Path) -> None:
     _write_gzip(images_path, _image_bytes([[0, 1, 2, 3], [4, 5, 6, 7]], 2, 2))
     _write_gzip(labels_path, _label_bytes([3, 7]))
 
-    images = data_loader._read_images(images_path)
-    labels = data_loader._read_labels(labels_path)
+    images = read_idx(images_path)
+    labels = read_idx(labels_path, True)
 
     assert images.shape == (2, 4)
     assert images.dtype == torch.uint8
