@@ -1,22 +1,10 @@
 """Tic-tac-toe benchmark: a 9-output net plays X against an exact minimax O."""
 
-from __future__ import annotations
-
 import statistics
-from typing import Any
 
-from minimal_nn_competition.benchmarks.tictactoe.engine import (
-    Board,
-    legal_moves,
-    minimax_move,
-    play,
-    winner,
-)
-from minimal_nn_competition.model.entry import (
-    LoadedSubmission,
-    Submission,
-    materialize_submission,
-)
+from minimal_nn_competition.model.entry import materialize_submission
+
+from .engine import legal_moves, minimax_move, play, winner
 
 DEFAULT_SEEDS = tuple(range(100))
 INPUT_SIZE = 9
@@ -25,12 +13,12 @@ OUTPUT_SIZE = 9
 _SCORES = {1.0: "win", 0.5: "draw", 0.0: "loss"}
 
 
-def _play_game(model: Any) -> float:
+def _play_game(model):
     import torch
 
-    board: Board = (0,) * 9
+    board = (0,) * 9
     while True:
-        observation = torch.tensor([float(cell) for cell in board], dtype=torch.float32)
+        observation = torch.tensor(board, dtype=torch.float32)
         logits = model(observation.unsqueeze(0)).squeeze(0)
         mask = torch.full_like(logits, float("-inf"))
         mask[legal_moves(board)] = 0.0
@@ -50,12 +38,12 @@ def _play_game(model: Any) -> float:
 class TicTacToeBenchmark:
     name = "tictactoe"
 
-    def __init__(self, seeds: tuple[int, ...] = DEFAULT_SEEDS) -> None:
+    def __init__(self, seeds=DEFAULT_SEEDS):
         if not seeds:
             raise ValueError("Tic-tac-toe benchmark requires at least one seed")
         self.seeds = seeds
 
-    def load_submission(self, submission: Submission) -> LoadedSubmission:
+    def load_submission(self, submission):
         if submission.config.benchmark != self.name:
             raise ValueError("Submission benchmark does not match TicTacToe")
         if submission.config.input_size != INPUT_SIZE:
@@ -64,21 +52,19 @@ class TicTacToeBenchmark:
             raise ValueError("TicTacToe submissions must declare output_size 9")
         return materialize_submission(submission)
 
-    def evaluate(self, submission: LoadedSubmission) -> tuple[float, float, bool, dict[str, Any]]:
+    def evaluate(self, submission):
         try:
             import torch
         except ImportError as exc:
             raise RuntimeError("PyTorch is required for TicTacToe evaluation") from exc
-        scores = []
         with torch.no_grad():
-            for _ in self.seeds:
-                scores.append(_play_game(submission.model))
+            scores = [_play_game(submission.model) for _ in self.seeds]
         mean = statistics.fmean(scores)
         std = statistics.pstdev(scores)
         return (
             mean,
             std,
-            all(score >= 0.5 for score in scores),
+            min(scores) >= 0.5,
             {
                 "scores": scores,
                 "results": [_SCORES[score] for score in scores],

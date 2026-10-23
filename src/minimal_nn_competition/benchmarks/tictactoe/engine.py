@@ -1,10 +1,6 @@
 """Pure tic-tac-toe rules and an exact minimax O policy."""
 
-from __future__ import annotations
-
 from functools import cache
-
-Board = tuple[int, ...]
 
 LINES = (
     (0, 1, 2),
@@ -18,30 +14,27 @@ LINES = (
 )
 
 
-def winner(board: Board) -> int | None:
-    """Return 1 (X wins), -1 (O wins), 0 (full-board draw), or None (ongoing)."""
+def winner(board):
     for a, b, c in LINES:
         if board[a] != 0 and board[a] == board[b] == board[c]:
             return board[a]
-    if all(cell != 0 for cell in board):
+    if 0 not in board:
         return 0
     return None
 
 
-def legal_moves(board: Board) -> list[int]:
-    """Return the empty cell indices in ascending order."""
+def legal_moves(board):
     return [index for index, cell in enumerate(board) if cell == 0]
 
 
-def play(board: Board, move: int, player: int) -> Board:
+def play(board, move, player):
     cells = list(board)
     cells[move] = player
     return tuple(cells)
 
 
 @cache
-def _outcome(board: Board, player: int) -> int:
-    """X-centric game value under optimal play from this position onward."""
+def _outcome(board, player):
     result = winner(board)
     if result is not None:
         return result
@@ -49,8 +42,7 @@ def _outcome(board: Board, player: int) -> int:
     return max(values) if player == 1 else min(values)
 
 
-def minimax_move(board: Board) -> int | None:
-    """Return O's optimal move, breaking ties toward the lowest index."""
+def minimax_move(board):
     moves = legal_moves(board)
     if not moves:
         return None

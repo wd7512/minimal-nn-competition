@@ -1,20 +1,14 @@
 """Train a minimal linear tic-tac-toe submission and write it to disk."""
 
-from __future__ import annotations
-
 import argparse
 import json
-import logging
 from pathlib import Path
-from typing import Any
-
-logger = logging.getLogger(__name__)
 
 INPUT_SIZE = 9
 OUTPUT_SIZE = 9
 
 
-def create_model(seed: int = 0) -> Any:
+def create_model(seed=0):
     """Return the linear policy shape used by the example submission."""
     import torch
     from torch import nn
@@ -23,7 +17,7 @@ def create_model(seed: int = 0) -> Any:
     return nn.Linear(INPUT_SIZE, OUTPUT_SIZE)
 
 
-def train(output_dir: Path, seed: int = 0, name: str | None = None) -> dict[str, Any]:
+def train(output_dir, seed=0, name=None):
     """Write ``config.json`` and ``model.pt`` for a linear tic-tac-toe net."""
     import torch
 
@@ -39,12 +33,10 @@ def train(output_dir: Path, seed: int = 0, name: str | None = None) -> dict[str,
     }
     (output_dir / "config.json").write_text(json.dumps(config, indent=2))
     torch.save(model.state_dict(), output_dir / "model.pt")
-    logger.info("Wrote tic-tac-toe example submission to %s", output_dir)
     return config
 
 
-def main(argv: list[str] | None = None) -> int:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("models/tictactoe/example"))
     parser.add_argument("--seed", type=int, default=0)
