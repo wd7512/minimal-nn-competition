@@ -81,3 +81,22 @@ def test_unknown_architecture_is_rejected(tmp_path: Path) -> None:
     path.write_text('{"benchmark":"snake","architecture":"cnn","input_size":7,"output_size":4}')
     with pytest.raises(SubmissionError, match="architecture must be one of"):
         SubmissionConfig.from_file(path)
+
+
+def test_input_indices_rejected_outside_snake(tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+    path.write_text(
+        '{"benchmark":"mnist","name":"x","author":"tester","architecture":"mlp",'
+        '"input_size":784,"output_size":10,"input_indices":[0,1,2]}'
+    )
+    with pytest.raises(SubmissionError, match="only supported for the snake benchmark"):
+        SubmissionConfig.from_file(path)
+
+
+def test_input_indices_accepted_for_snake(tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+    path.write_text(
+        '{"benchmark":"snake","name":"x","author":"tester","architecture":"mlp",'
+        '"input_size":3,"output_size":4,"hidden_sizes":[4],"input_indices":[0,1,2]}'
+    )
+    assert SubmissionConfig.from_file(path).input_indices == (0, 1, 2)
