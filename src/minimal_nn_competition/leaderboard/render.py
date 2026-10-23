@@ -30,9 +30,7 @@ _GROUP_SPECS = (
         "id": "snake",
         "label": "Snake",
         "eyebrow": "Games",
-        "description": (
-            "Three board variants: open 8×8, open 16×16, and 8×8 with deterministic blocked cells."
-        ),
+        "description": "",
         "benchmarks": (
             "snake-simple-8x8",
             "snake-simple-16x16",
@@ -44,7 +42,7 @@ _GROUP_SPECS = (
         "id": "mnist",
         "label": "MNIST",
         "eyebrow": "Vision",
-        "description": "Two 70,000-example image classification tasks.",
+        "description": "",
         "benchmarks": ("mnist", "fashion-mnist"),
         "accent": "mnist",
     },
@@ -52,7 +50,7 @@ _GROUP_SPECS = (
         "id": "chess",
         "label": "Chess evaluation",
         "eyebrow": "Regression",
-        "description": "Predict Stockfish evaluation within 0.1 pawns on 10,000 positions.",
+        "description": "",
         "benchmarks": ("chess-eval",),
         "accent": "chess",
     },
@@ -66,12 +64,12 @@ _VERSION_LABELS = {
     "chess-eval": "Stockfish 0.1 pawn",
 }
 _PANEL_NOTES = {
-    "snake-simple-8x8": "64-cell open board",
-    "snake-simple-16x16": "256-cell open board",
-    "snake-obstacles-8x8": "Blocked cells, closed-tour validation",
-    "mnist": "Handwritten digits",
-    "fashion-mnist": "Garment categories",
-    "chess-eval": "10,000 fixed positions",
+    "snake-simple-8x8": "An open study",
+    "snake-simple-16x16": "A larger open study",
+    "snake-obstacles-8x8": "A constrained study",
+    "mnist": "A first light study",
+    "fashion-mnist": "A second light study",
+    "chess-eval": "A measured study",
 }
 
 _STYLE = """
@@ -86,6 +84,8 @@ _STYLE = """
   --hover: #edf2ef;
   --pass: #1f6b43;
   --fail: #8a3434;
+  --pass-tint: #e6f1ea;
+  --fail-tint: #f8e9e7;
   --focus: #2f5f57;
   --accent-snake: #256b66;
   --accent-mnist: #8a5b16;
@@ -105,6 +105,8 @@ _STYLE = """
     --hover: #182622;
     --pass: #74cf9b;
     --fail: #f09b91;
+    --pass-tint: #15251d;
+    --fail-tint: #2b1e1c;
     --focus: #8bcacb;
     --accent-snake: #7fcac1;
     --accent-mnist: #e0b76b;
@@ -133,12 +135,12 @@ a:hover { text-decoration-thickness: 2px; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font: 700 9px/1 var(--mono);
+  font: 700 10px/1 var(--mono);
   letter-spacing: .08em;
   text-transform: uppercase;
   white-space: nowrap;
 }
-.status::before { content: ""; width: 5px; height: 5px; background: currentColor; flex: none; }
+.status::before { content: ""; width: 6px; height: 6px; background: currentColor; flex: none; }
 .status--pass { color: var(--pass); }
 .status--fail { color: var(--fail); }
 """
@@ -237,14 +239,6 @@ h1 {
   align-items: baseline;
   gap: 12px;
 }
-.js .group__title-trigger.is-clickable { cursor: pointer; }
-.js .group__title-trigger.is-clickable:hover .group__title-text {
-  text-decoration: underline;
-  text-decoration-color: var(--accent);
-  text-underline-offset: 5px;
-}
-.cycle { display: none; font: 12px/1 var(--mono); color: var(--accent); }
-.js .cycle { display: inline; }
 .group__desc { margin: 12px 0 0; max-width: 58ch; color: var(--muted); }
 .group__stats {
   display: flex;
@@ -297,19 +291,27 @@ h1 {
 .js .version-panel:not(.is-active) { display: none; }
 .table-note { margin: 0 0 8px; font: 10px/1.4 var(--mono); color: var(--muted); }
 .table-note strong { color: var(--ink); font-weight: 600; }
+.passed-toggle { display: none; margin: 0 0 8px; font: 11px/1.4 var(--mono); color: var(--muted); }
+.js .passed-toggle { display: flex; align-items: center; gap: 8px; }
+.passed-toggle input { width: 14px; height: 14px; accent-color: var(--pass); }
+.js .version-panel.hide-failed tbody tr.is-fail { display: none; }
 .table-wrap {
   overflow-x: auto;
   border-top: 1px solid var(--rule-strong);
   border-bottom: 1px solid var(--rule-strong);
   -webkit-overflow-scrolling: touch;
 }
-table.results { width: 100%; border-collapse: collapse; min-width: 40rem; }
+table.results { width: 100%; border-collapse: collapse; min-width: 30rem; }
 .results th, .results td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--rule);
   text-align: left;
   vertical-align: top;
 }
+.results tbody tr.is-pass { background: var(--pass-tint); }
+.results tbody tr.is-fail { background: var(--fail-tint); }
+.results tbody tr.is-pass td:first-child { background: var(--pass-tint); }
+.results tbody tr.is-fail td:first-child { background: var(--fail-tint); }
 .results thead th {
   background: var(--surface);
   font: 700 9px/1.4 var(--mono);
@@ -340,11 +342,14 @@ td.submission a {
   text-underline-offset: 3px;
 }
 td.submission a:hover { text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
-.submission__name { font-weight: 600; }
+.submission__name { font-weight: 400; font-size: 13px; }
 .submission__id { font: 10px/1.35 var(--mono); color: var(--muted); }
+.submission__meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.submission__meta .score { font-weight: 600; color: var(--ink); font-size: 11px; white-space: nowrap; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.num { font-family: var(--mono); font-size: 12px; }
 td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
+.score-std { color: var(--muted); font-weight: 400; font-size: 11px; white-space: nowrap; }
 .sr-only {
   position: absolute;
   width: 1px;
@@ -367,7 +372,7 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   font: 10px/1.5 var(--mono);
 }
 .footer p { margin: 0; }
-.version { color: inherit; opacity: .55; text-decoration: none; }
+.version { color: inherit; opacity: .9; text-decoration: underline; text-underline-offset: 3px; }
 .version:hover, .version:focus-visible { opacity: 1; }
 .js-only { display: none; }
 .js .js-only { display: inline; }
@@ -381,7 +386,7 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .rail a { grid-template-columns: 6px 20px minmax(0, 1fr); border-bottom: 0; padding: 10px 12px 10px 0; }
   .rail a + a { border-left: 1px solid var(--rule); padding-left: 12px; }
   .rail a small { grid-column: 3; }
-  .rail__note { display: none; }
+  .rail__note { display: block; margin-top: 12px; }
 }
 @media (max-width: 700px) {
   .shell { padding: 24px 16px 56px; }
@@ -390,6 +395,14 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .rail a + a { border-left: 0; padding-left: 0; }
   .group__head { grid-template-columns: 1fr; }
   .group__stats { flex-direction: row; align-items: baseline; gap: 16px; }
+  .results th, .results td { padding: 8px 8px; }
+  td.submission a { gap: 1px; }
+  .group { padding: 36px 0 20px; }
+  .table-wrap { overflow-x: visible; }
+  table.results { min-width: 0; }
+  td.num, th.num { white-space: normal; }
+  .score-std { display: inline; white-space: nowrap; }
+  .results th:first-child, .results td:first-child { position: static; }
   .footer { flex-direction: column; gap: 8px; }
 }
 """
@@ -438,6 +451,7 @@ _DETAIL_STYLE = """
   display: block;
   margin: 16px 0 0;
   border: 1px solid var(--rule-strong);
+  background: var(--surface);
   image-rendering: pixelated;
   width: min(100%, 480px);
   height: auto;
@@ -470,6 +484,7 @@ button, select { font: inherit; padding: .25rem .75rem; }
 }
 .detail-meta dd { margin: 0; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
 .detail-score { font-family: var(--mono); font-weight: 600; }
+.score-std { color: var(--muted); font-weight: 400; font-size: 12px; white-space: nowrap; }
 .detail-footer {
   display: flex;
   justify-content: space-between;
@@ -507,17 +522,17 @@ function draw() {
   const cell = canvas.width / SIZE;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   BLOCKED.forEach((blockedCell) => {
-    ctx.fillStyle = "#555";
+    ctx.fillStyle = "#8a9a94";
     ctx.fillRect(blockedCell[0] * cell, blockedCell[1] * cell, cell, cell);
   });
   const food = FRAMES[frame].food;
   if (food) {
-    ctx.fillStyle = "#c33";
+    ctx.fillStyle = "#e5484d";
     ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);
   }
   const snake = FRAMES[frame].snake;
   snake.forEach((segment, index) => {
-    ctx.fillStyle = index === 0 ? "#1a7f37" : "#3fb950";
+    ctx.fillStyle = index === 0 ? "#1f6b43" : "#57b47a";
     ctx.fillRect(segment[0] * cell, segment[1] * cell, cell, cell);
   });
   status.textContent = "move " + frame + "/" + (FRAMES.length - 1)
@@ -569,7 +584,6 @@ _SITE_SCRIPT = """
     if (!panels.length) return;
     const versions = panels.map(function (panel) { return panel.dataset.version; });
     const links = Array.from(group.querySelectorAll("[data-version-button]"));
-    const trigger = group.querySelector("[data-cycle-trigger]");
     const current = group.querySelector("[data-current]");
     const count = group.querySelector("[data-count]");
     const countWord = group.querySelector("[data-count-word]");
@@ -593,40 +607,29 @@ _SITE_SCRIPT = """
       if (count) count.textContent = panel.dataset.count || "";
       if (countWord) countWord.textContent = Number(panel.dataset.count) === 1 ? "run" : "runs";
       if (pass) pass.textContent = panel.dataset.pass || "";
-      if (trigger) {
-        trigger.setAttribute(
-          "aria-label",
-          "Switch " + group.dataset.title + " version. Current: " +
-            (panel.dataset.label || "") + ". " + index + " of " + versions.length + "."
-        );
-      }
     }
     links.forEach(function (link) {
       link.addEventListener("click", function () { select(link.dataset.version); });
     });
-    if (trigger && versions.length > 1) {
-      trigger.classList.add("is-clickable");
-      trigger.setAttribute("role", "button");
-      trigger.setAttribute("tabindex", "0");
-      const next = function () {
-        const active = panels.find(function (panel) { return !panel.hidden; }) || panels[0];
-        const index = versions.indexOf(active.dataset.version);
-        select(versions[(index + 1) % versions.length]);
-      };
-      trigger.addEventListener("click", next);
-      trigger.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          next();
-        }
-      });
-    }
+    panels.forEach(function (panel) {
+      const toggle = panel.querySelector("[data-passed-toggle]");
+      if (!toggle) return;
+      const apply = function () { panel.classList.toggle("hide-failed", toggle.checked); };
+      toggle.addEventListener("change", apply);
+      apply();
+    });
     const initial = panels.find(function (panel) {
       return panel.classList.contains("is-active");
     }) || panels[0];
     select(initial.dataset.version);
-    const fromHash = window.location.hash.slice(1);
-    if (versions.indexOf(fromHash) !== -1) select(fromHash);
+    let fromHash = window.location.hash.slice(1);
+    if (fromHash.indexOf("panel-") === 0) fromHash = fromHash.slice(6);
+    if (versions.indexOf(fromHash) !== -1) {
+      select(fromHash);
+      if (!document.getElementById(window.location.hash.slice(1))) {
+        try { group.scrollIntoView(); } catch (e) {}
+      }
+    }
   });
 })();
 """
@@ -657,6 +660,14 @@ def _score_text(result):
     return f"{mean:.{digits}f}%"
 
 
+def _score_html(result):
+    text = _score_text(result)
+    if "±" in text:
+        main, std = text.split("±", 1)
+        return f"{html.escape(main.strip())} <span class=\"score-std\">± {html.escape(std.strip())}</span>"
+    return html.escape(text)
+
+
 def _game_length_text(result):
     moves = result.details.get("seed_moves")
     return (
@@ -664,6 +675,29 @@ def _game_length_text(result):
         if not isinstance(moves, list) or not moves
         else f"{statistics.fmean(moves):.1f} ± {statistics.pstdev(moves):.1f}"
     )
+
+
+def _length_text(result):
+    if result.benchmark in SNAKE_BENCHMARKS:
+        return _game_length_text(result)
+    samples = result.details.get("samples")
+    if isinstance(samples, int):
+        return f"{samples:,}"
+    return "-"
+
+
+def _length_html(result):
+    text = _length_text(result)
+    if "±" in text:
+        main, std = text.split("±", 1)
+        return f"{html.escape(main.strip())} <span class=\"score-std\">± {html.escape(std.strip())}</span>"
+    return html.escape(text)
+
+
+def _fourth_header(benchmark):
+    if benchmark in SNAKE_BENCHMARKS:
+        return "Game length"
+    return "Samples"
 
 
 def _plural(count, singular):
@@ -713,7 +747,7 @@ def _group_info(benchmark):
     return _version_label(benchmark), "default"
 
 
-def _submission_cell(result, link):
+def _submission_cell(result, link, status=None, score_html=None):
     name = html.escape(result.name)
     submission = html.escape(result.submission)
     secondary = (
@@ -721,9 +755,13 @@ def _submission_cell(result, link):
         if result.name != result.submission
         else ""
     )
-    content = f'<span class="submission__name">{name}</span>{secondary}'
+    meta = ""
+    if score_html:
+        meta = f'<span class="submission__meta"><span class="score">{score_html}</span></span>'
+    content = f'<span class="submission__name">{name}</span>{secondary}{meta}'
     if link:
-        return f'<a href="{html.escape(link)}" aria-label="View details for {name}">{content}</a>'
+        label = f"View details for {result.name}, {status}" if status else f"View details for {result.name}"
+        return f'<a href="{html.escape(link)}" aria-label="{html.escape(label)}">{content}</a>'
     return content
 
 
@@ -732,16 +770,18 @@ def _table(results, submission_links=None):
     for rank, result in enumerate(results, 1):
         link = (submission_links or {}).get((result.benchmark, result.submission))
         status = "pass" if result.passed else "fail"
+        row_class = "is-pass" if result.passed else "is-fail"
         rows.append(
-            f'<tr><td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link)}</td><td class="num score">{_score_text(result)}</td><td><span class="status status--{status}">{status}</span></td><td class="num">{result.parameter_count:,}</td></tr>'
+            f'<tr class="{row_class}"><td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link, status, _score_html(result))}</td><td class="num">{result.parameter_count:,}</td><td class="num">{_length_html(result)}</td></tr>'
         )
     label = _version_label(results[0].benchmark) if results else "Results"
+    fourth = _fourth_header(results[0].benchmark) if results else "Samples"
     caption = (
         f"{html.escape(label)} results, ranked by {_ranking_text(results[0].benchmark)}."
         if results
         else "Results."
     )
-    return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Submission</th><th scope="col" class="num">Score</th><th scope="col">Status</th><th scope="col" class="num">Parameters</th></tr></thead><tbody>{"".join(rows)}</tbody></table>"""
+    return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Name</th><th scope="col" class="num">Parameters</th><th scope="col" class="num">{html.escape(fourth)}</th></tr></thead><tbody>{"".join(rows)}</tbody></table>"""
 
 
 def _detail_row(label, value):
@@ -764,16 +804,23 @@ def render_submission_html(result, payload, rank, total):
         _detail_row("Benchmark", html.escape(version_label)),
         _detail_row("Group", html.escape(group_label)),
         _detail_row("Submission", html.escape(result.submission)),
-        _detail_row("Name", html.escape(result.name)),
-        _detail_row("Author", html.escape(result.author)),
-        _detail_row("Rank", f"#{rank} of {total}"),
-        _detail_row(
-            "Score", f'<span class="detail-score">{html.escape(_score_text(result))}</span>'
-        ),
-        _detail_row("Status", f'<span class="status status--{status}">{status}</span>'),
-        _detail_row("Normalisation", html.escape(normalisation_text)),
-        _detail_row("Parameters", f"{result.parameter_count:,}"),
     ]
+    if result.name != result.submission:
+        rows.append(_detail_row("Name", html.escape(result.name)))
+    rows.extend(
+        [
+            _detail_row("Author", html.escape(result.author)),
+            _detail_row("Rank", f"#{rank} of {total}"),
+            _detail_row("Score", f'<span class="detail-score">{_score_html(result)}</span>'),
+        ]
+    )
+    rows.extend(
+        [
+            _detail_row("Status", f'<span class="status status--{status}">{status}</span>'),
+            _detail_row("Normalisation", html.escape(normalisation_text)),
+            _detail_row("Parameters", f"{result.parameter_count:,}"),
+        ]
+    )
     if result.benchmark in SNAKE_BENCHMARKS:
         rows.append(_detail_row("Game length", html.escape(_game_length_text(result))))
         seed_lengths = result.details.get("seed_lengths")
@@ -796,7 +843,28 @@ def render_submission_html(result, payload, rank, total):
             .replace("__SIZE__", str(size))
             .replace("__BLOCKED__", json.dumps(payload.get("blocked", [])))
         )
-        game_section = f"""<section class="detail-section detail-game" aria-labelledby="replay-title"><div class="detail-section-head"><h2 id="replay-title">Replay</h2><p>Seed {int(payload.get("seed", 0))} · {int(payload.get("moves", 0)):,} moves · final length {int(payload.get("length", 0))}</p></div><canvas id="board" width="{canvas}" height="{canvas}"></canvas><div class="controls"><button id="play" type="button">Play</button><button id="prev" type="button">Step back</button><button id="next" type="button">Step forward</button><label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="4" selected>4x</option><option value="8">8x</option></select></label></div><p id="status" class="muted" aria-live="polite"></p></section>"""
+        seed = int(payload.get("seed", 0))
+        moves = int(payload.get("moves", 0))
+        length = int(payload.get("length", 0))
+        canvas_label = (
+            f"Snake replay board. Seed {seed}, {moves:,} moves, final length {length}. "
+            "Use Play and Step buttons below; current position is announced in status text."
+        )
+        canvas_fallback = f"Snake replay: Seed {seed}, {moves:,} moves, final length {length}. Enable JavaScript to play."
+        game_section = (
+            f'<section class="detail-section detail-game" aria-labelledby="replay-title">'
+            f'<div class="detail-section-head"><h2 id="replay-title">Replay</h2>'
+            f"<p>Seed {seed} · {moves:,} moves · final length {length}</p></div>"
+            f'<canvas id="board" width="{canvas}" height="{canvas}" role="img" '
+            f'aria-label="{html.escape(canvas_label)}" aria-describedby="status">{html.escape(canvas_fallback)}</canvas>'
+            '<div class="controls"><button id="play" type="button">Play</button>'
+            '<button id="prev" type="button">Step back</button>'
+            '<button id="next" type="button">Step forward</button>'
+            '<label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option>'
+            '<option value="4" selected>4x</option><option value="8">8x</option></select></label></div>'
+            '<noscript><p class="muted">Replay needs JavaScript. Summary above gives seed, moves and final length.</p></noscript>'
+            '<p id="status" class="muted" aria-live="polite"></p></section>'
+        )
         script_tag = f"<script>{script}</script>"
         grid_class = "detail-grid"
     else:
@@ -804,7 +872,12 @@ def render_submission_html(result, payload, rank, total):
         script_tag = ""
         grid_class = "detail-grid detail-grid--single"
 
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)} — {html.escape(version_label)} — Minimal NN Competition</title><style>{_STYLE}{_DETAIL_STYLE}</style></head><body data-accent="{html.escape(accent)}"><div class="detail-shell"><header class="detail-head"><p class="eyebrow"><span class="detail-group">{html.escape(group_label)}</span> · {html.escape(version_label)}</p><h1 class="detail-title">{html.escape(title)}</h1><p class="detail-subtitle">Submission details</p><p class="detail-links"><a href="../">← Back to leaderboard</a><span>·</span><a href="../leaderboard.json">Raw leaderboard JSON</a></p></header><div class="{grid_class}">{game_section}<aside class="detail-panel" aria-labelledby="details-title"><h2 class="detail-kicker" id="details-title">Submission</h2><dl class="detail-meta">{meta}</dl></aside></div><footer class="detail-footer"><a href="../">Back to leaderboard</a><span>Minimal NN Competition</span></footer></div>{script_tag}</body></html>"""
+    if group_label == version_label:
+        eyebrow_second = _PANEL_NOTES.get(result.benchmark, version_label)
+        eyebrow_html = f'<span class="detail-group">{html.escape(group_label)}</span> · {html.escape(eyebrow_second)}'
+    else:
+        eyebrow_html = f'<span class="detail-group">{html.escape(group_label)}</span> · {html.escape(version_label)}'
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)} — {html.escape(version_label)} — Minimal NN Competition</title><style>{_STYLE}{_DETAIL_STYLE}</style></head><body data-accent="{html.escape(accent)}"><div class="detail-shell"><header class="detail-head"><p class="eyebrow">{eyebrow_html}</p><h1 class="detail-title">{html.escape(title)}</h1><p class="detail-subtitle">Submission details</p><p class="detail-links"><a href="../">← Back to leaderboard</a><span>·</span><a href="../leaderboard.json">Raw leaderboard JSON</a></p></header><div class="{grid_class}">{game_section}<aside class="detail-panel" aria-labelledby="details-title"><h2 class="detail-kicker" id="details-title">Submission</h2><dl class="detail-meta">{meta}</dl></aside></div><footer class="detail-footer"><a href="../">Back to leaderboard</a><span>Minimal NN Competition · <a href="../internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard">speed board</a></span></footer></div>{script_tag}</body></html>"""
 
 
 def render_submission_pages(results, replays, output_dir):
@@ -867,29 +940,13 @@ def render_html(results, submission_links=None):
         default_benchmark = versions[0]
         default_label = _version_label(default_benchmark)
         group_count = sum(len(entries[benchmark]) for benchmark in versions)
-        group_pass = sum(
-            sum(1 for result in entries[benchmark] if result.passed) for benchmark in versions
-        )
         rail_links.append(
-            f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong><small>{group_count} {_plural(group_count, "run")}</small></a>'
+            f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong><small>{group_count} {_plural(group_count, "run")} total</small></a>'
         )
-        if len(versions) > 1:
-            title = (
-                f'<span class="group__title-trigger" data-cycle-trigger>'
-                f'<span class="group__title-text">{html.escape(label)}</span>'
-                f'<span class="cycle" aria-hidden="true">↻</span></span>'
-            )
-        else:
-            title = f'<span class="group__title-text">{html.escape(label)}</span>'
         description = (
             f'<p class="group__desc">{html.escape(spec["description"])}</p>'
             if spec["description"]
             else ""
-        )
-        stats = (
-            f'<div class="group__stats"><span><strong data-count>{group_count}</strong> '
-            f"<span data-count-word>{_plural(group_count, 'run')}</span></span>"
-            f"<span><strong data-pass>{group_pass}</strong> pass</span></div>"
         )
         version_buttons = []
         for benchmark in versions:
@@ -904,15 +961,17 @@ def render_html(results, submission_links=None):
                 f"{''.join(version_buttons)}</div>"
             )
             hint = (
-                f'<p class="version-hint"><span data-current aria-live="polite">'
-                f"{html.escape(default_label)} · 1 of {len(versions)}</span> · click the title to cycle</p>"
+                f'<p class="sr-only" aria-live="polite"><span data-current>'
+                f"{html.escape(default_label)} · 1 of {len(versions)}</span></p>"
             )
         else:
             version_controls = ""
-            hint = f'<p class="version-hint"><span>{html.escape(default_label)} · 1 of 1</span></p>'
+            hint = ""
         version_row = (
-            f'<div class="version-row"><p class="version-row__label">Version</p>'
+            f'<div class="version-row">'
             f"{version_controls}{hint}</div>"
+            if (version_controls or hint)
+            else ""
         )
         panels = []
         for benchmark in versions:
@@ -921,33 +980,26 @@ def render_html(results, submission_links=None):
             count = len(version_entries)
             pass_count = sum(1 for result in version_entries if result.passed)
             active = benchmark == default_benchmark
-            note = f"<strong>{html.escape(version_label)}</strong>"
-            detail = _PANEL_NOTES.get(benchmark)
-            if detail:
-                note += f" · {html.escape(detail)}"
-            note += f" · Ranked by {_ranking_text(benchmark)}."
-            note += " · Select a submission for full details."
             table = _table(version_entries, submission_links)
             panels.append(
                 f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}" data-count="{count}" data-pass="{pass_count}">'
-                f'<p class="table-note">{note}</p>'
+                f'<label class="passed-toggle"><input type="checkbox" checked data-passed-toggle> Pass only</label>'
                 f'<div class="table-wrap" role="region" tabindex="0" aria-label="{html.escape(version_label)} results">{table}</div>'
                 f"</div>"
             )
         sections.append(
             f'<section class="group" id="{html.escape(group_id)}" data-group-section data-accent="{html.escape(accent)}" data-title="{html.escape(label)}" aria-labelledby="{html.escape(group_id)}-title">'
-            f'<div class="group__head"><div><p class="eyebrow"><span class="group__index">{group_number:02d}</span> / {html.escape(spec["eyebrow"])}</p>'
-            f'<h2 class="group__title" id="{html.escape(group_id)}-title">{title}</h2>{description}</div>{stats}</div>'
+            f'<div class="group__head"><div><p class="eyebrow" id="{html.escape(group_id)}-title"><span class="group__index">{group_number:02d}</span> / {html.escape(label)}</p>'
+            f'{description}</div></div>'
             f"{version_row}{''.join(panels)}</section>"
         )
     rail_note = (
-        f"{total} {_plural(total, 'run')} · {passed} pass<br>"
-        f'<span class="js-only">Click a group title to cycle its versions.</span>'
+        f"{total} {_plural(total, 'run')} total · {passed} pass"
         if groups
         else ""
     )
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Small PyTorch state-dict submissions for image classification, Snake variants, and chess evaluation.</p><p class="links"><a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit a model</a><span>·</span><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><p class="links"><a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit a model</a><span>·</span><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
 
