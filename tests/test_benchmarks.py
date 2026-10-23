@@ -7,6 +7,8 @@ import torch
 
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+from minimal_nn_competition.benchmarks.register import create_benchmark
+from minimal_nn_competition.benchmarks.robustness.benchmark import RobustnessBenchmark
 from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
 from minimal_nn_competition.model.entry import Submission, materialize_submission
@@ -326,3 +328,48 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
     )
     with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
         FashionMnistBenchmark().load_submission(submission)
+
+
+def test_robustness_registers_by_name() -> None:
+    benchmark = create_benchmark("robustness")
+    assert benchmark.name == "robustness"
+    assert isinstance(benchmark, RobustnessBenchmark)
+
+
+def test_robustness_zero_model_end_to_end(tmp_path: Path) -> None:
+    inputs = torch.zeros((2, 784), dtype=torch.uint8)
+    inputs[0, 0] = 255
+    inputs[1, 1] = 255
+    labels = torch.tensor([0, 1])
+    data_path = tmp_path / "robustness-test.pt"
+    torch.save((inputs, labels), data_path)
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "robustness",
+            "architecture": "linear",
+            "input_size": 784,
+            "output_size": 10,
+        },
+        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+    )
+    loaded = materialize_submission(submission)
+    score, _, passed, details = RobustnessBenchmark(data_path=data_path).evaluate(loaded)
+    assert score == 0.5
+    assert passed is True
+    assert details["clean_accuracy"] == 0.5
+
+
+def test_robustness_rejects_wrong_shape(tmp_path: Path) -> None:
+    submission = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "robustness",
+            "architecture": "linear",
+            "input_size": 10,
+            "output_size": 10,
+        },
+        {"weight": torch.zeros((10, 10)), "bias": torch.zeros(10)},
+    )
+    with pytest.raises(ValueError, match="input_size 784"):
+        RobustnessBenchmark().load_submission(submission)

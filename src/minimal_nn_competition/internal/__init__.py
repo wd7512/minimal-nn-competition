@@ -27,6 +27,7 @@ _FASHION_FILES = (
     f"{PACKAGE}/examples/fashion_mnist_submission.py",
 )
 _SNAKE_FILES = (f"{PACKAGE}/benchmarks/snake", f"{PACKAGE}/examples/snake_submission.py")
+_ROBUSTNESS_FILES = (f"{PACKAGE}/benchmarks/robustness",)
 
 
 @dataclass(frozen=True)
@@ -84,6 +85,15 @@ SCOPES = (
         ),
     ),
     Scope(
+        "robustness",
+        _ROBUSTNESS_FILES,
+        (
+            "tests/test_benchmarks.py::test_robustness_registers_by_name",
+            "tests/test_benchmarks.py::test_robustness_zero_model_end_to_end",
+            "tests/test_benchmarks.py::test_robustness_rejects_wrong_shape",
+        ),
+    ),
+    Scope(
         "core",
         (PACKAGE,),
         (
@@ -128,7 +138,9 @@ def expand_scope_tests(scope, collected):
 
 def scope_files(scope, root):
     """Resolve a scope's source prefixes to Python files under ``root``."""
-    excluded = [root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES]
+    excluded = [
+        root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES + _ROBUSTNESS_FILES
+    ]
     files = []
     for source in scope.sources:
         path = root / source
