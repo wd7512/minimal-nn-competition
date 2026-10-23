@@ -1,6 +1,6 @@
 [project]
 name = "minimal-nn-competition"
-version = "0.0.1"
+version = "0.0.2"
 description = "A platform for presenting and finding the smallest possible neural-network for problems."
 readme = "README.md"
 authors = [
