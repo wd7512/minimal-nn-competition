@@ -27,6 +27,10 @@ _FASHION_FILES = (
     f"{PACKAGE}/examples/fashion_mnist_submission.py",
 )
 _SNAKE_FILES = (f"{PACKAGE}/benchmarks/snake", f"{PACKAGE}/examples/snake_submission.py")
+_PARITY_FILES = (
+    f"{PACKAGE}/benchmarks/parity",
+    f"{PACKAGE}/examples/parity_submission.py",
+)
 
 
 @dataclass(frozen=True)
@@ -84,6 +88,17 @@ SCOPES = (
         ),
     ),
     Scope(
+        "parity",
+        _PARITY_FILES,
+        (
+            "tests/test_benchmarks.py::test_parity_registers_by_name",
+            "tests/test_benchmarks.py::test_parity_dataset_is_deterministic",
+            "tests/test_benchmarks.py::test_parity_evaluate_oracle_passes",
+            "tests/test_benchmarks.py::test_parity_evaluate_dummy_fails",
+            "tests/test_benchmarks.py::test_parity_rejects_wrong_shape",
+        ),
+    ),
+    Scope(
         "core",
         (PACKAGE,),
         (
@@ -128,7 +143,9 @@ def expand_scope_tests(scope, collected):
 
 def scope_files(scope, root):
     """Resolve a scope's source prefixes to Python files under ``root``."""
-    excluded = [root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES]
+    excluded = [
+        root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES + _PARITY_FILES
+    ]
     files = []
     for source in scope.sources:
         path = root / source

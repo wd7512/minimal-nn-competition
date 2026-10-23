@@ -13,11 +13,13 @@ def _factories() -> dict[str, BenchmarkFactory]:
         FashionMnistBenchmark,
     )
     from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
+    from minimal_nn_competition.benchmarks.parity.benchmark import ParityBenchmark
     from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
 
     return {
         "fashion-mnist": FashionMnistBenchmark,
         "mnist": MnistBenchmark,
+        "parity": ParityBenchmark,
         "snake": SnakeBenchmark,
     }
 
