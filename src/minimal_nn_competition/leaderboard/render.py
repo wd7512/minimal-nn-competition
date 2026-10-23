@@ -9,7 +9,7 @@ from itertools import groupby
 
 from minimal_nn_competition import __version__
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
-from minimal_nn_competition.benchmarks.snake.replay import replay_slug
+from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
 
 _SECTION_TITLES = {
@@ -17,10 +17,12 @@ _SECTION_TITLES = {
     "mnist": "MNIST COMPRESSION",
     "snake-simple-8x8": "SNAKE SIMPLE 8X8",
     "snake-simple-16x16": "SNAKE SIMPLE 16X16",
+    "snake-obstacles-8x8": "SNAKE OBSTACLES 8X8",
 }
 _REPLAY_TITLES = {
     "snake-simple-8x8": "Snake Simple 8x8",
     "snake-simple-16x16": "Snake Simple 16x16",
+    "snake-obstacles-8x8": "Snake Obstacles 8x8",
 }
 
 _STYLE = """
@@ -38,13 +40,24 @@ footer { margin-top: 2rem; text-align: right; }
 
 
 def _score_text(result):
-    maximum = result.details.get("max_length", 64) if result.benchmark in SNAKE_BENCHMARKS else 1
+    if result.benchmark not in SNAKE_BENCHMARKS:
+        return f"{result.score * 100:.2f}%"
+    lengths = result.details.get("seed_lengths")
+    targets = result.details.get("target_lengths")
+    if (
+        isinstance(lengths, list)
+        and isinstance(targets, list)
+        and len(lengths) == len(targets)
+        and targets
+        and all(target > 0 for target in targets)
+    ):
+        percentages = [
+            length / target * 100 for length, target in zip(lengths, targets, strict=True)
+        ]
+        return f"{statistics.fmean(percentages):.2f}% ± {statistics.pstdev(percentages):.2f}%"
+    maximum = result.details.get("max_length", 64)
     mean = result.score / maximum * 100
-    return (
-        f"{mean:.2f}%"
-        if result.benchmark not in SNAKE_BENCHMARKS
-        else f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
-    )
+    return f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
 
 
 def _game_length_text(result):
@@ -142,6 +155,14 @@ speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
 draw();
 """
 
+_GAME_SCRIPT_WITH_BLOCKED = _GAME_SCRIPT.replace(
+    "const SIZE = __SIZE__;",
+    "const SIZE = __SIZE__;\nconst BLOCKED = __BLOCKED__;",
+).replace(
+    '  const food = FRAMES[frame].food;\n  ctx.fillStyle = "#c33";\n  ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);',
+    '  BLOCKED.forEach((blockedCell) => {\n    ctx.fillStyle = "#555";\n    ctx.fillRect(blockedCell[0] * cell, blockedCell[1] * cell, cell, cell);\n  });\n  const food = FRAMES[frame].food;\n  if (food) {\n    ctx.fillStyle = "#c33";\n    ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);\n  }',
+)
+
 
 def render_game_html(submission, payload, benchmark="snake-simple-8x8"):
     """Render a standalone replay page with an inline frame player."""
@@ -149,14 +170,23 @@ def render_game_html(submission, payload, benchmark="snake-simple-8x8"):
     size = int(payload.get("size", 8))
     label = _REPLAY_TITLES.get(benchmark, benchmark)
     canvas = 40 * size
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{label} replay — {title}</title><style>{_GAME_STYLE}</style></head><body><header><h1>{label} replay — {title}</h1><p>Seed {int(payload.get("seed", 0))}, {int(payload.get("moves", 0))} moves, final length {int(payload.get("length", 0))}.</p><p><a href="../">Main leaderboard</a></p></header><canvas id="board" width="{canvas}" height="{canvas}"></canvas><div class="controls"><button id="play" type="button">Play</button><button id="prev" type="button">Step back</button><button id="next" type="button">Step forward</button><label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="4" selected>4x</option><option value="8">8x</option></select></label></div><p id="status" class="muted"></p><script>{_GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"])).replace("__SIZE__", str(size))}</script></body></html>
+    script = _GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"])).replace(
+        "__SIZE__", str(size)
+    )
+    if payload.get("blocked"):
+        script = (
+            _GAME_SCRIPT_WITH_BLOCKED.replace("__FRAMES__", json.dumps(payload["frames"]))
+            .replace("__SIZE__", str(size))
+            .replace("__BLOCKED__", json.dumps(payload["blocked"]))
+        )
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{label} replay — {title}</title><style>{_GAME_STYLE}</style></head><body><header><h1>{label} replay — {title}</h1><p>Seed {int(payload.get("seed", 0))}, {int(payload.get("moves", 0))} moves, final length {int(payload.get("length", 0))}.</p><p><a href="../">Main leaderboard</a></p></header><canvas id="board" width="{canvas}" height="{canvas}"></canvas><div class="controls"><button id="play" type="button">Play</button><button id="prev" type="button">Step back</button><button id="next" type="button">Step forward</button><label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="4" selected>4x</option><option value="8">8x</option></select></label></div><p id="status" class="muted"></p><script>{script}</script></body></html>
 """
 
 
 def render_game_pages(results, replays, output_dir):
     """Write one replay page per snake submission; return submission-to-href links.
 
-    ``replays`` is keyed by the replay slug, not the raw submission name.
+    ``replays`` is keyed by the replay stem, not the raw submission name.
     """
     games_dir = output_dir / "games"
     links = {}
@@ -167,7 +197,7 @@ def render_game_pages(results, replays, output_dir):
     for result in results:
         if result.benchmark not in SNAKE_BENCHMARKS:
             continue
-        slug = replay_slug(result.submission)
+        slug = replay_stem(result.benchmark, result.submission)
         payload = replays.get(slug)
         if payload is None:
             continue

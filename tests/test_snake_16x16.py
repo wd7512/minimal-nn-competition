@@ -46,6 +46,7 @@ def test_registry_and_list_include_16x16(capsys: pytest.CaptureFixture[str]) -> 
     assert capsys.readouterr().out.splitlines() == [
         "fashion-mnist",
         "mnist",
+        "snake-obstacles-8x8",
         "snake-simple-16x16",
         "snake-simple-8x8",
     ]
@@ -97,7 +98,13 @@ def test_16x16_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         size = 16
 
         def __init__(
-            self, size: int, seed: int, max_moves: int, input_indices: object = None
+            self,
+            size: int,
+            seed: int,
+            max_moves: int,
+            input_indices: object = None,
+            blocked: object = (),
+            loop_on_full: bool = False,
         ) -> None:
             self.snake = [(0, 0)] * 256
 
@@ -147,14 +154,14 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
         {"max_length": 256, "seed_moves": [10, 20]},
     )
     payload = record_game(_right_model(), size=16)
-    index = render_site([result], tmp_path, {"example": payload})
+    index = render_site([result], tmp_path, {"snake-simple-16x16-example": payload})
     html = index.read_text()
     assert "SNAKE SIMPLE 16X16" in html
     assert "50.00% ± 0.00%" in html
     assert "<th>Game length</th>" in html
     assert "15.0 ± 5.0" in html
     assert "<th>Replay</th>" in html
-    game_page = (tmp_path / "games" / "example.html").read_text()
+    game_page = (tmp_path / "games" / "snake-simple-16x16-example.html").read_text()
     assert "Snake Simple 16x16 replay" in game_page
     assert 'width="640" height="640"' in game_page
 
@@ -190,7 +197,7 @@ def test_collect_records_16x16_replay(tmp_path: Path, fast_snake_cli: None) -> N
         )
         == 0
     )
-    payload = json.loads((replays / "tiny.json").read_text())
+    payload = json.loads((replays / "snake-simple-16x16-tiny.json").read_text())
     assert payload["size"] == 16
     assert payload["frames"][0]["snake"] == [[8, 8]]
 

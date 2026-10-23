@@ -5,8 +5,8 @@ Feature layout:
   4-7   corner-adjacency averages derived from those four values
   8-11  food alignment on the same row or column
   12-15 food alignment on a diagonal
-  16-23 nearest body segment: right, left, down, up, down-right, up-left,
-        down-left, up-right
+  16-23 nearest body or blocked cell: right, left, down, up, down-right,
+        up-left, down-left, up-right
 
 Non-zero values are normalized with ``(size - value - 1) / (size - 2)``.
 """
@@ -31,33 +31,35 @@ _RAY_DIRECTIONS = (
 def _all_features(engine):
     size = engine.size
     head_x, head_y = engine.snake[0]
-    food_x, food_y = engine.food
     head_cell = engine.head_cell
 
     values = [head_y, head_x, size - head_y - 1, size - head_x - 1]
     values += [(values[i] + values[-~i % 4] - 1) / 2 for i in range(4)]
     values += [0.0] * 16
 
-    row_delta = head_y - food_y
-    column_delta = head_x - food_x
-    if row_delta == 0:
-        values[8 if head_x > food_x else 9] = abs(column_delta)
-    if column_delta == 0:
-        values[10 if head_y > food_y else 11] = abs(row_delta)
-    if row_delta == column_delta:
-        values[12 if row_delta < 0 else 13] = abs(row_delta)
-    if row_delta == -column_delta:
-        values[14 if row_delta < 0 else 15] = abs(row_delta)
+    food = engine.food
+    if food is not None:
+        food_x, food_y = food
+        row_delta = head_y - food_y
+        column_delta = head_x - food_x
+        if row_delta == 0:
+            values[8 if head_x > food_x else 9] = abs(column_delta)
+        if column_delta == 0:
+            values[10 if head_y > food_y else 11] = abs(row_delta)
+        if row_delta == column_delta:
+            values[12 if row_delta < 0 else 13] = abs(row_delta)
+        if row_delta == -column_delta:
+            values[14 if row_delta < 0 else 15] = abs(row_delta)
 
-    body_mask = engine.body_mask
-    if body_mask:
+    target_mask = engine.body_mask | engine.blocked_mask
+    if target_mask:
         y, x = divmod(head_cell, size)
         for index, (dy, dx) in enumerate(_RAY_DIRECTIONS):
             next_y, next_x = y + dy, x + dx
             distance = 0
             while 0 <= next_y < size and 0 <= next_x < size:
                 distance += 1
-                if body_mask >> (next_y * size + next_x) & 1:
+                if target_mask >> (next_y * size + next_x) & 1:
                     values[16 + index] = distance
                     break
                 next_y += dy

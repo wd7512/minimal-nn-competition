@@ -3,6 +3,7 @@
 import statistics
 
 from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
+from minimal_nn_competition.benchmarks.snake.layout import obstacles_for_seed
 from minimal_nn_competition.benchmarks.snake.observation import OBSERVATION_SIZE
 from minimal_nn_competition.model.entry import materialize_submission
 
@@ -45,12 +46,24 @@ class SnakeBenchmark:
         self.seeds = seeds
         self.max_moves = max_moves
 
+    def obstacles(self, seed):
+        """Return the blocked cells for a seed (none for plain Snake)."""
+        return ()
+
+    def environment_options(self, seed):
+        """Return the size, blocked cells, and full-board rule for a seed."""
+        return {
+            "size": self.size,
+            "blocked": self.obstacles(seed),
+            "loop_on_full": self.loop_on_full,
+        }
+
     def _environment(self, seed, input_indices):
         return SnakeEnvironment(
-            size=self.size,
             seed=seed,
             max_moves=self.max_moves,
             input_indices=input_indices,
+            **self.environment_options(seed),
         )
 
     def load_submission(self, submission):
@@ -77,8 +90,13 @@ class SnakeBenchmark:
         indices = selected_input_indices(submission.config, label)
         lengths = []
         moves = []
+        seed_passed = []
+        target_lengths = []
+        seed_blocked = []
         with torch.no_grad():
             for seed in self.seeds:
+                blocked = self.obstacles(seed)
+                target = self.size * self.size - len(blocked)
                 environment = self._environment(seed, indices)
                 observation = environment.reset()
                 done = False
@@ -91,18 +109,26 @@ class SnakeBenchmark:
                     )
                     observation, _, done = environment.step(action)
                     ticks += 1
-                lengths.append(len(environment.snake))
+                length = len(environment.snake)
+                won = bool(getattr(environment, "won", False))
+                lengths.append(length)
                 moves.append(ticks)
+                target_lengths.append(target)
+                seed_blocked.append([list(cell) for cell in blocked])
+                seed_passed.append(length == target and (won if self.loop_on_full else True))
         score = statistics.fmean(lengths)
         score_std = statistics.pstdev(lengths)
         board_size = environment.size * environment.size
         return (
             score,
             score_std,
-            all(length == board_size for length in lengths),
+            all(seed_passed),
             {
                 "seed_lengths": lengths,
                 "seed_moves": moves,
+                "seed_passed": seed_passed,
+                "target_lengths": target_lengths,
+                "seed_blocked": seed_blocked,
                 "max_length": board_size,
                 "seeds": len(self.seeds),
             },
@@ -112,3 +138,12 @@ class SnakeBenchmark:
 class SnakeSimple16x16Benchmark(SnakeBenchmark):
     name = "snake-simple-16x16"
     size = 16
+
+
+class SnakeObstacles8x8Benchmark(SnakeBenchmark):
+    name = "snake-obstacles-8x8"
+    size = 8
+    loop_on_full = True
+
+    def obstacles(self, seed):
+        return obstacles_for_seed(self.size, seed)

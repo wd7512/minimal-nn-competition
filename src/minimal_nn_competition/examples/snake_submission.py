@@ -36,8 +36,11 @@ def _select_device(requested):
 
 
 def _distance(environment):
+    food = environment.food
+    if food is None:
+        return 0
     head_x, head_y = environment.snake[0]
-    food_x, food_y = environment.food
+    food_x, food_y = food
     return abs(head_x - food_x) + abs(head_y - food_y)
 
 
@@ -65,7 +68,7 @@ def _gae(rewards, values, dones, gamma, lam):
     ]
 
 
-def _evaluate(policy, device, seeds, size=8):
+def _evaluate(policy, device, seeds, benchmark):
     import torch
 
     from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
@@ -73,7 +76,11 @@ def _evaluate(policy, device, seeds, size=8):
     lengths = []
     with torch.no_grad():
         for seed in seeds:
-            environment = SnakeEnvironment(size=size, seed=seed, max_moves=4096)
+            environment = SnakeEnvironment(
+                seed=seed,
+                max_moves=4096,
+                **benchmark.environment_options(seed),
+            )
             observation = environment.reset()
             done = False
             while not done:
@@ -109,7 +116,7 @@ def train(
 
     if benchmark not in SNAKE_BENCHMARKS:
         raise ValueError(f"Unknown Snake benchmark {benchmark!r}")
-    size = create_benchmark(benchmark).size
+    benchmark_instance = create_benchmark(benchmark)
 
     logger = logging.getLogger(__name__)
     torch.manual_seed(seed)
@@ -135,10 +142,11 @@ def train(
         advantages_all = []
         episode_lengths = []
         for episode in range(episodes_per_iteration):
+            episode_seed = seed + iteration * episodes_per_iteration + episode
             environment = SnakeEnvironment(
-                size=size,
-                seed=seed + iteration * episodes_per_iteration + episode,
+                seed=episode_seed,
                 max_moves=max_moves,
+                **benchmark_instance.environment_options(episode_seed),
             )
             observation = environment.reset()
             episode_rewards = []
@@ -205,7 +213,7 @@ def train(
                 f"iteration {iteration + 1}/{iterations} length {mean_length:.1f} food {mean_length - 1:.2f}"
             )
 
-    lengths = _evaluate(policy, device, DEFAULT_SEEDS, size)
+    lengths = _evaluate(policy, device, DEFAULT_SEEDS, benchmark_instance)
     logger.info(
         f"Greedy evaluation: mean {statistics.fmean(lengths):.2f}, std {statistics.pstdev(lengths):.2f}, lengths {lengths}"
     )
