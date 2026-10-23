@@ -120,6 +120,7 @@ tests/test_import.py
 tests/test_configs.py
 tests/test_integration.py::test_checked_in_examples_load
 tests/test_integration.py::test_render_site
+tests/test_integration.py::test_render_near_perfect_failure_is_not_shown_as_100
 tests/test_integration.py::test_render_mnist_has_no_game_length_column
 tests/test_integration.py::test_render_cli
 tests/test_integration.py::test_render_shows_name_and_author

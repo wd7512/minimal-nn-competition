@@ -34,11 +34,10 @@ footer { margin-top: 2rem; text-align: right; }
 def _score_text(result):
     maximum = result.details.get("max_length", 64) if result.benchmark == "snake-simple-8x8" else 1
     mean = result.score / maximum * 100
-    return (
-        f"{mean:.2f}%"
-        if result.benchmark != "snake-simple-8x8"
-        else f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
-    )
+    if result.benchmark == "snake-simple-8x8":
+        return f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
+    digits = 4 if not result.passed and mean >= 99.995 else 2
+    return f"{mean:.{digits}f}%"
 
 
 def _game_length_text(result):
