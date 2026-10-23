@@ -81,11 +81,11 @@ def _parser():
     _render_args(render_internal)
     collect = add("collect", help="Evaluate every model under models/")
     collect.add_argument("--models", type=Path, default=Path("models"))
-    collect.add_argument("--data-path", type=Path, default=Path("data/mnist-test.pt"))
+    collect.add_argument("--data-path", type=Path, default=Path("data/mnist.pt"))
     collect.add_argument(
         "--fashion-mnist-data-path",
         type=Path,
-        default=Path("data/fashion-mnist-test.pt"),
+        default=Path("data/fashion-mnist.pt"),
     )
     collect.add_argument("--output", type=Path, default=Path("leaderboard.json"))
     collect.add_argument(
@@ -94,18 +94,16 @@ def _parser():
         default=None,
         help="Record one seed-0 Snake Simple 8x8 game per submission into this directory",
     )
-    download = add("download-mnist", help="Download the official MNIST caches")
+    download = add("download-mnist", help="Download the official MNIST dataset")
     _download_args(download)
     download_fashion = add(
-        "download-fashion-mnist", help="Download the official Fashion-MNIST caches"
+        "download-fashion-mnist", help="Download the official Fashion-MNIST dataset"
     )
     _download_args(download_fashion)
     train_mnist = add("train-mnist", help="Train the MNIST example submission")
-    _classifier_train_args(train_mnist, "data/mnist-train.pt", "models/mnist/example")
+    _classifier_train_args(train_mnist, "data/mnist.pt", "models/mnist/example")
     train_fashion = add("train-fashion-mnist", help="Train the Fashion-MNIST example submission")
-    _classifier_train_args(
-        train_fashion, "data/fashion-mnist-train.pt", "models/fashion-mnist/example"
-    )
+    _classifier_train_args(train_fashion, "data/fashion-mnist.pt", "models/fashion-mnist/example")
     train_snake = add(
         "train-snake-simple-8x8", help="Train the Snake Simple 8x8 example submission"
     )
@@ -253,10 +251,10 @@ def main(argv=None):
 
             download_mnist = download_fashion_mnist
         try:
-            train_path, test_path = download_mnist(args.output, force=args.force)
+            cache_path = download_mnist(args.output, force=args.force)
         except (OSError, ValueError) as exc:
             return _fail(exc)
-        _emit(f"{train_path}\n{test_path}")
+        _emit(cache_path)
         return 0
     if args.command in ("train-mnist", "train-fashion-mnist"):
         if args.command == "train-mnist":
@@ -297,6 +295,10 @@ def main(argv=None):
     kwargs = {}
     if args.data_path is not None:
         kwargs["data_path"] = args.data_path
+    elif args.benchmark == "mnist":
+        kwargs["data_path"] = Path("data/mnist.pt")
+    elif args.benchmark == "fashion-mnist":
+        kwargs["data_path"] = Path("data/fashion-mnist.pt")
     try:
         benchmark = create_benchmark(args.benchmark, **kwargs)
         result = evaluate_submission(Submission.from_directory(args.submission), benchmark)

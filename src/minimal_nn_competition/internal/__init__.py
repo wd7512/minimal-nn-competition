@@ -50,6 +50,8 @@ tests/test_benchmarks.py::test_mnist_rejects_wrong_shape
 tests/test_benchmarks.py::test_mnist_accepts_two_dimensional_labels
 tests/test_benchmarks.py::test_mnist_rejects_length_mismatch
 tests/test_benchmarks.py::test_mnist_rejects_wrong_input_width
+tests/test_benchmarks.py::test_mnist_rejects_partial_dataset
+tests/test_benchmarks.py::test_image_benchmarks_expect_full_dataset
 tests/test_mnist_data.py""".splitlines()
         ),
     ),

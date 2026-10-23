@@ -7,6 +7,10 @@ Find the smallest possible neural network for a problem.
 Problems: **Snake Simple 8x8** (fill an 8×8 board) · **MNIST** and **Fashion-MNIST** (classify images).
 Rules: feed-forward `linear` or `mlp` models, a standard activation, and a PyTorch `state_dict`.
 
+MNIST and Fashion-MNIST each use one 70,000-example dataset. There is no
+held-out split: train on the same examples you are scored on and fit every
+example exactly.
+
 ## Submit
 
 Open a pull request against `submission` with exactly

@@ -9,7 +9,7 @@ train = partial(train_classifier, benchmark="fashion-mnist")
 
 
 def main(argv=None):
-    return run("Fashion-MNIST", "data/fashion-mnist-train.pt", "models/fashion-mnist/example", argv)
+    return run("Fashion-MNIST", "data/fashion-mnist.pt", "models/fashion-mnist/example", argv)
 
 
 if __name__ == "__main__":

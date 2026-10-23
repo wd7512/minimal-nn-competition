@@ -33,7 +33,7 @@ def _assert_written(output: Path, benchmark: str) -> None:
 
 
 def test_mnist_training_writes_submission(tmp_path: Path) -> None:
-    data_path = tmp_path / "mnist-train.pt"
+    data_path = tmp_path / "mnist.pt"
     _write_training_cache(data_path)
     output = tmp_path / "mnist"
     mnist_submission.train(
@@ -47,7 +47,7 @@ def test_mnist_training_writes_submission(tmp_path: Path) -> None:
 
 
 def test_fashion_mnist_training_writes_submission(tmp_path: Path) -> None:
-    data_path = tmp_path / "fashion-mnist-train.pt"
+    data_path = tmp_path / "fashion-mnist.pt"
     _write_training_cache(data_path)
     output = tmp_path / "fashion-mnist"
     fashion_mnist_submission.train(
@@ -63,7 +63,7 @@ def test_fashion_mnist_training_writes_submission(tmp_path: Path) -> None:
 def test_training_processes_final_partial_batch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    data_path = tmp_path / "mnist-train.pt"
+    data_path = tmp_path / "mnist.pt"
     inputs = torch.zeros((5, 784), dtype=torch.uint8)
     torch.save((inputs, torch.arange(5)), data_path)
     batch_sizes: list[int] = []
@@ -86,7 +86,7 @@ def test_training_processes_final_partial_batch(
     ((mnist_submission, "mnist"), (fashion_mnist_submission, "fashion-mnist")),
 )
 def test_example_cli_trains(tmp_path: Path, module: object, benchmark: str) -> None:
-    data_path = tmp_path / f"{benchmark}-train.pt"
+    data_path = tmp_path / f"{benchmark}.pt"
     _write_training_cache(data_path)
     output = tmp_path / benchmark
     assert (

@@ -4,14 +4,18 @@ from minimal_nn_competition.model.entry import SubmissionError, materialize_subm
 
 
 class ImageClassificationBenchmark:
-    """Evaluate a 784-input, 10-output classifier against a cached test set."""
+    """Evaluate a 784-input, 10-output classifier against the full dataset."""
 
     name: str
     display_name: str
+    expected_samples: int = 70_000
 
-    def __init__(self, data_path=None, threshold=1.0):
+    def __init__(self, data_path=None, threshold=1.0, expected_samples=None):
         self.data_path = data_path
         self.threshold = threshold
+        self.expected_samples = (
+            type(self).expected_samples if expected_samples is None else expected_samples
+        )
 
     def load_submission(self, submission):
         config, name = submission.config, self.display_name
@@ -25,7 +29,7 @@ class ImageClassificationBenchmark:
         config, name = submission.config, self.display_name
         if self.data_path is None or not self.data_path.is_file():
             raise FileNotFoundError(
-                f"{name} test data is unavailable; provide the official test-set cache with --data-path"
+                f"{name} dataset is unavailable; provide the official dataset cache with --data-path"
             )
         try:
             import torch
@@ -41,9 +45,16 @@ class ImageClassificationBenchmark:
             labels = labels.flatten()
             if len(inputs) != len(labels):
                 raise ValueError(f"{name} inputs and labels must have the same length")
+            if self.expected_samples is not None and len(labels) != self.expected_samples:
+                raise SubmissionError(
+                    f"{name} dataset must contain exactly {self.expected_samples} samples, "
+                    f"found {len(labels)}"
+                )
             with torch.no_grad():
                 predictions = submission.model(inputs).argmax(1)
             accuracy = (predictions == labels).float().mean().item()
+        except SubmissionError:
+            raise
         except (KeyError, TypeError, ValueError, RuntimeError) as exc:
             raise SubmissionError(
                 f"{name} cache must contain raw (inputs, labels) tensors, and the checkpoint must match the declared architecture"

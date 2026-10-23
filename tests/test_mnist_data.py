@@ -37,7 +37,7 @@ def test_parsers_read_idx_data(tmp_path: Path) -> None:
     assert labels.tolist() == [3, 7]
 
 
-def test_download_mnist_writes_caches(tmp_path: Path, monkeypatch) -> None:
+def test_download_mnist_writes_cache(tmp_path: Path, monkeypatch) -> None:
     fixtures = tmp_path / "fixtures"
     fixtures.mkdir()
     _write_gzip(fixtures / "train-images-idx3-ubyte.gz", _image_bytes([[1, 2, 3, 4]], 2, 2))
@@ -50,14 +50,12 @@ def test_download_mnist_writes_caches(tmp_path: Path, monkeypatch) -> None:
 
     monkeypatch.setattr(data_loader, "_download", fake_download)
     destination = tmp_path / "data"
-    train_path, test_path = data_loader.download_mnist(destination)
+    cache_path = data_loader.download_mnist(destination)
 
-    train_inputs, train_labels = torch.load(train_path, weights_only=True)
-    test_inputs, test_labels = torch.load(test_path, weights_only=True)
-    assert train_inputs.tolist() == [[1, 2, 3, 4]]
-    assert train_labels.tolist() == [1]
-    assert test_inputs.tolist() == [[5, 6, 7, 8]]
-    assert test_labels.tolist() == [2]
+    inputs, labels = torch.load(cache_path, weights_only=True)
+    assert cache_path == destination / "mnist.pt"
+    assert inputs.tolist() == [[1, 2, 3, 4], [5, 6, 7, 8]]
+    assert labels.tolist() == [1, 2]
 
 
 def test_image_caches_use_distinct_raw_files(tmp_path: Path, monkeypatch) -> None:
@@ -88,10 +86,16 @@ def test_image_caches_use_distinct_raw_files(tmp_path: Path, monkeypatch) -> Non
     monkeypatch.setattr(data_loader, "_download", download_from(mnist_fixtures))
     monkeypatch.setattr(fashion_loader, "download_file", download_from(fashion_fixtures))
     destination = tmp_path / "data"
-    mnist_train, mnist_test = data_loader.download_mnist(destination)
-    fashion_train, fashion_test = fashion_loader.download_fashion_mnist(destination)
+    mnist_path = data_loader.download_mnist(destination)
+    fashion_path = fashion_loader.download_fashion_mnist(destination)
 
-    assert torch.load(mnist_train, weights_only=True)[0].tolist() == [[1, 2, 3, 4]]
-    assert torch.load(mnist_test, weights_only=True)[0].tolist() == [[5, 6, 7, 8]]
-    assert torch.load(fashion_train, weights_only=True)[0].tolist() == [[9, 10, 11, 12]]
-    assert torch.load(fashion_test, weights_only=True)[0].tolist() == [[13, 14, 15, 16]]
+    assert mnist_path == destination / "mnist.pt"
+    assert fashion_path == destination / "fashion-mnist.pt"
+    assert torch.load(mnist_path, weights_only=True)[0].tolist() == [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    assert torch.load(fashion_path, weights_only=True)[0].tolist() == [
+        [9, 10, 11, 12],
+        [13, 14, 15, 16],
+    ]

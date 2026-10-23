@@ -6,7 +6,7 @@ FASHION_MNIST_BASE_URL = "https://github.com/zalandoresearch/fashion-mnist/raw/m
 
 
 def download_fashion_mnist(destination, force=False):
-    """Download Fashion-MNIST and save raw ``(inputs, labels)`` caches as ``.pt`` files."""
+    """Download Fashion-MNIST and save one raw ``(inputs, labels)`` cache as a ``.pt`` file."""
     return download_dataset(
         destination, FASHION_MNIST_BASE_URL, "fashion", "fashion-mnist", force, download_file
     )
