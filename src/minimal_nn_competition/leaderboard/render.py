@@ -9,7 +9,7 @@ from itertools import groupby
 
 from minimal_nn_competition import __version__
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
-from minimal_nn_competition.benchmarks.snake.replay import replay_slug
+from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
 
 _SECTION_TITLES = {
@@ -21,6 +21,10 @@ _SECTION_TITLES = {
 _REPLAY_TITLES = {
     "snake-simple-8x8": "Snake Simple 8x8",
     "snake-simple-16x16": "Snake Simple 16x16",
+}
+_SNAKE_MAX_LENGTH = {
+    "snake-simple-8x8": 64,
+    "snake-simple-16x16": 256,
 }
 
 _STYLE = """
@@ -38,13 +42,14 @@ footer { margin-top: 2rem; text-align: right; }
 
 
 def _score_text(result):
-    maximum = result.details.get("max_length", 64) if result.benchmark in SNAKE_BENCHMARKS else 1
+    if result.benchmark not in SNAKE_BENCHMARKS:
+        maximum = result.details.get("max_length", 1)
+        mean = result.score / maximum * 100
+        digits = 4 if not result.passed and mean >= 99.995 else 2
+        return f"{mean:.{digits}f}%"
+    maximum = result.details.get("max_length", _SNAKE_MAX_LENGTH.get(result.benchmark, 64))
     mean = result.score / maximum * 100
-    return (
-        f"{mean:.2f}%"
-        if result.benchmark not in SNAKE_BENCHMARKS
-        else f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
-    )
+    return f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
 
 
 def _game_length_text(result):
@@ -62,7 +67,7 @@ def _table(results, replay_links=None):
     show_replay = bool(replay_links)
     for rank, result in enumerate(results, 1):
         normalisation = result.details.get("normalisation")
-        link = (replay_links or {}).get(result.submission)
+        link = (replay_links or {}).get((result.benchmark, result.submission))
         rows.append(
             f"""<tr{' class="passed"' if result.passed else ""}><td>{rank}</td><td>{html.escape(result.submission)}</td><td>{html.escape(result.name)}</td><td>{html.escape(result.author)}</td><td>{_score_text(result)}</td>{f"<td>{_game_length_text(result)}</td>" if show_game_length else ""}<td>{"pass" if result.passed else "fail"}</td><td>{str(normalisation).lower() if isinstance(normalisation, bool) else "-"}</td><td>{result.parameter_count}</td>{f'<td><a href="{html.escape(link)}">view game</a></td>' if link else "<td>-</td>" if show_replay else ""}</tr>"""
         )
@@ -154,9 +159,9 @@ def render_game_html(submission, payload, benchmark="snake-simple-8x8"):
 
 
 def render_game_pages(results, replays, output_dir):
-    """Write one replay page per snake submission; return submission-to-href links.
+    """Write one replay page per snake submission; return benchmark/submission links.
 
-    ``replays`` is keyed by the replay slug, not the raw submission name.
+    ``replays`` is keyed by the replay stem, not the raw submission name.
     """
     games_dir = output_dir / "games"
     links = {}
@@ -167,22 +172,23 @@ def render_game_pages(results, replays, output_dir):
     for result in results:
         if result.benchmark not in SNAKE_BENCHMARKS:
             continue
-        slug = replay_slug(result.submission)
-        payload = replays.get(slug)
+        stem = replay_stem(result.benchmark, result.submission)
+        payload = replays.get(stem)
         if payload is None:
             continue
-        previous = seen.get(slug)
-        if previous is not None and previous != result.submission:
+        previous = seen.get(stem)
+        if previous is not None and previous != (result.benchmark, result.submission):
             raise ValueError(
-                f"Replay filename collision: {previous!r} and {result.submission!r} both map to {slug!r}"
+                f"Replay filename collision: {previous!r} and "
+                f"{(result.benchmark, result.submission)!r} both map to {stem!r}"
             )
-        seen[slug] = result.submission
+        seen[stem] = (result.benchmark, result.submission)
         games_dir.mkdir(parents=True, exist_ok=True)
-        (games_dir / f"{slug}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
-        (games_dir / f"{slug}.html").write_text(
+        (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
+        (games_dir / f"{stem}.html").write_text(
             render_game_html(result.submission, payload, result.benchmark)
         )
-        links[result.submission] = f"games/{slug}.html"
+        links[(result.benchmark, result.submission)] = f"games/{stem}.html"
     return links
 
 
@@ -198,7 +204,7 @@ def render_html(results, replay_links=None):
         sections.append(
             f"""<section><h2>{html.escape(_SECTION_TITLES.get(benchmark, benchmark.upper()))}</h2><p class="muted">{len(entries)} result(s), ranked by {ranking}.</p>{_table(entries, replay_links if benchmark in SNAKE_BENCHMARKS else None)}</section>"""
         )
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>{_STYLE}</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, and Snake Simple 8x8.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{"".join(sections) or "<p>No results have been recorded yet.</p>"}<footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>{_STYLE}</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, and Snake benchmarks.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{"".join(sections) or "<p>No results have been recorded yet.</p>"}<footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></body></html>
 """
 
 

@@ -109,6 +109,7 @@ def _parser():
         train_snake = add(f"train-{benchmark}", help=f"Train the {benchmark} example submission")
         train_snake.add_argument("--output", type=Path, default=Path(f"models/{benchmark}/example"))
         train_snake.add_argument("--iterations", type=int, default=600)
+        train_snake.add_argument("--max-moves", type=int, default=None)
         _train_common(train_snake)
     return parser
 
@@ -118,18 +119,18 @@ def _record_replay(replay_dir, name, benchmark, submission):
     from minimal_nn_competition.benchmarks.snake.replay import (
         REPLAY_SEED,
         record_game,
-        replay_slug,
+        replay_stem,
         save_replay,
     )
 
     loaded = benchmark.load_submission(submission)
     save_replay(
-        replay_dir / f"{replay_slug(name)}.json",
+        replay_dir / f"{replay_stem(benchmark.name, name)}.json",
         record_game(
             loaded.model,
             seed=REPLAY_SEED,
             max_moves=benchmark.max_moves,
-            input_indices=selected_input_indices(submission.config, type(benchmark).__name__),
+            input_indices=selected_input_indices(submission.config, benchmark.name),
             size=benchmark.size,
         ),
     )
@@ -280,6 +281,7 @@ def main(argv=None):
             train(
                 args.output,
                 iterations=args.iterations,
+                max_moves=args.max_moves,
                 device_name=args.device,
                 name=args.name,
                 author=args.author,

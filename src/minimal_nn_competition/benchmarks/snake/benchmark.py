@@ -37,7 +37,7 @@ class SnakeBenchmark:
     loop_on_full = False
 
     def __init__(self, seeds=DEFAULT_SEEDS, max_moves=4096):
-        label = type(self).__name__
+        label = self.name
         if not seeds:
             raise ValueError(f"{label} benchmark requires at least one seed")
         if max_moves <= 0:
@@ -54,7 +54,7 @@ class SnakeBenchmark:
         )
 
     def load_submission(self, submission):
-        label = type(self).__name__
+        label = self.name
         if submission.config.benchmark != self.name:
             raise ValueError(f"Submission benchmark does not match {label}")
         indices = selected_input_indices(submission.config, label)
@@ -69,7 +69,7 @@ class SnakeBenchmark:
         return materialize_submission(submission)
 
     def evaluate(self, submission):
-        label = type(self).__name__
+        label = self.name
         try:
             import torch
         except ImportError as exc:
