@@ -17,5 +17,5 @@ dependencies, workflows, the leaderboard, or `docs/`.
 - [How to make an MNIST submission](how-to/how-to-make-an-mnist-submission.md)
 - [How to make a Fashion-MNIST submission](how-to/how-to-make-a-fashion-mnist-submission.md)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for leaderboard rebuilds, internal boards,
-local development, and the review flow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and
+[how to validate a submission](how-to/how-to-validate-a-submission.md).
