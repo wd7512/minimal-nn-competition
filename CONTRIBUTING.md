@@ -30,7 +30,7 @@ protection when needed. Only submissions use the `submission` branch.
 
 ```bash
 uv sync --dev --locked
-uv run mnc list
+uv run mnnc list
 uv run ruff format --check
 uv run ruff check
 uv run ty check
@@ -43,10 +43,10 @@ uv build
 The site also publishes the Snake speed and internal token boards:
 
 ```bash
-uv run mnc speed
-uv run mnc render-speed speed-leaderboard.json docs/internal
-uv run mnc internal
-uv run mnc render-internal internal-leaderboard.json docs
+uv run mnnc speed
+uv run mnnc render-speed speed-leaderboard.json docs/internal
+uv run mnnc internal
+uv run mnnc render-internal internal-leaderboard.json docs
 ```
 
 Pages deploys `docs/` on every push to `main`.

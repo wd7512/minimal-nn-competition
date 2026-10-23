@@ -60,8 +60,8 @@ Download the official Fashion-MNIST caches, then evaluate the example:
 
 ```bash
 uv sync --dev --locked
-uv run mnc download-fashion-mnist --output data
-uv run mnc evaluate fashion-mnist models/fashion-mnist/example \
+uv run mnnc download-fashion-mnist --output data
+uv run mnnc evaluate fashion-mnist models/fashion-mnist/example \
   --data-path data/fashion-mnist-test.pt
 ```
 
@@ -80,8 +80,8 @@ parameter count.
 The checked-in example can be trained locally:
 
 ```bash
-uv run mnc download-fashion-mnist --output data
-uv run mnc train-fashion-mnist
+uv run mnnc download-fashion-mnist --output data
+uv run mnnc train-fashion-mnist
 ```
 
 Training uses Apple MPS automatically when available and takes only a few

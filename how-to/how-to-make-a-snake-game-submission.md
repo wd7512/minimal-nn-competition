@@ -72,7 +72,7 @@ checkpoint.
 
 ```bash
 uv sync --dev --locked
-uv run mnc evaluate snake models/snake/example
+uv run mnnc evaluate snake models/snake/example
 ```
 
 ## Scoring
@@ -91,7 +91,7 @@ parameter count are ranked by ascending game length, so faster games win.
 The checked-in example can be trained locally:
 
 ```bash
-uv run mnc train-snake
+uv run mnnc train-snake
 ```
 
 Training uses Apple MPS automatically when available and takes only a few

@@ -12,7 +12,7 @@ dependencies = ["pydantic==2.14.1", "torch==2.14.1"]
 [project.scripts]
 minimal-nn-competition = "minimal_nn_competition.__main__:main"
 minimal_nn_competition = "minimal_nn_competition.__main__:main"
-mnc = "minimal_nn_competition.__main__:main"
+mnnc = "minimal_nn_competition.__main__:main"
 
 [dependency-groups]
 dev = [

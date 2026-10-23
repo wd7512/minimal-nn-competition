@@ -13,7 +13,7 @@ from minimal_nn_competition.internal.scoring import RULES_VERSION, score_files
 
 logger = logging.getLogger(__name__)
 
-# Set in validation subprocesses so tests that invoke `mnc internal` itself
+# Set in validation subprocesses so tests that invoke `mnnc internal` itself
 # skip instead of recursing (the outer run already covers them).
 _NESTED_ENV_VAR = "MINIMAL_NN_COMPETITION_INTERNAL"
 
