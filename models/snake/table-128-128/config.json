@@ -1,0 +1,30 @@
+{
+  "benchmark": "snake",
+  "name": "table-128-128",
+  "author": "muse spark 1.3 x hermes",
+  "architecture": "mlp",
+  "input_size": 14,
+  "output_size": 4,
+  "hidden_sizes": [
+    128,
+    128
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    8,
+    9,
+    10,
+    11,
+    16,
+    17,
+    18,
+    19
+  ],
+  "description": "Tabular-policy distillation + ES on game length. 100/100 fill, mean 706.8 moves."
+}
