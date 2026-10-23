@@ -54,11 +54,12 @@ uv run mnnc evaluate <benchmark> models/<benchmark>/<name>
 Image benchmarks use `data/mnist.pt` and `data/fashion-mnist.pt` by default;
 each cache contains all 70,000 examples. The evaluator rejects caches that do
 not contain exactly 70,000 samples. Legacy `*-train.pt` / `*-test.pt` caches are
-not used. Snake Simple 8x8 needs no data.
+not used. Snake benchmarks need no data.
 
-Expected passes are `1.0` for MNIST and Fashion-MNIST, and `64.0` for Snake Simple 8x8.
-Confirm the score and parameter count match the PR description. A perfect
-image score is expected; verify the cache is the correct benchmark's data.
+Expected passes are `1.0` for MNIST and Fashion-MNIST, `64.0` for Snake Simple 8x8,
+and `256.0` for Snake Simple 16x16. Snake Simple 16x16 evaluates 100 seeds with a
+4096-move cap. Confirm the score and parameter count match the PR description. A
+perfect image score is expected; verify the cache is the correct benchmark's data.
 There is no held-out split: an entry must fit all 70,000 examples.
 
 If an entry fails, revert it on `submission` and do not promote it.
@@ -71,7 +72,7 @@ uv run mnnc render leaderboard.json docs --replays replays
 ```
 
 `collect` re-evaluates every model and is the authoritative rebuild. It also
-records a seed-0 replay for each Snake Simple 8x8 submission. `replays/` is temporary;
+records a seed-0 replay for each Snake submission. `replays/` is temporary;
 commit only `leaderboard.json`, `docs/leaderboard.json`, and `docs/`.
 
 ## 6. Check the site

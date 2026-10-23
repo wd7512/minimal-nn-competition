@@ -15,13 +15,18 @@ def replay_slug(submission):
     return _SLUG_RE.sub("_", submission).strip("_") or "game"
 
 
-def record_game(model, seed=REPLAY_SEED, max_moves=4096, input_indices=None):
+def record_game(model, seed=REPLAY_SEED, max_moves=4096, input_indices=None, size=8):
     """Play one game and return a JSON-serialisable replay payload."""
     try:
         import torch
     except ImportError as exc:
         raise RuntimeError("PyTorch is required for Snake replays") from exc
-    environment = SnakeEnvironment(seed=seed, max_moves=max_moves, input_indices=input_indices)
+    environment = SnakeEnvironment(
+        size=size,
+        seed=seed,
+        max_moves=max_moves,
+        input_indices=input_indices,
+    )
 
     def frame():
         return {

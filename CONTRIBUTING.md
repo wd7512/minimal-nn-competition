@@ -17,6 +17,7 @@ is optional.
 Benchmark guides:
 
 - [Snake Simple 8x8](how-to/how-to-make-a-snake-simple-8x8-submission.md)
+- [Snake Simple 16x16](how-to/how-to-make-a-snake-simple-16x16-submission.md)
 - [MNIST](how-to/how-to-make-an-mnist-submission.md)
 - [Fashion-MNIST](how-to/how-to-make-a-fashion-mnist-submission.md)
 

@@ -98,6 +98,7 @@ tests/test_core.py::test_snake_can_move_into_vacating_tail
 tests/test_integration.py::test_evaluate_snake_cli
 tests/test_integration.py::test_data_path_rejected_for_snake
 tests/test_observation.py
+tests/test_snake_16x16.py
 tests/test_snake_replay.py""".splitlines()
         ),
     ),

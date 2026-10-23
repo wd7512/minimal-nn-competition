@@ -6,12 +6,16 @@ def _factories():
         FashionMnistBenchmark,
     )
     from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
-    from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
+    from minimal_nn_competition.benchmarks.snake.benchmark import (
+        SnakeBenchmark,
+        SnakeSimple16x16Benchmark,
+    )
 
     return {
         "fashion-mnist": FashionMnistBenchmark,
         "mnist": MnistBenchmark,
         "snake-simple-8x8": SnakeBenchmark,
+        "snake-simple-16x16": SnakeSimple16x16Benchmark,
     }
 
 

@@ -91,7 +91,7 @@ def test_input_indices_rejected_outside_snake(tmp_path: Path) -> None:
         '{"benchmark":"mnist","name":"x","author":"tester","architecture":"mlp",'
         '"input_size":784,"output_size":10,"input_indices":[0,1,2]}'
     )
-    with pytest.raises(SubmissionError, match="only supported for the snake-simple-8x8 benchmark"):
+    with pytest.raises(SubmissionError, match="only supported for snake benchmarks"):
         SubmissionConfig.from_file(path)
 
 

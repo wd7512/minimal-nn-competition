@@ -51,7 +51,9 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     class FullBoardEnvironment:
         size = 8
 
-        def __init__(self, seed: int, max_moves: int, input_indices: object = None) -> None:
+        def __init__(
+            self, size: int, seed: int, max_moves: int, input_indices: object = None
+        ) -> None:
             self.snake = [(0, 0)] * 64
 
         def reset(self) -> tuple[int, ...]:
@@ -89,7 +91,9 @@ def test_snake_score_std_across_seeds(tmp_path: Path, monkeypatch: pytest.Monkey
     class VariableEnvironment:
         size = 8
 
-        def __init__(self, seed: int, max_moves: int, input_indices: object = None) -> None:
+        def __init__(
+            self, size: int, seed: int, max_moves: int, input_indices: object = None
+        ) -> None:
             self.snake = [(0, 0)] * (64 if seed == 0 else 1)
 
         def reset(self) -> tuple[int, ...]:
