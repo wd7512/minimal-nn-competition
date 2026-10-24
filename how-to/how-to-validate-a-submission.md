@@ -53,9 +53,12 @@ uv run mnnc evaluate <benchmark> models/<benchmark>/<name>
 
 Image benchmarks use `data/mnist.pt` and `data/fashion-mnist.pt` by default;
 each cache contains all 70,000 examples. The evaluator rejects caches that do
-not contain exactly 70,000 samples. Legacy `*-train.pt` / `*-test.pt` caches are
-not used. Snake benchmarks need no data download; Chess evaluation uses its
-committed 10,000-position Stockfish set.
+not contain exactly 70,000 samples. The downloaders verify each raw file
+against a pinned SHA-256 digest (Fashion-MNIST is also pinned to a fixed
+upstream commit) and delete and fail on any mismatch, so a corrupted or
+upstream-modified download cannot silently produce a different cache. Legacy
+`*-train.pt` / `*-test.pt` caches are not used. Snake benchmarks need no data
+download; Chess evaluation uses its committed 10,000-position Stockfish set.
 
 Expected passes are `1.0` for MNIST and Fashion-MNIST, `64.0` for Snake Simple
 8x8, `256.0` for Snake Simple 16x16, and `1.0` for Chess evaluation. Snake
