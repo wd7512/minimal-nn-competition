@@ -333,7 +333,7 @@ td.submission a:hover { text-decoration-color: var(--accent); text-decoration-th
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.num { font-family: var(--mono); font-size: 12px; }
 td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
-.score-std { color: var(--muted); font-weight: 400; font-size: 11px; white-space: nowrap; }
+.std { color: var(--muted); font-weight: 400; font-size: 11px; white-space: nowrap; }
 .sr-only {
   position: absolute;
   width: 1px;
@@ -384,7 +384,7 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .table-wrap { overflow-x: visible; }
   table.results { min-width: 0; }
   td.num, th.num { white-space: normal; }
-  .score-std { display: inline; white-space: nowrap; }
+  .std { display: inline; white-space: nowrap; }
   .results th:first-child, .results td:first-child { position: static; }
   .footer { flex-direction: column; gap: 8px; }
 }
@@ -467,7 +467,6 @@ button, select { font: inherit; padding: .25rem .75rem; }
 }
 .detail-meta dd { margin: 0; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
 .detail-score { font-family: var(--mono); font-weight: 600; }
-.score-std { color: var(--muted); font-weight: 400; font-size: 12px; white-space: nowrap; }
 .detail-footer {
   display: flex;
   justify-content: space-between;
@@ -978,7 +977,7 @@ def _length_html(result):
     text = _length_text(result)
     if "±" in text:
         main, std = text.split("±", 1)
-        return f'{html.escape(main.strip())} <span class="score-std">± {html.escape(std.strip())}</span>'
+        return f'{html.escape(main.strip())} <span class="std">± {html.escape(std.strip())}</span>'
     return html.escape(text)
 
 
