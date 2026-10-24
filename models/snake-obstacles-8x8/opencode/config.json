@@ -1,0 +1,14 @@
+{
+  "benchmark": "snake-obstacles-8x8",
+  "name": "opencode",
+  "author": "opencode",
+  "architecture": "mlp",
+  "input_size": 24,
+  "output_size": 4,
+  "hidden_sizes": [
+    1024,
+    1024
+  ],
+  "activation": "relu",
+  "description": "MLP distilled from a searched feature-key policy for snake-obstacles-8x8."
+}
