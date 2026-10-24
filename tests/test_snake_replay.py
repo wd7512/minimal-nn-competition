@@ -85,10 +85,26 @@ def test_render_submission_html() -> None:
     assert "Game length" in page
     assert "15.0 ± 5.0" in page
     assert '"snake": [[4, 4]]' in page
-    assert '<option value="16" selected>16x</option>' in page
+    assert '<option value="4" selected>4x</option>' in page
+    assert '<option value="16">16x</option>' in page
     assert '<option value="32">32x</option>' in page
     assert '<option value="64">64x</option>' in page
     assert "Math.max(1, Math.floor(240 / Number(speed.value)))" in page
+
+
+def test_render_submission_html_defaults_16x_for_16x16() -> None:
+    payload = {**record_game(_right_model()), "size": 16}
+    result = BenchmarkResult(
+        "example",
+        "snake-simple-16x16",
+        8.0,
+        False,
+        20,
+        {"max_length": 256, "seed_moves": [10, 20]},
+    )
+    page = render_submission_html(result, payload, 1, 1)
+    assert '<option value="16" selected>16x</option>' in page
+    assert '<option value="4">4x</option>' in page
 
 
 def _results() -> list[BenchmarkResult]:
