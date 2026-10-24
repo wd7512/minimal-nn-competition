@@ -1,0 +1,14 @@
+{
+  "benchmark": "mnist",
+  "name": "mlp-14-14",
+  "author": "hermes",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    14,
+    14
+  ],
+  "activation": "relu",
+  "normalisation": true
+}
