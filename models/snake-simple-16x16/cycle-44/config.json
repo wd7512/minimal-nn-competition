@@ -1,0 +1,21 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "cycle-44",
+  "author": "muse spark 1.3 x hermes",
+  "architecture": "mlp",
+  "input_size": 6,
+  "output_size": 4,
+  "hidden_sizes": [
+    44
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "Serpentine-cycle clone, head-6 features, MLP [44]. 100/100 fill on 16x16."
+}
