@@ -551,7 +551,7 @@ function play() {
       stop();
     }
     draw();
-  }, Math.max(16, Math.floor(240 / Number(speed.value))));
+  }, Math.max(1, Math.floor(240 / Number(speed.value))));
 }
 playButton.addEventListener("click", play);
 document.getElementById("prev").addEventListener("click", () => { stop(); step(-1); });
@@ -843,7 +843,9 @@ def render_submission_html(result, payload, rank, total):
             '<button id="prev" type="button">Step back</button>'
             '<button id="next" type="button">Step forward</button>'
             '<label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option>'
-            '<option value="4" selected>4x</option><option value="8">8x</option></select></label></div>'
+            '<option value="4">4x</option><option value="8">8x</option>'
+            '<option value="16" selected>16x</option><option value="32">32x</option>'
+            '<option value="64">64x</option></select></label></div>'
             '<noscript><p class="muted">Replay needs JavaScript. Summary above gives seed, moves and final length.</p></noscript>'
             '<p id="status" class="muted" aria-live="polite"></p></section>'
         )

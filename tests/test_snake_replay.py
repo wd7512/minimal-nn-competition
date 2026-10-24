@@ -85,6 +85,10 @@ def test_render_submission_html() -> None:
     assert "Game length" in page
     assert "15.0 ± 5.0" in page
     assert '"snake": [[4, 4]]' in page
+    assert '<option value="16" selected>16x</option>' in page
+    assert '<option value="32">32x</option>' in page
+    assert '<option value="64">64x</option>' in page
+    assert "Math.max(1, Math.floor(240 / Number(speed.value)))" in page
 
 
 def _results() -> list[BenchmarkResult]:
