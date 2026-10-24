@@ -200,8 +200,9 @@ def test_render_site(tmp_path: Path) -> None:
     assert 'href="internal/speed/"' in html
     assert f"v{__version__}" in html
     assert "50.00%" in html
-    assert "1.56% ± 0.78%" in html
-    assert "Game length</th>" not in html
+    assert "1.56%" in html
+    assert "0.78%" in html
+    assert "Game length</th>" in html
     assert "Normalisation</th>" not in html
     assert "submissions/snake-simple-8x8--snake-example.html" in html
     assert "submissions/mnist--mnist-example.html" in html
@@ -273,7 +274,8 @@ def test_render_chess_eval(tmp_path: Path) -> None:
     html = render_site(results, tmp_path).read_text()
     assert "Chess evaluation" in html
     assert "Stockfish 0.1 pawn" in html
-    assert "100.00% ± 0.00%" in html
+    assert "100.00%" in html
+    assert "0.00%" in html
     assert "chess-example" in html
 
 
@@ -293,11 +295,16 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
     assert 'data-version="snake-simple-16x16"' in html
     assert 'class="version-panel is-active" id="panel-snake-simple-8x8"' in html
     assert 'class="version-panel" id="panel-snake-simple-16x16"' in html
-    assert "data-cycle-trigger" in html
+    assert "data-version-button" in html
     assert 'aria-controls="panel-fashion-mnist"' in html
     chess_start = html.index('id="chess"')
     chess_end = html.index("</section>", chess_start)
-    assert "data-cycle-trigger" not in html[chess_start:chess_end]
+    assert "data-version-button" not in html[chess_start:chess_end]
+    # Regression: the tab script must not rewrite panel DOM. Group-level
+    # run/pass stats were removed, so no [data-count]/[data-pass] hooks may
+    # remain for querySelector to resolve to a panel wrapper.
+    assert "data-count" not in html
+    assert 'querySelector("[data-pass]")' not in html
 
 
 def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

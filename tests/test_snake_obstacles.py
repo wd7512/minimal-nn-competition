@@ -323,7 +323,8 @@ def test_render_site_shows_the_obstacle_section(tmp_path: Path) -> None:
     index = render_site([result], tmp_path, {"snake-obstacles-8x8--example": payload})
     html = index.read_text()
     assert "Obstacles 8×8" in html
-    assert "50.00% ± 0.00%" in html
+    assert "50.00%" in html
+    assert "0.00%" in html
 
 
 def test_validate_cli_passes(caplog: pytest.LogCaptureFixture) -> None:

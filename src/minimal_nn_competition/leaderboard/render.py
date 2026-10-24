@@ -161,7 +161,7 @@ _SITE_STYLE = """
   align-items: center;
   gap: 8px;
   margin: 0;
-  font: 700 11px/1.4 var(--mono);
+  font: 700 16px/1.4 var(--mono);
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--ink);
@@ -173,7 +173,7 @@ _SITE_STYLE = """
 .brand-dots span:nth-child(3) { background: var(--accent-chess); }
 .rail__label {
   margin: 24px 0 8px;
-  font: 700 10px/1.4 var(--mono);
+  font: 700 15px/1.4 var(--mono);
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -199,7 +199,7 @@ _SITE_STYLE = """
 .masthead { border-bottom: 1px solid var(--rule-strong); padding-bottom: 32px; }
 .eyebrow {
   margin: 0;
-  font: 700 10px/1.4 var(--mono);
+  font: 700 15px/1.4 var(--mono);
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -240,21 +240,6 @@ h1 {
   gap: 12px;
 }
 .group__desc { margin: 12px 0 0; max-width: 58ch; color: var(--muted); }
-.group__stats {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  font: 11px/1.4 var(--mono);
-  color: var(--muted);
-  white-space: nowrap;
-}
-.group__stats strong {
-  color: var(--ink);
-  font-weight: 600;
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-}
 .version-row {
   display: none;
   flex-wrap: wrap;
@@ -394,7 +379,6 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .rail a { border-left: 0; border-bottom: 1px solid var(--rule); padding-left: 0; }
   .rail a + a { border-left: 0; padding-left: 0; }
   .group__head { grid-template-columns: 1fr; }
-  .group__stats { flex-direction: row; align-items: baseline; gap: 16px; }
   .results th, .results td { padding: 8px 8px; }
   td.submission a { gap: 1px; }
   .group { padding: 36px 0 20px; }
@@ -412,7 +396,7 @@ _DETAIL_STYLE = """
 .detail-head { border-bottom: 1px solid var(--rule-strong); padding-bottom: 24px; }
 .eyebrow {
   margin: 0;
-  font: 700 10px/1.4 var(--mono);
+  font: 700 15px/1.4 var(--mono);
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -462,7 +446,7 @@ button, select { font: inherit; padding: .25rem .75rem; }
 .detail-panel { border-top: 1px solid var(--rule-strong); padding-top: 12px; }
 .detail-kicker {
   margin: 0 0 8px;
-  font: 700 10px/1.4 var(--mono);
+  font: 700 15px/1.4 var(--mono);
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -585,9 +569,6 @@ _SITE_SCRIPT = """
     const versions = panels.map(function (panel) { return panel.dataset.version; });
     const links = Array.from(group.querySelectorAll("[data-version-button]"));
     const current = group.querySelector("[data-current]");
-    const count = group.querySelector("[data-count]");
-    const countWord = group.querySelector("[data-count-word]");
-    const pass = group.querySelector("[data-pass]");
     function select(id) {
       const panel = panels.find(function (item) { return item.dataset.version === id; });
       if (!panel) return;
@@ -604,9 +585,6 @@ _SITE_SCRIPT = """
       if (current) {
         current.textContent = (panel.dataset.label || "") + " · " + index + " of " + versions.length;
       }
-      if (count) count.textContent = panel.dataset.count || "";
-      if (countWord) countWord.textContent = Number(panel.dataset.count) === 1 ? "run" : "runs";
-      if (pass) pass.textContent = panel.dataset.pass || "";
     }
     links.forEach(function (link) {
       link.addEventListener("click", function () { select(link.dataset.version); });
@@ -664,7 +642,7 @@ def _score_html(result):
     text = _score_text(result)
     if "±" in text:
         main, std = text.split("±", 1)
-        return f"{html.escape(main.strip())} <span class=\"score-std\">± {html.escape(std.strip())}</span>"
+        return f'{html.escape(main.strip())} <span class="score-std">± {html.escape(std.strip())}</span>'
     return html.escape(text)
 
 
@@ -690,7 +668,7 @@ def _length_html(result):
     text = _length_text(result)
     if "±" in text:
         main, std = text.split("±", 1)
-        return f"{html.escape(main.strip())} <span class=\"score-std\">± {html.escape(std.strip())}</span>"
+        return f'{html.escape(main.strip())} <span class="score-std">± {html.escape(std.strip())}</span>'
     return html.escape(text)
 
 
@@ -760,7 +738,11 @@ def _submission_cell(result, link, status=None, score_html=None):
         meta = f'<span class="submission__meta"><span class="score">{score_html}</span></span>'
     content = f'<span class="submission__name">{name}</span>{secondary}{meta}'
     if link:
-        label = f"View details for {result.name}, {status}" if status else f"View details for {result.name}"
+        label = (
+            f"View details for {result.name}, {status}"
+            if status
+            else f"View details for {result.name}"
+        )
         return f'<a href="{html.escape(link)}" aria-label="{html.escape(label)}">{content}</a>'
     return content
 
@@ -968,8 +950,7 @@ def render_html(results, submission_links=None):
             version_controls = ""
             hint = ""
         version_row = (
-            f'<div class="version-row">'
-            f"{version_controls}{hint}</div>"
+            f'<div class="version-row">{version_controls}{hint}</div>'
             if (version_controls or hint)
             else ""
         )
@@ -977,27 +958,21 @@ def render_html(results, submission_links=None):
         for benchmark in versions:
             version_entries = entries[benchmark]
             version_label = _version_label(benchmark)
-            count = len(version_entries)
-            pass_count = sum(1 for result in version_entries if result.passed)
             active = benchmark == default_benchmark
             table = _table(version_entries, submission_links)
             panels.append(
-                f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}" data-count="{count}" data-pass="{pass_count}">'
-                f'<label class="passed-toggle"><input type="checkbox" checked data-passed-toggle> Pass only</label>'
+                f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}">'
+                f'<label class="passed-toggle"><input type="checkbox" data-passed-toggle> Pass only</label>'
                 f'<div class="table-wrap" role="region" tabindex="0" aria-label="{html.escape(version_label)} results">{table}</div>'
                 f"</div>"
             )
         sections.append(
             f'<section class="group" id="{html.escape(group_id)}" data-group-section data-accent="{html.escape(accent)}" data-title="{html.escape(label)}" aria-labelledby="{html.escape(group_id)}-title">'
             f'<div class="group__head"><div><p class="eyebrow" id="{html.escape(group_id)}-title"><span class="group__index">{group_number:02d}</span> / {html.escape(label)}</p>'
-            f'{description}</div></div>'
+            f"{description}</div></div>"
             f"{version_row}{''.join(panels)}</section>"
         )
-    rail_note = (
-        f"{total} {_plural(total, 'run')} total · {passed} pass"
-        if groups
-        else ""
-    )
+    rail_note = f"{total} {_plural(total, 'run')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><p class="links"><a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit a model</a><span>·</span><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """

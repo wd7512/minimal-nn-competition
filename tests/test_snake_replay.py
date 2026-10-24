@@ -114,8 +114,8 @@ def test_render_site_writes_submission_pages(tmp_path: Path) -> None:
     index = render_site(_results(), tmp_path, {"snake-simple-8x8--example": payload})
     html = index.read_text()
     assert "Replay</th>" not in html
-    assert "Game length</th>" not in html
-    assert "Select a submission for full details." in html
+    assert "Game length</th>" in html
+    assert "View details for" in html
     assert 'href="submissions/snake-simple-8x8--example.html"' in html
     page = tmp_path / "submissions" / "snake-simple-8x8--example.html"
     assert page.is_file()
@@ -129,7 +129,7 @@ def test_render_site_without_replays_still_links_details(tmp_path: Path) -> None
     index = render_site(_results(), tmp_path)
     html = index.read_text()
     assert "Replay</th>" not in html
-    assert "Game length</th>" not in html
+    assert "Game length</th>" in html
     assert "view game" not in html
     assert 'href="submissions/snake-simple-8x8--example.html"' in html
     assert not (tmp_path / "games").exists()

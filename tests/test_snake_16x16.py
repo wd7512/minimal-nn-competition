@@ -162,8 +162,9 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
     index = render_site([result], tmp_path, {"snake-simple-16x16--example": payload})
     html = index.read_text()
     assert "Simple 16×16" in html
-    assert "50.00% ± 0.00%" in html
-    assert "Game length</th>" not in html
+    assert "50.00%" in html
+    assert "0.00%" in html
+    assert "Game length</th>" in html
     assert "Replay</th>" not in html
     assert "submissions/snake-simple-16x16--example.html" in html
     game_page = (tmp_path / "submissions" / "snake-simple-16x16--example.html").read_text()
