@@ -18,6 +18,7 @@ jobs:
       - name: Validate submission files
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PYTHONPATH: src
         run: |
           git show "$BASE_SHA:.github/scripts/validate_submission.py" > "$RUNNER_TEMP/validate_submission.py"
           python3 "$RUNNER_TEMP/validate_submission.py"
