@@ -40,6 +40,7 @@ _CHESS_FILES = (
 )
 _CARTPOLE_FILES = (
     f"{PACKAGE}/benchmarks/cartpole",
+    f"{PACKAGE}/benchmarks/control",
     f"{PACKAGE}/examples/cartpole_submission.py",
 )
 _PENDULUM_FILES = (
@@ -155,7 +156,8 @@ tests/test_rl_environments.py::test_cartpole_calibration
 tests/test_rl_environments.py::test_control_evaluate_cli
 tests/test_rl_environments.py::test_control_collect_cli
 tests/test_rl_environments.py::test_control_train_commands_wire_examples
-tests/test_rl_environments.py::test_render_control_group""".splitlines()
+tests/test_rl_environments.py::test_render_control_group
+tests/test_control_replay.py""".splitlines()
         ),
     ),
     Scope(

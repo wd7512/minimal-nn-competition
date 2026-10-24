@@ -174,7 +174,7 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
     assert "Simple 16×16" in game_page
     assert "Replay" in game_page
     assert "15.0 ± 5.0" in game_page
-    assert 'width="640" height="640"' in game_page
+    assert 'width="480" height="480"' in game_page
 
 
 def test_collect_records_16x16_replay(tmp_path: Path, fast_snake_cli: None) -> None:
