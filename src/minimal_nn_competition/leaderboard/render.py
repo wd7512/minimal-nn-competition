@@ -7,13 +7,15 @@ import statistics
 from dataclasses import asdict
 
 from minimal_nn_competition import __version__
+from minimal_nn_competition.benchmarks.chess_eval.names import CHESS_BENCHMARKS
 from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
 
 _SECTION_TITLES = {
-    "chess-eval": "CHESS EVALUATION",
+    "chess-eval-10k": "CHESS EVALUATION 10K",
+    "chess-eval-100k": "CHESS EVALUATION 100K",
     "fashion-mnist": "FASHION-MNIST COMPRESSION",
     "mnist": "MNIST COMPRESSION",
     "snake-simple-8x8": "SNAKE SIMPLE 8X8",
@@ -52,7 +54,7 @@ _GROUP_SPECS = (
         "label": "Chess evaluation",
         "eyebrow": "Regression",
         "description": "",
-        "benchmarks": ("chess-eval",),
+        "benchmarks": ("chess-eval-10k", "chess-eval-100k"),
         "accent": "chess",
     },
     {
@@ -70,7 +72,8 @@ _VERSION_LABELS = {
     "snake-obstacles-8x8": "Obstacles 8×8",
     "mnist": "MNIST",
     "fashion-mnist": "Fashion-MNIST",
-    "chess-eval": "Stockfish 0.1 pawn",
+    "chess-eval-10k": "Stockfish 10k",
+    "chess-eval-100k": "Stockfish 100k",
     "cartpole": "CartPole",
     "pendulum": "Discrete torque",
     "lunarlander": "Lunar touchdown",
@@ -81,7 +84,8 @@ _PANEL_NOTES = {
     "snake-obstacles-8x8": "A constrained study",
     "mnist": "A first light study",
     "fashion-mnist": "A second light study",
-    "chess-eval": "A measured study",
+    "chess-eval-10k": "A measured study",
+    "chess-eval-100k": "A larger measured study",
     "cartpole": "A 500-step challenge",
     "pendulum": "A return study",
     "lunarlander": "A soft-landing study",
@@ -652,7 +656,7 @@ def _score_text(result):
         mean = result.score / maximum * 100
         return f"{mean:.2f}%"
     mean = result.score * 100
-    if result.benchmark == "chess-eval":
+    if result.benchmark in CHESS_BENCHMARKS:
         return f"{mean:.2f}%"
     digits = 4 if not result.passed and mean >= 99.995 else 2
     return f"{mean:.{digits}f}%"
@@ -685,7 +689,7 @@ def _error_text(result):
 def _length_text(result):
     if result.benchmark in SNAKE_BENCHMARKS:
         return _game_length_text(result)
-    if result.benchmark == "chess-eval":
+    if result.benchmark in CHESS_BENCHMARKS:
         return _error_text(result)
     return "-"
 
@@ -701,7 +705,7 @@ def _length_html(result):
 def _fourth_header(benchmark):
     if benchmark in SNAKE_BENCHMARKS:
         return "Game length"
-    if benchmark == "chess-eval":
+    if benchmark in CHESS_BENCHMARKS:
         return "Error"
     return None
 
@@ -713,7 +717,7 @@ def _plural(count, singular):
 def _ranking_text(benchmark):
     if benchmark in SNAKE_BENCHMARKS:
         return "pass status, score, parameter count, then game length"
-    if benchmark == "chess-eval":
+    if benchmark in CHESS_BENCHMARKS:
         return "pass status, score, parameter count, then mean error"
     return "pass status, score, then parameter count"
 
@@ -854,7 +858,7 @@ def render_submission_html(result, payload, rank, total):
         if isinstance(seed_lengths, list) and seed_lengths:
             rows.append(_detail_row("Seed games", str(len(seed_lengths))))
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
-    if result.benchmark == "chess-eval":
+    if result.benchmark in CHESS_BENCHMARKS:
         error = _error_text(result)
         rows.append(
             _detail_row("Mean error", html.escape(f"{error} pawns" if error != "-" else "-"))

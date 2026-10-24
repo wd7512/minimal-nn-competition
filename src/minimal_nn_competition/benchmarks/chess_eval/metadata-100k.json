@@ -1,0 +1,52 @@
+{
+  "bands": {
+    "black": 33333,
+    "draw": 33334,
+    "white": 33333
+  },
+  "draw_threshold_cp": 50,
+  "filters": {
+    "deduplicate_fen": true,
+    "exclude_en_passant": true,
+    "exclude_mate": true,
+    "first_pv": "highest depth, best for the side to move",
+    "max_abs_cp": 1000,
+    "min_depth": 30,
+    "min_knodes": 500000
+  },
+  "input": {
+    "planes": [
+      "white P",
+      "white N",
+      "white B",
+      "white R",
+      "white Q",
+      "white K",
+      "black P",
+      "black N",
+      "black B",
+      "black R",
+      "black Q",
+      "black K"
+    ],
+    "side_to_move": "white=1, black=-1",
+    "size": 769,
+    "squares": "FEN order: a8=0, h8=7, a1=56, h1=63"
+  },
+  "license": "CC0-1.0",
+  "output": "white-perspective pawns (Stockfish cp / 100)",
+  "positions": 100000,
+  "retrieved": "2026-10-24",
+  "seed": "chess-eval-100k-v1",
+  "sha256": "b26cb474a406bed119ef7af629e5ba598c6f94d3de98e04ee9d390a055386f01",
+  "source": "https://huggingface.co/datasets/Lichess/chess-position-evaluations",
+  "source_files": [
+    "https://huggingface.co/datasets/Lichess/chess-position-evaluations/resolve/main/data/data_0000.parquet",
+    "https://huggingface.co/datasets/Lichess/chess-position-evaluations/resolve/main/data/data_0004.parquet",
+    "https://huggingface.co/datasets/Lichess/chess-position-evaluations/resolve/main/data/data_0008.parquet",
+    "https://huggingface.co/datasets/Lichess/chess-position-evaluations/resolve/main/data/data_0012.parquet",
+    "https://huggingface.co/datasets/Lichess/chess-position-evaluations/resolve/main/data/data_0016.parquet"
+  ],
+  "superset_of": "chess-eval-10k",
+  "tolerance_pawns": 0.1
+}

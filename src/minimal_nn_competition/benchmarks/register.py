@@ -3,7 +3,10 @@
 
 def _factories():
     from minimal_nn_competition.benchmarks.cartpole.benchmark import CartPoleBenchmark
-    from minimal_nn_competition.benchmarks.chess_eval.benchmark import ChessEvalBenchmark
+    from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
+        ChessEval10kBenchmark,
+        ChessEval100kBenchmark,
+    )
     from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import (
         FashionMnistBenchmark,
     )
@@ -18,7 +21,8 @@ def _factories():
 
     return {
         "cartpole": CartPoleBenchmark,
-        "chess-eval": ChessEvalBenchmark,
+        "chess-eval-10k": ChessEval10kBenchmark,
+        "chess-eval-100k": ChessEval100kBenchmark,
         "fashion-mnist": FashionMnistBenchmark,
         "lunarlander": LunarLanderBenchmark,
         "mnist": MnistBenchmark,

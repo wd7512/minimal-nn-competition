@@ -1,5 +1,5 @@
 {
-  "benchmark": "chess-eval",
+  "benchmark": "chess-eval-10k",
   "name": "chess-mlp-64",
   "author": "example author",
   "architecture": "mlp",

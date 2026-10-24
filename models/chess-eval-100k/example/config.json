@@ -1,0 +1,14 @@
+{
+  "benchmark": "chess-eval-100k",
+  "name": "chess-10k-transfer",
+  "author": "example author",
+  "architecture": "mlp",
+  "input_size": 769,
+  "output_size": 1,
+  "hidden_sizes": [
+    64,
+    64
+  ],
+  "activation": "relu",
+  "description": "Trained on the 10k tier and evaluated on the 100k tier as a baseline."
+}

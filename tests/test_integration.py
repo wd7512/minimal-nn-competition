@@ -6,7 +6,10 @@ import torch
 
 from minimal_nn_competition import __version__
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.chess_eval.benchmark import ChessEvalBenchmark
+from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
+    ChessEval10kBenchmark,
+    ChessEval100kBenchmark,
+)
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
@@ -17,11 +20,13 @@ from minimal_nn_competition.runner.entry import BenchmarkResult
 
 
 def test_checked_in_examples_load() -> None:
-    chess = Submission.from_directory(Path("models/chess-eval/example"))
+    chess = Submission.from_directory(Path("models/chess-eval-10k/example"))
+    chess_100k = Submission.from_directory(Path("models/chess-eval-100k/example"))
     fashion_mnist = Submission.from_directory(Path("models/fashion-mnist/example"))
     mnist = Submission.from_directory(Path("models/mnist/example"))
     snake = Submission.from_directory(Path("models/snake-simple-8x8/example"))
-    assert ChessEvalBenchmark().load_submission(chess).model is not None
+    assert ChessEval10kBenchmark().load_submission(chess).model is not None
+    assert ChessEval100kBenchmark().load_submission(chess_100k).model is not None
     assert FashionMnistBenchmark().load_submission(fashion_mnist).model is not None
     assert MnistBenchmark().load_submission(mnist).model is not None
     assert SnakeBenchmark().load_submission(snake).model is not None
@@ -36,9 +41,9 @@ def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: 
 
 
 def test_evaluate_chess_eval_cli(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["evaluate", "chess-eval", "models/chess-eval/example"]) == 0
+    assert main(["evaluate", "chess-eval-10k", "models/chess-eval-10k/example"]) == 0
     out = capsys.readouterr().out
-    assert '"benchmark": "chess-eval"' in out
+    assert '"benchmark": "chess-eval-10k"' in out
     assert '"name": "chess-mlp-64"' in out
     assert '"author": "example author"' in out
     assert '"passed": true' in out
@@ -275,7 +280,7 @@ def test_render_chess_eval(tmp_path: Path) -> None:
     results = [
         BenchmarkResult(
             "chess-example",
-            "chess-eval",
+            "chess-eval-10k",
             1.0,
             True,
             53_505,
@@ -286,7 +291,7 @@ def test_render_chess_eval(tmp_path: Path) -> None:
     ]
     html = render_site(results, tmp_path).read_text()
     assert "Chess evaluation" in html
-    assert "Stockfish 0.1 pawn" in html
+    assert "Stockfish 10k" in html
     assert "100.00%" in html
     assert "100.00% ±" not in html
     assert "Error</th>" in html
@@ -294,7 +299,7 @@ def test_render_chess_eval(tmp_path: Path) -> None:
     assert "Samples</th>" not in html
     assert "mean error" in html
     assert "chess-example" in html
-    detail = (tmp_path / "submissions" / "chess-eval--chess-example.html").read_text()
+    detail = (tmp_path / "submissions" / "chess-eval-10k--chess-example.html").read_text()
     assert "<dt>Mean error</dt>" in detail
     assert "0.0046 pawns" in detail
     assert "<dt>Samples</dt>" not in detail
@@ -304,7 +309,7 @@ def test_rank_chess_eval_breaks_score_ties_by_mean_error() -> None:
     def chess_result(submission: str, mae: float) -> BenchmarkResult:
         return BenchmarkResult(
             submission,
-            "chess-eval",
+            "chess-eval-10k",
             1.0,
             True,
             10,
@@ -323,7 +328,15 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
         BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {"max_length": 256}),
         BenchmarkResult("mnist", "mnist", 0.5, False, 10, {"normalisation": False}),
         BenchmarkResult("fashion", "fashion-mnist", 0.5, False, 10, {"normalisation": True}),
-        BenchmarkResult("chess", "chess-eval", 1.0, True, 10, {"tolerance_pawns": 0.1}),
+        BenchmarkResult("chess-10k", "chess-eval-10k", 1.0, True, 10, {"tolerance_pawns": 0.1}),
+        BenchmarkResult(
+            "chess-100k",
+            "chess-eval-100k",
+            0.5,
+            False,
+            10,
+            {"tolerance_pawns": 0.1, "samples": 100_000},
+        ),
     ]
     html = render_site(results, tmp_path).read_text()
     assert html.index('id="snake"') < html.index('id="mnist"') < html.index('id="chess"')
@@ -335,7 +348,11 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
     assert 'aria-controls="panel-fashion-mnist"' in html
     chess_start = html.index('id="chess"')
     chess_end = html.index("</section>", chess_start)
-    assert "data-version-button" not in html[chess_start:chess_end]
+    chess_html = html[chess_start:chess_end]
+    assert 'data-version="chess-eval-10k"' in chess_html
+    assert 'data-version="chess-eval-100k"' in chess_html
+    assert 'class="version-panel is-active" id="panel-chess-eval-10k"' in chess_html
+    assert 'class="version-panel" id="panel-chess-eval-100k"' in chess_html
     # Regression: the tab script must not rewrite panel DOM. Group-level
     # run/pass stats were removed, so no [data-count]/[data-pass] hooks may
     # remain for querySelector to resolve to a panel wrapper.

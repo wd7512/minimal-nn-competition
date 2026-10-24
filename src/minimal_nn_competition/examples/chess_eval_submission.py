@@ -1,4 +1,4 @@
-"""Train the chess-eval example submission on the committed Stockfish dataset."""
+"""Train a chess evaluation example submission on the committed Stockfish dataset."""
 
 import argparse
 import json
@@ -43,13 +43,14 @@ def train(
     seed=0,
     name=None,
     author="example author",
+    benchmark="chess-eval-10k",
 ):
     """Train the example MLP and write ``config.json`` and ``model.pt``."""
     import torch
     from torch import nn
 
     from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
-        DEFAULT_DATA,
+        CHESS_EVAL_DATA,
         TOLERANCE_PAWNS,
         load_tensors,
     )
@@ -57,8 +58,8 @@ def train(
     logger = logging.getLogger(__name__)
     torch.manual_seed(seed)
     device = select_device(device_name)
-    logger.info(f"Training Chess evaluation example on {device}")
-    inputs, targets = load_tensors(data_path or DEFAULT_DATA)
+    logger.info(f"Training {benchmark} example on {device}")
+    inputs, targets = load_tensors(data_path or CHESS_EVAL_DATA[benchmark])
     inputs = inputs.to(device)
     targets = targets.to(device)
 
@@ -110,7 +111,7 @@ def train(
     output_dir.mkdir(parents=True, exist_ok=True)
     torch.save(best_state, output_dir / "model.pt")
     config = {
-        "benchmark": "chess-eval",
+        "benchmark": benchmark,
         "name": name or output_dir.name,
         "author": author or "example author",
         "architecture": "mlp",
@@ -126,9 +127,11 @@ def train(
 
 
 def main(argv=None):
+    from minimal_nn_competition.benchmarks.chess_eval.benchmark import CHESS_EVAL_DATA
+
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=Path("models/chess-eval/example"))
+    parser.add_argument("--output", type=Path, default=Path("models/chess-eval-10k/example"))
     parser.add_argument("--data-path", type=Path, default=None)
     parser.add_argument("--epochs", type=int, default=16_000)
     parser.add_argument("--batch-size", type=int, default=256)
@@ -138,6 +141,7 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--name", default=None)
     parser.add_argument("--author", default="example author")
+    parser.add_argument("--benchmark", default="chess-eval-10k", choices=tuple(CHESS_EVAL_DATA))
     args = parser.parse_args(argv)
     train(
         args.output,
@@ -150,6 +154,7 @@ def main(argv=None):
         seed=args.seed,
         name=args.name,
         author=args.author,
+        benchmark=args.benchmark,
     )
     return 0
 

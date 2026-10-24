@@ -49,7 +49,8 @@ def test_registry_and_list_include_16x16(capsys: pytest.CaptureFixture[str]) -> 
     assert main(["list"]) == 0
     assert capsys.readouterr().out.splitlines() == [
         "cartpole",
-        "chess-eval",
+        "chess-eval-100k",
+        "chess-eval-10k",
         "fashion-mnist",
         "lunarlander",
         "mnist",
