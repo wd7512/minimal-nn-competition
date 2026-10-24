@@ -48,7 +48,7 @@ def test_snake_partial_run_does_not_pass(tmp_path: Path) -> None:
     )
     result = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(materialize_submission(submission))
     score, score_std, passed, details = result
-    assert score == 1.0
+    assert score == 0.0
     assert score_std == 0.0
     assert passed is False
     assert details["seed_lengths"] == [1, 1, 1]
@@ -90,7 +90,7 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     score, score_std, passed, details = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(
         materialize_submission(submission)
     )
-    assert score == 64.0
+    assert score == 1.0
     assert score_std == 0.0
     assert passed is True
     assert details["seed_lengths"] == [64, 64, 64]
@@ -136,8 +136,8 @@ def test_snake_score_std_across_seeds(tmp_path: Path, monkeypatch: pytest.Monkey
     score, score_std, passed, details = SnakeBenchmark(seeds=(0, 1)).evaluate(
         materialize_submission(submission)
     )
-    assert score == 32.5
-    assert score_std == 31.5
+    assert score == 0.5
+    assert score_std == 0.5
     assert passed is False
     assert details["seed_lengths"] == [64, 1]
     assert details["seed_moves"] == [1, 1]
@@ -188,7 +188,7 @@ def test_snake_selected_inputs_evaluate(tmp_path: Path) -> None:
     )
     result = SnakeBenchmark(seeds=(0,)).evaluate(materialize_submission(submission))
     score, score_std, passed, details = result
-    assert score == 1.0
+    assert score == 0.0
     assert score_std == 0.0
     assert passed is False
     assert details["seed_lengths"] == [1]

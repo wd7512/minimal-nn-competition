@@ -102,17 +102,16 @@ cell and complete the extra loop move within the 4096-move cap.
 
 ## Scoring
 
-Snake Obstacles 8x8 evaluates each model across 100 seeds (`0`–`99`) with a
-4096-move cap. The score is the mean final snake length. The site shows each
-seed's length as a percentage of that seed's free-cell target, then displays the
-mean and population standard deviation across seeds. The `Game length` column
+Snake Obstacles 8x8 evaluates each model across 100 seeds (`0`–`99`). The score
+is the fraction of seeds that fill every free cell and complete the extra loop
+move, so a passing submission scores `1.0`. The detail page shows each seed's
+length as a percentage of that seed's free-cell target. The `Game length` column
 shows the mean number of ticks per game and its standard deviation.
 
-A run passes only when every seed both reaches its target length and completes the
-extra loop move. Results rank passing submissions before failing submissions,
-then by descending score and ascending parameter count. Submissions with equal
-score and parameter count are ranked by ascending game length, so faster games
-win.
+Results rank passing submissions before failing submissions, then by descending
+score (fraction of seeds passed) and ascending parameter count. Submissions with
+equal score and parameter count are ranked by ascending game length, so faster
+games win.
 
 ## Train the example
 

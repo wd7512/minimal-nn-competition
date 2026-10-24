@@ -1,4 +1,8 @@
-"""CartPole benchmark: a 2-logit net balances the pole for max_steps per seed."""
+"""CartPole benchmark: a 2-logit net balances the pole for max_steps per seed.
+
+Score is the fraction of seeds that survive the full horizon (1.0 = every seed
+passes); mean steps stay in details as the reward column.
+"""
 
 import random
 import statistics
@@ -48,12 +52,14 @@ class CartPoleBenchmark:
                     if done:
                         break
                 counts.append(balanced)
+        passed_flags = [count == self.max_steps for count in counts]
         return (
-            statistics.fmean(counts),
-            statistics.pstdev(counts),
-            all(count == self.max_steps for count in counts),
+            statistics.fmean(passed_flags),
+            statistics.pstdev(passed_flags),
+            all(passed_flags),
             {
                 "seed_steps": counts,
+                "mean_steps": statistics.fmean(counts),
                 "max_steps": self.max_steps,
                 "seeds": len(self.seeds),
             },

@@ -77,14 +77,15 @@ uv run mnnc evaluate snake-simple-8x8 models/snake-simple-8x8/example
 
 ## Scoring
 
-Snake Simple 8x8 evaluates each model across 100 seeds (`0`–`99`) with a 4096-move cap.
-The score is the mean final snake length as a percentage of the 64-cell board,
-and the site also shows the standard deviation across seeds. The `Game length`
-column shows the mean number of ticks per game and its standard deviation.
+Snake Simple 8x8 evaluates each model across 100 seeds (`0`–`99`). The score is
+the fraction of seeds that fill the 64-cell board and make the extra move, so a
+passing submission scores `1.0`. The `Game length` column shows the mean number
+of ticks per game and its standard deviation.
 
 Results rank passing submissions before failing submissions, then by descending
-score and ascending parameter count. Snake Simple 8x8 submissions with equal score and
-parameter count are ranked by ascending game length, so faster games win.
+score (fraction of seeds passed) and ascending parameter count. Submissions with
+equal score and parameter count are ranked by ascending game length, so faster
+games win.
 
 ## Train the example
 

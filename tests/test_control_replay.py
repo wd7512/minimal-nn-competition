@@ -119,7 +119,7 @@ def test_render_submission_html_embeds_control_replay() -> None:
     assert '"kind"' not in page
     assert "__KIND__" not in page
     assert "const KIND = " in page
-    assert "Game length" in page
+    assert "Reward" in page
     assert "500.0 ± 0.0" in page
     assert "Seed games" in page
     assert ">100<" in page
@@ -143,14 +143,14 @@ def test_render_submission_html_lunarlander_rows() -> None:
     assert "LunarLander replay" in page
     assert "Landings" in page
     assert "1/2" in page
-    assert "Game length" in page
+    assert "Reward" in page
 
 
 def test_render_submission_html_without_replay() -> None:
     page = render_submission_html(_result("cartpole", {"seed_steps": [8], "seeds": 1}), None, 1, 1)
     assert "<canvas" not in page
     assert "Not recorded" in page
-    assert "Game length" in page
+    assert "Reward" in page
 
 
 def test_render_site_writes_control_games(tmp_path: Path) -> None:

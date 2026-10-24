@@ -23,11 +23,6 @@ _SECTION_TITLES = {
     "snake-simple-16x16": "SNAKE SIMPLE 16X16",
     "snake-obstacles-8x8": "SNAKE OBSTACLES 8X8",
 }
-_SNAKE_MAX_LENGTH = {
-    "snake-simple-8x8": 64,
-    "snake-simple-16x16": 256,
-    "snake-obstacles-8x8": 64,
-}
 
 _GROUP_SPECS = (
     {
@@ -957,28 +952,8 @@ _SITE_SCRIPT = """
 
 
 def _score_text(result):
-    if result.benchmark in RL_BENCHMARKS:
-        return f"{result.score:.2f}"
-    if result.benchmark in SNAKE_BENCHMARKS:
-        lengths = result.details.get("seed_lengths")
-        targets = result.details.get("target_lengths")
-        if (
-            isinstance(lengths, list)
-            and isinstance(targets, list)
-            and len(lengths) == len(targets)
-            and targets
-            and all(target > 0 for target in targets)
-        ):
-            percentages = [
-                length / target * 100 for length, target in zip(lengths, targets, strict=True)
-            ]
-            return f"{statistics.fmean(percentages):.2f}%"
-        maximum = result.details.get("max_length", _SNAKE_MAX_LENGTH.get(result.benchmark, 64))
-        mean = result.score / maximum * 100
-        return f"{mean:.2f}%"
+    # Score is the fraction of seeds or samples that pass for every benchmark.
     mean = result.score * 100
-    if result.benchmark in CHESS_BENCHMARKS:
-        return f"{mean:.2f}%"
     digits = 4 if not result.passed and mean >= 99.995 else 2
     return f"{mean:.{digits}f}%"
 
@@ -1007,11 +982,22 @@ def _error_text(result):
     return f"{mae:.4f}"
 
 
+def _reward_text(result):
+    if result.benchmark == "cartpole":
+        return mean_steps(result)
+    mean_return = result.details.get("mean_return")
+    if not isinstance(mean_return, (int, float)):
+        return "-"
+    return f"{mean_return:.2f}"
+
+
 def _length_text(result):
     if result.benchmark in SNAKE_BENCHMARKS:
         return _game_length_text(result)
     if result.benchmark in CHESS_BENCHMARKS:
         return _error_text(result)
+    if result.benchmark in RL_BENCHMARKS:
+        return _reward_text(result)
     return "-"
 
 
@@ -1028,6 +1014,8 @@ def _fourth_header(benchmark):
         return "Game length"
     if benchmark in CHESS_BENCHMARKS:
         return "Error"
+    if benchmark in RL_BENCHMARKS:
+        return "Reward"
     return None
 
 
@@ -1180,7 +1168,7 @@ def render_submission_html(result, payload, rank, total):
             rows.append(_detail_row("Seed games", str(len(seed_lengths))))
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
     if result.benchmark in RL_BENCHMARKS:
-        rows.append(_detail_row("Game length", html.escape(mean_steps(result))))
+        rows.append(_detail_row("Reward", html.escape(_reward_text(result))))
         games = result.details.get("seed_steps")
         if not isinstance(games, list):
             games = result.details.get("seed_returns")

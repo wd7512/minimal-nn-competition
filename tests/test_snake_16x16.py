@@ -94,7 +94,7 @@ def test_16x16_evaluation_uses_256_cell_board(tmp_path: Path) -> None:
     score, score_std, passed, details = SnakeSimple16x16Benchmark(seeds=(0, 1)).evaluate(
         materialize_submission(submission)
     )
-    assert score == 1.0
+    assert score == 0.0
     assert score_std == 0.0
     assert passed is False
     assert details["seed_lengths"] == [1, 1]
@@ -137,7 +137,7 @@ def test_16x16_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     score, score_std, passed, details = SnakeSimple16x16Benchmark(seeds=(0, 1)).evaluate(
         materialize_submission(submission)
     )
-    assert score == 256.0
+    assert score == 1.0
     assert score_std == 0.0
     assert passed is True
     assert details["seed_lengths"] == [256, 256]
@@ -157,10 +157,10 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
     result = BenchmarkResult(
         "example",
         "snake-simple-16x16",
-        128.0,
+        0.5,
         False,
         20,
-        {"max_length": 256, "seed_moves": [10, 20]},
+        {"max_length": 256, "seed_moves": [10, 20], "seed_lengths": [128, 128]},
     )
     payload = record_game(_right_model(), size=16)
     index = render_site([result], tmp_path, {"snake-simple-16x16--example": payload})

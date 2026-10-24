@@ -56,15 +56,16 @@ examples, and the downloader verifies pinned SHA-256 digests, failing on any
 mismatch. Snake needs no data; Chess uses its committed Stockfish sets. There
 is no held-out split: an entry must fit every example.
 
-Expected scores: `1.0` MNIST and Fashion-MNIST, `64.0` Snake Simple 8x8,
-`256.0` Snake Simple 16x16 (100 seeds, 4096-move cap), `1.0` Chess (every
-position within 0.1 pawns of Stockfish). Confirm the score and parameter count
-match the PR description, and that an image cache is the correct benchmark's
-data.
+Expected scores: `1.0` everywhere — every seed or sample must pass. MNIST and
+Fashion-MNIST classify all 70,000 examples; Chess places every position within
+0.1 pawns of Stockfish; Snake fills the board on every seed; CartPole survives
+500 steps on every seed; Pendulum clears `-500` per seed; LunarLander lands
+every seed. Confirm the score and parameter count match the PR description,
+and that an image cache is the correct benchmark's data.
 
-Snake Obstacles 8x8 has no fixed score; it is the mean final length over
-seeded obstacle layouts. Inspect `seed_passed` and `target_lengths` in the
-result, and validate the layouts separately:
+Snake Obstacles 8x8 passes only when every seed fills its free cells and
+completes the extra loop move. Inspect `seed_passed` and `target_lengths` in
+the result, and validate the layouts separately:
 
 ```bash
 uv run mnnc validate-snake-obstacles-8x8 --seeds 100

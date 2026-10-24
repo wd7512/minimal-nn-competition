@@ -219,13 +219,14 @@ def test_cartpole_calibration(tmp_path: Path) -> None:
 
     zero = materialize_submission(_zero_submission(tmp_path, "cartpole", 4, 2))
     score, _, passed, _ = benchmark.evaluate(zero)
-    assert score < benchmark.max_steps
+    assert 0.0 <= score < 1.0
     assert passed is False
 
     example = Submission.from_directory(Path("models/cartpole/example"))
     result = evaluate_submission(example, benchmark)
-    assert result.score == benchmark.max_steps
+    assert result.score == 1.0
     assert result.passed is True
+    assert result.details["mean_steps"] == benchmark.max_steps
 
 
 def test_pendulum_calibration(tmp_path: Path) -> None:
@@ -243,13 +244,14 @@ def test_pendulum_calibration(tmp_path: Path) -> None:
 
     zero = materialize_submission(_zero_submission(tmp_path, "pendulum", 3, 5))
     score, _, passed, _ = benchmark.evaluate(zero)
-    assert score < benchmark.threshold
+    assert 0.0 <= score < 1.0
     assert passed is False
 
     example = Submission.from_directory(Path("models/pendulum/example"))
     result = evaluate_submission(example, benchmark)
-    assert result.score >= benchmark.threshold
+    assert result.score == 1.0
     assert result.passed is True
+    assert result.details["mean_return"] >= benchmark.threshold
 
 
 def test_lunarlander_calibration(tmp_path: Path) -> None:
@@ -265,17 +267,33 @@ def test_lunarlander_calibration(tmp_path: Path) -> None:
             if done:
                 break
         returns.append(total)
-    assert sum(returns) / len(returns) < benchmark.threshold
+    assert sum(returns) / len(returns) < 0.0
 
     zero = materialize_submission(_zero_submission(tmp_path, "lunarlander", 8, 4))
     score, _, passed, _ = benchmark.evaluate(zero)
-    assert score < benchmark.threshold
+    assert 0.0 <= score < 1.0
     assert passed is False
 
     example = Submission.from_directory(Path("models/lunarlander/example"))
     result = evaluate_submission(example, benchmark)
-    assert result.score >= benchmark.threshold
+    assert result.score == 1.0
     assert result.passed is True
+    assert isinstance(result.details["mean_return"], float)
+
+
+@pytest.mark.parametrize(
+    ("name", "input_size", "output_size"),
+    [("cartpole", 4, 2), ("pendulum", 3, 5), ("lunarlander", 8, 4)],
+)
+def test_control_score_is_pass_fraction(
+    tmp_path: Path, name: str, input_size: int, output_size: int
+) -> None:
+    benchmark = create_benchmark(name, seeds=FAST_SEEDS)
+    zero = materialize_submission(_zero_submission(tmp_path, name, input_size, output_size))
+    score, score_std, passed, _ = benchmark.evaluate(zero)
+    assert 0.0 <= score <= 1.0
+    assert passed is (score == 1.0)
+    assert score_std >= 0.0
 
 
 @pytest.fixture
@@ -387,9 +405,13 @@ def test_control_train_commands_wire_examples(
 
 def test_render_control_group(tmp_path: Path) -> None:
     results = [
-        BenchmarkResult("cart", "cartpole", 500.0, True, 10, {"max_steps": 500}),
-        BenchmarkResult("pend", "pendulum", -140.0, True, 4741, {"horizon": 200}),
-        BenchmarkResult("land", "lunarlander", 8.0, True, 4996, {"max_steps": 300}),
+        BenchmarkResult("cart", "cartpole", 1.0, True, 10, {"max_steps": 500, "seed_steps": [500]}),
+        BenchmarkResult(
+            "pend", "pendulum", 1.0, True, 4741, {"horizon": 200, "mean_return": -140.0}
+        ),
+        BenchmarkResult(
+            "land", "lunarlander", 1.0, True, 4996, {"max_steps": 300, "mean_return": 8.0}
+        ),
     ]
     html = render_site(results, tmp_path).read_text()
     assert 'id="control"' in html
@@ -399,6 +421,8 @@ def test_render_control_group(tmp_path: Path) -> None:
     assert ">Lunar touchdown<" in html
     assert "--accent-control" in html
     assert "prefers-color-scheme: dark" in html
-    assert "500.00" in html
+    assert "100.00%" in html
+    assert "Reward</th>" in html
+    assert "500.0" in html
     assert "-140.00" in html
     assert "8.00" in html

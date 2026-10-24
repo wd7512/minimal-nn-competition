@@ -7,10 +7,9 @@ from minimal_nn_competition.benchmarks.snake.layout import obstacles_for_seed
 from minimal_nn_competition.benchmarks.snake.observation import OBSERVATION_SIZE
 from minimal_nn_competition.model.entry import materialize_submission
 
-# An agent passes if it can fill the board. If it does not it gets a secondary
-# score which allows it to be placed on the leaderboard. Therefore we should have
-# {score = snake size (max size * size), network_size = network size} and the
-# ranking is score first and network size second.
+# Score is the fraction of seeds that fill the board (1.0 = every seed passes),
+# so all passing entries tie and ranking falls through to the smaller network.
+# Seed length and move count stay in details for the per-seed view.
 
 DEFAULT_SEEDS = tuple(range(100))
 
@@ -136,8 +135,8 @@ class SnakeBenchmark:
                     and ticks <= self.max_moves
                     and (won if self.loop_on_full else True)
                 )
-        score = statistics.fmean(lengths)
-        score_std = statistics.pstdev(lengths)
+        score = statistics.fmean(seed_passed)
+        score_std = statistics.pstdev(seed_passed)
         max_length = max(target_lengths)
         return (
             score,

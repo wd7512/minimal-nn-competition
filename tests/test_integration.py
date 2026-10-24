@@ -188,7 +188,7 @@ def test_render_site(tmp_path: Path) -> None:
         BenchmarkResult(
             "snake-example",
             "snake-simple-8x8",
-            1.0,
+            0.0,
             False,
             20,
             {"seed_lengths": [1], "max_length": 64, "seed_moves": [10, 20]},
@@ -206,8 +206,8 @@ def test_render_site(tmp_path: Path) -> None:
     assert 'href="internal/speed/"' in html
     assert f"v{__version__}" in html
     assert "50.00%" in html
-    assert "1.56%" in html
-    assert "1.56% ±" not in html
+    assert "0.00%" in html
+    assert "0.00% ±" not in html
     assert "Game length</th>" in html
     assert "Samples</th>" not in html
     assert "Normalisation</th>" not in html

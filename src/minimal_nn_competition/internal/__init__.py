@@ -159,6 +159,7 @@ tests/test_rl_environments.py::test_control_evaluate_cli
 tests/test_rl_environments.py::test_control_collect_cli
 tests/test_rl_environments.py::test_control_train_commands_wire_examples
 tests/test_rl_environments.py::test_render_control_group
+tests/test_rl_environments.py::test_control_score_is_pass_fraction[cartpole-4-2]
 tests/test_control_replay.py""".splitlines()
         ),
     ),
@@ -169,7 +170,8 @@ tests/test_control_replay.py""".splitlines()
             """tests/test_rl_environments.py::test_pendulum_engine_is_deterministic
 tests/test_rl_environments.py::test_pendulum_reset_bounds
 tests/test_rl_environments.py::test_pendulum_rejects_wrong_config
-tests/test_rl_environments.py::test_pendulum_calibration""".splitlines()
+tests/test_rl_environments.py::test_pendulum_calibration
+tests/test_rl_environments.py::test_control_score_is_pass_fraction[pendulum-3-5]""".splitlines()
         ),
     ),
     Scope(
@@ -179,7 +181,8 @@ tests/test_rl_environments.py::test_pendulum_calibration""".splitlines()
             """tests/test_rl_environments.py::test_lunarlander_engine_is_deterministic
 tests/test_rl_environments.py::test_lunarlander_reset_bounds
 tests/test_rl_environments.py::test_lunarlander_rejects_wrong_config
-tests/test_rl_environments.py::test_lunarlander_calibration""".splitlines()
+tests/test_rl_environments.py::test_lunarlander_calibration
+tests/test_rl_environments.py::test_control_score_is_pass_fraction[lunarlander-8-4]""".splitlines()
         ),
     ),
     Scope(

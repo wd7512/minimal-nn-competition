@@ -1,4 +1,8 @@
-"""Pendulum benchmark: a 5-logit net controls a discrete-torque pendulum."""
+"""Pendulum benchmark: a 5-logit net controls a discrete-torque pendulum.
+
+Score is the fraction of seeds whose return clears PASS_THRESHOLD
+(1.0 = every seed passes); mean return stays in details as the reward column.
+"""
 
 import random
 import statistics
@@ -51,13 +55,14 @@ class PendulumBenchmark:
                     state, reward, _ = step(state, action)
                     total += reward
                 returns.append(total)
-        score = statistics.fmean(returns)
+        passed_flags = [total >= self.threshold for total in returns]
         return (
-            score,
-            statistics.pstdev(returns),
-            score >= self.threshold,
+            statistics.fmean(passed_flags),
+            statistics.pstdev(passed_flags),
+            all(passed_flags),
             {
                 "seed_returns": returns,
+                "mean_return": statistics.fmean(returns),
                 "horizon": self.horizon,
                 "seeds": len(self.seeds),
                 "threshold": self.threshold,
