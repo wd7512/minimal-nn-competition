@@ -195,11 +195,10 @@ def test_obstacle_benchmark_is_registered() -> None:
 
 def test_obstacle_benchmark_evaluation_with_dummy_model(tmp_path: Path) -> None:
     submission = _write_submission(tmp_path)
-    score, score_std, passed, details = SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS).evaluate(
+    score, passed, details = SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS).evaluate(
         materialize_submission(submission)
     )
     assert score == statistics.fmean(details["seed_passed"])
-    assert score_std == statistics.pstdev(details["seed_passed"])
     assert passed is False
     assert details["target_lengths"] == [
         64 - len(obstacles_for_seed(8, seed)) for seed in FAST_SEEDS
@@ -237,7 +236,7 @@ def test_obstacle_benchmark_requires_the_loop_win(
 
     monkeypatch.setattr(snake_benchmark, "SnakeEnvironment", LoopEnvironment)
     submission = _write_submission(tmp_path)
-    _, _, passed, details = SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS).evaluate(
+    _, passed, details = SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS).evaluate(
         materialize_submission(submission)
     )
     assert passed is won

@@ -114,7 +114,6 @@ tests/test_training.py""".splitlines()
             """tests/test_benchmarks.py::test_snake_partial_run_does_not_pass
 tests/test_benchmarks.py::test_snake_full_board_passes
 tests/test_benchmarks.py::test_snake_defaults_to_100_seeds
-tests/test_benchmarks.py::test_snake_score_std_across_seeds
 tests/test_benchmarks.py::test_snake_rejects_wrong_config
 tests/test_benchmarks.py::test_snake_selected_input_indices_build_smaller_model
 tests/test_benchmarks.py::test_snake_selected_inputs_evaluate

@@ -65,7 +65,6 @@ class LunarLanderBenchmark:
                 steps.append(taken)
         return (
             statistics.fmean(landed),
-            statistics.pstdev(landed),
             all(landed),
             {
                 "seed_returns": returns,

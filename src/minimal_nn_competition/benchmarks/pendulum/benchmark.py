@@ -58,7 +58,6 @@ class PendulumBenchmark:
         passed_flags = [total >= self.threshold for total in returns]
         return (
             statistics.fmean(passed_flags),
-            statistics.pstdev(passed_flags),
             all(passed_flags),
             {
                 "seed_returns": returns,

@@ -217,7 +217,6 @@ def test_render_site(tmp_path: Path) -> None:
             False,
             20,
             {"seed_lengths": [1], "max_length": 64, "seed_moves": [10, 20]},
-            score_std=0.5,
         ),
     ]
     index = render_site(results, tmp_path)
@@ -252,7 +251,7 @@ def test_render_site(tmp_path: Path) -> None:
         "mnist-example",
         "snake-example",
     ]
-    assert raw[2]["score_std"] == 0.5
+    assert raw[2]["details"]["seed_moves"] == [10, 20]
 
 
 def test_render_near_perfect_failure_is_not_shown_as_100(tmp_path: Path) -> None:

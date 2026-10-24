@@ -91,11 +91,10 @@ def test_16x16_evaluation_uses_256_cell_board(tmp_path: Path) -> None:
         },
         {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
-    score, score_std, passed, details = SnakeSimple16x16Benchmark(seeds=(0, 1)).evaluate(
+    score, passed, details = SnakeSimple16x16Benchmark(seeds=(0, 1)).evaluate(
         materialize_submission(submission)
     )
     assert score == 0.0
-    assert score_std == 0.0
     assert passed is False
     assert details["seed_lengths"] == [1, 1]
     assert details["seed_moves"] == [9, 9]
@@ -134,11 +133,10 @@ def test_16x16_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         },
         {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
-    score, score_std, passed, details = SnakeSimple16x16Benchmark(seeds=(0, 1)).evaluate(
+    score, passed, details = SnakeSimple16x16Benchmark(seeds=(0, 1)).evaluate(
         materialize_submission(submission)
     )
     assert score == 1.0
-    assert score_std == 0.0
     assert passed is True
     assert details["seed_lengths"] == [256, 256]
     assert details["max_length"] == 256

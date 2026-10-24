@@ -218,7 +218,7 @@ def test_cartpole_calibration(tmp_path: Path) -> None:
     assert max(random_steps) < benchmark.max_steps
 
     zero = materialize_submission(_zero_submission(tmp_path, "cartpole", 4, 2))
-    score, _, passed, _ = benchmark.evaluate(zero)
+    score, passed, _ = benchmark.evaluate(zero)
     assert 0.0 <= score < 1.0
     assert passed is False
 
@@ -243,7 +243,7 @@ def test_pendulum_calibration(tmp_path: Path) -> None:
     assert sum(returns) / len(returns) < benchmark.threshold
 
     zero = materialize_submission(_zero_submission(tmp_path, "pendulum", 3, 5))
-    score, _, passed, _ = benchmark.evaluate(zero)
+    score, passed, _ = benchmark.evaluate(zero)
     assert 0.0 <= score < 1.0
     assert passed is False
 
@@ -270,7 +270,7 @@ def test_lunarlander_calibration(tmp_path: Path) -> None:
     assert sum(returns) / len(returns) < 0.0
 
     zero = materialize_submission(_zero_submission(tmp_path, "lunarlander", 8, 4))
-    score, _, passed, _ = benchmark.evaluate(zero)
+    score, passed, _ = benchmark.evaluate(zero)
     assert 0.0 <= score < 1.0
     assert passed is False
 
@@ -290,10 +290,9 @@ def test_control_score_is_pass_fraction(
 ) -> None:
     benchmark = create_benchmark(name, seeds=FAST_SEEDS)
     zero = materialize_submission(_zero_submission(tmp_path, name, input_size, output_size))
-    score, score_std, passed, _ = benchmark.evaluate(zero)
+    score, passed, _ = benchmark.evaluate(zero)
     assert 0.0 <= score <= 1.0
     assert passed is (score == 1.0)
-    assert score_std >= 0.0
 
 
 @pytest.fixture

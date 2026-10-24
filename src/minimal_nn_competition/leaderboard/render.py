@@ -14,22 +14,10 @@ from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
 
-_SECTION_TITLES = {
-    "chess-eval-10k": "CHESS EVALUATION 10K",
-    "chess-eval-100k": "CHESS EVALUATION 100K",
-    "fashion-mnist": "FASHION-MNIST COMPRESSION",
-    "mnist": "MNIST COMPRESSION",
-    "snake-simple-8x8": "SNAKE SIMPLE 8X8",
-    "snake-simple-16x16": "SNAKE SIMPLE 16X16",
-    "snake-obstacles-8x8": "SNAKE OBSTACLES 8X8",
-}
-
 _GROUP_SPECS = (
     {
         "id": "snake",
         "label": "Snake",
-        "eyebrow": "Games",
-        "description": "",
         "benchmarks": (
             "snake-simple-8x8",
             "snake-simple-16x16",
@@ -40,24 +28,18 @@ _GROUP_SPECS = (
     {
         "id": "image-compression",
         "label": "Image compression",
-        "eyebrow": "Vision",
-        "description": "",
         "benchmarks": ("mnist", "fashion-mnist"),
         "accent": "image-compression",
     },
     {
         "id": "chess",
         "label": "Chess evaluation",
-        "eyebrow": "Regression",
-        "description": "",
         "benchmarks": ("chess-eval-10k", "chess-eval-100k"),
         "accent": "chess",
     },
     {
         "id": "control",
         "label": "Control",
-        "eyebrow": "Reinforcement learning",
-        "description": "",
         "benchmarks": ("cartpole", "pendulum", "lunarlander"),
         "accent": "control",
     },
@@ -257,7 +239,6 @@ h1 {
   align-items: baseline;
   gap: 12px;
 }
-.group__desc { margin: 12px 0 0; max-width: 58ch; color: var(--muted); }
 .version-row {
   display: none;
   flex-wrap: wrap;
@@ -958,14 +939,6 @@ def _score_text(result):
     return f"{mean:.{digits}f}%"
 
 
-def _score_html(result):
-    text = _score_text(result)
-    if "±" in text:
-        main, std = text.split("±", 1)
-        return f'{html.escape(main.strip())} <span class="score-std">± {html.escape(std.strip())}</span>'
-    return html.escape(text)
-
-
 def _game_length_text(result):
     moves = result.details.get("seed_moves")
     return (
@@ -1034,7 +1007,7 @@ def _ranking_text(benchmark):
 def _version_label(benchmark):
     if benchmark in _VERSION_LABELS:
         return _VERSION_LABELS[benchmark]
-    return _SECTION_TITLES.get(benchmark, benchmark.replace("-", " ").title())
+    return benchmark.replace("-", " ").title()
 
 
 def _group_specs(results):
@@ -1052,8 +1025,6 @@ def _group_specs(results):
             {
                 "id": benchmark,
                 "label": _version_label(benchmark),
-                "eyebrow": "Other",
-                "description": "",
                 "benchmarks": (benchmark,),
                 "accent": "default",
             }
@@ -1097,7 +1068,7 @@ def _table(results, submission_links=None):
         link = (submission_links or {}).get((result.benchmark, result.submission))
         status = "pass" if result.passed else "fail"
         row_class = "is-pass" if result.passed else "is-fail"
-        cells = f'<td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link, status, _score_html(result))}</td><td class="num">{result.parameter_count:,}</td>'
+        cells = f'<td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link, status, html.escape(_score_text(result)))}</td><td class="num">{result.parameter_count:,}</td>'
         if fourth is not None:
             cells += f'<td class="num">{_length_html(result)}</td>'
         rows.append(f'<tr class="{row_class}">{cells}</tr>')
@@ -1151,7 +1122,9 @@ def render_submission_html(result, payload, rank, total):
         [
             _detail_row("Author", html.escape(result.author)),
             _detail_row("Rank", f"#{rank} of {total}"),
-            _detail_row("Score", f'<span class="detail-score">{_score_html(result)}</span>'),
+            _detail_row(
+                "Score", f'<span class="detail-score">{html.escape(_score_text(result))}</span>'
+            ),
         ]
     )
     rows.extend(
@@ -1308,11 +1281,6 @@ def render_html(results, submission_links=None):
         rail_links.append(
             f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong><small>{group_count} {_plural(group_count, "run")} total</small></a>'
         )
-        description = (
-            f'<p class="group__desc">{html.escape(spec["description"])}</p>'
-            if spec["description"]
-            else ""
-        )
         version_buttons = []
         for benchmark in versions:
             version_label = _version_label(benchmark)
@@ -1351,8 +1319,7 @@ def render_html(results, submission_links=None):
             )
         sections.append(
             f'<section class="group" id="{html.escape(group_id)}" data-group-section data-accent="{html.escape(accent)}" data-title="{html.escape(label)}" aria-labelledby="{html.escape(group_id)}-title">'
-            f'<div class="group__head"><div><p class="eyebrow" id="{html.escape(group_id)}-title"><span class="group__index">{group_number:02d}</span> / {html.escape(label)}</p>'
-            f"{description}</div></div>"
+            f'<div class="group__head"><div><p class="eyebrow" id="{html.escape(group_id)}-title"><span class="group__index">{group_number:02d}</span> / {html.escape(label)}</p></div></div>'
             f"{version_row}{''.join(panels)}</section>"
         )
     rail_note = f"{total} {_plural(total, 'run')} total · {passed} pass" if groups else ""

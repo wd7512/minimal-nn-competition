@@ -15,7 +15,6 @@ class BenchmarkResult:
     passed: bool
     parameter_count: int
     details: dict[str, Any]
-    score_std: float = 0.0
     name: str = "unknown"
     author: str = "unknown"
 
@@ -25,7 +24,7 @@ class BenchmarkResult:
 
 def evaluate_submission(submission, benchmark):
     loaded = benchmark.load_submission(submission)
-    score, score_std, passed, details = benchmark.evaluate(loaded)
+    score, passed, details = benchmark.evaluate(loaded)
     config = submission.config
     details = dict(details)
     details["structure"] = [config.input_size, *config.hidden_sizes, config.output_size]
@@ -36,7 +35,6 @@ def evaluate_submission(submission, benchmark):
         passed=bool(passed),
         parameter_count=parameter_count(loaded.state_dict),
         details=details,
-        score_std=float(score_std),
         name=submission.config.name,
         author=submission.config.author,
     )

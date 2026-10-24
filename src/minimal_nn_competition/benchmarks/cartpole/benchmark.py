@@ -55,7 +55,6 @@ class CartPoleBenchmark:
         passed_flags = [count == self.max_steps for count in counts]
         return (
             statistics.fmean(passed_flags),
-            statistics.pstdev(passed_flags),
             all(passed_flags),
             {
                 "seed_steps": counts,

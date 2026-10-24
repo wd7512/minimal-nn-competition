@@ -117,7 +117,6 @@
     "parameter_count": 10,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "example"
   },
   {
@@ -238,7 +237,6 @@
     "parameter_count": 10,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "linear-lqr"
   },
   {
@@ -359,7 +357,6 @@
     "parameter_count": 10,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "linear-pd"
   },
   {
@@ -480,7 +477,6 @@
     "parameter_count": 10,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "mistral-lqr"
   },
   {
@@ -524,7 +520,6 @@
     "parameter_count": 53505,
     "passed": false,
     "score": 0.15401999652385712,
-    "score_std": 0.0030743446591375385,
     "submission": "example"
   },
   {
@@ -568,7 +563,6 @@
     "parameter_count": 36975,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "mlp-47-16"
   },
   {
@@ -612,7 +606,6 @@
     "parameter_count": 53505,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "example"
   },
   {
@@ -631,7 +624,6 @@
     "parameter_count": 27835,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "mlp-35"
   },
   {
@@ -650,7 +642,6 @@
     "parameter_count": 50890,
     "passed": false,
     "score": 0.8961856961250305,
-    "score_std": 0.0,
     "submission": "example"
   },
   {
@@ -669,7 +660,6 @@
     "parameter_count": 10345,
     "passed": false,
     "score": 0.8282285928726196,
-    "score_std": 0.0,
     "submission": "mlp-13"
   },
   {
@@ -689,7 +679,6 @@
     "parameter_count": 10407,
     "passed": false,
     "score": 0.8222285509109497,
-    "score_std": 0.0,
     "submission": "mlp-13-8"
   },
   {
@@ -1016,7 +1005,6 @@
     "parameter_count": 244,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "mlp-10-10"
   },
   {
@@ -1343,7 +1331,6 @@
     "parameter_count": 4996,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "example"
   },
   {
@@ -1363,7 +1350,6 @@
     "parameter_count": 11350,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "mlp-14-14"
   },
   {
@@ -1382,7 +1368,6 @@
     "parameter_count": 50890,
     "passed": false,
     "score": 0.9895285964012146,
-    "score_std": 0.0,
     "submission": "example"
   },
   {
@@ -1402,7 +1387,6 @@
     "parameter_count": 5631,
     "passed": false,
     "score": 0.8737857341766357,
-    "score_std": 0.0,
     "submission": "mlp-7-7"
   },
   {
@@ -1422,7 +1406,6 @@
     "parameter_count": 4822,
     "passed": false,
     "score": 0.8534285426139832,
-    "score_std": 0.0,
     "submission": "mlp-6-6"
   },
   {
@@ -1444,7 +1427,6 @@
     "parameter_count": 3934,
     "passed": false,
     "score": 0.8044428825378418,
-    "score_std": 0.0,
     "submission": "mlp-4-16-16-16"
   },
   {
@@ -1568,7 +1550,6 @@
     "parameter_count": 4741,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "example"
   },
   {
@@ -3374,7 +3355,6 @@
     "parameter_count": 6020,
     "passed": false,
     "score": 0.0,
-    "score_std": 0.0,
     "submission": "example"
   },
   {
@@ -5179,7 +5159,6 @@
     "parameter_count": 14852,
     "passed": false,
     "score": 0.0,
-    "score_std": 0.0,
     "submission": "obs-fb"
   },
   {
@@ -5708,7 +5687,6 @@
     "parameter_count": 488,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "cycle-44"
   },
   {
@@ -6237,7 +6215,6 @@
     "parameter_count": 400,
     "passed": false,
     "score": 0.0,
-    "score_std": 0.0,
     "submission": "serp-36"
   },
   {
@@ -6767,7 +6744,6 @@
     "parameter_count": 6020,
     "passed": false,
     "score": 0.0,
-    "score_std": 0.0,
     "submission": "example"
   },
   {
@@ -7296,7 +7272,6 @@
     "parameter_count": 37,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "hamiltonian-3-h6"
   },
   {
@@ -7825,7 +7800,6 @@
     "parameter_count": 92,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "serpentine-8-h6"
   },
   {
@@ -8355,7 +8329,6 @@
     "parameter_count": 160,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "serpentine-6-6-fs14"
   },
   {
@@ -8885,7 +8858,6 @@
     "parameter_count": 228,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "hamiltonian-8-8-fs14"
   },
   {
@@ -9415,7 +9387,6 @@
     "parameter_count": 228,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "serpentine-8-8-fs14"
   },
   {
@@ -9945,7 +9916,6 @@
     "parameter_count": 704,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "hamiltonian-20-16-fs14"
   },
   {
@@ -10475,7 +10445,6 @@
     "parameter_count": 708,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "shortcut-16-16-fs22"
   },
   {
@@ -11005,7 +10974,6 @@
     "parameter_count": 1068,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "hamiltonian-24-16"
   },
   {
@@ -11535,7 +11503,6 @@
     "parameter_count": 18948,
     "passed": true,
     "score": 1.0,
-    "score_std": 0.0,
     "submission": "table-128-128"
   },
   {
@@ -12065,7 +12032,6 @@
     "parameter_count": 6020,
     "passed": false,
     "score": 0.0,
-    "score_std": 0.0,
     "submission": "example"
   }
 ]
