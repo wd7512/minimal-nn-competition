@@ -94,7 +94,9 @@ def test_evaluate_mnist_cli(
         )
         == 0
     )
-    assert '"benchmark": "mnist"' in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert '"benchmark": "mnist"' in out
+    assert '"structure": [784, 64, 10]' in out
 
 
 def test_evaluate_mnist_uses_default_data_path(
@@ -170,6 +172,29 @@ def test_render_shows_name_and_author(tmp_path: Path) -> None:
     assert "<dt>Author</dt>" in detail
     assert "Cool Net" in detail
     assert "tester" in detail
+
+
+def test_render_shows_structure_row(tmp_path: Path) -> None:
+    results = [
+        BenchmarkResult(
+            "mlp-14-14",
+            "mnist",
+            1.0,
+            True,
+            3070,
+            {"normalisation": True, "structure": [784, 14, 14, 10]},
+            author="tester",
+        ),
+        BenchmarkResult(
+            "plain", "mnist", 0.5, False, 10, {"normalisation": False}, author="tester"
+        ),
+    ]
+    render_site(results, tmp_path)
+    detail = (tmp_path / "submissions" / "mnist--mlp-14-14.html").read_text()
+    assert "<dt>Structure</dt><dd>[784,14,14,10]</dd>" in detail
+    assert detail.index("<dt>Structure</dt>") < detail.index("<dt>Parameters</dt>")
+    plain = (tmp_path / "submissions" / "mnist--plain.html").read_text()
+    assert "Structure</dt>" not in plain
 
 
 def test_render_site(tmp_path: Path) -> None:

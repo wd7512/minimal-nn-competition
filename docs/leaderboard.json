@@ -107,7 +107,11 @@
         500,
         500
       ],
-      "seeds": 100
+      "seeds": 100,
+      "structure": [
+        4,
+        2
+      ]
     },
     "name": "example",
     "parameter_count": 10,
@@ -224,7 +228,11 @@
         500,
         500
       ],
-      "seeds": 100
+      "seeds": 100,
+      "structure": [
+        4,
+        2
+      ]
     },
     "name": "linear-lqr",
     "parameter_count": 10,
@@ -341,7 +349,11 @@
         500,
         500
       ],
-      "seeds": 100
+      "seeds": 100,
+      "structure": [
+        4,
+        2
+      ]
     },
     "name": "linear-pd",
     "parameter_count": 10,
@@ -458,7 +470,11 @@
         500,
         500
       ],
-      "seeds": 100
+      "seeds": 100,
+      "structure": [
+        4,
+        2
+      ]
     },
     "name": "mistral-lqr",
     "parameter_count": 10,
@@ -496,6 +512,12 @@
       "folds": 20,
       "mae": 1.5992956161499023,
       "samples": 100000,
+      "structure": [
+        769,
+        64,
+        64,
+        1
+      ],
       "tolerance_pawns": 0.1
     },
     "name": "chess-10k-transfer",
@@ -534,6 +556,12 @@
       "folds": 20,
       "mae": 0.004628564231097698,
       "samples": 10000,
+      "structure": [
+        769,
+        47,
+        16,
+        1
+      ],
       "tolerance_pawns": 0.1
     },
     "name": "mlp-47-16",
@@ -572,6 +600,12 @@
       "folds": 20,
       "mae": 0.010310436598956585,
       "samples": 10000,
+      "structure": [
+        769,
+        64,
+        64,
+        1
+      ],
       "tolerance_pawns": 0.1
     },
     "name": "chess-mlp-64",
@@ -586,7 +620,12 @@
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        35,
+        10
+      ]
     },
     "name": "mlp-35",
     "parameter_count": 27835,
@@ -600,7 +639,12 @@
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": false,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        64,
+        10
+      ]
     },
     "name": "example",
     "parameter_count": 50890,
@@ -614,7 +658,12 @@
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        13,
+        10
+      ]
     },
     "name": "mlp-13",
     "parameter_count": 10345,
@@ -628,7 +677,13 @@
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        13,
+        8,
+        10
+      ]
     },
     "name": "mlp-13-8",
     "parameter_count": 10407,
@@ -949,7 +1004,13 @@
         10,
         9
       ],
-      "seeds": 100
+      "seeds": 100,
+      "structure": [
+        8,
+        10,
+        10,
+        4
+      ]
     },
     "name": "mlp-10-10",
     "parameter_count": 244,
@@ -1270,7 +1331,13 @@
         9,
         9
       ],
-      "seeds": 100
+      "seeds": 100,
+      "structure": [
+        8,
+        64,
+        64,
+        4
+      ]
     },
     "name": "example",
     "parameter_count": 4996,
@@ -1284,7 +1351,13 @@
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        14,
+        14,
+        10
+      ]
     },
     "name": "mlp-14-14",
     "parameter_count": 11350,
@@ -1298,7 +1371,12 @@
     "benchmark": "mnist",
     "details": {
       "normalisation": false,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        64,
+        10
+      ]
     },
     "name": "example",
     "parameter_count": 50890,
@@ -1312,7 +1390,13 @@
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        7,
+        7,
+        10
+      ]
     },
     "name": "mlp-7-7",
     "parameter_count": 5631,
@@ -1326,7 +1410,13 @@
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        6,
+        6,
+        10
+      ]
     },
     "name": "mlp-6-6",
     "parameter_count": 4822,
@@ -1340,7 +1430,15 @@
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
-      "samples": 70000
+      "samples": 70000,
+      "structure": [
+        784,
+        4,
+        16,
+        16,
+        16,
+        10
+      ]
     },
     "name": "mlp-4-16-16-16",
     "parameter_count": 3934,
@@ -1458,6 +1556,12 @@
         -125.95179113474697
       ],
       "seeds": 100,
+      "structure": [
+        3,
+        64,
+        64,
+        5
+      ],
       "threshold": -500.0
     },
     "name": "example",
@@ -3157,6 +3261,12 @@
         false
       ],
       "seeds": 100,
+      "structure": [
+        24,
+        64,
+        64,
+        4
+      ],
       "target_lengths": [
         60,
         62,
@@ -4957,6 +5067,11 @@
         false
       ],
       "seeds": 100,
+      "structure": [
+        24,
+        512,
+        4
+      ],
       "target_lengths": [
         60,
         62,
@@ -5481,6 +5596,11 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        6,
+        44,
+        4
+      ],
       "target_lengths": [
         256,
         256,
@@ -6005,6 +6125,11 @@
         false
       ],
       "seeds": 100,
+      "structure": [
+        6,
+        36,
+        4
+      ],
       "target_lengths": [
         256,
         256,
@@ -6529,6 +6654,12 @@
         false
       ],
       "seeds": 100,
+      "structure": [
+        24,
+        64,
+        64,
+        4
+      ],
       "target_lengths": [
         256,
         256,
@@ -7053,6 +7184,11 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        6,
+        3,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -7577,6 +7713,11 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        6,
+        8,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -8101,6 +8242,12 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        14,
+        6,
+        6,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -8625,6 +8772,12 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        14,
+        8,
+        8,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -9149,6 +9302,12 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        14,
+        8,
+        8,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -9673,6 +9832,12 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        14,
+        20,
+        16,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -10197,6 +10362,12 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        22,
+        16,
+        16,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -10721,6 +10892,12 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        24,
+        24,
+        16,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -11245,6 +11422,12 @@
         true
       ],
       "seeds": 100,
+      "structure": [
+        14,
+        128,
+        128,
+        4
+      ],
       "target_lengths": [
         64,
         64,
@@ -11769,6 +11952,12 @@
         false
       ],
       "seeds": 100,
+      "structure": [
+        24,
+        64,
+        64,
+        4
+      ],
       "target_lengths": [
         64,
         64,

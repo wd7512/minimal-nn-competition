@@ -1158,9 +1158,12 @@ def render_submission_html(result, payload, rank, total):
         [
             _detail_row("Status", f'<span class="status status--{status}">{status}</span>'),
             _detail_row("Normalisation", html.escape(normalisation_text)),
-            _detail_row("Parameters", f"{result.parameter_count:,}"),
         ]
     )
+    structure = result.details.get("structure")
+    if isinstance(structure, list) and structure:
+        rows.append(_detail_row("Structure", f"[{','.join(str(int(size)) for size in structure)}]"))
+    rows.append(_detail_row("Parameters", f"{result.parameter_count:,}"))
     if result.benchmark in SNAKE_BENCHMARKS:
         rows.append(_detail_row("Game length", html.escape(_game_length_text(result))))
         seed_lengths = result.details.get("seed_lengths")

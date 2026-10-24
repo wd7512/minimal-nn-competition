@@ -205,6 +205,7 @@ tests/test_configs.py
 tests/test_integration.py::test_checked_in_examples_load
 tests/test_integration.py::test_render_site
 tests/test_integration.py::test_render_near_perfect_failure_is_not_shown_as_100
+tests/test_integration.py::test_render_shows_structure_row
 tests/test_integration.py::test_render_mnist_has_no_game_length_column
 tests/test_integration.py::test_render_chess_eval
 tests/test_integration.py::test_rank_chess_eval_breaks_score_ties_by_mean_error
