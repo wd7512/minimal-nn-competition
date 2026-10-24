@@ -22,6 +22,7 @@ Benchmark guides:
 - [MNIST](how-to/how-to-make-an-mnist-submission.md)
 - [Fashion-MNIST](how-to/how-to-make-a-fashion-mnist-submission.md)
 - [Chess evaluation](how-to/how-to-make-a-chess-eval-submission.md)
+- [Control (RL)](how-to/how-to-make-an-rl-submission.md)
 
 Snake Obstacles 8x8 seeds two or four blocked cells per run. A submission
 passes only when every seed fills all free cells and then completes one extra

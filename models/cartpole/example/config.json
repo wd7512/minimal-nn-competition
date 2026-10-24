@@ -1,0 +1,9 @@
+{
+  "benchmark": "cartpole",
+  "name": "example",
+  "author": "example author",
+  "architecture": "linear",
+  "input_size": 4,
+  "output_size": 2,
+  "description": "A tuned linear pole-balancing controller."
+}

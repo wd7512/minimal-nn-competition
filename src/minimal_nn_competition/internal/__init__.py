@@ -38,6 +38,20 @@ _CHESS_FILES = (
     f"{PACKAGE}/benchmarks/chess_eval",
     f"{PACKAGE}/examples/chess_eval_submission.py",
 )
+_CARTPOLE_FILES = (
+    f"{PACKAGE}/benchmarks/cartpole",
+    f"{PACKAGE}/examples/cartpole_submission.py",
+)
+_PENDULUM_FILES = (
+    f"{PACKAGE}/benchmarks/pendulum",
+    f"{PACKAGE}/examples/pendulum_submission.py",
+    f"{PACKAGE}/examples/ppo.py",
+)
+_LUNARLANDER_FILES = (
+    f"{PACKAGE}/benchmarks/lunarlander",
+    f"{PACKAGE}/examples/lunarlander_submission.py",
+    f"{PACKAGE}/examples/ppo.py",
+)
 
 
 @dataclass(frozen=True)
@@ -130,6 +144,41 @@ tests/test_chess_eval_data.py""".splitlines()
         ),
     ),
     Scope(
+        "cartpole",
+        _CARTPOLE_FILES,
+        tuple(
+            """tests/test_rl_environments.py::test_cartpole_engine_is_deterministic
+tests/test_rl_environments.py::test_cartpole_reset_bounds
+tests/test_rl_environments.py::test_registry_includes_control_benchmarks
+tests/test_rl_environments.py::test_cartpole_rejects_wrong_config
+tests/test_rl_environments.py::test_cartpole_calibration
+tests/test_rl_environments.py::test_control_evaluate_cli
+tests/test_rl_environments.py::test_control_collect_cli
+tests/test_rl_environments.py::test_control_train_commands_wire_examples
+tests/test_rl_environments.py::test_render_control_group""".splitlines()
+        ),
+    ),
+    Scope(
+        "pendulum",
+        _PENDULUM_FILES,
+        tuple(
+            """tests/test_rl_environments.py::test_pendulum_engine_is_deterministic
+tests/test_rl_environments.py::test_pendulum_reset_bounds
+tests/test_rl_environments.py::test_pendulum_rejects_wrong_config
+tests/test_rl_environments.py::test_pendulum_calibration""".splitlines()
+        ),
+    ),
+    Scope(
+        "lunarlander",
+        _LUNARLANDER_FILES,
+        tuple(
+            """tests/test_rl_environments.py::test_lunarlander_engine_is_deterministic
+tests/test_rl_environments.py::test_lunarlander_reset_bounds
+tests/test_rl_environments.py::test_lunarlander_rejects_wrong_config
+tests/test_rl_environments.py::test_lunarlander_calibration""".splitlines()
+        ),
+    ),
+    Scope(
         "core",
         (PACKAGE,),
         tuple(
@@ -178,7 +227,14 @@ def expand_scope_tests(scope, collected):
 def scope_files(scope, root):
     """Resolve a scope's source prefixes to Python files under ``root``."""
     excluded = [
-        root / source for source in _MNIST_FILES + _FASHION_FILES + _SNAKE_FILES + _CHESS_FILES
+        root / source
+        for source in _MNIST_FILES
+        + _FASHION_FILES
+        + _SNAKE_FILES
+        + _CHESS_FILES
+        + _CARTPOLE_FILES
+        + _PENDULUM_FILES
+        + _LUNARLANDER_FILES
     ]
     files = []
     for source in scope.sources:

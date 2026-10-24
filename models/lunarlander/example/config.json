@@ -1,0 +1,14 @@
+{
+  "benchmark": "lunarlander",
+  "name": "example",
+  "author": "example author",
+  "architecture": "mlp",
+  "input_size": 8,
+  "output_size": 4,
+  "hidden_sizes": [
+    64,
+    64
+  ],
+  "activation": "relu",
+  "description": "A small PPO-trained lunar lander policy."
+}
