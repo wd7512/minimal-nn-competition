@@ -38,13 +38,11 @@ protection when needed. Only submissions use the `submission` branch.
 
 ```bash
 uv sync --dev --locked
-uv run mnnc list
-uv run ruff format --check
-uv run ruff check
-uv run ty check
-uv run pytest
-uv build
+uv run dev-tools check
 ```
+
+Individual diagnostics are available with `uv run dev-tools tokens`,
+`uv run dev-tools snake-speed`, and `uv run dev-tools char-encoding`.
 
 ## Hidden boards
 
