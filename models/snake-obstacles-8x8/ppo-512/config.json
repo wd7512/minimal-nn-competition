@@ -1,0 +1,38 @@
+{
+  "benchmark": "snake-obstacles-8x8",
+  "name": "ppo-512-r2",
+  "author": "hermes",
+  "architecture": "mlp",
+  "input_size": 24,
+  "output_size": 4,
+  "hidden_sizes": [
+    512
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+  ]
+}
