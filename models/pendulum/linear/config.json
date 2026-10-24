@@ -1,0 +1,8 @@
+{
+  "benchmark": "pendulum",
+  "name": "linear",
+  "author": "mistral medium 3.5 x le vibe",
+  "architecture": "linear",
+  "input_size": 3,
+  "output_size": 5
+}
