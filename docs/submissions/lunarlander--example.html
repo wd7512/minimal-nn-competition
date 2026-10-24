@@ -169,4 +169,266 @@ button, select { font: inherit; padding: .25rem .75rem; }
   .detail-meta div { grid-template-columns: 1fr; gap: 2px; }
   .detail-footer { flex-direction: column; gap: 8px; }
 }
-</style></head><body data-accent="control"><div class="detail-shell"><header class="detail-head"><p class="eyebrow"><span class="detail-group">Control</span> · Lunar touchdown</p><h1 class="detail-title">example</h1><p class="detail-subtitle">Submission details</p><p class="detail-links"><a href="../">← Back to leaderboard</a><span>·</span><a href="../leaderboard.json">Raw leaderboard JSON</a></p></header><div class="detail-grid detail-grid--single"><aside class="detail-panel" aria-labelledby="details-title"><h2 class="detail-kicker" id="details-title">Submission</h2><dl class="detail-meta"><div><dt>Benchmark</dt><dd>Lunar touchdown</dd></div><div><dt>Group</dt><dd>Control</dd></div><div><dt>Submission</dt><dd>example</dd></div><div><dt>Author</dt><dd>example author</dd></div><div><dt>Rank</dt><dd>#1 of 1</dd></div><div><dt>Score</dt><dd><span class="detail-score">8.16</span></dd></div><div><dt>Status</dt><dd><span class="status status--pass">pass</span></dd></div><div><dt>Normalisation</dt><dd>-</dd></div><div><dt>Parameters</dt><dd>4,996</dd></div></dl></aside></div><footer class="detail-footer"><a href="../">Back to leaderboard</a><span>Minimal NN Competition · <a href="../internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard">speed board</a></span></footer></div></body></html>
+</style></head><body data-accent="control"><div class="detail-shell"><header class="detail-head"><p class="eyebrow"><span class="detail-group">Control</span> · Lunar touchdown</p><h1 class="detail-title">example</h1><p class="detail-subtitle">Submission details</p><p class="detail-links"><a href="../">← Back to leaderboard</a><span>·</span><a href="../leaderboard.json">Raw leaderboard JSON</a></p></header><div class="detail-grid"><section class="detail-section detail-game" aria-labelledby="replay-title"><div class="detail-section-head"><h2 id="replay-title">Replay</h2><p>Seed 0 · 10 steps · landed</p></div><canvas id="board" width="360" height="420" role="img" aria-label="LunarLander replay. Seed 0, 10 steps, landed. Use Play and Step buttons below; current position is announced in status text." aria-describedby="status">LunarLander replay: Seed 0, 10 steps, landed. Enable JavaScript to play.</canvas><div class="controls"><button id="play" type="button">Play</button><button id="prev" type="button">Step back</button><button id="next" type="button">Step forward</button><label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="4" selected>4x</option><option value="8">8x</option><option value="16">16x</option><option value="32">32x</option><option value="64">64x</option></select></label></div><noscript><p class="muted">Replay needs JavaScript. Summary above gives seed, steps and outcome.</p></noscript><p id="status" class="muted" aria-live="polite"></p></section><aside class="detail-panel" aria-labelledby="details-title"><h2 class="detail-kicker" id="details-title">Submission</h2><dl class="detail-meta"><div><dt>Benchmark</dt><dd>Lunar touchdown</dd></div><div><dt>Group</dt><dd>Control</dd></div><div><dt>Submission</dt><dd>example</dd></div><div><dt>Author</dt><dd>example author</dd></div><div><dt>Rank</dt><dd>#1 of 1</dd></div><div><dt>Score</dt><dd><span class="detail-score">8.16</span></dd></div><div><dt>Status</dt><dd><span class="status status--pass">pass</span></dd></div><div><dt>Normalisation</dt><dd>-</dd></div><div><dt>Parameters</dt><dd>4,996</dd></div><div><dt>Game length</dt><dd>10.9 ± 1.5</dd></div><div><dt>Seed games</dt><dd>100</dd></div><div><dt>Landings</dt><dd>100/100</dd></div><div><dt>Replay</dt><dd>Available below</dd></div></dl></aside></div><footer class="detail-footer"><a href="../">Back to leaderboard</a><span>Minimal NN Competition · <a href="../internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard">speed board</a></span></footer></div><script>
+const FRAMES = [{"action": null, "reward": 0.0, "state": [0.13776874061001926, 1.1515908805880604, -0.007942841916915501, -0.024108324970703667, 0.002254944273721707, -0.0019013172509917148]}, {"action": 2, "reward": -0.18055583872512873, "state": [0.10982589869310376, 1.1074825556173566, -0.0279428419169155, -0.04410832497070367, 0.02035362702272999, 0.016288814474107457]}, {"action": 2, "reward": -0.1750318551417112, "state": [0.06188305677618826, 1.043374230646653, -0.0479428419169155, -0.06410832497070366, 0.05664244149683745, 0.03265993302669671]}, {"action": 3, "reward": -0.15526312782078963, "state": [0.03394021485927276, 0.9592659056759493, -0.0279428419169155, -0.08410832497070367, 0.06930237452353416, 0.011393939724027038]}, {"action": 3, "reward": -0.14424867656095203, "state": [0.02599737294235726, 0.8551575807052456, -0.007942841916915501, -0.10410832497070367, 0.060696314247561195, -0.007745454248375666]}, {"action": 2, "reward": -0.14761236099861927, "state": [-0.001945468974558242, 0.7310492557345419, -0.0279428419169155, -0.12410832497070368, 0.07295085999918553, 0.011029091176461902]}, {"action": 3, "reward": -0.14453892741295932, "state": [-0.009888310891473743, 0.5869409307638382, -0.007942841916915501, -0.14410832497070367, 0.06397995117564743, -0.008073817941184289]}, {"action": 3, "reward": -0.144788602762288, "state": [0.0021688471916107566, 0.4228326057931346, 0.0120571580830845, -0.16410832497070366, 0.03590613323446314, -0.025266436147065863]}, {"action": 2, "reward": -0.14698104265060855, "state": [-0.005773994725304744, 0.23872428082243094, -0.007942841916915501, -0.18410832497070365, 0.03063969708739728, -0.004739792532359276]}, {"action": 1, "reward": -0.15445478539316856, "state": [-0.013716836642220245, 0.08461595585172732, -0.007942841916915501, -0.15410832497070362, 0.025899904555038003, -0.004265813279123349]}, {"action": 1, "reward": 9.848021704042681, "state": [-0.021659678559135746, -0.0394923691189763, -0.007942841916915501, -0.12410832497070362, 0.021634091275914653, -0.003839231951211014]}];
+const KIND = "lunarlander";
+const OUTCOME = "landed";
+const TORQUES = [-2.0, -1.0, 0.0, 1.0, 2.0];
+const THRUSTS = ["coast", "main", "left", "right"];
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const status = document.getElementById("status");
+const playButton = document.getElementById("play");
+const speed = document.getElementById("speed");
+let frame = 0;
+let playing = false;
+let timer = null;
+function last() {
+  return FRAMES.length - 1;
+}
+function deg(radians) {
+  return (Number(radians) * 180 / Math.PI).toFixed(1);
+}
+function drawCartpole(state) {
+  const rail = canvas.height - 36;
+  const toX = (x) => 24 + ((x + 2.4) / 4.8) * (canvas.width - 48);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "#aebbb5";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(16, rail);
+  ctx.lineTo(canvas.width - 16, rail);
+  ctx.stroke();
+  ctx.strokeStyle = "#8a3434";
+  ctx.setLineDash([4, 3]);
+  [toX(-2.4), toX(2.4)].forEach((lineX) => {
+    ctx.beginPath();
+    ctx.moveTo(lineX, rail - 48);
+    ctx.lineTo(lineX, rail + 12);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  const cartX = Math.max(24, Math.min(canvas.width - 24, toX(state[0])));
+  ctx.fillStyle = "#17231f";
+  ctx.fillRect(cartX - 20, rail - 24, 40, 24);
+  const pivotX = cartX;
+  const pivotY = rail - 24;
+  const tipX = pivotX + 100 * Math.sin(state[2]);
+  const tipY = pivotY - 100 * Math.cos(state[2]);
+  ctx.strokeStyle = "#8a5b16";
+  ctx.lineWidth = 5;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(pivotX, pivotY);
+  ctx.lineTo(tipX, tipY);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+  ctx.fillStyle = "#8a5b16";
+  ctx.beginPath();
+  ctx.arc(tipX, tipY, 4, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.fillStyle = "#3f5f86";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 4, 0, 2 * Math.PI);
+  ctx.fill();
+  let text = "step " + frame + "/" + last()
+    + ", x " + Number(state[0]).toFixed(2)
+    + ", θ " + deg(state[2]) + "°";
+  if (frame === last()) {
+    text += " · " + OUTCOME;
+  }
+  status.textContent = text;
+}
+function drawPendulum(state, action) {
+  const pivotX = 160;
+  const pivotY = 150;
+  const arm = 110;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const tipX = pivotX + arm * Math.sin(state[0]);
+  const tipY = pivotY - arm * Math.cos(state[0]);
+  ctx.strokeStyle = "#e5484d";
+  ctx.lineWidth = 14;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(pivotX, pivotY);
+  ctx.lineTo(tipX, tipY);
+  ctx.stroke();
+  ctx.lineCap = "butt";
+  ctx.fillStyle = "#e5484d";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 7, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(tipX, tipY, 7, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.fillStyle = "#17231f";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 3, 0, 2 * Math.PI);
+  ctx.fill();
+  const torque = action === null ? 0 : TORQUES[action];
+  if (action !== null && torque !== 0) {
+    const R = 34;
+    const span = 100 * Math.PI / 180;
+    const base = -Math.PI / 2;
+    const a0 = base;
+    const a1 = torque > 0 ? base + span : base - span;
+    ctx.strokeStyle = "#63706b";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(pivotX, pivotY, R, a0, a1, torque < 0);
+    ctx.stroke();
+    const ex = pivotX + R * Math.cos(a1);
+    const ey = pivotY + R * Math.sin(a1);
+    const tAng = a1 + (torque > 0 ? Math.PI / 2 : -Math.PI / 2);
+    const ux = Math.cos(tAng);
+    const uy = Math.sin(tAng);
+    const px = -uy;
+    const py = ux;
+    const bx = ex - ux * 10;
+    const by = ey - uy * 10;
+    ctx.fillStyle = "#63706b";
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(bx + px * 5, by + py * 5);
+    ctx.lineTo(bx - px * 5, by - py * 5);
+    ctx.closePath();
+    ctx.fill();
+  }
+  let text = "step " + frame + "/" + last()
+    + ", θ " + deg(state[0]) + "°"
+    + ", ω " + Number(state[1]).toFixed(2);
+  if (frame === last()) {
+    text += " · " + OUTCOME;
+  }
+  status.textContent = text;
+}
+function drawLunarlander(state, action) {
+  const toX = (x) => 20 + ((x + 1) / 2) * 320;
+  const toY = (y) => 400 - (y / 1.5) * 380;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "#17231f";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 400);
+  ctx.lineTo(canvas.width, 400);
+  ctx.stroke();
+  ctx.fillStyle = "#1f6b43";
+  ctx.fillRect(toX(-0.25), 394, toX(0.25) - toX(-0.25), 6);
+  [toX(-0.25), toX(0.25)].forEach((edge, idx) => {
+    ctx.strokeStyle = "#17231f";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(edge, 394);
+    ctx.lineTo(edge, 368);
+    ctx.stroke();
+    ctx.fillStyle = "#8a5b16";
+    ctx.beginPath();
+    if (idx === 0) {
+      ctx.moveTo(edge, 368);
+      ctx.lineTo(edge, 358);
+      ctx.lineTo(edge + 14, 363);
+    } else {
+      ctx.moveTo(edge, 368);
+      ctx.lineTo(edge, 358);
+      ctx.lineTo(edge - 14, 363);
+    }
+    ctx.closePath();
+    ctx.fill();
+  });
+  for (let index = Math.max(0, frame - 24); index < frame; index += 1) {
+    ctx.fillStyle = "rgba(63, 95, 134, 0.45)";
+    ctx.beginPath();
+    ctx.arc(toX(FRAMES[index].state[0]), toY(FRAMES[index].state[1]), 2, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  const px = toX(state[0]);
+  const py = Math.min(toY(state[1]), 404);
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(Number(state[4]));
+  ctx.fillStyle = "#6f42c1";
+  ctx.strokeStyle = "#17231f";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, -10);
+  ctx.lineTo(7, -3);
+  ctx.lineTo(7, 8);
+  ctx.lineTo(-7, 8);
+  ctx.lineTo(-7, -3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#8a9a94";
+  if (action === 1) {
+    ctx.beginPath();
+    ctx.arc(0, 12, 3 + (frame % 3), 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 18, 2, 0, 2 * Math.PI);
+    ctx.fill();
+  } else if (action === 2) {
+    ctx.beginPath();
+    ctx.arc(-11, 4, 2 + (frame % 2), 0, 2 * Math.PI);
+    ctx.fill();
+  } else if (action === 3) {
+    ctx.beginPath();
+    ctx.arc(11, 4, 2 + (frame % 2), 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  ctx.restore();
+  let text = "step " + frame + "/" + last()
+    + ", x " + Number(state[0]).toFixed(2)
+    + ", y " + Number(state[1]).toFixed(2)
+    + ", thrust " + (action === null ? "—" : THRUSTS[action]);
+  if (frame === last() && OUTCOME) {
+    text += " · " + OUTCOME;
+  }
+  status.textContent = text;
+}
+function draw() {
+  const current = FRAMES[frame];
+  if (KIND === "cartpole") {
+    drawCartpole(current.state);
+  } else if (KIND === "pendulum") {
+    drawPendulum(current.state, current.action);
+  } else {
+    drawLunarlander(current.state, current.action);
+  }
+}
+function step(delta) {
+  frame = Math.min(last(), Math.max(0, frame + delta));
+  draw();
+}
+function stop() {
+  playing = false;
+  playButton.textContent = "Play";
+  if (timer !== null) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
+function play() {
+  if (playing) {
+    stop();
+    return;
+  }
+  if (frame >= last()) {
+    frame = 0;
+  }
+  playing = true;
+  playButton.textContent = "Pause";
+  timer = setInterval(() => {
+    frame += 1;
+    if (frame >= last()) {
+      frame = last();
+      stop();
+    }
+    draw();
+  }, Math.max(1, Math.floor(240 / Number(speed.value))));
+}
+  playButton.addEventListener("click", play);
+  document.getElementById("prev").addEventListener("click", () => { stop(); step(-1); });
+  document.getElementById("next").addEventListener("click", () => { stop(); step(1); });
+  speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
+  draw();
+</script></body></html>
