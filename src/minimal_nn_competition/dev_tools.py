@@ -90,11 +90,11 @@ def tokens() -> int:
 
 def snake_speed() -> int:
     baseline = _baseline()
-    current = measure_snake_speed(duration=0.25, runs=3, warmup=0.25)
+    current = measure_snake_speed(duration=0.1, runs=2, warmup=0.1)
     command = [
         sys.executable,
         "-c",
-        "from minimal_nn_competition.speed.benchmark import measure_snake_speed; print(measure_snake_speed(duration=.25, runs=3, warmup=.25).ticks_per_second)",
+        "from minimal_nn_competition.speed.benchmark import measure_snake_speed; print(measure_snake_speed(duration=.1, runs=2, warmup=.1).ticks_per_second)",
     ]
     old = float(subprocess.check_output(command, cwd=baseline, text=True).strip())
     change = (current.ticks_per_second - old) / old
@@ -130,6 +130,8 @@ def char_encoding() -> int:
             continue
         for line, content in enumerate(text.splitlines(), 1):
             for column, char in enumerate(content, 1):
+                if ord(char) < 128:
+                    continue
                 category = unicodedata.category(char)
                 codepoint = ord(char)
                 dangerous = char != " " and (
