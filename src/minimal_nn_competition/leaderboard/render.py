@@ -808,6 +808,17 @@ def _replay_text(payload):
     return "Available below" if payload is not None else "Not recorded"
 
 
+_SPEED_OPTIONS = ("1", "2", "4", "8", "16", "32", "64")
+
+
+def _speed_select(default):
+    options = "".join(
+        f'<option value="{value}"{" selected" if value == default else ""}>{value}x</option>'
+        for value in _SPEED_OPTIONS
+    )
+    return f'<label>Speed <select id="speed">{options}</select></label>'
+
+
 def render_submission_html(result, payload, rank, total):
     """Render a submission detail page, embedding a replay when one is available."""
     group_label, accent = _group_info(result.benchmark)
@@ -860,6 +871,7 @@ def render_submission_html(result, payload, rank, total):
     if payload is not None:
         size = int(payload.get("size", 8))
         canvas = 40 * size
+        default_speed = "16" if size == 16 else "4"
         script = (
             _GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"]))
             .replace("__SIZE__", str(size))
@@ -882,10 +894,7 @@ def render_submission_html(result, payload, rank, total):
             '<div class="controls"><button id="play" type="button">Play</button>'
             '<button id="prev" type="button">Step back</button>'
             '<button id="next" type="button">Step forward</button>'
-            '<label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option>'
-            '<option value="4">4x</option><option value="8">8x</option>'
-            '<option value="16" selected>16x</option><option value="32">32x</option>'
-            '<option value="64">64x</option></select></label></div>'
+            f"{_speed_select(default_speed)}</div>"
             '<noscript><p class="muted">Replay needs JavaScript. Summary above gives seed, moves and final length.</p></noscript>'
             '<p id="status" class="muted" aria-live="polite"></p></section>'
         )
