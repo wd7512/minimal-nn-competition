@@ -8,6 +8,7 @@ from dataclasses import asdict
 
 from minimal_nn_competition import __version__
 from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
+from minimal_nn_competition.benchmarks.control.replay import mean_steps
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
@@ -578,6 +579,292 @@ speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
 draw();
 """
 
+_CONTROL_GAME_SCRIPT = """
+const FRAMES = __FRAMES__;
+const KIND = "__KIND__";
+const OUTCOME = "__OUTCOME__";
+const TORQUES = [-2.0, -1.0, 0.0, 1.0, 2.0];
+const THRUSTS = ["coast", "main", "left", "right"];
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const status = document.getElementById("status");
+const playButton = document.getElementById("play");
+const speed = document.getElementById("speed");
+let frame = 0;
+let playing = false;
+let timer = null;
+function last() {
+  return FRAMES.length - 1;
+}
+function deg(radians) {
+  return (Number(radians) * 180 / Math.PI).toFixed(1);
+}
+function drawCartpole(state) {
+  const rail = canvas.height - 36;
+  const toX = (x) => 24 + ((x + 2.4) / 4.8) * (canvas.width - 48);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "#aebbb5";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(16, rail);
+  ctx.lineTo(canvas.width - 16, rail);
+  ctx.stroke();
+  ctx.strokeStyle = "#8a3434";
+  ctx.setLineDash([4, 3]);
+  [toX(-2.4), toX(2.4)].forEach((lineX) => {
+    ctx.beginPath();
+    ctx.moveTo(lineX, rail - 48);
+    ctx.lineTo(lineX, rail + 12);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  const cartX = toX(Math.max(-2.6, Math.min(2.6, state[0])));
+  ctx.fillStyle = "#17231f";
+  ctx.fillRect(cartX - 15, rail - 14, 30, 12);
+  const pivotY = rail - 16;
+  const tipX = cartX + 56 * Math.sin(state[2]);
+  const tipY = pivotY - 56 * Math.cos(state[2]);
+  ctx.strokeStyle = "#1f6b43";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(cartX, pivotY);
+  ctx.lineTo(tipX, tipY);
+  ctx.stroke();
+  ctx.fillStyle = "#1f6b43";
+  ctx.beginPath();
+  ctx.arc(tipX, tipY, 4, 0, 2 * Math.PI);
+  ctx.fill();
+  let text = "step " + frame + "/" + last()
+    + ", x " + Number(state[0]).toFixed(2)
+    + ", θ " + deg(state[2]) + "°";
+  if (frame === last()) {
+    text += " · " + OUTCOME;
+  }
+  status.textContent = text;
+}
+function drawPendulum(state, action) {
+  const pivotX = 160;
+  const pivotY = 150;
+  const arm = 110;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "#aebbb5";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, arm, 0, 2 * Math.PI);
+  ctx.stroke();
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pivotX, pivotY);
+  ctx.lineTo(pivotX, pivotY - arm);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  const tipX = pivotX + arm * Math.sin(state[0]);
+  const tipY = pivotY - arm * Math.cos(state[0]);
+  ctx.strokeStyle = "#17231f";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(pivotX, pivotY);
+  ctx.lineTo(tipX, tipY);
+  ctx.stroke();
+  ctx.fillStyle = "#3f5f86";
+  ctx.beginPath();
+  ctx.arc(tipX, tipY, 9, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.fillStyle = "#17231f";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 5, 0, 2 * Math.PI);
+  ctx.fill();
+  const torque = action === null ? 0 : TORQUES[action];
+  ctx.fillStyle = "#8a5b16";
+  ctx.fillRect(pivotX + (torque / 2) * 60 - 3, 262, 6, 14);
+  ctx.strokeStyle = "#aebbb5";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(96, 262, 128, 14);
+  ctx.fillStyle = "#63706b";
+  ctx.font = "12px system-ui, sans-serif";
+  ctx.fillText("torque " + torque.toFixed(1), 126, 298);
+  status.textContent = "step " + frame + "/" + last()
+    + ", θ " + deg(state[0]) + "°"
+    + ", ω " + Number(state[1]).toFixed(2);
+}
+function drawLunarlander(state, action) {
+  const toX = (x) => 20 + ((x + 1) / 2) * 320;
+  const toY = (y) => 400 - (y / 1.5) * 380;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "#aebbb5";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, 400);
+  ctx.lineTo(canvas.width, 400);
+  ctx.stroke();
+  ctx.fillStyle = "#1f6b43";
+  ctx.fillRect(toX(-0.25), 394, toX(0.25) - toX(-0.25), 6);
+  for (let index = Math.max(0, frame - 24); index < frame; index += 1) {
+    ctx.fillStyle = "rgba(63, 95, 134, 0.45)";
+    ctx.beginPath();
+    ctx.arc(toX(FRAMES[index].state[0]), toY(FRAMES[index].state[1]), 2, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  const px = toX(state[0]);
+  const py = Math.min(toY(state[1]), 404);
+  ctx.save();
+  ctx.translate(px, py);
+  ctx.rotate(Number(state[4]));
+  ctx.fillStyle = "#17231f";
+  ctx.beginPath();
+  ctx.moveTo(0, -10);
+  ctx.lineTo(7, 8);
+  ctx.lineTo(-7, 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#e5484d";
+  if (action === 1) {
+    ctx.beginPath();
+    ctx.moveTo(-4, 8);
+    ctx.lineTo(4, 8);
+    ctx.lineTo(0, 20);
+    ctx.closePath();
+    ctx.fill();
+  } else if (action === 2) {
+    ctx.beginPath();
+    ctx.moveTo(-7, 0);
+    ctx.lineTo(-16, 4);
+    ctx.lineTo(-7, 8);
+    ctx.closePath();
+    ctx.fill();
+  } else if (action === 3) {
+    ctx.beginPath();
+    ctx.moveTo(7, 0);
+    ctx.lineTo(16, 4);
+    ctx.lineTo(7, 8);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+  if (frame === last() && (OUTCOME === "landed" || OUTCOME === "crashed")) {
+    ctx.font = "bold 16px system-ui, sans-serif";
+    ctx.fillStyle = OUTCOME === "landed" ? "#1f6b43" : "#8a3434";
+    ctx.fillText(OUTCOME.toUpperCase(), 20, 30);
+  }
+  let text = "step " + frame + "/" + last()
+    + ", x " + Number(state[0]).toFixed(2)
+    + ", y " + Number(state[1]).toFixed(2)
+    + ", thrust " + (action === null ? "—" : THRUSTS[action]);
+  if (frame === last() && OUTCOME) {
+    text += " · " + OUTCOME;
+  }
+  status.textContent = text;
+}
+function draw() {
+  const current = FRAMES[frame];
+  if (KIND === "cartpole") {
+    drawCartpole(current.state);
+  } else if (KIND === "pendulum") {
+    drawPendulum(current.state, current.action);
+  } else {
+    drawLunarlander(current.state, current.action);
+  }
+}
+function step(delta) {
+  frame = Math.min(last(), Math.max(0, frame + delta));
+  draw();
+}
+function stop() {
+  playing = false;
+  playButton.textContent = "Play";
+  if (timer !== null) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
+function play() {
+  if (playing) {
+    stop();
+    return;
+  }
+  if (frame >= last()) {
+    frame = 0;
+  }
+  playing = true;
+  playButton.textContent = "Pause";
+  timer = setInterval(() => {
+    frame += 1;
+    if (frame >= last()) {
+      frame = last();
+      stop();
+    }
+    draw();
+  }, Math.max(1, Math.floor(240 / Number(speed.value))));
+}
+  playButton.addEventListener("click", play);
+  document.getElementById("prev").addEventListener("click", () => { stop(); step(-1); });
+  document.getElementById("next").addEventListener("click", () => { stop(); step(1); });
+  speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
+  draw();
+"""
+
+_CONTROL_CANVAS = {
+    "cartpole": (480, 160),
+    "pendulum": (320, 320),
+    "lunarlander": (360, 420),
+}
+
+_CONTROL_GAME_LABEL = {
+    "cartpole": "CartPole replay",
+    "pendulum": "Pendulum replay",
+    "lunarlander": "LunarLander replay",
+}
+
+
+def _control_game_section(kind, payload):
+    seed = int(payload.get("seed", 0))
+    steps = int(payload.get("steps", 0))
+    total = float(payload.get("total_reward", 0.0))
+    terminated = bool(payload.get("terminated", False))
+    if kind == "cartpole":
+        outcome = "fell" if terminated else "balanced"
+    elif kind == "pendulum":
+        outcome = f"total return {total:.2f}"
+    elif payload.get("landed"):
+        outcome = "landed"
+    elif terminated:
+        outcome = "crashed"
+    else:
+        outcome = "timed out"
+    width, height = _CONTROL_CANVAS[kind]
+    label = _CONTROL_GAME_LABEL[kind]
+    caption = f"Seed {seed} · {steps:,} steps · {outcome}"
+    canvas_label = (
+        f"{label}. Seed {seed}, {steps:,} steps, {outcome}. "
+        "Use Play and Step buttons below; current position is announced in status text."
+    )
+    canvas_fallback = (
+        f"{label}: Seed {seed}, {steps:,} steps, {outcome}. Enable JavaScript to play."
+    )
+    script = (
+        _CONTROL_GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"]))
+        .replace("__KIND__", kind)
+        .replace("__OUTCOME__", outcome)
+    )
+    section = (
+        '<section class="detail-section detail-game" aria-labelledby="replay-title">'
+        '<div class="detail-section-head"><h2 id="replay-title">Replay</h2>'
+        f"<p>{html.escape(caption)}</p></div>"
+        f'<canvas id="board" width="{width}" height="{height}" role="img" '
+        f'aria-label="{html.escape(canvas_label)}" aria-describedby="status">{html.escape(canvas_fallback)}</canvas>'
+        '<div class="controls"><button id="play" type="button">Play</button>'
+        '<button id="prev" type="button">Step back</button>'
+        '<button id="next" type="button">Step forward</button>'
+        '<label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option>'
+        '<option value="4">4x</option><option value="8">8x</option>'
+        '<option value="16" selected>16x</option><option value="32">32x</option>'
+        '<option value="64">64x</option></select></label></div>'
+        '<noscript><p class="muted">Replay needs JavaScript. Summary above gives seed, steps and outcome.</p></noscript>'
+        '<p id="status" class="muted" aria-live="polite"></p></section>'
+    )
+    return section, script
+
+
 _SITE_SCRIPT = """
 (function () {
   const groups = Array.from(document.querySelectorAll("[data-group-section]"));
@@ -843,6 +1130,20 @@ def render_submission_html(result, payload, rank, total):
         if isinstance(seed_lengths, list) and seed_lengths:
             rows.append(_detail_row("Seed games", str(len(seed_lengths))))
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
+    if result.benchmark in RL_BENCHMARKS:
+        rows.append(_detail_row("Game length", html.escape(mean_steps(result))))
+        games = result.details.get("seed_steps")
+        if not isinstance(games, list):
+            games = result.details.get("seed_returns")
+        if isinstance(games, list):
+            rows.append(_detail_row("Seed games", str(len(games))))
+        if result.benchmark == "lunarlander":
+            landed = result.details.get("seed_landed")
+            if isinstance(landed, list):
+                rows.append(
+                    _detail_row("Landings", f"{sum(1 for game in landed if game)}/{len(landed)}")
+                )
+        rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
     if result.benchmark == "chess-eval":
         error = _error_text(result)
         rows.append(
@@ -857,7 +1158,7 @@ def render_submission_html(result, payload, rank, total):
         rows.append(_detail_row("Tolerance", f"{tolerance:g} pawns"))
     meta = "".join(rows)
 
-    if payload is not None:
+    if payload is not None and result.benchmark in SNAKE_BENCHMARKS:
         size = int(payload.get("size", 8))
         canvas = 40 * size
         script = (
@@ -891,6 +1192,10 @@ def render_submission_html(result, payload, rank, total):
         )
         script_tag = f"<script>{script}</script>"
         grid_class = "detail-grid"
+    elif payload is not None and result.benchmark in RL_BENCHMARKS:
+        game_section, control_script = _control_game_section(result.benchmark, payload)
+        script_tag = f"<script>{control_script}</script>"
+        grid_class = "detail-grid"
     else:
         game_section = ""
         script_tag = ""
@@ -907,7 +1212,7 @@ def render_submission_html(result, payload, rank, total):
 def render_submission_pages(results, replays, output_dir):
     """Write one detail page per submission; return benchmark/submission links.
 
-    Replay JSON is written under ``games/`` when a Snake replay is available.
+    Replay JSON is written under ``games/`` for Snake and control replays.
     """
     pages_dir = output_dir / "submissions"
     games_dir = output_dir / "games"
@@ -929,12 +1234,10 @@ def render_submission_pages(results, replays, output_dir):
                 f"{(result.benchmark, result.submission)!r} both map to {stem!r}"
             )
         seen[stem] = (result.benchmark, result.submission)
-        payload = None
-        if result.benchmark in SNAKE_BENCHMARKS:
-            payload = replays.get(stem)
-            if payload is not None:
-                games_dir.mkdir(parents=True, exist_ok=True)
-                (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
+        payload = replays.get(stem)
+        if payload is not None:
+            games_dir.mkdir(parents=True, exist_ok=True)
+            (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
         pages_dir.mkdir(parents=True, exist_ok=True)
         (pages_dir / f"{stem}.html").write_text(
             render_submission_html(

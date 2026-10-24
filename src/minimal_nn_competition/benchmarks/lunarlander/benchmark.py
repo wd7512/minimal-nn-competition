@@ -42,23 +42,27 @@ class LunarLanderBenchmark:
             raise RuntimeError("PyTorch is required for LunarLander evaluation") from exc
         returns = []
         landed = []
+        steps = []
         with torch.no_grad():
             for seed in self.seeds:
                 state = reset(random.Random(seed))
                 total = 0.0
                 done = False
                 success = False
+                taken = 0
                 for _ in range(self.max_steps):
                     features = observation(state)
                     inputs = torch.tensor(features, dtype=torch.float32)[None]
                     action = int(submission.model(inputs).argmax(dim=1).item())
                     state, reward, done = step(state, action)
                     total += reward
+                    taken += 1
                     if done:
                         success = state[1] <= 0.0 and is_landed(state)
                         break
                 returns.append(total)
                 landed.append(success)
+                steps.append(taken)
         score = statistics.fmean(returns)
         return (
             score,
@@ -67,6 +71,7 @@ class LunarLanderBenchmark:
             {
                 "seed_returns": returns,
                 "seed_landed": landed,
+                "seed_steps": steps,
                 "max_steps": self.max_steps,
                 "seeds": len(self.seeds),
                 "threshold": self.threshold,
