@@ -7,6 +7,7 @@ import statistics
 from dataclasses import asdict
 
 from minimal_nn_competition import __version__
+from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
@@ -54,6 +55,14 @@ _GROUP_SPECS = (
         "benchmarks": ("chess-eval",),
         "accent": "chess",
     },
+    {
+        "id": "control",
+        "label": "Control",
+        "eyebrow": "Reinforcement learning",
+        "description": "",
+        "benchmarks": ("cartpole", "pendulum", "lunarlander"),
+        "accent": "control",
+    },
 )
 _VERSION_LABELS = {
     "snake-simple-8x8": "Simple 8×8",
@@ -62,6 +71,9 @@ _VERSION_LABELS = {
     "mnist": "MNIST",
     "fashion-mnist": "Fashion-MNIST",
     "chess-eval": "Stockfish 0.1 pawn",
+    "cartpole": "CartPole",
+    "pendulum": "Discrete torque",
+    "lunarlander": "Lunar touchdown",
 }
 _PANEL_NOTES = {
     "snake-simple-8x8": "An open study",
@@ -70,6 +82,9 @@ _PANEL_NOTES = {
     "mnist": "A first light study",
     "fashion-mnist": "A second light study",
     "chess-eval": "A measured study",
+    "cartpole": "A 500-step challenge",
+    "pendulum": "A return study",
+    "lunarlander": "A soft-landing study",
 }
 
 _STYLE = """
@@ -90,6 +105,7 @@ _STYLE = """
   --accent-snake: #256b66;
   --accent-mnist: #8a5b16;
   --accent-chess: #3f5f86;
+  --accent-control: #6f42c1;
   --display: ui-serif, Georgia, "Times New Roman", serif;
   --body: system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -111,6 +127,7 @@ _STYLE = """
     --accent-snake: #7fcac1;
     --accent-mnist: #e0b76b;
     --accent-chess: #9bb9df;
+    --accent-control: #b392f0;
   }
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -130,6 +147,7 @@ a:hover { text-decoration-thickness: 2px; }
 [data-accent="snake"] { --accent: var(--accent-snake); }
 [data-accent="mnist"] { --accent: var(--accent-mnist); }
 [data-accent="chess"] { --accent: var(--accent-chess); }
+[data-accent="control"] { --accent: var(--accent-control); }
 [data-accent="default"] { --accent: var(--accent-snake); }
 .status {
   display: inline-flex;
@@ -614,6 +632,8 @@ _SITE_SCRIPT = """
 
 
 def _score_text(result):
+    if result.benchmark in RL_BENCHMARKS:
+        return f"{result.score:.2f}"
     if result.benchmark in SNAKE_BENCHMARKS:
         lengths = result.details.get("seed_lengths")
         targets = result.details.get("target_lengths")
