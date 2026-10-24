@@ -198,7 +198,7 @@ def test_render_site(tmp_path: Path) -> None:
     index = render_site(results, tmp_path)
     html = index.read_text()
     assert 'id="snake"' in html
-    assert 'id="mnist"' in html
+    assert 'id="image-compression"' in html
     assert "Fashion-MNIST" in html
     assert "Simple 8×8" in html
     assert "fashion-example" in html
@@ -339,7 +339,11 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
         ),
     ]
     html = render_site(results, tmp_path).read_text()
-    assert html.index('id="snake"') < html.index('id="mnist"') < html.index('id="chess"')
+    assert (
+        html.index('id="snake"') < html.index('id="image-compression"') < html.index('id="chess"')
+    )
+    assert "Image compression" in html
+    assert 'id="mnist"' not in html
     assert 'data-version="snake-simple-8x8"' in html
     assert 'data-version="snake-simple-16x16"' in html
     assert 'class="version-panel is-active" id="panel-snake-simple-8x8"' in html

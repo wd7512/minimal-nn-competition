@@ -38,12 +38,12 @@ _GROUP_SPECS = (
         "accent": "snake",
     },
     {
-        "id": "mnist",
-        "label": "MNIST",
+        "id": "image-compression",
+        "label": "Image compression",
         "eyebrow": "Vision",
         "description": "",
         "benchmarks": ("mnist", "fashion-mnist"),
-        "accent": "mnist",
+        "accent": "image-compression",
     },
     {
         "id": "chess",
@@ -103,7 +103,7 @@ _STYLE = """
   --fail-tint: #f8e9e7;
   --focus: #2f5f57;
   --accent-snake: #256b66;
-  --accent-mnist: #8a5b16;
+  --accent-image-compression: #8a5b16;
   --accent-chess: #3f5f86;
   --accent-control: #6f42c1;
   --display: ui-serif, Georgia, "Times New Roman", serif;
@@ -125,7 +125,7 @@ _STYLE = """
     --fail-tint: #2b1e1c;
     --focus: #8bcacb;
     --accent-snake: #7fcac1;
-    --accent-mnist: #e0b76b;
+    --accent-image-compression: #e0b76b;
     --accent-chess: #9bb9df;
     --accent-control: #b392f0;
   }
@@ -145,7 +145,7 @@ a { color: inherit; text-underline-offset: 3px; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 [data-accent="snake"] { --accent: var(--accent-snake); }
-[data-accent="mnist"] { --accent: var(--accent-mnist); }
+[data-accent="image-compression"] { --accent: var(--accent-image-compression); }
 [data-accent="chess"] { --accent: var(--accent-chess); }
 [data-accent="control"] { --accent: var(--accent-control); }
 [data-accent="default"] { --accent: var(--accent-snake); }
@@ -187,7 +187,7 @@ _SITE_STYLE = """
 .brand-dots { display: inline-flex; gap: 3px; }
 .brand-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 .brand-dots span:nth-child(1) { background: var(--accent-snake); }
-.brand-dots span:nth-child(2) { background: var(--accent-mnist); }
+.brand-dots span:nth-child(2) { background: var(--accent-image-compression); }
 .brand-dots span:nth-child(3) { background: var(--accent-chess); }
 .rail__label {
   margin: 24px 0 8px;
