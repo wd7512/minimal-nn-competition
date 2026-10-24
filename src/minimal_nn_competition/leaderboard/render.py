@@ -627,13 +627,13 @@ def _score_text(result):
             percentages = [
                 length / target * 100 for length, target in zip(lengths, targets, strict=True)
             ]
-            return f"{statistics.fmean(percentages):.2f}% ± {statistics.pstdev(percentages):.2f}%"
+            return f"{statistics.fmean(percentages):.2f}%"
         maximum = result.details.get("max_length", _SNAKE_MAX_LENGTH.get(result.benchmark, 64))
         mean = result.score / maximum * 100
-        return f"{mean:.2f}% ± {result.score_std / maximum * 100:.2f}%"
+        return f"{mean:.2f}%"
     mean = result.score * 100
     if result.benchmark == "chess-eval":
-        return f"{mean:.2f}% ± {result.score_std * 100:.2f}%"
+        return f"{mean:.2f}%"
     digits = 4 if not result.passed and mean >= 99.995 else 2
     return f"{mean:.{digits}f}%"
 
@@ -655,12 +655,18 @@ def _game_length_text(result):
     )
 
 
+def _error_text(result):
+    mae = result.details.get("mae")
+    if not isinstance(mae, (int, float)):
+        return "-"
+    return f"{mae:.4f}"
+
+
 def _length_text(result):
     if result.benchmark in SNAKE_BENCHMARKS:
         return _game_length_text(result)
-    samples = result.details.get("samples")
-    if isinstance(samples, int):
-        return f"{samples:,}"
+    if result.benchmark == "chess-eval":
+        return _error_text(result)
     return "-"
 
 
@@ -675,7 +681,9 @@ def _length_html(result):
 def _fourth_header(benchmark):
     if benchmark in SNAKE_BENCHMARKS:
         return "Game length"
-    return "Samples"
+    if benchmark == "chess-eval":
+        return "Error"
+    return None
 
 
 def _plural(count, singular):
@@ -685,6 +693,8 @@ def _plural(count, singular):
 def _ranking_text(benchmark):
     if benchmark in SNAKE_BENCHMARKS:
         return "pass status, score, parameter count, then game length"
+    if benchmark == "chess-eval":
+        return "pass status, score, parameter count, then mean error"
     return "pass status, score, then parameter count"
 
 
@@ -749,21 +759,25 @@ def _submission_cell(result, link, status=None, score_html=None):
 
 def _table(results, submission_links=None):
     rows = []
+    fourth = _fourth_header(results[0].benchmark) if results else None
     for rank, result in enumerate(results, 1):
         link = (submission_links or {}).get((result.benchmark, result.submission))
         status = "pass" if result.passed else "fail"
         row_class = "is-pass" if result.passed else "is-fail"
-        rows.append(
-            f'<tr class="{row_class}"><td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link, status, _score_html(result))}</td><td class="num">{result.parameter_count:,}</td><td class="num">{_length_html(result)}</td></tr>'
-        )
+        cells = f'<td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link, status, _score_html(result))}</td><td class="num">{result.parameter_count:,}</td>'
+        if fourth is not None:
+            cells += f'<td class="num">{_length_html(result)}</td>'
+        rows.append(f'<tr class="{row_class}">{cells}</tr>')
     label = _version_label(results[0].benchmark) if results else "Results"
-    fourth = _fourth_header(results[0].benchmark) if results else "Samples"
+    fourth_header = (
+        f'<th scope="col" class="num">{html.escape(fourth)}</th>' if fourth is not None else ""
+    )
     caption = (
         f"{html.escape(label)} results, ranked by {_ranking_text(results[0].benchmark)}."
         if results
         else "Results."
     )
-    return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Name</th><th scope="col" class="num">Parameters</th><th scope="col" class="num">{html.escape(fourth)}</th></tr></thead><tbody>{"".join(rows)}</tbody></table>"""
+    return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Name</th><th scope="col" class="num">Parameters</th>{fourth_header}</tr></thead><tbody>{"".join(rows)}</tbody></table>"""
 
 
 def _detail_row(label, value):
@@ -809,9 +823,15 @@ def render_submission_html(result, payload, rank, total):
         if isinstance(seed_lengths, list) and seed_lengths:
             rows.append(_detail_row("Seed games", str(len(seed_lengths))))
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
-    samples = result.details.get("samples")
-    if isinstance(samples, int):
-        rows.append(_detail_row("Samples", f"{samples:,}"))
+    if result.benchmark == "chess-eval":
+        error = _error_text(result)
+        rows.append(
+            _detail_row("Mean error", html.escape(f"{error} pawns" if error != "-" else "-"))
+        )
+    elif result.benchmark not in ("mnist", "fashion-mnist"):
+        samples = result.details.get("samples")
+        if isinstance(samples, int):
+            rows.append(_detail_row("Samples", f"{samples:,}"))
     tolerance = result.details.get("tolerance_pawns")
     if isinstance(tolerance, (int, float)):
         rows.append(_detail_row("Tolerance", f"{tolerance:g} pawns"))

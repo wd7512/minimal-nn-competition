@@ -10,6 +10,7 @@ from minimal_nn_competition.benchmarks.chess_eval.benchmark import ChessEvalBenc
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
+from minimal_nn_competition.leaderboard import rank_results
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission
 from minimal_nn_competition.runner.entry import BenchmarkResult
@@ -201,8 +202,9 @@ def test_render_site(tmp_path: Path) -> None:
     assert f"v{__version__}" in html
     assert "50.00%" in html
     assert "1.56%" in html
-    assert "0.78%" in html
+    assert "1.56% ±" not in html
     assert "Game length</th>" in html
+    assert "Samples</th>" not in html
     assert "Normalisation</th>" not in html
     assert "submissions/snake-simple-8x8--snake-example.html" in html
     assert "submissions/mnist--mnist-example.html" in html
@@ -252,10 +254,21 @@ def test_render_mnist_has_no_game_length_column(tmp_path: Path) -> None:
     results = [
         BenchmarkResult(
             "mnist-example", "mnist", 0.5, False, 10, {"samples": 2, "normalisation": False}
-        )
+        ),
+        BenchmarkResult(
+            "fashion-example",
+            "fashion-mnist",
+            0.5,
+            False,
+            10,
+            {"samples": 2, "normalisation": True},
+        ),
     ]
     html = render_site(results, tmp_path).read_text()
     assert "Game length</th>" not in html
+    assert "Samples</th>" not in html
+    mnist_page = (tmp_path / "submissions" / "mnist--mnist-example.html").read_text()
+    assert "<dt>Samples</dt>" not in mnist_page
 
 
 def test_render_chess_eval(tmp_path: Path) -> None:
@@ -266,7 +279,7 @@ def test_render_chess_eval(tmp_path: Path) -> None:
             1.0,
             True,
             53_505,
-            {"tolerance_pawns": 0.1},
+            {"tolerance_pawns": 0.1, "mae": 0.0046, "samples": 10_000},
             name="chess-mlp-64",
             author="tester",
         )
@@ -275,8 +288,31 @@ def test_render_chess_eval(tmp_path: Path) -> None:
     assert "Chess evaluation" in html
     assert "Stockfish 0.1 pawn" in html
     assert "100.00%" in html
-    assert "0.00%" in html
+    assert "100.00% ±" not in html
+    assert "Error</th>" in html
+    assert "0.0046" in html
+    assert "Samples</th>" not in html
+    assert "mean error" in html
     assert "chess-example" in html
+    detail = (tmp_path / "submissions" / "chess-eval--chess-example.html").read_text()
+    assert "<dt>Mean error</dt>" in detail
+    assert "0.0046 pawns" in detail
+    assert "<dt>Samples</dt>" not in detail
+
+
+def test_rank_chess_eval_breaks_score_ties_by_mean_error() -> None:
+    def chess_result(submission: str, mae: float) -> BenchmarkResult:
+        return BenchmarkResult(
+            submission,
+            "chess-eval",
+            1.0,
+            True,
+            10,
+            {"tolerance_pawns": 0.1, "mae": mae, "samples": 10_000},
+        )
+
+    ranked = rank_results([chess_result("worse", 0.02), chess_result("better", 0.01)])
+    assert [result.submission for result in ranked] == ["better", "worse"]
 
 
 def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:

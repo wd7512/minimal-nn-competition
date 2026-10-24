@@ -17,8 +17,15 @@ def _game_length(result):
     return statistics.fmean(moves)
 
 
+def _mean_error(result):
+    if result.benchmark != "chess-eval":
+        return 0.0
+    mae = result.details.get("mae", 0.0)
+    return mae if isinstance(mae, (int, float)) else 0.0
+
+
 def rank_results(results):
-    """Rank by passing status, score, parameter count, then Snake game length."""
+    """Rank by passing status, score, parameter count, Snake game length, then Chess mean error."""
     # For the Snake competition it would be nice to have some renderings of the games.
     return sorted(
         results,
@@ -28,6 +35,7 @@ def rank_results(results):
             -result.score,
             result.parameter_count,
             _game_length(result),
+            _mean_error(result),
             result.submission,
         ),
     )
