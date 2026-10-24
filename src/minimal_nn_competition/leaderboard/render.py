@@ -600,11 +600,11 @@ function deg(radians) {
   return (Number(radians) * 180 / Math.PI).toFixed(1);
 }
 function drawCartpole(state) {
-  const rail = canvas.height - 36;
+  const rail = canvas.height - 80;
   const toX = (x) => 24 + ((x + 2.4) / 4.8) * (canvas.width - 48);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = "#aebbb5";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(16, rail);
   ctx.lineTo(canvas.width - 16, rail);
@@ -613,20 +613,20 @@ function drawCartpole(state) {
   ctx.setLineDash([4, 3]);
   [toX(-2.4), toX(2.4)].forEach((lineX) => {
     ctx.beginPath();
-    ctx.moveTo(lineX, rail - 48);
-    ctx.lineTo(lineX, rail + 12);
+    ctx.moveTo(lineX, rail - 110);
+    ctx.lineTo(lineX, rail + 14);
     ctx.stroke();
   });
   ctx.setLineDash([]);
   const cartX = Math.max(24, Math.min(canvas.width - 24, toX(state[0])));
   ctx.fillStyle = "#17231f";
-  ctx.fillRect(cartX - 20, rail - 24, 40, 24);
+  ctx.fillRect(cartX - 24, rail - 28, 48, 28);
   const pivotX = cartX;
-  const pivotY = rail - 24;
-  const tipX = pivotX + 100 * Math.sin(state[2]);
-  const tipY = pivotY - 100 * Math.cos(state[2]);
+  const pivotY = rail - 28;
+  const tipX = pivotX + 200 * Math.sin(state[2]);
+  const tipY = pivotY - 200 * Math.cos(state[2]);
   ctx.strokeStyle = "#8a5b16";
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 6;
   ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(pivotX, pivotY);
@@ -635,11 +635,11 @@ function drawCartpole(state) {
   ctx.lineCap = "butt";
   ctx.fillStyle = "#8a5b16";
   ctx.beginPath();
-  ctx.arc(tipX, tipY, 4, 0, 2 * Math.PI);
+  ctx.arc(tipX, tipY, 5, 0, 2 * Math.PI);
   ctx.fill();
   ctx.fillStyle = "#3f5f86";
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 4, 0, 2 * Math.PI);
+  ctx.arc(pivotX, pivotY, 5, 0, 2 * Math.PI);
   ctx.fill();
   let text = "step " + frame + "/" + last()
     + ", x " + Number(state[0]).toFixed(2)
@@ -650,14 +650,14 @@ function drawCartpole(state) {
   status.textContent = text;
 }
 function drawPendulum(state, action) {
-  const pivotX = 160;
-  const pivotY = 150;
-  const arm = 110;
+  const pivotX = canvas.width / 2;
+  const pivotY = canvas.height * 0.47;
+  const arm = canvas.height * 0.34;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const tipX = pivotX + arm * Math.sin(state[0]);
   const tipY = pivotY - arm * Math.cos(state[0]);
   ctx.strokeStyle = "#e5484d";
-  ctx.lineWidth = 14;
+  ctx.lineWidth = 20;
   ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(pivotX, pivotY);
@@ -666,24 +666,24 @@ function drawPendulum(state, action) {
   ctx.lineCap = "butt";
   ctx.fillStyle = "#e5484d";
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 7, 0, 2 * Math.PI);
+  ctx.arc(pivotX, pivotY, 10, 0, 2 * Math.PI);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(tipX, tipY, 7, 0, 2 * Math.PI);
+  ctx.arc(tipX, tipY, 10, 0, 2 * Math.PI);
   ctx.fill();
   ctx.fillStyle = "#17231f";
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 3, 0, 2 * Math.PI);
+  ctx.arc(pivotX, pivotY, 4, 0, 2 * Math.PI);
   ctx.fill();
   const torque = action === null ? 0 : TORQUES[action];
   if (action !== null && torque !== 0) {
-    const R = 34;
+    const R = 50;
     const span = 100 * Math.PI / 180;
     const base = -Math.PI / 2;
     const a0 = base;
     const a1 = torque > 0 ? base + span : base - span;
     ctx.strokeStyle = "#63706b";
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.arc(pivotX, pivotY, R, a0, a1, torque < 0);
     ctx.stroke();
@@ -694,13 +694,13 @@ function drawPendulum(state, action) {
     const uy = Math.sin(tAng);
     const px = -uy;
     const py = ux;
-    const bx = ex - ux * 10;
-    const by = ey - uy * 10;
+    const bx = ex - ux * 14;
+    const by = ey - uy * 14;
     ctx.fillStyle = "#63706b";
     ctx.beginPath();
     ctx.moveTo(ex, ey);
-    ctx.lineTo(bx + px * 5, by + py * 5);
-    ctx.lineTo(bx - px * 5, by - py * 5);
+    ctx.lineTo(bx + px * 7, by + py * 7);
+    ctx.lineTo(bx - px * 7, by - py * 7);
     ctx.closePath();
     ctx.fill();
   }
@@ -713,34 +713,35 @@ function drawPendulum(state, action) {
   status.textContent = text;
 }
 function drawLunarlander(state, action) {
-  const toX = (x) => 20 + ((x + 1) / 2) * 320;
-  const toY = (y) => 400 - (y / 1.5) * 380;
+  const ground = canvas.height - 40;
+  const toX = (x) => 30 + ((x + 1) / 2) * (canvas.width - 60);
+  const toY = (y) => ground - y * ((ground - 100) / 1.5);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = "#17231f";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(0, 400);
-  ctx.lineTo(canvas.width, 400);
+  ctx.moveTo(0, ground);
+  ctx.lineTo(canvas.width, ground);
   ctx.stroke();
   ctx.fillStyle = "#1f6b43";
-  ctx.fillRect(toX(-0.25), 394, toX(0.25) - toX(-0.25), 6);
+  ctx.fillRect(toX(-0.25), ground - 6, toX(0.25) - toX(-0.25), 6);
   [toX(-0.25), toX(0.25)].forEach((edge, idx) => {
     ctx.strokeStyle = "#17231f";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(edge, 394);
-    ctx.lineTo(edge, 368);
+    ctx.moveTo(edge, ground - 6);
+    ctx.lineTo(edge, ground - 36);
     ctx.stroke();
     ctx.fillStyle = "#8a5b16";
     ctx.beginPath();
     if (idx === 0) {
-      ctx.moveTo(edge, 368);
-      ctx.lineTo(edge, 358);
-      ctx.lineTo(edge + 14, 363);
+      ctx.moveTo(edge, ground - 36);
+      ctx.lineTo(edge, ground - 48);
+      ctx.lineTo(edge + 16, ground - 42);
     } else {
-      ctx.moveTo(edge, 368);
-      ctx.lineTo(edge, 358);
-      ctx.lineTo(edge - 14, 363);
+      ctx.moveTo(edge, ground - 36);
+      ctx.lineTo(edge, ground - 48);
+      ctx.lineTo(edge - 16, ground - 42);
     }
     ctx.closePath();
     ctx.fill();
@@ -748,11 +749,11 @@ function drawLunarlander(state, action) {
   for (let index = Math.max(0, frame - 24); index < frame; index += 1) {
     ctx.fillStyle = "rgba(63, 95, 134, 0.45)";
     ctx.beginPath();
-    ctx.arc(toX(FRAMES[index].state[0]), toY(FRAMES[index].state[1]), 2, 0, 2 * Math.PI);
+    ctx.arc(toX(FRAMES[index].state[0]), toY(FRAMES[index].state[1]), 3, 0, 2 * Math.PI);
     ctx.fill();
   }
   const px = toX(state[0]);
-  const py = Math.min(toY(state[1]), 404);
+  const py = Math.min(toY(state[1]), ground + 4);
   ctx.save();
   ctx.translate(px, py);
   ctx.rotate(Number(state[4]));
@@ -760,29 +761,29 @@ function drawLunarlander(state, action) {
   ctx.strokeStyle = "#17231f";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(0, -10);
-  ctx.lineTo(7, -3);
-  ctx.lineTo(7, 8);
-  ctx.lineTo(-7, 8);
-  ctx.lineTo(-7, -3);
+  ctx.moveTo(0, -13);
+  ctx.lineTo(9, -4);
+  ctx.lineTo(9, 10);
+  ctx.lineTo(-9, 10);
+  ctx.lineTo(-9, -4);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = "#8a9a94";
   if (action === 1) {
     ctx.beginPath();
-    ctx.arc(0, 12, 3 + (frame % 3), 0, 2 * Math.PI);
+    ctx.arc(0, 16, 4 + (frame % 3), 0, 2 * Math.PI);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(0, 18, 2, 0, 2 * Math.PI);
+    ctx.arc(0, 24, 3, 0, 2 * Math.PI);
     ctx.fill();
   } else if (action === 2) {
     ctx.beginPath();
-    ctx.arc(-11, 4, 2 + (frame % 2), 0, 2 * Math.PI);
+    ctx.arc(-14, 5, 3 + (frame % 2), 0, 2 * Math.PI);
     ctx.fill();
   } else if (action === 3) {
     ctx.beginPath();
-    ctx.arc(11, 4, 2 + (frame % 2), 0, 2 * Math.PI);
+    ctx.arc(14, 5, 3 + (frame % 2), 0, 2 * Math.PI);
     ctx.fill();
   }
   ctx.restore();
@@ -843,11 +844,7 @@ function play() {
   draw();
 """
 
-_CONTROL_CANVAS = {
-    "cartpole": (480, 160),
-    "pendulum": (320, 320),
-    "lunarlander": (360, 420),
-}
+_REPLAY_BOX = 480
 
 _CONTROL_GAME_LABEL = {
     "cartpole": "CartPole replay",
@@ -871,7 +868,7 @@ def _control_game_section(kind, payload):
         outcome = "crashed"
     else:
         outcome = "timed out"
-    width, height = _CONTROL_CANVAS[kind]
+    width, height = _REPLAY_BOX, _REPLAY_BOX
     label = _CONTROL_GAME_LABEL[kind]
     caption = f"Seed {seed} · {steps:,} steps · {outcome}"
     canvas_label = (
@@ -1200,7 +1197,7 @@ def render_submission_html(result, payload, rank, total):
 
     if payload is not None and result.benchmark in SNAKE_BENCHMARKS:
         size = int(payload.get("size", 8))
-        canvas = 40 * size
+        canvas = _REPLAY_BOX
         script = (
             _GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"]))
             .replace("__SIZE__", str(size))

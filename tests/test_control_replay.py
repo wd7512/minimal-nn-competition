@@ -114,6 +114,7 @@ def test_render_submission_html_embeds_control_replay() -> None:
     payload = record_game("cartpole", _FixedAction(2, 0), seed=REPLAY_SEED, steps=8)
     page = render_submission_html(_result("cartpole", details), payload, 1, 1)
     assert "<canvas" in page
+    assert 'width="480" height="480"' in page
     assert "CartPole replay" in page
     assert '"kind"' not in page
     assert "__KIND__" not in page
@@ -138,6 +139,7 @@ def test_render_submission_html_lunarlander_rows() -> None:
     payload = record_game("lunarlander", _FixedAction(4, 0), seed=REPLAY_SEED, steps=10)
     page = render_submission_html(_result("lunarlander", details), payload, 1, 1)
     assert "<canvas" in page
+    assert 'width="480" height="480"' in page
     assert "LunarLander replay" in page
     assert "Landings" in page
     assert "1/2" in page

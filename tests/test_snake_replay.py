@@ -80,6 +80,7 @@ def test_render_submission_html() -> None:
     )
     page = render_submission_html(result, payload, 1, 1)
     assert "<canvas" in page
+    assert 'width="480" height="480"' in page
     assert "view game" not in page
     assert "Back to leaderboard" in page
     assert "Game length" in page
