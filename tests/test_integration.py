@@ -157,10 +157,13 @@ def test_render_shows_name_and_author(tmp_path: Path) -> None:
         ),
     ]
     html = render_site(results, tmp_path).read_text()
-    assert "<th>Name</th>" in html
-    assert "<th>Author</th>" in html
     assert "Cool Net" in html
-    assert "tester" in html
+    assert 'href="submissions/snake-simple-8x8--example.html"' in html
+    detail = (tmp_path / "submissions" / "snake-simple-8x8--example.html").read_text()
+    assert "<dt>Name</dt>" in detail
+    assert "<dt>Author</dt>" in detail
+    assert "Cool Net" in detail
+    assert "tester" in detail
 
 
 def test_render_site(tmp_path: Path) -> None:
@@ -188,19 +191,27 @@ def test_render_site(tmp_path: Path) -> None:
     ]
     index = render_site(results, tmp_path)
     html = index.read_text()
-    assert "FASHION-MNIST COMPRESSION" in html
-    assert "MNIST COMPRESSION" in html
-    assert "SNAKE SIMPLE 8X8" in html
+    assert 'id="snake"' in html
+    assert 'id="mnist"' in html
+    assert "Fashion-MNIST" in html
+    assert "Simple 8×8" in html
     assert "fashion-example" in html
     assert "mnist-example" in html
     assert 'href="internal/speed/"' in html
     assert f"v{__version__}" in html
     assert "50.00%" in html
-    assert "1.56% ± 0.78%" in html
-    assert "<th>Game length</th>" in html
-    assert "15.0 ± 5.0" in html
-    assert "<th>Normalisation</th>" in html
-    assert "<td>false</td>" in html
+    assert "1.56%" in html
+    assert "0.78%" in html
+    assert "Game length</th>" in html
+    assert "Normalisation</th>" not in html
+    assert "submissions/snake-simple-8x8--snake-example.html" in html
+    assert "submissions/mnist--mnist-example.html" in html
+    snake_page = (tmp_path / "submissions" / "snake-simple-8x8--snake-example.html").read_text()
+    assert "<dt>Game length</dt>" in snake_page
+    assert "15.0 ± 5.0" in snake_page
+    mnist_page = (tmp_path / "submissions" / "mnist--mnist-example.html").read_text()
+    assert "<dt>Normalisation</dt>" in mnist_page
+    assert "<dd>false</dd>" in mnist_page
     assert "<th>Details</th>" not in html
     assert "<details>" not in html
     raw = json.loads((tmp_path / "leaderboard.json").read_text())
@@ -244,7 +255,7 @@ def test_render_mnist_has_no_game_length_column(tmp_path: Path) -> None:
         )
     ]
     html = render_site(results, tmp_path).read_text()
-    assert "<th>Game length</th>" not in html
+    assert "Game length</th>" not in html
 
 
 def test_render_chess_eval(tmp_path: Path) -> None:
@@ -261,9 +272,39 @@ def test_render_chess_eval(tmp_path: Path) -> None:
         )
     ]
     html = render_site(results, tmp_path).read_text()
-    assert "CHESS EVALUATION" in html
-    assert "100.00% ± 0.00%" in html
+    assert "Chess evaluation" in html
+    assert "Stockfish 0.1 pawn" in html
+    assert "100.00%" in html
+    assert "0.00%" in html
     assert "chess-example" in html
+
+
+def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
+    results = [
+        BenchmarkResult(
+            "snake-8", "snake-simple-8x8", 1.0, False, 10, {"seed_lengths": [1], "max_length": 64}
+        ),
+        BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {"max_length": 256}),
+        BenchmarkResult("mnist", "mnist", 0.5, False, 10, {"normalisation": False}),
+        BenchmarkResult("fashion", "fashion-mnist", 0.5, False, 10, {"normalisation": True}),
+        BenchmarkResult("chess", "chess-eval", 1.0, True, 10, {"tolerance_pawns": 0.1}),
+    ]
+    html = render_site(results, tmp_path).read_text()
+    assert html.index('id="snake"') < html.index('id="mnist"') < html.index('id="chess"')
+    assert 'data-version="snake-simple-8x8"' in html
+    assert 'data-version="snake-simple-16x16"' in html
+    assert 'class="version-panel is-active" id="panel-snake-simple-8x8"' in html
+    assert 'class="version-panel" id="panel-snake-simple-16x16"' in html
+    assert "data-version-button" in html
+    assert 'aria-controls="panel-fashion-mnist"' in html
+    chess_start = html.index('id="chess"')
+    chess_end = html.index("</section>", chess_start)
+    assert "data-version-button" not in html[chess_start:chess_end]
+    # Regression: the tab script must not rewrite panel DOM. Group-level
+    # run/pass stats were removed, so no [data-count]/[data-pass] hooks may
+    # remain for querySelector to resolve to a panel wrapper.
+    assert "data-count" not in html
+    assert 'querySelector("[data-pass]")' not in html
 
 
 def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

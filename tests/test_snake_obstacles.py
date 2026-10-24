@@ -25,9 +25,9 @@ from minimal_nn_competition.benchmarks.snake.observation import observe
 from minimal_nn_competition.benchmarks.snake.replay import record_game, replay_stem
 from minimal_nn_competition.leaderboard.render import (
     _score_text,
-    render_game_html,
-    render_game_pages,
     render_site,
+    render_submission_html,
+    render_submission_pages,
 )
 from minimal_nn_competition.model.entry import (
     Submission,
@@ -259,11 +259,6 @@ def test_replay_payload_and_render_include_obstacles(tmp_path: Path) -> None:
         loop_on_full=True,
     )
     assert payload["blocked"] == [list(cell) for cell in blocked]
-    page = render_game_html("example", payload, "snake-obstacles-8x8")
-    assert "Snake Obstacles 8x8 replay" in page
-    assert "const BLOCKED" in page
-    assert "if (food)" in page
-
     result = BenchmarkResult(
         "example",
         "snake-obstacles-8x8",
@@ -272,9 +267,16 @@ def test_replay_payload_and_render_include_obstacles(tmp_path: Path) -> None:
         20,
         {"seed_lengths": [60], "target_lengths": [60], "seed_moves": [100]},
     )
-    links = render_game_pages([result], {"snake-obstacles-8x8--example": payload}, tmp_path)
-    assert links == {("snake-obstacles-8x8", "example"): "games/snake-obstacles-8x8--example.html"}
-    rendered = (tmp_path / "games" / "snake-obstacles-8x8--example.html").read_text()
+    page = render_submission_html(result, payload, 1, 1)
+    assert "Obstacles 8×8" in page
+    assert "Replay" in page
+    assert "const BLOCKED" in page
+    assert "if (food)" in page
+    links = render_submission_pages([result], {"snake-obstacles-8x8--example": payload}, tmp_path)
+    assert links == {
+        ("snake-obstacles-8x8", "example"): "submissions/snake-obstacles-8x8--example.html"
+    }
+    rendered = (tmp_path / "submissions" / "snake-obstacles-8x8--example.html").read_text()
     assert "const BLOCKED" in rendered
 
 
@@ -287,7 +289,10 @@ def test_replay_render_handles_a_full_board_without_food() -> None:
         "moves": 1,
         "frames": [{"snake": [[4, 4]], "food": None}],
     }
-    page = render_game_html("example", payload, "snake-obstacles-8x8")
+    result = BenchmarkResult(
+        "example", "snake-obstacles-8x8", 60.0, True, 20, {"seed_lengths": [60]}
+    )
+    page = render_submission_html(result, payload, 1, 1)
     assert '"food": null' in page
     assert "if (food)" in page
 
@@ -317,8 +322,9 @@ def test_render_site_shows_the_obstacle_section(tmp_path: Path) -> None:
     )
     index = render_site([result], tmp_path, {"snake-obstacles-8x8--example": payload})
     html = index.read_text()
-    assert "SNAKE OBSTACLES 8X8" in html
-    assert "50.00% ± 0.00%" in html
+    assert "Obstacles 8×8" in html
+    assert "50.00%" in html
+    assert "0.00%" in html
 
 
 def test_validate_cli_passes(caplog: pytest.LogCaptureFixture) -> None:

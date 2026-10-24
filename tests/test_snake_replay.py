@@ -14,9 +14,9 @@ from minimal_nn_competition.benchmarks.snake.replay import (
 )
 from minimal_nn_competition.leaderboard.render import (
     _game_length_text,
-    render_game_html,
-    render_game_pages,
     render_site,
+    render_submission_html,
+    render_submission_pages,
 )
 from minimal_nn_competition.runner.entry import BenchmarkResult
 
@@ -68,12 +68,22 @@ def test_load_replay_rejects_invalid_file(tmp_path: Path) -> None:
         load_replay(path)
 
 
-def test_render_game_html() -> None:
+def test_render_submission_html() -> None:
     payload = record_game(_right_model())
-    page = render_game_html("example", payload)
+    result = BenchmarkResult(
+        "example",
+        "snake-simple-8x8",
+        8.0,
+        False,
+        20,
+        {"max_length": 64, "seed_moves": [10, 20]},
+    )
+    page = render_submission_html(result, payload, 1, 1)
     assert "<canvas" in page
     assert "view game" not in page
-    assert "Main leaderboard" in page
+    assert "Back to leaderboard" in page
+    assert "Game length" in page
+    assert "15.0 ± 5.0" in page
     assert '"snake": [[4, 4]]' in page
 
 
@@ -99,56 +109,66 @@ def test_game_length_text() -> None:
     assert _game_length_text(missing) == "-"
 
 
-def test_render_site_writes_game_pages(tmp_path: Path) -> None:
+def test_render_site_writes_submission_pages(tmp_path: Path) -> None:
     payload = record_game(_right_model())
     index = render_site(_results(), tmp_path, {"snake-simple-8x8--example": payload})
     html = index.read_text()
-    assert "view game" in html
-    assert "<th>Game length</th>" in html
-    assert "15.0 ± 5.0" in html
-    assert "<th>Replay</th>" in html
-    assert 'href="games/snake-simple-8x8--example.html"' in html
-    game_page = tmp_path / "games" / "snake-simple-8x8--example.html"
-    assert game_page.is_file()
-    assert "Main leaderboard" in game_page.read_text()
+    assert "Replay</th>" not in html
+    assert "Game length</th>" in html
+    assert "View details for" in html
+    assert 'href="submissions/snake-simple-8x8--example.html"' in html
+    page = tmp_path / "submissions" / "snake-simple-8x8--example.html"
+    assert page.is_file()
+    assert "Back to leaderboard" in page.read_text()
+    assert "15.0 ± 5.0" in page.read_text()
     raw = json.loads((tmp_path / "games" / "snake-simple-8x8--example.json").read_text())
     assert raw["seed"] == REPLAY_SEED
 
 
-def test_render_site_without_replays_has_no_replay_column(tmp_path: Path) -> None:
+def test_render_site_without_replays_still_links_details(tmp_path: Path) -> None:
     index = render_site(_results(), tmp_path)
     html = index.read_text()
-    assert "<th>Replay</th>" not in html
-    assert "<th>Game length</th>" in html
+    assert "Replay</th>" not in html
+    assert "Game length</th>" in html
     assert "view game" not in html
+    assert 'href="submissions/snake-simple-8x8--example.html"' in html
     assert not (tmp_path / "games").exists()
+    page = (tmp_path / "submissions" / "snake-simple-8x8--example.html").read_text()
+    assert "Not recorded" in page
+    assert "<canvas" not in page
 
 
-def test_render_game_pages_uses_slug_lookup(tmp_path: Path) -> None:
+def test_render_submission_pages_uses_slug_lookup(tmp_path: Path) -> None:
     payload = record_game(_right_model())
     result = BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64})
-    links = render_game_pages([result], {"snake-simple-8x8--my_model": payload}, tmp_path)
-    assert links == {("snake-simple-8x8", "my model"): "games/snake-simple-8x8--my_model.html"}
-    assert (tmp_path / "games" / "snake-simple-8x8--my_model.html").is_file()
+    links = render_submission_pages([result], {"snake-simple-8x8--my_model": payload}, tmp_path)
+    assert links == {
+        ("snake-simple-8x8", "my model"): "submissions/snake-simple-8x8--my_model.html"
+    }
+    assert (tmp_path / "submissions" / "snake-simple-8x8--my_model.html").is_file()
 
 
-def test_render_game_pages_rejects_slug_collisions(tmp_path: Path) -> None:
+def test_render_submission_pages_rejects_slug_collisions(tmp_path: Path) -> None:
     payload = record_game(_right_model())
     results = [
         BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
         BenchmarkResult("my_model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
     ]
     with pytest.raises(ValueError, match="collision"):
-        render_game_pages(results, {"snake-simple-8x8--my_model": payload}, tmp_path)
+        render_submission_pages(results, {"snake-simple-8x8--my_model": payload}, tmp_path)
 
 
-def test_render_site_removes_stale_game_pages(tmp_path: Path) -> None:
+def test_render_site_removes_stale_pages(tmp_path: Path) -> None:
     stale = tmp_path / "games" / "stale.html"
     stale.parent.mkdir()
     stale.write_text("stale")
+    stale_detail = tmp_path / "submissions" / "stale.html"
+    stale_detail.parent.mkdir()
+    stale_detail.write_text("stale")
     payload = record_game(_right_model())
     render_site(_results(), tmp_path, {"snake-simple-8x8--example": payload})
     assert not stale.exists()
+    assert not stale_detail.exists()
 
 
 def test_collect_reports_replay_dir_errors(
@@ -207,8 +227,8 @@ def test_collect_and_render_replay_cli(
     assert (replays / "snake-simple-8x8--example.json").is_file()
     docs = tmp_path / "docs"
     assert main(["render", str(output), str(docs), "--replays", str(replays)]) == 0
-    assert (docs / "games" / "snake-simple-8x8--example.html").is_file()
-    assert "view game" in (docs / "index.html").read_text()
+    assert (docs / "submissions" / "snake-simple-8x8--example.html").is_file()
+    assert "submissions/snake-simple-8x8--example.html" in (docs / "index.html").read_text()
     capsys.readouterr()
 
 
