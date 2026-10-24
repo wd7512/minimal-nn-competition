@@ -73,7 +73,7 @@ def _parser():
         "--replays",
         type=Path,
         default=None,
-        help="Directory of Snake replay JSON files recorded by collect",
+        help="Directory of Snake and control replay JSON files recorded by collect",
     )
     speed = add("speed", help="Benchmark the local Snake Simple 8x8 environment")
     speed.add_argument("--duration", type=float, default=1.0)
@@ -100,7 +100,7 @@ def _parser():
         "--replay-dir",
         type=Path,
         default=None,
-        help="Record one seed-0 Snake game per submission into this directory",
+        help="Record one seed-0 Snake or control game per submission into this directory",
     )
     download = add("download-mnist", help="Download the official MNIST dataset")
     _download_args(download)
@@ -142,6 +142,21 @@ def _parser():
 
 
 def _record_replay(replay_dir, name, benchmark, submission):
+    if benchmark.name in RL_BENCHMARKS:
+        from minimal_nn_competition.benchmarks.control.replay import (
+            REPLAY_SEED,
+            record_game,
+            replay_stem,
+            save_replay,
+        )
+
+        steps = benchmark.horizon if benchmark.name == "pendulum" else benchmark.max_steps
+        loaded = benchmark.load_submission(submission)
+        save_replay(
+            replay_dir / f"{replay_stem(benchmark.name, name)}.json",
+            record_game(benchmark.name, loaded.model, seed=REPLAY_SEED, steps=steps),
+        )
+        return
     from minimal_nn_competition.benchmarks.snake.benchmark import selected_input_indices
     from minimal_nn_competition.benchmarks.snake.replay import (
         REPLAY_SEED,
@@ -278,7 +293,9 @@ def main(argv=None):
                     kwargs["data_path"] = args.fashion_mnist_data_path
                 benchmark = create_benchmark(submission.config.benchmark, **kwargs)
                 results.append(evaluate_submission(submission, benchmark))
-                if args.replay_dir is not None and submission.config.benchmark in SNAKE_BENCHMARKS:
+                if args.replay_dir is not None and submission.config.benchmark in (
+                    SNAKE_BENCHMARKS + RL_BENCHMARKS
+                ):
                     _record_replay(args.replay_dir, config_path.parent.name, benchmark, submission)
             except (OSError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:
                 logger.error("%s: %s", config_path.parent, exc)
