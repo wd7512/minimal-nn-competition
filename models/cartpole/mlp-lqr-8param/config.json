@@ -1,8 +1,0 @@
-{
-  "benchmark": "cartpole",
-  "name": "mlp-lqr-8param",
-  "author": "mistral medium 3.5 x le vibe",
-  "architecture": "linear",
-  "input_size": 4,
-  "output_size": 2
-}
