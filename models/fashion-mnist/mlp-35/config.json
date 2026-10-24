@@ -1,0 +1,13 @@
+{
+  "benchmark": "fashion-mnist",
+  "name": "mlp-35",
+  "author": "hermes",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    35
+  ],
+  "activation": "relu",
+  "normalisation": true
+}
