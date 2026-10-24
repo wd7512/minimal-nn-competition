@@ -34,7 +34,8 @@ Why a plain `linear` or `mlp` model can attempt it:
 
 ## Example
 
-- Working entry and its score:
+- Working, checked-in example script that produces an initial submission (may fail):
+- Its score:
 - What a high score does not prove:
 - How could it be gamed?
 
@@ -48,4 +49,4 @@ Why a plain `linear` or `mlp` model can attempt it:
 - [ ] Same fixed, publicly shareable material for everyone.
 - [ ] Reproducible with stated seeds.
 - [ ] Minutes, not hours, to evaluate.
-- [ ] Working example or a concrete plan.
+- [ ] Working example script that seeds an initial submission (passing or failing).
