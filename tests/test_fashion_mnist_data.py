@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 import struct
 from pathlib import Path
 
@@ -7,6 +8,8 @@ import torch
 
 from minimal_nn_competition.__main__ import main
 from minimal_nn_competition.benchmarks.fashion_mnist import data_loader
+from minimal_nn_competition.benchmarks.fashion_mnist.data_loader import FASHION_MNIST_SHA256
+from minimal_nn_competition.benchmarks.idx import FILES
 
 
 def _image_bytes(images: list[list[int]], rows: int, columns: int) -> bytes:
@@ -47,6 +50,10 @@ def _recording_download(fixtures: Path, calls: list[str]):
     return download
 
 
+def _checksums_for(fixtures: Path) -> dict[str, str]:
+    return {name: hashlib.sha256((fixtures / name).read_bytes()).hexdigest() for name in FILES}
+
+
 def test_download_fashion_mnist_writes_cache(tmp_path: Path, monkeypatch) -> None:
     fixtures = tmp_path / "fixtures"
     fixtures.mkdir()
@@ -59,6 +66,7 @@ def test_download_fashion_mnist_writes_cache(tmp_path: Path, monkeypatch) -> Non
         path.write_bytes((fixtures / Path(url).name).read_bytes())
 
     monkeypatch.setattr(data_loader, "download_file", fake_download)
+    monkeypatch.setattr(data_loader, "FASHION_MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
     cache_path = data_loader.download_fashion_mnist(destination)
 
@@ -68,10 +76,34 @@ def test_download_fashion_mnist_writes_cache(tmp_path: Path, monkeypatch) -> Non
     assert labels.tolist() == [1, 2]
 
 
+def test_pinned_fashion_mnist_checksums_cover_idx_files() -> None:
+    assert set(FASHION_MNIST_SHA256) == set(FILES)
+    assert all(
+        len(digest) == 64 and int(digest, 16) >= 0 for digest in FASHION_MNIST_SHA256.values()
+    )
+
+
+def test_download_fashion_mnist_rejects_checksum_mismatch(tmp_path: Path, monkeypatch) -> None:
+    fixtures = _fixtures(tmp_path)
+    monkeypatch.setattr(data_loader, "download_file", _fake_download(fixtures))
+    checksums = _checksums_for(fixtures)
+    checksums["t10k-labels-idx1-ubyte.gz"] = "0" * 64
+    monkeypatch.setattr(data_loader, "FASHION_MNIST_SHA256", checksums)
+    destination = tmp_path / "data"
+
+    with pytest.raises(ValueError, match="Checksum mismatch for t10k-labels-idx1-ubyte.gz"):
+        data_loader.download_fashion_mnist(destination)
+
+    assert not (destination / "fashion-t10k-labels-idx1-ubyte.gz").exists()
+    assert (destination / "fashion-train-images-idx3-ubyte.gz").exists()
+    assert not (destination / "fashion-mnist.pt").exists()
+
+
 def test_download_fashion_mnist_reuses_cache(tmp_path: Path, monkeypatch) -> None:
     fixtures = _fixtures(tmp_path)
     calls: list[str] = []
     monkeypatch.setattr(data_loader, "download_file", _recording_download(fixtures, calls))
+    monkeypatch.setattr(data_loader, "FASHION_MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
 
     first = data_loader.download_fashion_mnist(destination)
@@ -85,6 +117,7 @@ def test_download_fashion_mnist_force_rebuilds_cache(tmp_path: Path, monkeypatch
     fixtures = _fixtures(tmp_path)
     calls: list[str] = []
     monkeypatch.setattr(data_loader, "download_file", _recording_download(fixtures, calls))
+    monkeypatch.setattr(data_loader, "FASHION_MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
 
     first = data_loader.download_fashion_mnist(destination)
@@ -97,6 +130,7 @@ def test_download_fashion_mnist_force_rebuilds_cache(tmp_path: Path, monkeypatch
 def test_download_fashion_mnist_does_not_write_split_caches(tmp_path: Path, monkeypatch) -> None:
     fixtures = _fixtures(tmp_path)
     monkeypatch.setattr(data_loader, "download_file", _fake_download(fixtures))
+    monkeypatch.setattr(data_loader, "FASHION_MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
 
     data_loader.download_fashion_mnist(destination)
@@ -110,6 +144,7 @@ def test_download_fashion_mnist_cli_prints_cache_path(
 ) -> None:
     fixtures = _fixtures(tmp_path)
     monkeypatch.setattr(data_loader, "download_file", _fake_download(fixtures))
+    monkeypatch.setattr(data_loader, "FASHION_MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
 
     assert main(["download-fashion-mnist", "--output", str(destination)]) == 0
