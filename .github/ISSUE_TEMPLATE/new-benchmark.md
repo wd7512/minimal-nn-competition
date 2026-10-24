@@ -36,6 +36,7 @@ Why a plain `linear` or `mlp` model can attempt it:
 
 - Working, checked-in example script that produces an initial submission (may fail):
 - Its score:
+- Online research consulted, cited with a link and reproduced in the example script:
 - What a high score does not prove:
 - How could it be gamed?
 
