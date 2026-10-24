@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 import struct
 from pathlib import Path
 
@@ -7,8 +8,9 @@ import torch
 
 from minimal_nn_competition.__main__ import main
 from minimal_nn_competition.benchmarks.fashion_mnist import data_loader as fashion_loader
-from minimal_nn_competition.benchmarks.idx import read_idx
+from minimal_nn_competition.benchmarks.idx import FILES, read_idx
 from minimal_nn_competition.benchmarks.mnist import data_loader
+from minimal_nn_competition.benchmarks.mnist.data_loader import MNIST_SHA256
 
 
 def _image_bytes(images: list[list[int]], rows: int, columns: int) -> bytes:
@@ -49,6 +51,10 @@ def _recording_download(fixtures: Path, calls: list[str]):
     return download
 
 
+def _checksums_for(fixtures: Path) -> dict[str, str]:
+    return {name: hashlib.sha256((fixtures / name).read_bytes()).hexdigest() for name in FILES}
+
+
 def test_parsers_read_idx_data(tmp_path: Path) -> None:
     images_path = tmp_path / "images.gz"
     labels_path = tmp_path / "labels.gz"
@@ -76,6 +82,7 @@ def test_download_mnist_writes_cache(tmp_path: Path, monkeypatch) -> None:
         path.write_bytes((fixtures / Path(url).name).read_bytes())
 
     monkeypatch.setattr(data_loader, "_download", fake_download)
+    monkeypatch.setattr(data_loader, "MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
     cache_path = data_loader.download_mnist(destination)
 
@@ -83,6 +90,27 @@ def test_download_mnist_writes_cache(tmp_path: Path, monkeypatch) -> None:
     assert cache_path == destination / "mnist.pt"
     assert inputs.tolist() == [[1, 2, 3, 4], [5, 6, 7, 8]]
     assert labels.tolist() == [1, 2]
+
+
+def test_pinned_mnist_checksums_cover_idx_files() -> None:
+    assert set(MNIST_SHA256) == set(FILES)
+    assert all(len(digest) == 64 and int(digest, 16) >= 0 for digest in MNIST_SHA256.values())
+
+
+def test_download_mnist_rejects_checksum_mismatch(tmp_path: Path, monkeypatch) -> None:
+    fixtures = _fixtures(tmp_path)
+    monkeypatch.setattr(data_loader, "_download", _fake_download(fixtures))
+    checksums = _checksums_for(fixtures)
+    checksums["t10k-labels-idx1-ubyte.gz"] = "0" * 64
+    monkeypatch.setattr(data_loader, "MNIST_SHA256", checksums)
+    destination = tmp_path / "data"
+
+    with pytest.raises(ValueError, match="Checksum mismatch for t10k-labels-idx1-ubyte.gz"):
+        data_loader.download_mnist(destination)
+
+    assert not (destination / "mnist-t10k-labels-idx1-ubyte.gz").exists()
+    assert (destination / "mnist-train-images-idx3-ubyte.gz").exists()
+    assert not (destination / "mnist.pt").exists()
 
 
 def test_image_caches_use_distinct_raw_files(tmp_path: Path, monkeypatch) -> None:
@@ -112,6 +140,8 @@ def test_image_caches_use_distinct_raw_files(tmp_path: Path, monkeypatch) -> Non
 
     monkeypatch.setattr(data_loader, "_download", download_from(mnist_fixtures))
     monkeypatch.setattr(fashion_loader, "download_file", download_from(fashion_fixtures))
+    monkeypatch.setattr(data_loader, "MNIST_SHA256", _checksums_for(mnist_fixtures))
+    monkeypatch.setattr(fashion_loader, "FASHION_MNIST_SHA256", _checksums_for(fashion_fixtures))
     destination = tmp_path / "data"
     mnist_path = data_loader.download_mnist(destination)
     fashion_path = fashion_loader.download_fashion_mnist(destination)
@@ -132,6 +162,7 @@ def test_download_mnist_reuses_cache(tmp_path: Path, monkeypatch) -> None:
     fixtures = _fixtures(tmp_path)
     calls: list[str] = []
     monkeypatch.setattr(data_loader, "_download", _recording_download(fixtures, calls))
+    monkeypatch.setattr(data_loader, "MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
 
     first = data_loader.download_mnist(destination)
@@ -145,6 +176,7 @@ def test_download_mnist_force_rebuilds_cache(tmp_path: Path, monkeypatch) -> Non
     fixtures = _fixtures(tmp_path)
     calls: list[str] = []
     monkeypatch.setattr(data_loader, "_download", _recording_download(fixtures, calls))
+    monkeypatch.setattr(data_loader, "MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
 
     first = data_loader.download_mnist(destination)
@@ -157,6 +189,7 @@ def test_download_mnist_force_rebuilds_cache(tmp_path: Path, monkeypatch) -> Non
 def test_download_mnist_does_not_write_split_caches(tmp_path: Path, monkeypatch) -> None:
     fixtures = _fixtures(tmp_path)
     monkeypatch.setattr(data_loader, "_download", _fake_download(fixtures))
+    monkeypatch.setattr(data_loader, "MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
 
     data_loader.download_mnist(destination)
@@ -170,6 +203,7 @@ def test_download_mnist_cli_prints_cache_path(
 ) -> None:
     fixtures = _fixtures(tmp_path)
     monkeypatch.setattr(data_loader, "_download", _fake_download(fixtures))
+    monkeypatch.setattr(data_loader, "MNIST_SHA256", _checksums_for(fixtures))
     destination = tmp_path / "data"
 
     assert main(["download-mnist", "--output", str(destination)]) == 0

@@ -51,34 +51,28 @@ uv run mnnc download-fashion-mnist --output data
 uv run mnnc evaluate <benchmark> models/<benchmark>/<name>
 ```
 
-Image benchmarks use `data/mnist.pt` and `data/fashion-mnist.pt` by default;
-each cache contains all 70,000 examples. The evaluator rejects caches that do
-not contain exactly 70,000 samples. Legacy `*-train.pt` / `*-test.pt` caches are
-not used. Snake benchmarks need no data download; Chess evaluation uses its
-committed 10,000-position Stockfish set.
+Only the image benchmarks need a download. Each cache holds all 70,000
+examples, and the downloader verifies pinned SHA-256 digests, failing on any
+mismatch. Snake needs no data; Chess uses its committed Stockfish sets. There
+is no held-out split: an entry must fit every example.
 
-Expected passes are `1.0` for MNIST and Fashion-MNIST, `64.0` for Snake Simple
-8x8, `256.0` for Snake Simple 16x16, and `1.0` for Chess evaluation. Snake
-Simple 16x16 evaluates 100 seeds with a 4096-move cap. A Chess score of `1.0`
-means every position is within 0.1 pawns of Stockfish. Confirm the score and
-parameter count match the PR description. A perfect image score is expected;
-verify the cache is the correct benchmark's data. There is no held-out split:
-an entry must fit all 70,000 image examples or all 10,000 chess positions.
+Expected scores: `1.0` MNIST and Fashion-MNIST, `64.0` Snake Simple 8x8,
+`256.0` Snake Simple 16x16 (100 seeds, 4096-move cap), `1.0` Chess (every
+position within 0.1 pawns of Stockfish). Confirm the score and parameter count
+match the PR description, and that an image cache is the correct benchmark's
+data.
 
-Snake Obstacles 8x8 uses two or four deterministically seeded blocked cells, so
-each seed has 62 or 60 free cells. A submission passes only when every seed fills
-its free cells and then completes one extra loop move into the vacating tail. The
-score is the mean final length; inspect `seed_passed` and `target_lengths` in the
-result rather than expecting a single fixed score. Validate the layouts separately:
+Snake Obstacles 8x8 has no fixed score; it is the mean final length over
+seeded obstacle layouts. Inspect `seed_passed` and `target_lengths` in the
+result, and validate the layouts separately:
 
 ```bash
 uv run mnnc validate-snake-obstacles-8x8 --seeds 100
 ```
 
-The command re-checks each closed Hamiltonian tour, simulates a tour-following
-policy with the same seed and blocked cells, and exits non-zero on any failure.
+The command exits non-zero on any failure.
 
-If an entry fails, revert it on `submission` and do not promote it.
+If an entry fails, revert it on `submission`; do not promote it.
 
 ## 5. Rebuild the leaderboard
 
