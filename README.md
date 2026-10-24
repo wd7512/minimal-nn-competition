@@ -4,7 +4,7 @@ Find the smallest possible neural network for a problem.
 
 **[View the leaderboard →](https://wd7512.github.io/minimal-nn-competition/)**
 
-Problems: **Snake Simple 8x8**, **Snake Simple 16x16**, and **Snake Obstacles 8x8** (fill every free cell) · **MNIST** and **Fashion-MNIST** (classify images) · **Chess evaluation** (predict Stockfish within 0.1 pawns) · **Control tasks** (CartPole, Pendulum, and LunarLander).
+Problems: **Snake Simple 8x8**, **Snake Simple 16x16**, and **Snake Obstacles 8x8** (fill every free cell) · **MNIST** and **Fashion-MNIST** (classify images) · **Chess evaluation 10k** and **Chess evaluation 100k** (predict Stockfish within 0.1 pawns) · **Control tasks** (CartPole, Pendulum, and LunarLander).
 Rules: feed-forward `linear` or `mlp` models, a standard activation, and a PyTorch `state_dict`.
 
 Snake Obstacles 8x8 places two or four deterministic blocked cells per seed. A
@@ -12,9 +12,10 @@ run passes only after filling every free cell and then making one extra loop mov
 into the vacating tail. Layouts are checked by a closed-tour validator.
 
 MNIST and Fashion-MNIST each use one 70,000-example dataset. Chess evaluation
-uses a fixed 10,000-position Stockfish set. Control tasks use fixed seeds and a
-hand-rolled engine; no data download is needed. There is no held-out split:
-train on the same examples you are scored on and fit every example exactly.
+uses fixed 10,000- and 100,000-position Stockfish sets; the 100k set includes
+every 10k position. Control tasks use fixed seeds and a hand-rolled engine; no
+data download is needed. There is no held-out split: train on the same examples
+you are scored on and fit every example exactly.
 
 ## Submit
 

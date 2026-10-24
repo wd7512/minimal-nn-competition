@@ -138,9 +138,11 @@ tests/test_benchmarks.py::test_chess_eval_load_tensors
 tests/test_benchmarks.py::test_chess_eval_evaluate_dummy_passes
 tests/test_benchmarks.py::test_chess_eval_evaluate_dummy_fails
 tests/test_benchmarks.py::test_chess_eval_rejects_wrong_shape
+tests/test_benchmarks.py::test_chess_eval_rejects_wrong_benchmark
 tests/test_benchmarks.py::test_chess_eval_requires_data_file
 tests/test_integration.py::test_evaluate_chess_eval_cli
-tests/test_chess_eval_data.py""".splitlines()
+tests/test_chess_eval_data.py::test_chess_eval_dataset_integrity
+tests/test_chess_eval_data.py::test_chess_eval_100k_contains_10k""".splitlines()
         ),
     ),
     Scope(

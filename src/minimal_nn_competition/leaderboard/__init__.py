@@ -4,6 +4,7 @@ import json
 import statistics
 from dataclasses import asdict
 
+from minimal_nn_competition.benchmarks.chess_eval.names import CHESS_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.runner.entry import BenchmarkResult
 
@@ -18,7 +19,7 @@ def _game_length(result):
 
 
 def _mean_error(result):
-    if result.benchmark != "chess-eval":
+    if result.benchmark not in CHESS_BENCHMARKS:
         return 0.0
     mae = result.details.get("mae", 0.0)
     return mae if isinstance(mae, (int, float)) else 0.0

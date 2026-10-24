@@ -30,7 +30,7 @@ not fill surfaces or decorate every control.
 | --- | --- | --- |
 | Snake | Simple 8×8, Simple 16×16, Obstacles 8×8 | Simple 8×8 |
 | MNIST | MNIST, Fashion-MNIST | MNIST |
-| Chess evaluation | Stockfish 0.1 pawn | Stockfish 0.1 pawn |
+| Chess evaluation | Stockfish 10k, Stockfish 100k | Stockfish 10k |
 
 Unknown benchmarks fall back to their own single-version group after the known
 groups, so a new benchmark is never dropped from the page.

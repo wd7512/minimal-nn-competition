@@ -11,7 +11,10 @@ INPUT_SIZE = 769
 OUTPUT_SIZE = 1
 TOLERANCE_PAWNS = 0.1
 DEFAULT_FOLDS = 20
-DEFAULT_DATA = Path(__file__).with_name("positions.jsonl")
+CHESS_EVAL_DATA = {
+    "chess-eval-10k": Path(__file__).with_name("positions-10k.jsonl"),
+    "chess-eval-100k": Path(__file__).with_name("positions-100k.jsonl"),
+}
 
 _PIECES = {piece: index for index, piece in enumerate("PNBRQKpnbrqk")}
 
@@ -68,18 +71,19 @@ def _load_positions(path):
     return tuple(positions)
 
 
-def load_tensors(data_path=DEFAULT_DATA):
+def load_tensors(data_path):
     """Return the evaluation inputs and pawn targets for ``data_path``."""
     return _load_tensors(str(Path(data_path)))
 
 
 class ChessEvalBenchmark:
-    name = "chess-eval"
+    name = ""
+    default_data = None
 
-    def __init__(self, data_path=DEFAULT_DATA, folds=DEFAULT_FOLDS):
+    def __init__(self, data_path=None, folds=DEFAULT_FOLDS):
         if folds <= 0:
             raise ValueError("Chess evaluation folds must be positive")
-        self.data_path = Path(data_path)
+        self.data_path = Path(data_path) if data_path is not None else self.default_data
         self.folds = folds
 
     def load_submission(self, submission):
@@ -113,3 +117,13 @@ class ChessEvalBenchmark:
                 "fold_scores": fold_scores,
             },
         )
+
+
+class ChessEval10kBenchmark(ChessEvalBenchmark):
+    name = "chess-eval-10k"
+    default_data = CHESS_EVAL_DATA[name]
+
+
+class ChessEval100kBenchmark(ChessEvalBenchmark):
+    name = "chess-eval-100k"
+    default_data = CHESS_EVAL_DATA[name]

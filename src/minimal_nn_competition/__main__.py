@@ -5,6 +5,7 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
+from minimal_nn_competition.benchmarks.chess_eval.names import CHESS_BENCHMARKS
 from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
 from minimal_nn_competition.benchmarks.register import available_benchmarks, create_benchmark
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
@@ -127,15 +128,16 @@ def _parser():
             train_rl.add_argument("--episodes-per-iteration", type=int, default=8)
         train_rl.add_argument("--seed", type=int, default=0)
         _train_common(train_rl)
-    train_chess = add("train-chess-eval", help="Train the Chess evaluation example submission")
-    train_chess.add_argument("--output", type=Path, default=Path("models/chess-eval/example"))
-    train_chess.add_argument("--data-path", type=Path, default=None)
-    train_chess.add_argument("--epochs", type=int, default=16_000)
-    train_chess.add_argument("--batch-size", type=int, default=256)
-    train_chess.add_argument("--learning-rate", type=float, default=1e-3)
-    train_chess.add_argument("--hidden-sizes", type=int, nargs="+", default=[64, 64])
-    train_chess.add_argument("--seed", type=int, default=0)
-    _train_common(train_chess)
+    for benchmark in CHESS_BENCHMARKS:
+        train_chess = add(f"train-{benchmark}", help=f"Train the {benchmark} example submission")
+        train_chess.add_argument("--output", type=Path, default=Path(f"models/{benchmark}/example"))
+        train_chess.add_argument("--data-path", type=Path, default=None)
+        train_chess.add_argument("--epochs", type=int, default=16_000)
+        train_chess.add_argument("--batch-size", type=int, default=256)
+        train_chess.add_argument("--learning-rate", type=float, default=1e-3)
+        train_chess.add_argument("--hidden-sizes", type=int, nargs="+", default=[64, 64])
+        train_chess.add_argument("--seed", type=int, default=0)
+        _train_common(train_chess)
     return parser
 
 
@@ -378,7 +380,7 @@ def main(argv=None):
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
-    if args.command == "train-chess-eval":
+    if args.command in tuple(f"train-{benchmark}" for benchmark in CHESS_BENCHMARKS):
         from minimal_nn_competition.examples.chess_eval_submission import train
 
         try:
@@ -393,6 +395,7 @@ def main(argv=None):
                 seed=args.seed,
                 name=args.name,
                 author=args.author,
+                benchmark=args.command.removeprefix("train-"),
             )
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
@@ -400,10 +403,10 @@ def main(argv=None):
     if args.data_path is not None and args.benchmark not in (
         "mnist",
         "fashion-mnist",
-        "chess-eval",
+        *CHESS_BENCHMARKS,
     ):
         logger.error(
-            "--data-path is only supported for the mnist, fashion-mnist, and chess-eval benchmarks"
+            "--data-path is only supported for the mnist, fashion-mnist, and chess evaluation benchmarks"
         )
         return 2
     kwargs = {}

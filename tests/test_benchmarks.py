@@ -6,10 +6,12 @@ import pytest
 import torch
 
 from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
-    ChessEvalBenchmark,
+    ChessEval10kBenchmark,
+    ChessEval100kBenchmark,
     encode,
     load_tensors,
 )
+from minimal_nn_competition.benchmarks.chess_eval.names import CHESS_BENCHMARKS
 from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
 from minimal_nn_competition.benchmarks.register import create_benchmark
@@ -528,16 +530,22 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
 
 
 def _write_chess_data(tmp_path: Path, rows: list[tuple[str, int]]) -> Path:
-    path = tmp_path / "positions.jsonl"
+    path = tmp_path / "positions-10k.jsonl"
     path.write_text("".join(json.dumps({"fen": fen, "cp": cp}) + "\n" for fen, cp in rows))
     return path
 
 
-def _chess_submission(tmp_path: Path, *, input_size: int = 769, output_size: int = 1) -> Submission:
+def _chess_submission(
+    tmp_path: Path,
+    *,
+    input_size: int = 769,
+    output_size: int = 1,
+    benchmark: str = "chess-eval-10k",
+) -> Submission:
     return _write_submission(
         tmp_path,
         {
-            "benchmark": "chess-eval",
+            "benchmark": benchmark,
             "architecture": "linear",
             "input_size": input_size,
             "output_size": output_size,
@@ -551,7 +559,8 @@ BLACK = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq -"
 
 
 def test_chess_eval_registers_by_name() -> None:
-    assert create_benchmark("chess-eval").name == "chess-eval"
+    for name in CHESS_BENCHMARKS:
+        assert create_benchmark(name).name == name
 
 
 def test_chess_eval_encodes_fen() -> None:
@@ -575,7 +584,9 @@ def test_chess_eval_load_tensors(tmp_path: Path) -> None:
 def test_chess_eval_evaluate_dummy_passes(tmp_path: Path) -> None:
     data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 0)])
     loaded = materialize_submission(_chess_submission(tmp_path))
-    score, score_std, passed, details = ChessEvalBenchmark(data_path=data, folds=2).evaluate(loaded)
+    score, score_std, passed, details = ChessEval10kBenchmark(data_path=data, folds=2).evaluate(
+        loaded
+    )
     assert score == 1.0
     assert score_std == 0.0
     assert passed is True
@@ -585,7 +596,9 @@ def test_chess_eval_evaluate_dummy_passes(tmp_path: Path) -> None:
 def test_chess_eval_evaluate_dummy_fails(tmp_path: Path) -> None:
     data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 60)])
     loaded = materialize_submission(_chess_submission(tmp_path))
-    score, score_std, passed, details = ChessEvalBenchmark(data_path=data, folds=2).evaluate(loaded)
+    score, score_std, passed, details = ChessEval10kBenchmark(data_path=data, folds=2).evaluate(
+        loaded
+    )
     assert score == 0.5
     assert score_std >= 0.0
     assert passed is False
@@ -595,15 +608,26 @@ def test_chess_eval_evaluate_dummy_fails(tmp_path: Path) -> None:
 def test_chess_eval_rejects_wrong_shape(tmp_path: Path) -> None:
     wrong_input = _chess_submission(tmp_path, input_size=768)
     with pytest.raises(ValueError, match="input_size 769"):
-        ChessEvalBenchmark().load_submission(wrong_input)
+        ChessEval10kBenchmark().load_submission(wrong_input)
     second = tmp_path / "second"
     second.mkdir()
     wrong_output = _chess_submission(second, output_size=2)
     with pytest.raises(ValueError, match="output_size 1"):
-        ChessEvalBenchmark().load_submission(wrong_output)
+        ChessEval10kBenchmark().load_submission(wrong_output)
+
+
+def test_chess_eval_rejects_wrong_benchmark(tmp_path: Path) -> None:
+    ten_k = _chess_submission(tmp_path)
+    with pytest.raises(ValueError, match="does not match"):
+        ChessEval100kBenchmark().load_submission(ten_k)
+    second = tmp_path / "hundred"
+    second.mkdir()
+    hundred_k = _chess_submission(second, benchmark="chess-eval-100k")
+    with pytest.raises(ValueError, match="does not match"):
+        ChessEval10kBenchmark().load_submission(hundred_k)
 
 
 def test_chess_eval_requires_data_file(tmp_path: Path) -> None:
     loaded = materialize_submission(_chess_submission(tmp_path))
     with pytest.raises(FileNotFoundError, match="Chess evaluation data is unavailable"):
-        ChessEvalBenchmark(data_path=tmp_path / "missing.jsonl").evaluate(loaded)
+        ChessEval10kBenchmark(data_path=tmp_path / "missing.jsonl").evaluate(loaded)
