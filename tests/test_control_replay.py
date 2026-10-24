@@ -124,6 +124,7 @@ def test_render_submission_html_embeds_control_replay() -> None:
     assert ">100<" in page
     assert "Available below" in page
     assert "Back to leaderboard" in page
+    assert '<option value="4" selected>4x</option>' in page
     assert "Math.max(1, Math.floor(240 / Number(speed.value)))" in page
 
 

@@ -604,7 +604,7 @@ function drawCartpole(state) {
   const toX = (x) => 24 + ((x + 2.4) / 4.8) * (canvas.width - 48);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = "#aebbb5";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(16, rail);
   ctx.lineTo(canvas.width - 16, rail);
@@ -618,21 +618,28 @@ function drawCartpole(state) {
     ctx.stroke();
   });
   ctx.setLineDash([]);
-  const cartX = toX(Math.max(-2.6, Math.min(2.6, state[0])));
+  const cartX = Math.max(24, Math.min(canvas.width - 24, toX(state[0])));
   ctx.fillStyle = "#17231f";
-  ctx.fillRect(cartX - 15, rail - 14, 30, 12);
-  const pivotY = rail - 16;
-  const tipX = cartX + 56 * Math.sin(state[2]);
-  const tipY = pivotY - 56 * Math.cos(state[2]);
-  ctx.strokeStyle = "#1f6b43";
+  ctx.fillRect(cartX - 20, rail - 24, 40, 24);
+  const pivotX = cartX;
+  const pivotY = rail - 24;
+  const tipX = pivotX + 100 * Math.sin(state[2]);
+  const tipY = pivotY - 100 * Math.cos(state[2]);
+  ctx.strokeStyle = "#8a5b16";
   ctx.lineWidth = 5;
+  ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(cartX, pivotY);
+  ctx.moveTo(pivotX, pivotY);
   ctx.lineTo(tipX, tipY);
   ctx.stroke();
-  ctx.fillStyle = "#1f6b43";
+  ctx.lineCap = "butt";
+  ctx.fillStyle = "#8a5b16";
   ctx.beginPath();
   ctx.arc(tipX, tipY, 4, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.fillStyle = "#3f5f86";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 4, 0, 2 * Math.PI);
   ctx.fill();
   let text = "step " + frame + "/" + last()
     + ", x " + Number(state[0]).toFixed(2)
@@ -647,42 +654,56 @@ function drawPendulum(state, action) {
   const pivotY = 150;
   const arm = 110;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = "#aebbb5";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(pivotX, pivotY, arm, 0, 2 * Math.PI);
-  ctx.stroke();
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath();
-  ctx.moveTo(pivotX, pivotY);
-  ctx.lineTo(pivotX, pivotY - arm);
-  ctx.stroke();
-  ctx.setLineDash([]);
   const tipX = pivotX + arm * Math.sin(state[0]);
   const tipY = pivotY - arm * Math.cos(state[0]);
-  ctx.strokeStyle = "#17231f";
-  ctx.lineWidth = 4;
+  ctx.strokeStyle = "#e5484d";
+  ctx.lineWidth = 14;
+  ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(pivotX, pivotY);
   ctx.lineTo(tipX, tipY);
   ctx.stroke();
-  ctx.fillStyle = "#3f5f86";
+  ctx.lineCap = "butt";
+  ctx.fillStyle = "#e5484d";
   ctx.beginPath();
-  ctx.arc(tipX, tipY, 9, 0, 2 * Math.PI);
+  ctx.arc(pivotX, pivotY, 7, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(tipX, tipY, 7, 0, 2 * Math.PI);
   ctx.fill();
   ctx.fillStyle = "#17231f";
   ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 5, 0, 2 * Math.PI);
+  ctx.arc(pivotX, pivotY, 3, 0, 2 * Math.PI);
   ctx.fill();
   const torque = action === null ? 0 : TORQUES[action];
-  ctx.fillStyle = "#8a5b16";
-  ctx.fillRect(pivotX + (torque / 2) * 60 - 3, 262, 6, 14);
-  ctx.strokeStyle = "#aebbb5";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(96, 262, 128, 14);
-  ctx.fillStyle = "#63706b";
-  ctx.font = "12px system-ui, sans-serif";
-  ctx.fillText("torque " + torque.toFixed(1), 126, 298);
+  if (action !== null && torque !== 0) {
+    const R = 34;
+    const span = 100 * Math.PI / 180;
+    const base = -Math.PI / 2;
+    const a0 = base;
+    const a1 = torque > 0 ? base + span : base - span;
+    ctx.strokeStyle = "#63706b";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(pivotX, pivotY, R, a0, a1, torque < 0);
+    ctx.stroke();
+    const ex = pivotX + R * Math.cos(a1);
+    const ey = pivotY + R * Math.sin(a1);
+    const tAng = a1 + (torque > 0 ? Math.PI / 2 : -Math.PI / 2);
+    const ux = Math.cos(tAng);
+    const uy = Math.sin(tAng);
+    const px = -uy;
+    const py = ux;
+    const bx = ex - ux * 10;
+    const by = ey - uy * 10;
+    ctx.fillStyle = "#63706b";
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(bx + px * 5, by + py * 5);
+    ctx.lineTo(bx - px * 5, by - py * 5);
+    ctx.closePath();
+    ctx.fill();
+  }
   let text = "step " + frame + "/" + last()
     + ", θ " + deg(state[0]) + "°"
     + ", ω " + Number(state[1]).toFixed(2);
@@ -695,7 +716,7 @@ function drawLunarlander(state, action) {
   const toX = (x) => 20 + ((x + 1) / 2) * 320;
   const toY = (y) => 400 - (y / 1.5) * 380;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = "#aebbb5";
+  ctx.strokeStyle = "#17231f";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0, 400);
@@ -703,6 +724,27 @@ function drawLunarlander(state, action) {
   ctx.stroke();
   ctx.fillStyle = "#1f6b43";
   ctx.fillRect(toX(-0.25), 394, toX(0.25) - toX(-0.25), 6);
+  [toX(-0.25), toX(0.25)].forEach((edge, idx) => {
+    ctx.strokeStyle = "#17231f";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(edge, 394);
+    ctx.lineTo(edge, 368);
+    ctx.stroke();
+    ctx.fillStyle = "#8a5b16";
+    ctx.beginPath();
+    if (idx === 0) {
+      ctx.moveTo(edge, 368);
+      ctx.lineTo(edge, 358);
+      ctx.lineTo(edge + 14, 363);
+    } else {
+      ctx.moveTo(edge, 368);
+      ctx.lineTo(edge, 358);
+      ctx.lineTo(edge - 14, 363);
+    }
+    ctx.closePath();
+    ctx.fill();
+  });
   for (let index = Math.max(0, frame - 24); index < frame; index += 1) {
     ctx.fillStyle = "rgba(63, 95, 134, 0.45)";
     ctx.beginPath();
@@ -714,42 +756,36 @@ function drawLunarlander(state, action) {
   ctx.save();
   ctx.translate(px, py);
   ctx.rotate(Number(state[4]));
-  ctx.fillStyle = "#17231f";
+  ctx.fillStyle = "#6f42c1";
+  ctx.strokeStyle = "#17231f";
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, -10);
+  ctx.lineTo(7, -3);
   ctx.lineTo(7, 8);
   ctx.lineTo(-7, 8);
+  ctx.lineTo(-7, -3);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = "#e5484d";
+  ctx.stroke();
+  ctx.fillStyle = "#8a9a94";
   if (action === 1) {
     ctx.beginPath();
-    ctx.moveTo(-4, 8);
-    ctx.lineTo(4, 8);
-    ctx.lineTo(0, 20);
-    ctx.closePath();
+    ctx.arc(0, 12, 3 + (frame % 3), 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 18, 2, 0, 2 * Math.PI);
     ctx.fill();
   } else if (action === 2) {
     ctx.beginPath();
-    ctx.moveTo(-7, 0);
-    ctx.lineTo(-16, 4);
-    ctx.lineTo(-7, 8);
-    ctx.closePath();
+    ctx.arc(-11, 4, 2 + (frame % 2), 0, 2 * Math.PI);
     ctx.fill();
   } else if (action === 3) {
     ctx.beginPath();
-    ctx.moveTo(7, 0);
-    ctx.lineTo(16, 4);
-    ctx.lineTo(7, 8);
-    ctx.closePath();
+    ctx.arc(11, 4, 2 + (frame % 2), 0, 2 * Math.PI);
     ctx.fill();
   }
   ctx.restore();
-  if (frame === last() && (OUTCOME === "landed" || OUTCOME === "crashed")) {
-    ctx.font = "bold 16px system-ui, sans-serif";
-    ctx.fillStyle = OUTCOME === "landed" ? "#1f6b43" : "#8a3434";
-    ctx.fillText(OUTCOME.toUpperCase(), 20, 30);
-  }
   let text = "step " + frame + "/" + last()
     + ", x " + Number(state[0]).toFixed(2)
     + ", y " + Number(state[1]).toFixed(2)
@@ -860,8 +896,8 @@ def _control_game_section(kind, payload):
         '<button id="prev" type="button">Step back</button>'
         '<button id="next" type="button">Step forward</button>'
         '<label>Speed <select id="speed"><option value="1">1x</option><option value="2">2x</option>'
-        '<option value="4">4x</option><option value="8">8x</option>'
-        '<option value="16" selected>16x</option><option value="32">32x</option>'
+        '<option value="4" selected>4x</option><option value="8">8x</option>'
+        '<option value="16">16x</option><option value="32">32x</option>'
         '<option value="64">64x</option></select></label></div>'
         '<noscript><p class="muted">Replay needs JavaScript. Summary above gives seed, steps and outcome.</p></noscript>'
         '<p id="status" class="muted" aria-live="polite"></p></section>'
