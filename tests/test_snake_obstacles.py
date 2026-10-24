@@ -306,7 +306,7 @@ def test_score_text_uses_per_seed_target_lengths() -> None:
         20,
         {"seed_lengths": [31, 30], "target_lengths": [62, 60]},
     )
-    assert _score_text(result) == "50.00% ± 0.00%"
+    assert _score_text(result) == "50.00%"
 
 
 def test_render_site_shows_the_obstacle_section(tmp_path: Path) -> None:
