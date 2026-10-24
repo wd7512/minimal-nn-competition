@@ -213,6 +213,7 @@ tests/test_internal.py
 tests/test_model.py
 tests/test_speed.py
 tests/test_submission_check.py""".splitlines()
+            + ["tests/test_submission_workflow.py"]
         ),
     ),
 )
