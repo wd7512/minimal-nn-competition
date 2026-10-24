@@ -1,0 +1,14 @@
+{
+  "benchmark": "pendulum",
+  "name": "example",
+  "author": "example author",
+  "architecture": "mlp",
+  "input_size": 3,
+  "output_size": 5,
+  "hidden_sizes": [
+    64,
+    64
+  ],
+  "activation": "relu",
+  "description": "A small PPO-trained discrete-torque pendulum policy."
+}

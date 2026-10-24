@@ -5,6 +5,7 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
+from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
 from minimal_nn_competition.benchmarks.register import available_benchmarks, create_benchmark
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.leaderboard import load_results, rank_results, save_results
@@ -116,6 +117,16 @@ def _parser():
         train_snake.add_argument("--iterations", type=int, default=600)
         train_snake.add_argument("--max-moves", type=int, default=None)
         _train_common(train_snake)
+    for benchmark in RL_BENCHMARKS:
+        train_rl = add(f"train-{benchmark}", help=f"Train the {benchmark} example submission")
+        train_rl.add_argument("--output", type=Path, default=Path(f"models/{benchmark}/example"))
+        if benchmark != "cartpole":
+            train_rl.add_argument(
+                "--iterations", type=int, default=500 if benchmark == "pendulum" else 1500
+            )
+            train_rl.add_argument("--episodes-per-iteration", type=int, default=8)
+        train_rl.add_argument("--seed", type=int, default=0)
+        _train_common(train_rl)
     train_chess = add("train-chess-eval", help="Train the Chess evaluation example submission")
     train_chess.add_argument("--output", type=Path, default=Path("models/chess-eval/example"))
     train_chess.add_argument("--data-path", type=Path, default=None)
@@ -323,6 +334,50 @@ def main(argv=None):
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
+    if args.command in tuple(f"train-{name}" for name in RL_BENCHMARKS):
+        try:
+            if args.command == "train-cartpole":
+                from minimal_nn_competition.examples.cartpole_submission import (
+                    train as train_cartpole,
+                )
+
+                train_cartpole(
+                    args.output,
+                    seed=args.seed,
+                    name=args.name,
+                    author=args.author,
+                )
+            elif args.command == "train-pendulum":
+                from minimal_nn_competition.examples.pendulum_submission import (
+                    train as train_pendulum,
+                )
+
+                train_pendulum(
+                    args.output,
+                    iterations=args.iterations,
+                    episodes_per_iteration=args.episodes_per_iteration,
+                    device_name=args.device,
+                    seed=args.seed,
+                    name=args.name,
+                    author=args.author,
+                )
+            else:
+                from minimal_nn_competition.examples.lunarlander_submission import (
+                    train as train_lunarlander,
+                )
+
+                train_lunarlander(
+                    args.output,
+                    iterations=args.iterations,
+                    episodes_per_iteration=args.episodes_per_iteration,
+                    device_name=args.device,
+                    seed=args.seed,
+                    name=args.name,
+                    author=args.author,
+                )
+        except (OSError, RuntimeError, ValueError) as exc:
+            return _fail(exc)
+        return 0
     if args.command == "train-chess-eval":
         from minimal_nn_competition.examples.chess_eval_submission import train
 
@@ -342,7 +397,11 @@ def main(argv=None):
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
-    if args.data_path is not None and args.benchmark in SNAKE_BENCHMARKS:
+    if args.data_path is not None and args.benchmark not in (
+        "mnist",
+        "fashion-mnist",
+        "chess-eval",
+    ):
         logger.error(
             "--data-path is only supported for the mnist, fashion-mnist, and chess-eval benchmarks"
         )

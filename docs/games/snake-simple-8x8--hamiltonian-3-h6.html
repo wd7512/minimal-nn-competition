@@ -9,6 +9,12 @@ tr.passed td { font-weight: 600; }
 footer { margin-top: 2rem; text-align: right; }
 .version { color: inherit; opacity: 0.35; text-decoration: none; font-size: 0.8rem; }
 .version:hover, .version:focus-visible { opacity: 1; }
+:root { --accent-control: #6f42c1; }
+@media (prefers-color-scheme: dark) { :root { --accent-control: #b392f0; } }
+.group-control { border-left: 4px solid var(--accent-control); padding-left: 1rem; }
+.group-control > h2 { color: var(--accent-control); }
+.section-version { font-size: 0.7rem; font-weight: 400; opacity: 0.55; margin-left: 0.4rem; }
+.panel-note { margin-top: -0.4rem; }
 
 canvas { border: 1px solid #8884; image-rendering: pixelated; width: min(80vw, 480px);
   height: auto; }

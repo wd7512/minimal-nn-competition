@@ -195,8 +195,11 @@ def test_scope_files_cover_src() -> None:
     assert set(covered) == every
     for path, scopes in covered.items():
         if len(scopes) > 1:
-            assert scopes == {"mnist", "fashion-mnist"}
-            assert path in shared
+            if scopes == {"pendulum", "lunarlander"}:
+                assert path.name == "ppo.py"
+            else:
+                assert scopes == {"mnist", "fashion-mnist"}
+                assert path in shared
 
 
 def test_scope_tests_cover_suite_exactly_once() -> None:
@@ -329,10 +332,13 @@ def test_internal_cli(tmp_path: Path) -> None:
     assert main(["internal", "--root", str(root), "--output", str(output)]) == 0
     results = load_internal_results(output)
     assert {result.scope for result in results} == {
+        "cartpole",
         "chess-eval",
         "core",
         "fashion-mnist",
+        "lunarlander",
         "mnist",
+        "pendulum",
         "snake-simple-8x8",
     }
     assert all(result.status == "pass" for result in results)

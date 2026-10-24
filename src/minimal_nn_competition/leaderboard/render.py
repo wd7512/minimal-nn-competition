@@ -8,17 +8,34 @@ from dataclasses import asdict
 from itertools import groupby
 
 from minimal_nn_competition import __version__
+from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
 
 _SECTION_TITLES = {
+    "cartpole": "CARTPOLE",
     "chess-eval": "CHESS EVALUATION",
     "fashion-mnist": "FASHION-MNIST COMPRESSION",
+    "lunarlander": "LUNARLANDER",
     "mnist": "MNIST COMPRESSION",
+    "pendulum": "PENDULUM",
     "snake-simple-8x8": "SNAKE SIMPLE 8X8",
     "snake-simple-16x16": "SNAKE SIMPLE 16X16",
     "snake-obstacles-8x8": "SNAKE OBSTACLES 8X8",
+}
+_SECTION_VERSIONS = {"cartpole": "v1", "lunarlander": "v1", "pendulum": "v1"}
+_SECTION_NOTES = {
+    "cartpole": "Balance the pole for 500 steps on every seed.",
+    "lunarlander": "Land softly on the pad; score is the mean episode return.",
+    "pendulum": "Swing up and hold the pendulum; score is the mean episode return.",
+}
+_CONTROL_GROUP = {
+    "title": "CONTROL",
+    "note": (
+        "Classic control tasks with fixed seeds. CartPole scores balanced steps; "
+        "Pendulum and LunarLander score mean episode return."
+    ),
 }
 _REPLAY_TITLES = {
     "snake-simple-8x8": "Snake Simple 8x8",
@@ -42,10 +59,18 @@ tr.passed td { font-weight: 600; }
 footer { margin-top: 2rem; text-align: right; }
 .version { color: inherit; opacity: 0.35; text-decoration: none; font-size: 0.8rem; }
 .version:hover, .version:focus-visible { opacity: 1; }
+:root { --accent-control: #6f42c1; }
+@media (prefers-color-scheme: dark) { :root { --accent-control: #b392f0; } }
+.group-control { border-left: 4px solid var(--accent-control); padding-left: 1rem; }
+.group-control > h2 { color: var(--accent-control); }
+.section-version { font-size: 0.7rem; font-weight: 400; opacity: 0.55; margin-left: 0.4rem; }
+.panel-note { margin-top: -0.4rem; }
 """
 
 
 def _score_text(result):
+    if result.benchmark in RL_BENCHMARKS:
+        return f"{result.score:.2f} ± {result.score_std:.2f}"
     if result.benchmark in SNAKE_BENCHMARKS:
         lengths = result.details.get("seed_lengths")
         targets = result.details.get("target_lengths")
@@ -222,19 +247,46 @@ def render_game_pages(results, replays, output_dir):
     return links
 
 
+def _render_section(benchmark, entries, replay_links):
+    ranking = (
+        "pass status, score, parameter count, then game length"
+        if benchmark in SNAKE_BENCHMARKS
+        else "pass status, score, then parameter count"
+    )
+    version = _SECTION_VERSIONS.get(benchmark)
+    version_html = f'<span class="section-version">{html.escape(version)}</span>' if version else ""
+    note = _SECTION_NOTES.get(benchmark)
+    note_html = f'<p class="panel-note muted">{html.escape(note)}</p>' if note else ""
+    return (
+        f"<section><h2>{html.escape(_SECTION_TITLES.get(benchmark, benchmark.upper()))}"
+        f'{version_html}</h2><p class="muted">{len(entries)} result(s), ranked by '
+        f"{ranking}.</p>{note_html}"
+        f"{_table(entries, replay_links if benchmark in SNAKE_BENCHMARKS else None)}</section>"
+    )
+
+
 def render_html(results, replay_links=None):
+    grouped = {
+        benchmark: list(group)
+        for benchmark, group in groupby(results, key=lambda result: result.benchmark)
+    }
     sections = []
-    for benchmark, group in groupby(results, key=lambda result: result.benchmark):
-        entries = list(group)
-        ranking = (
-            "pass status, score, parameter count, then game length"
-            if benchmark in SNAKE_BENCHMARKS
-            else "pass status, score, then parameter count"
-        )
+    control_sections = [
+        _render_section(benchmark, grouped[benchmark], replay_links)
+        for benchmark in RL_BENCHMARKS
+        if benchmark in grouped
+    ]
+    if control_sections:
         sections.append(
-            f"""<section><h2>{html.escape(_SECTION_TITLES.get(benchmark, benchmark.upper()))}</h2><p class="muted">{len(entries)} result(s), ranked by {ranking}.</p>{_table(entries, replay_links if benchmark in SNAKE_BENCHMARKS else None)}</section>"""
+            f'<section class="group-control"><h2>{html.escape(_CONTROL_GROUP["title"])}</h2>'
+            f'<p class="muted">{html.escape(_CONTROL_GROUP["note"])}</p>'
+            f"{''.join(control_sections)}</section>"
         )
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>{_STYLE}</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, Snake benchmarks, and Chess evaluation.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{"".join(sections) or "<p>No results have been recorded yet.</p>"}<footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></body></html>
+    for benchmark, entries in grouped.items():
+        if benchmark in RL_BENCHMARKS:
+            continue
+        sections.append(_render_section(benchmark, entries, replay_links))
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><style>{_STYLE}</style></head><body><header><h1>Minimal NN Competition</h1><p>Small PyTorch state-dict submissions for MNIST, Fashion-MNIST, Snake benchmarks, Chess evaluation, and Control tasks.</p><p>Submit a model by opening a pull request against the <code>submission</code> branch. See <a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p><p><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{"".join(sections) or "<p>No results have been recorded yet.</p>"}<footer><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></body></html>
 """
 
 
