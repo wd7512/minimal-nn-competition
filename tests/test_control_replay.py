@@ -54,12 +54,17 @@ def test_record_game_rejects_unknown_benchmark() -> None:
         record_game("chess-eval", _FixedAction(2, 0))
 
 
-def test_record_game_requires_torch(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    "benchmark,outputs", [("cartpole", 2), ("pendulum", 5), ("lunarlander", 4)]
+)
+def test_record_game_requires_torch(
+    monkeypatch: pytest.MonkeyPatch, benchmark: str, outputs: int
+) -> None:
     import sys
 
     monkeypatch.setitem(sys.modules, "torch", None)
     with pytest.raises(RuntimeError, match="PyTorch"):
-        record_game("cartpole", _FixedAction(2, 0))
+        record_game(benchmark, _FixedAction(outputs, 0))
 
 
 def test_record_game_terminal_flags() -> None:

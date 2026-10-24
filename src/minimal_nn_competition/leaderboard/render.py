@@ -683,9 +683,13 @@ function drawPendulum(state, action) {
   ctx.fillStyle = "#63706b";
   ctx.font = "12px system-ui, sans-serif";
   ctx.fillText("torque " + torque.toFixed(1), 126, 298);
-  status.textContent = "step " + frame + "/" + last()
+  let text = "step " + frame + "/" + last()
     + ", θ " + deg(state[0]) + "°"
     + ", ω " + Number(state[1]).toFixed(2);
+  if (frame === last()) {
+    text += " · " + OUTCOME;
+  }
+  status.textContent = text;
 }
 function drawLunarlander(state, action) {
   const toX = (x) => 20 + ((x + 1) / 2) * 320;
@@ -1235,7 +1239,7 @@ def render_submission_pages(results, replays, output_dir):
             )
         seen[stem] = (result.benchmark, result.submission)
         payload = replays.get(stem)
-        if payload is not None:
+        if payload is not None and result.benchmark in SNAKE_BENCHMARKS + RL_BENCHMARKS:
             games_dir.mkdir(parents=True, exist_ok=True)
             (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
         pages_dir.mkdir(parents=True, exist_ok=True)
