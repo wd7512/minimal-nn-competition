@@ -37,9 +37,9 @@ jobs:
         run: uv run --no-sync pytest
       - name: Check leaderboard site
         run: |
-          uv run --no-sync mnnc render leaderboard.json /tmp/minimal-nn-docs --replays docs/games
-          uv run --no-sync mnnc render-speed speed-leaderboard.json /tmp/minimal-nn-docs/internal
-          uv run --no-sync mnnc render-internal internal-leaderboard.json /tmp/minimal-nn-docs
+          uv run --no-sync mnnc render docs/leaderboard.json /tmp/minimal-nn-docs --replays docs/games
+          uv run --no-sync mnnc render-speed docs/internal/speed/leaderboard.json /tmp/minimal-nn-docs/internal
+          uv run --no-sync mnnc render-internal docs/internal/leaderboard.json /tmp/minimal-nn-docs
           diff -ru docs /tmp/minimal-nn-docs
       - name: Build
         run: uv build
