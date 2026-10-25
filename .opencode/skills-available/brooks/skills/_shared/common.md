@@ -168,7 +168,7 @@ graph TD
 <!-- Sort all findings by severity: Critical first, then Warning, then Suggestion -->
 <!-- If no findings in a severity tier, omit that tier's heading -->
 
-### 🔴 Critical
+### [red] Critical
 
 **[Risk Name] — [Short descriptive title]**
 Symptom: [exactly what was observed in the code]
@@ -176,7 +176,7 @@ Source: [Book title — Principle or Smell name]
 Consequence: [what breaks or gets worse if this is not fixed]
 Remedy: [concrete, specific action]
 
-### 🟡 Warning
+### [yellow] Warning
 
 **[Risk Name] — [Short descriptive title]**
 Symptom: ...
@@ -184,7 +184,7 @@ Source: ...
 Consequence: ...
 Remedy: ...
 
-### 🟢 Suggestion
+### [green] Suggestion
 
 **[Risk Name] — [Short descriptive title]**
 Symptom: ...
@@ -212,7 +212,7 @@ edit files. Full Sweep is the mode that applies fixes, and it follows
 Base score: 100. Per-finding deductions depend on the `strictness` preset
 (`balanced` is used when no preset is set):
 
-| Preset | 🔴 Critical | 🟡 Warning | 🟢 Suggestion |
+| Preset | [red] Critical | [yellow] Warning | [green] Suggestion |
 |--------|------------|-----------|--------------|
 | `strict` | −20 | −8 | −2 |
 | `balanced` (default) | −15 | −5 | −1 |
