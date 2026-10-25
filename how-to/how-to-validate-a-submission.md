@@ -30,7 +30,7 @@ For each PR the command:
    required data cache.
 3. Scores the candidate in a temporary worktree.
 4. Leaves failing PRs open, comments with the failure, and continues.
-5. Merges passing PRs, updates `leaderboard.json` and `docs/`, and pushes
+5. Merges passing PRs, updates `docs/`, and pushes
    `submission`.
 
 After processing, it creates and merges the promotion PR from `submission` to
