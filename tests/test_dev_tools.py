@@ -29,7 +29,13 @@ def test_baseline_is_cleaned_up() -> None:
 
 
 def test_markdown_files_follow_gitignore(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setattr(dev_tools, "ROOT", tmp_path)
-    monkeypatch.setattr(dev_tools, "_git", lambda *args, **kwargs: "visible.md")
+    calls = []
 
-    assert dev_tools._markdown_files(tmp_path) == [tmp_path / "visible.md"]
+    def fake_git(*args, **kwargs):
+        calls.append(args)
+        return "visible.md"
+
+    monkeypatch.setattr(dev_tools, "_git", fake_git)
+
+    assert dev_tools._markdown_files(tmp_path, respect_gitignore=True) == [tmp_path / "visible.md"]
+    assert calls == [("ls-files", "--cached", "--others", "--exclude-standard", "*.md")]
