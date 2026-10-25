@@ -47,9 +47,8 @@ def test_snake_partial_run_does_not_pass(tmp_path: Path) -> None:
         {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
     result = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(materialize_submission(submission))
-    score, score_std, passed, details = result
-    assert score == 1.0
-    assert score_std == 0.0
+    score, passed, details = result
+    assert score == 0.0
     assert passed is False
     assert details["seed_lengths"] == [1, 1, 1]
     assert details["seed_moves"] == [5, 5, 5]
@@ -87,11 +86,10 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         },
         {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
-    score, score_std, passed, details = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(
+    score, passed, details = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(
         materialize_submission(submission)
     )
-    assert score == 64.0
-    assert score_std == 0.0
+    assert score == 1.0
     assert passed is True
     assert details["seed_lengths"] == [64, 64, 64]
     assert details["seed_moves"] == [1, 1, 1]
@@ -99,48 +97,6 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
 def test_snake_defaults_to_100_seeds() -> None:
     assert SnakeBenchmark().seeds == tuple(range(100))
-
-
-def test_snake_score_std_across_seeds(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    class VariableEnvironment:
-        size = 8
-
-        def __init__(
-            self,
-            size: int,
-            seed: int,
-            max_moves: int,
-            input_indices: object = None,
-            blocked: object = (),
-            loop_on_full: bool = False,
-        ) -> None:
-            self.snake = [(0, 0)] * (64 if seed == 0 else 1)
-
-        def reset(self) -> tuple[int, ...]:
-            return (0.0,) * 24
-
-        def step(self, action: int) -> tuple[tuple[int, ...], float, bool]:
-            return (0.0,) * 24, 1.0, True
-
-    monkeypatch.setattr(snake_benchmark, "SnakeEnvironment", VariableEnvironment)
-    submission = _write_submission(
-        tmp_path,
-        {
-            "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
-            "input_size": 24,
-            "output_size": 4,
-        },
-        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
-    )
-    score, score_std, passed, details = SnakeBenchmark(seeds=(0, 1)).evaluate(
-        materialize_submission(submission)
-    )
-    assert score == 32.5
-    assert score_std == 31.5
-    assert passed is False
-    assert details["seed_lengths"] == [64, 1]
-    assert details["seed_moves"] == [1, 1]
 
 
 def test_snake_rejects_wrong_config(tmp_path: Path) -> None:
@@ -187,9 +143,8 @@ def test_snake_selected_inputs_evaluate(tmp_path: Path) -> None:
         {"weight": torch.zeros((4, 5)), "bias": torch.zeros(4)},
     )
     result = SnakeBenchmark(seeds=(0,)).evaluate(materialize_submission(submission))
-    score, score_std, passed, details = result
-    assert score == 1.0
-    assert score_std == 0.0
+    score, passed, details = result
+    assert score == 0.0
     assert passed is False
     assert details["seed_lengths"] == [1]
 
@@ -234,15 +189,14 @@ def test_mnist_evaluation_and_threshold(tmp_path: Path) -> None:
     loaded.state_dict["weight"][0, 0] = 1
     loaded.state_dict["weight"][1, 1] = 1
     loaded.model.load_state_dict(loaded.state_dict)
-    score, score_std, passed, details = MnistBenchmark(
-        data_path=data_path, expected_samples=2
-    ).evaluate(loaded)
+    score, passed, details = MnistBenchmark(data_path=data_path, expected_samples=2).evaluate(
+        loaded
+    )
     assert score == 1.0
-    assert score_std == 0.0
     assert passed is True
     assert details == {"samples": 2, "normalisation": False}
 
-    score, _, passed, _ = MnistBenchmark(
+    score, passed, _ = MnistBenchmark(
         data_path=data_path, threshold=1.01, expected_samples=2
     ).evaluate(loaded)
     assert score == 1.0
@@ -267,11 +221,10 @@ def test_mnist_normalisation_flag(tmp_path: Path) -> None:
     loaded.state_dict["weight"][0, 0] = 1
     loaded.state_dict["weight"][1, 1] = 1
     loaded.model.load_state_dict(loaded.state_dict)
-    score, score_std, passed, details = MnistBenchmark(
-        data_path=data_path, expected_samples=2
-    ).evaluate(loaded)
+    score, passed, details = MnistBenchmark(data_path=data_path, expected_samples=2).evaluate(
+        loaded
+    )
     assert score == 1.0
-    assert score_std == 0.0
     assert passed is True
     assert details == {"samples": 2, "normalisation": True}
 
@@ -324,7 +277,7 @@ def test_mnist_accepts_two_dimensional_labels(tmp_path: Path) -> None:
     inputs[1, 1] = 255
     _write_mnist_cache_with(data_path, inputs, torch.tensor([[0], [1]]))
     loaded = _loaded_mnist_submission(tmp_path)
-    score, _, passed, details = MnistBenchmark(data_path=data_path, expected_samples=2).evaluate(
+    score, passed, details = MnistBenchmark(data_path=data_path, expected_samples=2).evaluate(
         loaded
     )
     assert score == 1.0
@@ -424,11 +377,10 @@ def test_fashion_mnist_evaluation_and_threshold(tmp_path: Path) -> None:
     loaded.state_dict["weight"][0, 0] = 1
     loaded.state_dict["weight"][1, 1] = 1
     loaded.model.load_state_dict(loaded.state_dict)
-    score, score_std, passed, details = FashionMnistBenchmark(
+    score, passed, details = FashionMnistBenchmark(
         data_path=data_path, expected_samples=2
     ).evaluate(loaded)
     assert score == 1.0
-    assert score_std == 0.0
     assert passed is True
     assert details == {"samples": 2, "normalisation": False}
 
@@ -437,11 +389,10 @@ def test_fashion_mnist_normalisation_flag(tmp_path: Path) -> None:
     data_path = tmp_path / "fashion-mnist.pt"
     _write_mnist_cache(data_path)
     loaded = _loaded_fashion_mnist_submission(tmp_path, normalisation=True)
-    score, score_std, passed, details = FashionMnistBenchmark(
+    score, passed, details = FashionMnistBenchmark(
         data_path=data_path, expected_samples=2
     ).evaluate(loaded)
     assert score == 1.0
-    assert score_std == 0.0
     assert passed is True
     assert details == {"samples": 2, "normalisation": True}
 
@@ -453,7 +404,7 @@ def test_fashion_mnist_accepts_two_dimensional_labels(tmp_path: Path) -> None:
     inputs[1, 1] = 255
     _write_mnist_cache_with(data_path, inputs, torch.tensor([[0], [1]]))
     loaded = _loaded_fashion_mnist_submission(tmp_path)
-    score, _, passed, details = FashionMnistBenchmark(
+    score, passed, details = FashionMnistBenchmark(
         data_path=data_path, expected_samples=2
     ).evaluate(loaded)
     assert score == 1.0
@@ -584,11 +535,8 @@ def test_chess_eval_load_tensors(tmp_path: Path) -> None:
 def test_chess_eval_evaluate_dummy_passes(tmp_path: Path) -> None:
     data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 0)])
     loaded = materialize_submission(_chess_submission(tmp_path))
-    score, score_std, passed, details = ChessEval10kBenchmark(data_path=data, folds=2).evaluate(
-        loaded
-    )
+    score, passed, details = ChessEval10kBenchmark(data_path=data, folds=2).evaluate(loaded)
     assert score == 1.0
-    assert score_std == 0.0
     assert passed is True
     assert details["samples"] == 2
 
@@ -596,11 +544,8 @@ def test_chess_eval_evaluate_dummy_passes(tmp_path: Path) -> None:
 def test_chess_eval_evaluate_dummy_fails(tmp_path: Path) -> None:
     data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 60)])
     loaded = materialize_submission(_chess_submission(tmp_path))
-    score, score_std, passed, details = ChessEval10kBenchmark(data_path=data, folds=2).evaluate(
-        loaded
-    )
+    score, passed, details = ChessEval10kBenchmark(data_path=data, folds=2).evaluate(loaded)
     assert score == 0.5
-    assert score_std >= 0.0
     assert passed is False
     assert details["tolerance_pawns"] == 0.1
 

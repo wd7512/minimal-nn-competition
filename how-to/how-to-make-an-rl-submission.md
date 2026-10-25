@@ -94,20 +94,22 @@ checkpoint.
 
 ## 5. Scoring
 
-Every benchmark evaluates 100 fixed seeds (`0`–`99`).
+Every benchmark evaluates 100 fixed seeds (`0`–`99`). The score is the fraction
+of seeds that pass, so a passing submission scores `1.0`. The `Reward` column
+shows the mean episode return (for CartPole, the mean balanced steps with
+their standard deviation).
 
-- **CartPole**: the score is the mean number of balanced steps. A submission
-  passes only when every seed reaches 500 steps.
-- **Pendulum**: the score is the mean episode return over 200 steps. The pass
-  threshold is `-500`. A uniform random policy scores about `-1199`; the
-  checked-in example scores about `-140`.
-- **LunarLander**: the score is the mean episode return over at most 300 steps.
-  The pass threshold is `0`. A uniform random policy scores about `-11`; the
-  checked-in example scores about `8.2`.
+- **CartPole**: a seed passes when the pole stays balanced for all 500 steps.
+  The checked-in example's mean reward is about 500 steps.
+- **Pendulum**: a seed passes when its 200-step episode return clears `-500`.
+  A uniform random policy averages about `-1199`; the checked-in example about
+  `-140`.
+- **LunarLander**: a seed passes when the craft lands within 300 steps. A
+  uniform random policy averages about `-11`; the checked-in example about
+  `8.2`.
 
-Results rank passing submissions first, then by descending score and ascending
-parameter count. CartPole scores are already in steps; the other two scores are
-raw returns, so negative numbers are expected.
+Results rank passing submissions first, then by descending score (fraction of
+seeds passed) and ascending parameter count.
 
 ## 6. Evaluate locally
 

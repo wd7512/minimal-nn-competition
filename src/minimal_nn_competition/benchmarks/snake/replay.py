@@ -10,9 +10,9 @@ REPLAY_SEED = 0
 _SLUG_RE = re.compile(r"[^A-Za-z0-9_-]+")
 
 
-def replay_slug(submission):
-    """Map a submission name to a safe file stem."""
-    return _SLUG_RE.sub("_", submission).strip("_") or "game"
+def replay_slug(text):
+    """Map a submission or benchmark name to a safe file stem."""
+    return _SLUG_RE.sub("_", text).strip("_") or "game"
 
 
 def replay_stem(benchmark, submission):

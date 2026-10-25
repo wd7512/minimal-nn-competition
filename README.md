@@ -23,9 +23,7 @@ Open a pull request against `submission` with exactly
 `models/<benchmark>/<name>/config.json` and `model.pt`. Do not change code,
 dependencies, workflows, the leaderboard, or `docs/`.
 
-- [How to make a Snake Simple 8x8 submission](how-to/how-to-make-a-snake-simple-8x8-submission.md)
-- [How to make a Snake Simple 16x16 submission](how-to/how-to-make-a-snake-simple-16x16-submission.md)
-- [How to make a Snake Obstacles 8x8 submission](how-to/how-to-make-a-snake-obstacles-8x8-submission.md)
+- [How to make a Snake submission](how-to/how-to-make-a-snake-submission.md)
 - [How to make an MNIST submission](how-to/how-to-make-an-mnist-submission.md)
 - [How to make a Fashion-MNIST submission](how-to/how-to-make-a-fashion-mnist-submission.md)
 - [How to make a Chess evaluation submission](how-to/how-to-make-a-chess-eval-submission.md)

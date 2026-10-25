@@ -61,7 +61,6 @@ class ImageClassificationBenchmark:
             ) from exc
         return (
             accuracy,
-            0.0,
             accuracy >= self.threshold,
             {
                 "samples": len(labels),

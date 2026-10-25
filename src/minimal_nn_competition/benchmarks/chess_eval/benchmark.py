@@ -2,7 +2,6 @@
 
 import functools
 import json
-import statistics
 from pathlib import Path
 
 from minimal_nn_competition.model.entry import materialize_submission
@@ -107,7 +106,6 @@ class ChessEvalBenchmark:
         fold_scores = [within[index::folds].float().mean().item() for index in range(folds)]
         return (
             within.float().mean().item(),
-            statistics.pstdev(fold_scores),
             bool(within.all().item()),
             {
                 "samples": len(targets),
