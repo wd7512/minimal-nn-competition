@@ -26,3 +26,26 @@ def test_baseline_is_cleaned_up() -> None:
         assert (baseline / "pyproject.toml").is_file()
         path = Path(baseline)
     assert not path.exists()
+
+
+def test_markdown_files_exclude_opencode(tmp_path: Path) -> None:
+    opencode = tmp_path / ".opencode" / "skills"
+    opencode.mkdir(parents=True)
+    (opencode / "SKILL.md").write_text("skill", encoding="utf-8")
+    readme = tmp_path / "README.md"
+    readme.write_text("readme", encoding="utf-8")
+
+    assert dev_tools._markdown_files(tmp_path) == [readme]
+
+
+def test_markdown_files_follow_gitignore(monkeypatch, tmp_path: Path) -> None:
+    calls = []
+
+    def fake_git(*args, **kwargs):
+        calls.append(args)
+        return "visible.md"
+
+    monkeypatch.setattr(dev_tools, "_git", fake_git)
+
+    assert dev_tools._markdown_files(tmp_path, respect_gitignore=True) == [tmp_path / "visible.md"]
+    assert calls == [("ls-files", "--cached", "--others", "--exclude-standard", "*.md")]

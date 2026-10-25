@@ -37,6 +37,24 @@ def test_open_submission_prs_requires_successful_check(monkeypatch) -> None:
     assert prs[1].checks_summary == "no GitHub checks have run"
 
 
+def test_merge_deletes_short_lived_submission_branch(monkeypatch) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(github, "_gh", lambda args: calls.append(args) or "")
+
+    github.merge(1, delete_branch=True)
+
+    assert calls == [["pr", "merge", "1", "--merge", "--delete-branch"]]
+
+
+def test_merge_promotion_keeps_long_lived_branch(monkeypatch) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(github, "_gh", lambda args: calls.append(args) or "")
+
+    github.merge_promotion(2)
+
+    assert calls == [["pr", "merge", "2", "--merge"]]
+
+
 def test_open_submission_prs_rejects_failed_check(monkeypatch) -> None:
     payload = [
         {

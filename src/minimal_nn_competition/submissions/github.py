@@ -89,8 +89,11 @@ def comment(number: int, body: str) -> None:
     _gh(["pr", "comment", str(number), "--body", body])
 
 
-def merge(number: int) -> None:
-    _gh(["pr", "merge", str(number), "--merge", "--delete-branch"])
+def merge(number: int, *, delete_branch: bool) -> None:
+    args = ["pr", "merge", str(number), "--merge"]
+    if delete_branch:
+        args.append("--delete-branch")
+    _gh(args)
 
 
 def create_promotion_pr() -> int:
@@ -112,4 +115,4 @@ def create_promotion_pr() -> int:
 
 
 def merge_promotion(number: int) -> None:
-    merge(number)
+    merge(number, delete_branch=False)
