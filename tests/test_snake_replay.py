@@ -76,7 +76,7 @@ def test_render_submission_html() -> None:
         8.0,
         False,
         20,
-        {"max_length": 64, "seed_moves": [10, 20]},
+        {"seed_moves": [10, 20]},
     )
     page = render_submission_html(result, payload, 1, 1)
     assert "<canvas" in page
@@ -101,7 +101,7 @@ def test_render_submission_html_defaults_16x_for_16x16() -> None:
         8.0,
         False,
         20,
-        {"max_length": 256, "seed_moves": [10, 20]},
+        {"seed_moves": [10, 20]},
     )
     page = render_submission_html(result, payload, 1, 1)
     assert '<option value="16" selected>16x</option>' in page
@@ -116,17 +116,17 @@ def _results() -> list[BenchmarkResult]:
             8.0,
             False,
             20,
-            {"max_length": 64, "seed_moves": [10, 20]},
+            {"seed_moves": [10, 20]},
         ),
     ]
 
 
 def test_game_length_text() -> None:
     result = BenchmarkResult(
-        "example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64, "seed_moves": [10, 20]}
+        "example", "snake-simple-8x8", 8.0, False, 20, {"seed_moves": [10, 20]}
     )
     assert _game_length_text(result) == "15.0 ± 5.0"
-    missing = BenchmarkResult("example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64})
+    missing = BenchmarkResult("example", "snake-simple-8x8", 8.0, False, 20, {})
     assert _game_length_text(missing) == "-"
 
 
@@ -161,7 +161,7 @@ def test_render_site_without_replays_still_links_details(tmp_path: Path) -> None
 
 def test_render_submission_pages_uses_slug_lookup(tmp_path: Path) -> None:
     payload = record_game(_right_model())
-    result = BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64})
+    result = BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {})
     links = render_submission_pages([result], {"snake-simple-8x8--my_model": payload}, tmp_path)
     assert links == {
         ("snake-simple-8x8", "my model"): "submissions/snake-simple-8x8--my_model.html"
@@ -172,8 +172,8 @@ def test_render_submission_pages_uses_slug_lookup(tmp_path: Path) -> None:
 def test_render_submission_pages_rejects_slug_collisions(tmp_path: Path) -> None:
     payload = record_game(_right_model())
     results = [
-        BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
-        BenchmarkResult("my_model", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
+        BenchmarkResult("my model", "snake-simple-8x8", 8.0, False, 20, {}),
+        BenchmarkResult("my_model", "snake-simple-8x8", 8.0, False, 20, {}),
     ]
     with pytest.raises(ValueError, match="collision"):
         render_submission_pages(results, {"snake-simple-8x8--my_model": payload}, tmp_path)

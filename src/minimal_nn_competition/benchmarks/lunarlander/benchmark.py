@@ -1,4 +1,8 @@
-"""LunarLander benchmark: a 4-logit net lands a point-mass craft on a pad."""
+"""LunarLander benchmark: a 4-logit net lands a point-mass craft on a pad.
+
+Score is the fraction of seeds that land (1.0 = every seed passes); mean
+return stays in details as the reward column.
+"""
 
 import random
 import statistics
@@ -11,20 +15,16 @@ DEFAULT_SEEDS = tuple(range(100))
 DEFAULT_MAX_STEPS = 300
 INPUT_SIZE = 8
 OUTPUT_SIZE = 4
-# Tuned after measuring the PPO example and a uniform random policy; see
-# `models/lunarlander/example` and tests/test_rl_environments.py.
-PASS_THRESHOLD = 0.0
 
 
 class LunarLanderBenchmark:
     name = "lunarlander"
 
-    def __init__(self, seeds=DEFAULT_SEEDS, max_steps=DEFAULT_MAX_STEPS, threshold=PASS_THRESHOLD):
+    def __init__(self, seeds=DEFAULT_SEEDS, max_steps=DEFAULT_MAX_STEPS):
         if not seeds or max_steps <= 0:
             raise ValueError("LunarLander benchmark requires seeds and positive max_steps")
         self.seeds = seeds
         self.max_steps = max_steps
-        self.threshold = threshold
 
     def load_submission(self, submission):
         if submission.config.benchmark != self.name:
@@ -63,17 +63,13 @@ class LunarLanderBenchmark:
                 returns.append(total)
                 landed.append(success)
                 steps.append(taken)
-        score = statistics.fmean(returns)
         return (
-            score,
-            statistics.pstdev(returns),
-            score >= self.threshold,
+            statistics.fmean(landed),
+            all(landed),
             {
                 "seed_returns": returns,
                 "seed_landed": landed,
                 "seed_steps": steps,
-                "max_steps": self.max_steps,
-                "seeds": len(self.seeds),
-                "threshold": self.threshold,
+                "mean_return": statistics.fmean(returns),
             },
         )

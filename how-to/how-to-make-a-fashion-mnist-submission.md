@@ -1,9 +1,10 @@
 # How to make a Fashion-MNIST submission
 
-Fashion-MNIST uses 784 flattened pixel inputs and 10 outputs. The score is
-accuracy on all 70,000 Fashion-MNIST examples (the official 60,000 training and
-10,000 test images combined); a submission passes at 100%. There is no held-out
-split.
+Fashion-MNIST lives in the Image compression group alongside MNIST. It uses
+784 flattened pixel inputs and 10 outputs. The score is the fraction of
+all 70,000 Fashion-MNIST examples (the official 60,000 training and 10,000
+test images combined) classified correctly; a submission passes at `1.0` —
+every example. There is no held-out split.
 
 ## 1. Create the submission
 
@@ -75,9 +76,10 @@ caches are no longer written and can be deleted.
 ## Scoring
 
 Fashion-MNIST evaluates all 70,000 examples. Train on the same data you are
-scored on and fit every example exactly. The score is accuracy shown as a
-percentage; a submission passes at 100%. Results rank passing submissions before
-failing submissions, then by descending score and ascending parameter count.
+scored on and fit every example exactly. The score is the fraction classified
+correctly, so a passing submission scores `1.0` (shown as `100.00%` on the
+site). Results rank passing submissions before failing submissions, then by
+descending score and ascending parameter count.
 
 ## Train the example
 

@@ -130,7 +130,7 @@ def record_game(benchmark, model, seed=REPLAY_SEED, steps=None):
         return _record_cartpole(model, seed, steps)
     if benchmark == "pendulum":
         if steps is None:
-            steps = pendulum_benchmark.DEFAULT_HORIZON
+            steps = pendulum_benchmark.DEFAULT_MAX_STEPS
         return _record_pendulum(model, seed, steps)
     if benchmark == "lunarlander":
         if steps is None:
@@ -139,12 +139,9 @@ def record_game(benchmark, model, seed=REPLAY_SEED, steps=None):
     raise ValueError(f"Unknown control benchmark: {benchmark}")
 
 
-def mean_steps(result):
-    """Return the mean ± std episode length, mirroring snake's game length."""
+def steps_text(result):
+    """Return the mean ± std episode steps, mirroring snake's game length."""
     steps = result.details.get("seed_steps")
     if isinstance(steps, list) and steps:
         return f"{statistics.fmean(steps):.1f} ± {statistics.pstdev(steps):.1f}"
-    horizon = result.details.get("horizon")
-    if isinstance(horizon, int):
-        return f"{horizon} ± 0.0"
     return "-"
