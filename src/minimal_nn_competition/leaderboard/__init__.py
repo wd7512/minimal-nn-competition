@@ -84,7 +84,6 @@ def load_results(path):
                 passed=bool(item["passed"]),
                 parameter_count=int(item["parameter_count"]),
                 details=dict(item["details"]),
-                score_std=float(item.get("score_std", 0.0)),
                 name=str(item.get("name", item.get("submission", "unknown"))),
                 author=str(item.get("author", "unknown")),
             )

@@ -114,7 +114,6 @@ tests/test_training.py""".splitlines()
             """tests/test_benchmarks.py::test_snake_partial_run_does_not_pass
 tests/test_benchmarks.py::test_snake_full_board_passes
 tests/test_benchmarks.py::test_snake_defaults_to_100_seeds
-tests/test_benchmarks.py::test_snake_score_std_across_seeds
 tests/test_benchmarks.py::test_snake_rejects_wrong_config
 tests/test_benchmarks.py::test_snake_selected_input_indices_build_smaller_model
 tests/test_benchmarks.py::test_snake_selected_inputs_evaluate
@@ -152,6 +151,7 @@ tests/test_chess_eval_data.py::test_chess_eval_100k_contains_10k""".splitlines()
         tuple(
             """tests/test_rl_environments.py::test_cartpole_engine_is_deterministic
 tests/test_rl_environments.py::test_cartpole_reset_bounds
+tests/test_rl_environments.py::test_cartpole_seeds_vary_position_and_angle
 tests/test_rl_environments.py::test_registry_includes_control_benchmarks
 tests/test_rl_environments.py::test_cartpole_rejects_wrong_config
 tests/test_rl_environments.py::test_cartpole_calibration
@@ -159,6 +159,7 @@ tests/test_rl_environments.py::test_control_evaluate_cli
 tests/test_rl_environments.py::test_control_collect_cli
 tests/test_rl_environments.py::test_control_train_commands_wire_examples
 tests/test_rl_environments.py::test_render_control_group
+tests/test_rl_environments.py::test_control_score_is_pass_fraction[cartpole-4-2]
 tests/test_control_replay.py""".splitlines()
         ),
     ),
@@ -168,8 +169,10 @@ tests/test_control_replay.py""".splitlines()
         tuple(
             """tests/test_rl_environments.py::test_pendulum_engine_is_deterministic
 tests/test_rl_environments.py::test_pendulum_reset_bounds
+tests/test_rl_environments.py::test_pendulum_seeds_vary_initial_state
 tests/test_rl_environments.py::test_pendulum_rejects_wrong_config
-tests/test_rl_environments.py::test_pendulum_calibration""".splitlines()
+tests/test_rl_environments.py::test_pendulum_calibration
+tests/test_rl_environments.py::test_control_score_is_pass_fraction[pendulum-3-5]""".splitlines()
         ),
     ),
     Scope(
@@ -178,8 +181,10 @@ tests/test_rl_environments.py::test_pendulum_calibration""".splitlines()
         tuple(
             """tests/test_rl_environments.py::test_lunarlander_engine_is_deterministic
 tests/test_rl_environments.py::test_lunarlander_reset_bounds
+tests/test_rl_environments.py::test_lunarlander_seeds_vary_initial_state
 tests/test_rl_environments.py::test_lunarlander_rejects_wrong_config
-tests/test_rl_environments.py::test_lunarlander_calibration""".splitlines()
+tests/test_rl_environments.py::test_lunarlander_calibration
+tests/test_rl_environments.py::test_control_score_is_pass_fraction[lunarlander-8-4]""".splitlines()
         ),
     ),
     Scope(
@@ -204,6 +209,7 @@ tests/test_configs.py
 tests/test_integration.py::test_checked_in_examples_load
 tests/test_integration.py::test_render_site
 tests/test_integration.py::test_render_near_perfect_failure_is_not_shown_as_100
+tests/test_integration.py::test_render_shows_structure_row
 tests/test_integration.py::test_render_mnist_has_no_game_length_column
 tests/test_integration.py::test_render_chess_eval
 tests/test_integration.py::test_rank_chess_eval_breaks_score_ties_by_mean_error

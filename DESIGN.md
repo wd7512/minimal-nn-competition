@@ -9,15 +9,15 @@ full result metadata. Pass/Fail language and the version footer are preserved.
 
 **Benchmark Atlas** is the selected direction.
 
-- A sticky left rail lists the benchmark groups and total run counts.
+- A sticky left rail lists the benchmark groups and total submission counts.
 - The main column starts with a short masthead, then one section per group.
-- Each group has a numbered eyebrow, a large title, a one-line description, and
-  active-version run/pass counts.
+- Each group has a numbered eyebrow and a large title.
 - The group title cycles through versions when JavaScript is available. A
   version row underneath offers direct selection.
 - The table is the primary content: neutral rules, generous spacing, a sticky
   rank column on narrow screens, and horizontal scrolling instead of compressed
-  cells. It keeps only rank, submission, score, status, and parameters.
+  cells. It keeps rank, submission (with its score), parameters, and one
+  benchmark-specific column: Game length, Error, or Reward.
 - Submission names are links. The link opens a detail page in the same tab; the
   secondary line shows the raw submission id when it differs from the name.
 
@@ -29,7 +29,7 @@ not fill surfaces or decorate every control.
 | Group | Versions, in order | Default |
 | --- | --- | --- |
 | Snake | Simple 8×8, Simple 16×16, Obstacles 8×8 | Simple 8×8 |
-| MNIST | MNIST, Fashion-MNIST | MNIST |
+| Image compression | MNIST, Fashion-MNIST | MNIST |
 | Chess evaluation | Stockfish 10k, Stockfish 100k | Stockfish 10k |
 
 Unknown benchmarks fall back to their own single-version group after the known
@@ -87,7 +87,7 @@ theme toggle.
 
 The index table is intentionally small:
 
-`#`, Submission, Score, Status, Parameters.
+`#`, Name (with score and status), Parameters, and the benchmark column.
 
 - Ranks restart at 1 for each benchmark version.
 - Parameter counts use grouped digits.
@@ -107,9 +107,10 @@ self-contained and reuse the atlas tokens.
   benchmarks without a replay use a single metadata column.
 - Snake pages with a replay embed the canvas and controls and write the replay
   JSON to `games/{stem}.json`. Snake pages without a replay say "Not recorded".
-- Metadata always includes submission id, name, author, rank, score, status, and
-  parameters, plus benchmark-specific fields when present: normalisation,
-  game length, seed game count, samples, and chess tolerance.
+- Metadata always includes submission id, name, author, rank, score, status,
+  structure (for example `[784,14,14,10]`), and parameters, plus
+  benchmark-specific fields when present: normalisation, reward, game length,
+  seed game count, landings, and chess tolerance.
 - Replay and detail links are relative and open in the same tab.
 - Detail filenames use the same collision check as replays, so distinct
   submissions can never overwrite one another.

@@ -94,7 +94,9 @@ def test_evaluate_mnist_cli(
         )
         == 0
     )
-    assert '"benchmark": "mnist"' in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert '"benchmark": "mnist"' in out
+    assert '"structure": [784, 64, 10]' in out
 
 
 def test_evaluate_mnist_uses_default_data_path(
@@ -157,7 +159,7 @@ def test_render_shows_name_and_author(tmp_path: Path) -> None:
             8.0,
             False,
             20,
-            {"max_length": 64},
+            {},
             name="Cool Net",
             author="tester",
         ),
@@ -170,6 +172,29 @@ def test_render_shows_name_and_author(tmp_path: Path) -> None:
     assert "<dt>Author</dt>" in detail
     assert "Cool Net" in detail
     assert "tester" in detail
+
+
+def test_render_shows_structure_row(tmp_path: Path) -> None:
+    results = [
+        BenchmarkResult(
+            "mlp-14-14",
+            "mnist",
+            1.0,
+            True,
+            3070,
+            {"normalisation": True, "structure": [784, 14, 14, 10]},
+            author="tester",
+        ),
+        BenchmarkResult(
+            "plain", "mnist", 0.5, False, 10, {"normalisation": False}, author="tester"
+        ),
+    ]
+    render_site(results, tmp_path)
+    detail = (tmp_path / "submissions" / "mnist--mlp-14-14.html").read_text()
+    assert "<dt>Structure</dt><dd>[784,14,14,10]</dd>" in detail
+    assert detail.index("<dt>Structure</dt>") < detail.index("<dt>Parameters</dt>")
+    plain = (tmp_path / "submissions" / "mnist--plain.html").read_text()
+    assert "Structure</dt>" not in plain
 
 
 def test_render_site(tmp_path: Path) -> None:
@@ -188,17 +213,16 @@ def test_render_site(tmp_path: Path) -> None:
         BenchmarkResult(
             "snake-example",
             "snake-simple-8x8",
-            1.0,
+            0.0,
             False,
             20,
-            {"seed_lengths": [1], "max_length": 64, "seed_moves": [10, 20]},
-            score_std=0.5,
+            {"seed_lengths": [1], "seed_moves": [10, 20]},
         ),
     ]
     index = render_site(results, tmp_path)
     html = index.read_text()
     assert 'id="snake"' in html
-    assert 'id="mnist"' in html
+    assert 'id="image-compression"' in html
     assert "Fashion-MNIST" in html
     assert "Simple 8×8" in html
     assert "fashion-example" in html
@@ -206,8 +230,8 @@ def test_render_site(tmp_path: Path) -> None:
     assert 'href="internal/speed/"' in html
     assert f"v{__version__}" in html
     assert "50.00%" in html
-    assert "1.56%" in html
-    assert "1.56% ±" not in html
+    assert "0.00%" in html
+    assert "0.00% ±" not in html
     assert "Game length</th>" in html
     assert "Samples</th>" not in html
     assert "Normalisation</th>" not in html
@@ -227,7 +251,7 @@ def test_render_site(tmp_path: Path) -> None:
         "mnist-example",
         "snake-example",
     ]
-    assert raw[2]["score_std"] == 0.5
+    assert raw[2]["details"]["seed_moves"] == [10, 20]
 
 
 def test_render_near_perfect_failure_is_not_shown_as_100(tmp_path: Path) -> None:
@@ -333,10 +357,8 @@ def test_render_snake_caption_explains_failed_game_tiebreak(tmp_path: Path) -> N
 
 def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
     results = [
-        BenchmarkResult(
-            "snake-8", "snake-simple-8x8", 1.0, False, 10, {"seed_lengths": [1], "max_length": 64}
-        ),
-        BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {"max_length": 256}),
+        BenchmarkResult("snake-8", "snake-simple-8x8", 1.0, False, 10, {"seed_lengths": [1]}),
+        BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {}),
         BenchmarkResult("mnist", "mnist", 0.5, False, 10, {"normalisation": False}),
         BenchmarkResult("fashion", "fashion-mnist", 0.5, False, 10, {"normalisation": True}),
         BenchmarkResult("chess-10k", "chess-eval-10k", 1.0, True, 10, {"tolerance_pawns": 0.1}),
@@ -350,7 +372,11 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
         ),
     ]
     html = render_site(results, tmp_path).read_text()
-    assert html.index('id="snake"') < html.index('id="mnist"') < html.index('id="chess"')
+    assert (
+        html.index('id="snake"') < html.index('id="image-compression"') < html.index('id="chess"')
+    )
+    assert "Image compression" in html
+    assert 'id="mnist"' not in html
     assert 'data-version="snake-simple-8x8"' in html
     assert 'data-version="snake-simple-16x16"' in html
     assert 'class="version-panel is-active" id="panel-snake-simple-8x8"' in html

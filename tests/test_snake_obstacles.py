@@ -195,20 +195,18 @@ def test_obstacle_benchmark_is_registered() -> None:
 
 def test_obstacle_benchmark_evaluation_with_dummy_model(tmp_path: Path) -> None:
     submission = _write_submission(tmp_path)
-    score, score_std, passed, details = SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS).evaluate(
+    score, passed, details = SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS).evaluate(
         materialize_submission(submission)
     )
-    assert score == statistics.fmean(details["seed_lengths"])
-    assert score_std == statistics.pstdev(details["seed_lengths"])
+    assert score == statistics.fmean(details["seed_passed"])
     assert passed is False
-    assert details["target_lengths"] == [
+    assert details["seed_target_lengths"] == [
         64 - len(obstacles_for_seed(8, seed)) for seed in FAST_SEEDS
     ]
     assert details["seed_blocked"] == [
         [list(cell) for cell in obstacles_for_seed(8, seed)] for seed in FAST_SEEDS
     ]
     assert details["seed_passed"] == [False, False, False]
-    assert details["max_length"] == max(details["target_lengths"])
 
 
 @pytest.mark.parametrize("won", [True, False])
@@ -237,7 +235,7 @@ def test_obstacle_benchmark_requires_the_loop_win(
 
     monkeypatch.setattr(snake_benchmark, "SnakeEnvironment", LoopEnvironment)
     submission = _write_submission(tmp_path)
-    _, _, passed, details = SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS).evaluate(
+    _, passed, details = SnakeObstacles8x8Benchmark(seeds=FAST_SEEDS).evaluate(
         materialize_submission(submission)
     )
     assert passed is won
@@ -265,7 +263,7 @@ def test_replay_payload_and_render_include_obstacles(tmp_path: Path) -> None:
         60.0,
         True,
         20,
-        {"seed_lengths": [60], "target_lengths": [60], "seed_moves": [100]},
+        {"seed_lengths": [60], "seed_target_lengths": [60], "seed_moves": [100]},
     )
     page = render_submission_html(result, payload, 1, 1)
     assert "Obstacles 8×8" in page
@@ -290,21 +288,21 @@ def test_replay_render_handles_a_full_board_without_food() -> None:
         "frames": [{"snake": [[4, 4]], "food": None}],
     }
     result = BenchmarkResult(
-        "example", "snake-obstacles-8x8", 60.0, True, 20, {"seed_lengths": [60]}
+        "example", "snake-obstacles-8x8", 1.0, True, 20, {"seed_lengths": [60]}
     )
     page = render_submission_html(result, payload, 1, 1)
     assert '"food": null' in page
     assert "if (food)" in page
 
 
-def test_score_text_uses_per_seed_target_lengths() -> None:
+def test_score_text_renders_pass_fraction() -> None:
     result = BenchmarkResult(
         "example",
         "snake-obstacles-8x8",
-        30.5,
-        True,
+        0.5,
+        False,
         20,
-        {"seed_lengths": [31, 30], "target_lengths": [62, 60]},
+        {"seed_lengths": [31, 30], "seed_target_lengths": [62, 60], "seed_passed": [True, False]},
     )
     assert _score_text(result) == "50.00%"
 
@@ -315,10 +313,10 @@ def test_render_site_shows_the_obstacle_section(tmp_path: Path) -> None:
     result = BenchmarkResult(
         "example",
         "snake-obstacles-8x8",
-        31.0,
+        0.5,
         False,
         20,
-        {"seed_lengths": [31], "target_lengths": [62], "seed_moves": [10]},
+        {"seed_lengths": [31], "seed_target_lengths": [62], "seed_moves": [10]},
     )
     index = render_site([result], tmp_path, {"snake-obstacles-8x8--example": payload})
     html = index.read_text()

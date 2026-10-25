@@ -67,8 +67,26 @@ def test_cartpole_engine_is_deterministic() -> None:
 
 def test_cartpole_reset_bounds() -> None:
     for seed in range(20):
-        state = cartpole_engine.reset(random.Random(seed))
-        assert all(-0.05 <= value <= 0.05 for value in state)
+        x, x_dot, theta, theta_dot = cartpole_engine.reset(random.Random(seed))
+        assert -cartpole_engine.INITIAL_X_LIMIT <= x <= cartpole_engine.INITIAL_X_LIMIT
+        assert (
+            -cartpole_engine.INITIAL_VELOCITY_LIMIT
+            <= x_dot
+            <= cartpole_engine.INITIAL_VELOCITY_LIMIT
+        )
+        assert -cartpole_engine.INITIAL_THETA_LIMIT <= theta <= cartpole_engine.INITIAL_THETA_LIMIT
+        assert (
+            -cartpole_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= theta_dot
+            <= cartpole_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+        )
+
+
+def test_cartpole_seeds_vary_position_and_angle() -> None:
+    states = [cartpole_engine.reset(random.Random(seed)) for seed in range(100)]
+    assert len({state[0] for state in states}) == 100
+    assert len({state[2] for state in states}) == 100
+    assert pytest.approx(math.radians(40.0)) == cartpole_engine.THETA_LIMIT
 
 
 def test_pendulum_engine_is_deterministic() -> None:
@@ -82,12 +100,21 @@ def test_pendulum_engine_is_deterministic() -> None:
 def test_pendulum_reset_bounds() -> None:
     for seed in range(20):
         theta, theta_dot = pendulum_engine.reset(random.Random(seed))
-        assert -math.pi <= theta <= math.pi
-        assert -1.0 <= theta_dot <= 1.0
+        assert -pendulum_engine.INITIAL_ANGLE_LIMIT <= theta <= pendulum_engine.INITIAL_ANGLE_LIMIT
+        assert (
+            -pendulum_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= theta_dot
+            <= pendulum_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+        )
         cos_theta, sin_theta, velocity = pendulum_engine.observation((theta, theta_dot))
         assert cos_theta == pytest.approx(math.cos(theta))
         assert sin_theta == pytest.approx(math.sin(theta))
         assert velocity == theta_dot
+
+
+def test_pendulum_seeds_vary_initial_state() -> None:
+    states = [pendulum_engine.reset(random.Random(seed)) for seed in range(100)]
+    assert len(set(states)) == 100
 
 
 def test_lunarlander_engine_is_deterministic() -> None:
@@ -101,13 +128,34 @@ def test_lunarlander_engine_is_deterministic() -> None:
 def test_lunarlander_reset_bounds() -> None:
     for seed in range(20):
         x, y, vx, vy, angle, angular_velocity = lunarlander_engine.reset(random.Random(seed))
-        assert -0.2 <= x <= 0.2
-        assert 1.0 <= y <= 1.2
-        assert -0.05 <= vx <= 0.05
-        assert -0.05 <= vy <= 0.05
-        assert -0.1 <= angle <= 0.1
-        assert -0.01 <= angular_velocity <= 0.01
+        assert -lunarlander_engine.INITIAL_X_LIMIT <= x <= lunarlander_engine.INITIAL_X_LIMIT
+        assert lunarlander_engine.INITIAL_Y_MIN <= y <= lunarlander_engine.INITIAL_Y_MAX
+        assert (
+            -lunarlander_engine.INITIAL_VELOCITY_LIMIT
+            <= vx
+            <= lunarlander_engine.INITIAL_VELOCITY_LIMIT
+        )
+        assert (
+            -lunarlander_engine.INITIAL_VELOCITY_LIMIT
+            <= vy
+            <= lunarlander_engine.INITIAL_VELOCITY_LIMIT
+        )
+        assert (
+            -lunarlander_engine.INITIAL_ANGLE_LIMIT
+            <= angle
+            <= lunarlander_engine.INITIAL_ANGLE_LIMIT
+        )
+        assert (
+            -lunarlander_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= angular_velocity
+            <= lunarlander_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+        )
         assert len(lunarlander_engine.observation((x, y, vx, vy, angle, angular_velocity))) == 8
+
+
+def test_lunarlander_seeds_vary_initial_state() -> None:
+    states = [lunarlander_engine.reset(random.Random(seed)) for seed in range(100)]
+    assert len(set(states)) == 100
 
 
 def test_registry_includes_control_benchmarks() -> None:
@@ -218,14 +266,15 @@ def test_cartpole_calibration(tmp_path: Path) -> None:
     assert max(random_steps) < benchmark.max_steps
 
     zero = materialize_submission(_zero_submission(tmp_path, "cartpole", 4, 2))
-    score, _, passed, _ = benchmark.evaluate(zero)
-    assert score < benchmark.max_steps
+    score, passed, _ = benchmark.evaluate(zero)
+    assert 0.0 <= score < 1.0
     assert passed is False
 
     example = Submission.from_directory(Path("models/cartpole/example"))
     result = evaluate_submission(example, benchmark)
-    assert result.score == benchmark.max_steps
+    assert result.score == 1.0
     assert result.passed is True
+    assert result.details["seed_steps"] == [benchmark.max_steps] * len(benchmark.seeds)
 
 
 def test_pendulum_calibration(tmp_path: Path) -> None:
@@ -235,21 +284,22 @@ def test_pendulum_calibration(tmp_path: Path) -> None:
         rng = random.Random(seed)
         state = pendulum_engine.reset(rng)
         total = 0.0
-        for _ in range(benchmark.horizon):
+        for _ in range(benchmark.max_steps):
             state, reward, _ = pendulum_engine.step(state, rng.randrange(5))
             total += reward
         returns.append(total)
     assert sum(returns) / len(returns) < benchmark.threshold
 
     zero = materialize_submission(_zero_submission(tmp_path, "pendulum", 3, 5))
-    score, _, passed, _ = benchmark.evaluate(zero)
-    assert score < benchmark.threshold
+    score, passed, _ = benchmark.evaluate(zero)
+    assert 0.0 <= score < 1.0
     assert passed is False
 
     example = Submission.from_directory(Path("models/pendulum/example"))
     result = evaluate_submission(example, benchmark)
-    assert result.score >= benchmark.threshold
+    assert result.score == 1.0
     assert result.passed is True
+    assert result.details["mean_return"] >= benchmark.threshold
 
 
 def test_lunarlander_calibration(tmp_path: Path) -> None:
@@ -265,17 +315,32 @@ def test_lunarlander_calibration(tmp_path: Path) -> None:
             if done:
                 break
         returns.append(total)
-    assert sum(returns) / len(returns) < benchmark.threshold
+    assert sum(returns) / len(returns) < 0.0
 
     zero = materialize_submission(_zero_submission(tmp_path, "lunarlander", 8, 4))
-    score, _, passed, _ = benchmark.evaluate(zero)
-    assert score < benchmark.threshold
+    score, passed, _ = benchmark.evaluate(zero)
+    assert 0.0 <= score < 1.0
     assert passed is False
 
     example = Submission.from_directory(Path("models/lunarlander/example"))
     result = evaluate_submission(example, benchmark)
-    assert result.score >= benchmark.threshold
+    assert result.score == 1.0
     assert result.passed is True
+    assert isinstance(result.details["mean_return"], float)
+
+
+@pytest.mark.parametrize(
+    ("name", "input_size", "output_size"),
+    [("cartpole", 4, 2), ("pendulum", 3, 5), ("lunarlander", 8, 4)],
+)
+def test_control_score_is_pass_fraction(
+    tmp_path: Path, name: str, input_size: int, output_size: int
+) -> None:
+    benchmark = create_benchmark(name, seeds=FAST_SEEDS)
+    zero = materialize_submission(_zero_submission(tmp_path, name, input_size, output_size))
+    score, passed, _ = benchmark.evaluate(zero)
+    assert 0.0 <= score <= 1.0
+    assert passed is (score == 1.0)
 
 
 @pytest.fixture
@@ -387,9 +452,9 @@ def test_control_train_commands_wire_examples(
 
 def test_render_control_group(tmp_path: Path) -> None:
     results = [
-        BenchmarkResult("cart", "cartpole", 500.0, True, 10, {"max_steps": 500}),
-        BenchmarkResult("pend", "pendulum", -140.0, True, 4741, {"horizon": 200}),
-        BenchmarkResult("land", "lunarlander", 8.0, True, 4996, {"max_steps": 300}),
+        BenchmarkResult("cart", "cartpole", 1.0, True, 10, {"seed_steps": [500]}),
+        BenchmarkResult("pend", "pendulum", 1.0, True, 4741, {"mean_return": -140.0}),
+        BenchmarkResult("land", "lunarlander", 1.0, True, 4996, {"mean_return": 8.0}),
     ]
     html = render_site(results, tmp_path).read_text()
     assert 'id="control"' in html
@@ -399,6 +464,8 @@ def test_render_control_group(tmp_path: Path) -> None:
     assert ">Lunar touchdown<" in html
     assert "--accent-control" in html
     assert "prefers-color-scheme: dark" in html
-    assert "500.00" in html
+    assert "100.00%" in html
+    assert "Reward</th>" in html
+    assert "500.0" in html
     assert "-140.00" in html
     assert "8.00" in html

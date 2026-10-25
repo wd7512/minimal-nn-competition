@@ -71,16 +71,24 @@ LunarLander:
 
 CartPole observes `(x, x_dot, theta, theta_dot)` and chooses `0` (push left) or
 `1` (push right). It runs for 500 steps per seed; the episode also ends early if
-the cart leaves the track or the pole falls too far.
+the cart leaves the track or the pole falls past 40 degrees. Each of the 100
+fixed seeds deterministically initializes the cart position uniformly in
+`[-1.5, 1.5]`, the pole angle uniformly in `[-25 degrees, 25 degrees]`, the cart velocity
+uniformly in `[-0.02, 0.02]`, and the pole angular velocity uniformly in
+`[-0.02, 0.02]`.
 
 Pendulum observes `(cos(theta), sin(theta), theta_dot)` and chooses one of five
-torques: `-2`, `-1`, `0`, `1`, or `2`. It runs for 200 steps per seed.
+torques: `-2`, `-1`, `0`, `1`, or `2`. It runs for 200 steps per seed. Each
+seed initializes `theta` uniformly in `[-π, π]` and `theta_dot` uniformly in
+`[-2.0, 2.0]`.
 
 LunarLander observes
 `(x, y, vx, vy, angle, angular_velocity, left_contact, right_contact)` and
 chooses `0` (coast), `1` (main engine), `2` (left thruster), or `3` (right
 thruster). It runs for at most 300 steps per seed. A seed ends when the craft
-touches the ground or leaves the play area.
+touches the ground or leaves the play area. Initial states use uniform ranges
+of `x ∈ [-0.4, 0.4]`, `y ∈ [1.0, 1.3]`, `vx, vy ∈ [-0.1, 0.1]`, `angle ∈
+[-0.2, 0.2]`, and `angular_velocity ∈ [-0.03, 0.03]`.
 
 ## 4. Save `model.pt`
 
@@ -94,20 +102,22 @@ checkpoint.
 
 ## 5. Scoring
 
-Every benchmark evaluates 100 fixed seeds (`0`–`99`).
+Every benchmark evaluates 100 fixed seeds (`0`–`99`). The score is the fraction
+of seeds that pass, so a passing submission scores `1.0`. The `Reward` column
+shows the mean episode return (for CartPole, the mean balanced steps with
+their standard deviation).
 
-- **CartPole**: the score is the mean number of balanced steps. A submission
-  passes only when every seed reaches 500 steps.
-- **Pendulum**: the score is the mean episode return over 200 steps. The pass
-  threshold is `-500`. A uniform random policy scores about `-1199`; the
-  checked-in example scores about `-140`.
-- **LunarLander**: the score is the mean episode return over at most 300 steps.
-  The pass threshold is `0`. A uniform random policy scores about `-11`; the
-  checked-in example scores about `8.2`.
+- **CartPole**: a seed passes when the pole stays balanced for all 500 steps.
+  The checked-in example's mean reward is about 500 steps.
+- **Pendulum**: a seed passes when its 200-step episode return clears `-500`.
+  A uniform random policy averages about `-1199`; the checked-in example about
+  `-140`.
+- **LunarLander**: a seed passes when the craft lands within 300 steps. A
+  uniform random policy averages about `-11`; the checked-in example about
+  `8.2`.
 
-Results rank passing submissions first, then by descending score and ascending
-parameter count. CartPole scores are already in steps; the other two scores are
-raw returns, so negative numbers are expected.
+Results rank passing submissions first, then by descending score (fraction of
+seeds passed) and ascending parameter count.
 
 ## 6. Evaluate locally
 

@@ -166,9 +166,7 @@ def test_rank_snake_keeps_score_over_parameters() -> None:
 
 
 def test_leaderboard_round_trip(tmp_path: Path) -> None:
-    result = BenchmarkResult(
-        "example", "snake-simple-8x8", 1, True, 8, {"seed_lengths": [1]}, score_std=0.5
-    )
+    result = BenchmarkResult("example", "snake-simple-8x8", 1, True, 8, {"seed_lengths": [1]})
     path = tmp_path / "leaderboard.json"
     save_results(path, [result])
     assert load_results(path) == [result]

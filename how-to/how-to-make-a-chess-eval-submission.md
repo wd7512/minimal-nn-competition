@@ -71,8 +71,8 @@ White's point of view (`cp / 100`). The score is the fraction of positions where
 `abs(prediction - target) <= 0.1`.
 
 A submission passes only at `1.0` (every position within 0.1 pawns). Results
-rank passing submissions first, then by descending score and ascending
-parameter count.
+rank passing submissions first, then by descending score, ascending parameter
+count, and ascending mean error.
 
 ## 5. Save `model.pt`
 

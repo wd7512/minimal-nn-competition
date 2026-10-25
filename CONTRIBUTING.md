@@ -16,13 +16,15 @@ is optional.
 
 Benchmark guides:
 
-- [Snake Simple 8x8](how-to/how-to-make-a-snake-simple-8x8-submission.md)
-- [Snake Simple 16x16](how-to/how-to-make-a-snake-simple-16x16-submission.md)
-- [Snake Obstacles 8x8](how-to/how-to-make-a-snake-obstacles-8x8-submission.md)
+- [Snake](how-to/how-to-make-a-snake-submission.md)
 - [MNIST](how-to/how-to-make-an-mnist-submission.md)
 - [Fashion-MNIST](how-to/how-to-make-a-fashion-mnist-submission.md)
 - [Chess evaluation](how-to/how-to-make-a-chess-eval-submission.md)
 - [Control (RL)](how-to/how-to-make-an-rl-submission.md)
+
+Each submission's detail page shows its structure — for example
+`[784,14,14,10]` — directly above the parameter count, taken from
+`input_size`, `hidden_sizes`, and `output_size` in `config.json`.
 
 Snake Obstacles 8x8 seeds two or four blocked cells per run. A submission
 passes only when every seed fills all free cells and then completes one extra
