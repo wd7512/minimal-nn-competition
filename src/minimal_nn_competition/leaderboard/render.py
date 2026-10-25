@@ -1039,7 +1039,7 @@ def _ranking_text(benchmark):
     if benchmark in SNAKE_BENCHMARKS:
         return (
             "pass status, score, parameter count, then game length; "
-            "submissions still tied at 0% rank by longest game first"
+            "failed submissions rank by longest game first"
         )
     if benchmark in CHESS_BENCHMARKS:
         return "pass status, score, parameter count, then mean error"

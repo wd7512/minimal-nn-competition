@@ -137,13 +137,13 @@ def test_registry_and_leaderboard_ranking() -> None:
     ]
 
 
-def test_rank_snake_zero_score_ties_favour_longest_game() -> None:
+def test_rank_snake_failed_ties_favour_longest_game() -> None:
     results = [
-        BenchmarkResult("small", "snake-obstacles-8x8", 0, True, 10, {"seed_moves": [50]}),
-        BenchmarkResult("large", "snake-obstacles-8x8", 0, True, 500, {"seed_moves": [200]}),
-        BenchmarkResult("unknown", "snake-obstacles-8x8", 0, True, 1, {}),
-        BenchmarkResult("gone", "snake-obstacles-8x8", 0, True, 1, {"seed_moves": []}),
-        BenchmarkResult("winner", "snake-obstacles-8x8", 0.5, True, 900, {"seed_moves": [10]}),
+        BenchmarkResult("small", "snake-obstacles-8x8", 5.0, False, 10, {"seed_moves": [50]}),
+        BenchmarkResult("large", "snake-obstacles-8x8", 5.0, False, 500, {"seed_moves": [200]}),
+        BenchmarkResult("unknown", "snake-obstacles-8x8", 5.0, False, 1, {}),
+        BenchmarkResult("gone", "snake-obstacles-8x8", 5.0, False, 1, {"seed_moves": []}),
+        BenchmarkResult("winner", "snake-obstacles-8x8", 50.0, True, 900, {"seed_moves": [10]}),
     ]
     assert [result.submission for result in rank_results(results)] == [
         "winner",

@@ -320,13 +320,13 @@ def test_rank_chess_eval_breaks_score_ties_by_mean_error() -> None:
     assert [result.submission for result in ranked] == ["better", "worse"]
 
 
-def test_render_snake_caption_explains_zero_score_tiebreak(tmp_path: Path) -> None:
+def test_render_snake_caption_explains_failed_game_tiebreak(tmp_path: Path) -> None:
     results = [
-        BenchmarkResult("obstacle-a", "snake-obstacles-8x8", 0, False, 50, {"seed_moves": [30]}),
-        BenchmarkResult("obstacle-b", "snake-obstacles-8x8", 0, False, 200, {"seed_moves": [90]}),
+        BenchmarkResult("obstacle-a", "snake-obstacles-8x8", 5.1, False, 50, {"seed_moves": [30]}),
+        BenchmarkResult("obstacle-b", "snake-obstacles-8x8", 5.1, False, 200, {"seed_moves": [90]}),
     ]
     html = render_site(results, tmp_path).read_text()
-    assert "submissions still tied at 0% rank by longest game first" in html
+    assert "failed submissions rank by longest game first" in html
     # Longest game ranks first despite having more parameters.
     assert html.index("obstacle-b") < html.index("obstacle-a")
 
