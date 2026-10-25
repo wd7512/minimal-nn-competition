@@ -9,6 +9,14 @@ from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.runner.entry import BenchmarkResult
 
 
+def short_commit(commit):
+    return commit[:7] if commit != "unknown" else commit
+
+
+def format_measured(measured_at):
+    return measured_at.replace("T", " ").replace("+00:00", " UTC") or "-"
+
+
 def _game_length(result):
     if result.benchmark not in SNAKE_BENCHMARKS:
         return 0.0

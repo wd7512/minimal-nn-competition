@@ -252,7 +252,7 @@ def main(argv=None):
     parser.add_argument(
         "--name", default=None, help="Display name (defaults to the output directory)"
     )
-    parser.add_argument("--author", default="unknown", help="Author credited on the leaderboard")
+    parser.add_argument("--author", default="unknown", help="Submission author")
     args = parser.parse_args(argv)
     train(
         args.output,
