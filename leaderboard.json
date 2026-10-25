@@ -3,8 +3,6 @@
     "author": "example author",
     "benchmark": "cartpole",
     "details": {
-      "max_steps": 500,
-      "mean_steps": 500.0,
       "seed_steps": [
         500,
         500,
@@ -107,7 +105,6 @@
         500,
         500
       ],
-      "seeds": 100,
       "structure": [
         4,
         2
@@ -123,8 +120,6 @@
     "author": "hermes",
     "benchmark": "cartpole",
     "details": {
-      "max_steps": 500,
-      "mean_steps": 500.0,
       "seed_steps": [
         500,
         500,
@@ -227,7 +222,6 @@
         500,
         500
       ],
-      "seeds": 100,
       "structure": [
         4,
         2
@@ -243,8 +237,6 @@
     "author": "jules",
     "benchmark": "cartpole",
     "details": {
-      "max_steps": 500,
-      "mean_steps": 500.0,
       "seed_steps": [
         500,
         500,
@@ -347,7 +339,6 @@
         500,
         500
       ],
-      "seeds": 100,
       "structure": [
         4,
         2
@@ -363,8 +354,6 @@
     "author": "mistral medium 3.5 x le vibe",
     "benchmark": "cartpole",
     "details": {
-      "max_steps": 500,
-      "mean_steps": 500.0,
       "seed_steps": [
         500,
         500,
@@ -467,7 +456,6 @@
         500,
         500
       ],
-      "seeds": 100,
       "structure": [
         4,
         2
@@ -685,7 +673,6 @@
     "author": "gemini 3.6 flash x Jules",
     "benchmark": "lunarlander",
     "details": {
-      "max_steps": 300,
       "mean_return": 8.091783717867528,
       "seed_landed": [
         true,
@@ -993,7 +980,6 @@
         10,
         9
       ],
-      "seeds": 100,
       "structure": [
         8,
         10,
@@ -1011,7 +997,6 @@
     "author": "example author",
     "benchmark": "lunarlander",
     "details": {
-      "max_steps": 300,
       "mean_return": 8.15907356720294,
       "seed_landed": [
         true,
@@ -1319,7 +1304,6 @@
         9,
         9
       ],
-      "seeds": 100,
       "structure": [
         8,
         64,
@@ -1433,7 +1417,6 @@
     "author": "example author",
     "benchmark": "pendulum",
     "details": {
-      "horizon": 200,
       "mean_return": -139.59718823558288,
       "seed_returns": [
         -112.1087900796886,
@@ -1537,14 +1520,12 @@
         -126.82818226851109,
         -125.95179113474697
       ],
-      "seeds": 100,
       "structure": [
         3,
         64,
         64,
         5
-      ],
-      "threshold": -500.0
+      ]
     },
     "name": "example",
     "parameter_count": 4741,
@@ -1556,7 +1537,6 @@
     "author": "example author",
     "benchmark": "snake-obstacles-8x8",
     "details": {
-      "max_length": 62,
       "seed_blocked": [
         [
           [
@@ -3241,14 +3221,7 @@
         false,
         false
       ],
-      "seeds": 100,
-      "structure": [
-        24,
-        64,
-        64,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         60,
         62,
         62,
@@ -3349,6 +3322,12 @@
         62,
         60,
         60
+      ],
+      "structure": [
+        24,
+        64,
+        64,
+        4
       ]
     },
     "name": "example",
@@ -3361,7 +3340,6 @@
     "author": "hermes",
     "benchmark": "snake-obstacles-8x8",
     "details": {
-      "max_length": 62,
       "seed_blocked": [
         [
           [
@@ -5046,13 +5024,7 @@
         false,
         false
       ],
-      "seeds": 100,
-      "structure": [
-        24,
-        512,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         60,
         62,
         62,
@@ -5153,6 +5125,11 @@
         62,
         60,
         60
+      ],
+      "structure": [
+        24,
+        512,
+        4
       ]
     },
     "name": "obs-fb",
@@ -5165,7 +5142,6 @@
     "author": "muse spark 1.3 x hermes",
     "benchmark": "snake-simple-16x16",
     "details": {
-      "max_length": 256,
       "seed_blocked": [
         [],
         [],
@@ -5574,13 +5550,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        6,
-        44,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         256,
         256,
         256,
@@ -5681,6 +5651,11 @@
         256,
         256,
         256
+      ],
+      "structure": [
+        6,
+        44,
+        4
       ]
     },
     "name": "cycle-44",
@@ -5693,7 +5668,6 @@
     "author": "hermes",
     "benchmark": "snake-simple-16x16",
     "details": {
-      "max_length": 256,
       "seed_blocked": [
         [],
         [],
@@ -6102,13 +6076,7 @@
         false,
         false
       ],
-      "seeds": 100,
-      "structure": [
-        6,
-        36,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         256,
         256,
         256,
@@ -6209,6 +6177,11 @@
         256,
         256,
         256
+      ],
+      "structure": [
+        6,
+        36,
+        4
       ]
     },
     "name": "serp-36",
@@ -6221,7 +6194,6 @@
     "author": "example author",
     "benchmark": "snake-simple-16x16",
     "details": {
-      "max_length": 256,
       "seed_blocked": [
         [],
         [],
@@ -6630,14 +6602,7 @@
         false,
         false
       ],
-      "seeds": 100,
-      "structure": [
-        24,
-        64,
-        64,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         256,
         256,
         256,
@@ -6738,6 +6703,12 @@
         256,
         256,
         256
+      ],
+      "structure": [
+        24,
+        64,
+        64,
+        4
       ]
     },
     "name": "example",
@@ -6750,7 +6721,6 @@
     "author": "opus 5.5 high x claude code",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -7159,13 +7129,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        6,
-        3,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -7266,6 +7230,11 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        6,
+        3,
+        4
       ]
     },
     "name": "hamiltonian-3-h6",
@@ -7278,7 +7247,6 @@
     "author": "muse spark 1.3 x hermes",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -7687,13 +7655,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        6,
-        8,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -7794,6 +7756,11 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        6,
+        8,
+        4
       ]
     },
     "name": "serpentine-8-h6",
@@ -7806,7 +7773,6 @@
     "author": "muse spark 1.3 x hermes",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -8215,14 +8181,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        14,
-        6,
-        6,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -8323,6 +8282,12 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        14,
+        6,
+        6,
+        4
       ]
     },
     "name": "serpentine-6-6-fs14",
@@ -8335,7 +8300,6 @@
     "author": "gemini 3.6 flash x jules",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -8744,14 +8708,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        14,
-        8,
-        8,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -8852,6 +8809,12 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        14,
+        8,
+        8,
+        4
       ]
     },
     "name": "hamiltonian-8-8-fs14",
@@ -8864,7 +8827,6 @@
     "author": "muse spark 1.3 x hermes",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -9273,14 +9235,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        14,
-        8,
-        8,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -9381,6 +9336,12 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        14,
+        8,
+        8,
+        4
       ]
     },
     "name": "serpentine-8-8-fs14",
@@ -9393,7 +9354,6 @@
     "author": "muse spark 1.3 x hermes",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -9802,14 +9762,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        14,
-        20,
-        16,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -9910,6 +9863,12 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        14,
+        20,
+        16,
+        4
       ]
     },
     "name": "hamiltonian-20-16-fs14",
@@ -9922,7 +9881,6 @@
     "author": "opus 5.5 high x claude code",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -10331,14 +10289,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        22,
-        16,
-        16,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -10439,6 +10390,12 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        22,
+        16,
+        16,
+        4
       ]
     },
     "name": "shortcut-16-16-fs22",
@@ -10451,7 +10408,6 @@
     "author": "muse spark 1.3 x hermes",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -10860,14 +10816,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        24,
-        24,
-        16,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -10968,6 +10917,12 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        24,
+        24,
+        16,
+        4
       ]
     },
     "name": "hamiltonian-24-16",
@@ -10980,7 +10935,6 @@
     "author": "muse spark 1.3 x hermes",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -11389,14 +11343,7 @@
         true,
         true
       ],
-      "seeds": 100,
-      "structure": [
-        14,
-        128,
-        128,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -11497,6 +11444,12 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        14,
+        128,
+        128,
+        4
       ]
     },
     "name": "table-128-128",
@@ -11509,7 +11462,6 @@
     "author": "example author",
     "benchmark": "snake-simple-8x8",
     "details": {
-      "max_length": 64,
       "seed_blocked": [
         [],
         [],
@@ -11918,14 +11870,7 @@
         false,
         false
       ],
-      "seeds": 100,
-      "structure": [
-        24,
-        64,
-        64,
-        4
-      ],
-      "target_lengths": [
+      "seed_target_lengths": [
         64,
         64,
         64,
@@ -12026,6 +11971,12 @@
         64,
         64,
         64
+      ],
+      "structure": [
+        24,
+        64,
+        64,
+        4
       ]
     },
     "name": "example",
