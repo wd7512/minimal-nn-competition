@@ -33,7 +33,7 @@ Read the diff or files and answer:
 - What is the stated purpose of this change?
 - Which files were modified?
 - Flag immediately if the PR changes more than 10 unrelated files — that itself is a
-  🟡 Warning: Change Propagation (a PR that touches many unrelated things is a sign
+  [yellow] Warning: Change Propagation (a PR that touches many unrelated things is a sign
   that responsibilities are tangled).
 
 ### Step 2: Scan for Change Propagation
@@ -98,7 +98,7 @@ production logic changes → skip Step 7 entirely.
 - Does the diff modify production code?
 - Are corresponding test file changes included in the diff?
 - If new public behavior was added with no new tests:
-  → 🟡 Warning: Coverage Illusion — new behavior is untested
+  → [yellow] Warning: Coverage Illusion — new behavior is untested
   → Source: Feathers — Working Effectively with Legacy Code, Ch. 1
 - If the change is a pure refactor and existing tests cover the behavior → no finding.
 
@@ -111,7 +111,7 @@ Only check if the diff includes test file changes.
 - Does the diff add any methods to production classes that are only called from test files?
 
 If any of these are true:
-  → 🟡 Warning: Mock Abuse — test complexity exceeds behavior complexity
+  → [yellow] Warning: Mock Abuse — test complexity exceeds behavior complexity
   → Source: Osherove — The Art of Unit Testing, mock usage guidelines
 
 **Signal 3: Quick Test Obscurity sniff**
@@ -123,7 +123,7 @@ Only check if the diff includes test file changes.
 - Are there new tests with multiple assertions and no message strings on any of them?
 
 If test names are vague or assertions lack messages:
-  → 🟢 Suggestion: Test Obscurity — test intent is unclear from the test name or assertions
+  → [green] Suggestion: Test Obscurity — test intent is unclear from the test name or assertions
   → Source: Meszaros — xUnit Test Patterns, Assertion Roulette (p.224)
 
 **Output rule:**
@@ -145,9 +145,9 @@ Label the risk as the test decay risk name (e.g., "Coverage Illusion", "Mock Abu
 Apply the Iron Law format from `../_shared/common.md`. Each risk in `../_shared/decay-risks.md` has its own Severity
 Guide with numeric thresholds — use those as the primary reference. When a finding sits
 on the boundary between two tiers, use this as a tiebreaker:
-- 🔴 Critical — actively breaking velocity or creating production risk *today*
-- 🟡 Warning — will if left unaddressed through the next few features
-- 🟢 Suggestion — worth fixing when nearby, not urgent
+- [red] Critical — actively breaking velocity or creating production risk *today*
+- [yellow] Warning — will if left unaddressed through the next few features
+- [green] Suggestion — worth fixing when nearby, not urgent
 
 When multiple findings exist, list Critical items first. If there are more than 5 findings,
 add a one-line "Recommended fix order" at the end of the Findings section.

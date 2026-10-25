@@ -578,6 +578,20 @@
     "submission": "example"
   },
   {
+    "author": "agent",
+    "benchmark": "fashion-mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000
+    },
+    "name": "mlp-32",
+    "parameter_count": 25450,
+    "passed": true,
+    "score": 1.0,
+    "score_std": 0.0,
+    "submission": "mlp-32"
+  },
+  {
     "author": "hermes",
     "benchmark": "fashion-mnist",
     "details": {

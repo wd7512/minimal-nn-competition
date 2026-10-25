@@ -82,8 +82,8 @@ Look for:
   (test-induced design damage)?
 - Does any single test create more than 3 mock objects?
 
-If mock setup-to-assertion ratio exceeds 3:1 → 🟡 Warning.
-If production methods exist only for test access → 🔴 Critical (architecture is being
+If mock setup-to-assertion ratio exceeds 3:1 → [yellow] Warning.
+If production methods exist only for test access → [red] Critical (architecture is being
 distorted by the test suite).
 
 ### Step 3: Scan for Test Duplication
@@ -97,7 +97,7 @@ Look for:
   difference in what each layer is testing?
 
 Severity: use the T3 Severity Guide in `../_shared/test-decay-risks.md`, with instance
-counts as the tiebreaker — 🔴 10+ instances, 🟡 3–9, 🟢 1–2.
+counts as the tiebreaker — [red] 10+ instances, [yellow] 3–9, [green] 1–2.
 
 ### Step 4: Scan for Coverage Illusion and Architecture Mismatch
 
@@ -130,10 +130,10 @@ Look for Architecture Mismatch:
 
 **Test suite performance:** A slow test suite is a first-class maintainability risk — it
 breaks the fast-feedback loop and causes developers to skip running tests locally.
-- If the full suite runtime is > 10 minutes → 🟡 Warning (per the T6 Severity Guide in
+- If the full suite runtime is > 10 minutes → [yellow] Warning (per the T6 Severity Guide in
   `../_shared/test-decay-risks.md`; runtime alone does not reach Critical)
-- Runtime > 30 minutes, or unknown because nobody runs the suite, is still 🟡 Warning —
-  but say so explicitly in the Symptom. It reaches 🔴 Critical only when combined with a
+- Runtime > 30 minutes, or unknown because nobody runs the suite, is still [yellow] Warning —
+  but say so explicitly in the Symptom. It reaches [red] Critical only when combined with a
   Critical T6 condition: legacy code under modification with no seams and no
   characterization tests, or a fully inverted pyramid
 - If tests that could be unit tests are integration tests, that is a Performance Mismatch:

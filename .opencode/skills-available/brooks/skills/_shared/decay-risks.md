@@ -39,9 +39,9 @@ Cognitive load beyond working memory causes mistakes, avoidance, and blocks the 
 
 ### Severity Guide
 
-- 🔴 Critical: function > 50 lines, nesting > 5, or virtually no meaningful names
-- 🟡 Warning: function 20–50 lines, nesting 4–5, some unclear names
-- 🟢 Suggestion: minor naming issues, 1–2 magic numbers, isolated train-wreck chains
+- [red] Critical: function > 50 lines, nesting > 5, or virtually no meaningful names
+- [yellow] Warning: function 20–50 lines, nesting 4–5, some unclear names
+- [green] Suggestion: minor naming issues, 1–2 magic numbers, isolated train-wreck chains
 
 ### What Not to Flag
 
@@ -89,9 +89,9 @@ Each change ripples to unrelated modules, slowing velocity and multiplying regre
 
 ### Severity Guide
 
-- 🔴 Critical: one change touches > 5 files, or there is a structural dependency inversion (domain depends on infrastructure)
-- 🟡 Warning: one change touches 3–5 files, mild coupling between modules
-- 🟢 Suggestion: minor coupling, easily isolatable
+- [red] Critical: one change touches > 5 files, or there is a structural dependency inversion (domain depends on infrastructure)
+- [yellow] Warning: one change touches 3–5 files, mild coupling between modules
+- [green] Suggestion: minor coupling, easily isolatable
 
 ### What Not to Flag
 
@@ -127,9 +127,9 @@ Multiple copies drift apart silently. DRY is about decisions, not code lines.
 
 ### Severity Guide
 
-- 🔴 Critical: core business logic duplicated across modules, or same domain concept named 3+ different ways
-- 🟡 Warning: utility code duplicated, naming inconsistent within a subsystem
-- 🟢 Suggestion: minor literal duplication, single naming inconsistency
+- [red] Critical: core business logic duplicated across modules, or same domain concept named 3+ different ways
+- [yellow] Warning: utility code duplicated, naming inconsistent within a subsystem
+- [green] Suggestion: minor literal duplication, single naming inconsistency
 
 ### What Not to Flag
 
@@ -171,9 +171,9 @@ Accidental complexity accumulates addition by addition until developers fight sc
 
 ### Severity Guide
 
-- 🔴 Critical: an entire subsystem built around a speculative requirement, or framework overhead dominates domain logic
-- 🟡 Warning: several unnecessary abstractions or wrapper classes, unused configuration systems
-- 🟢 Suggestion: one or two lazy classes or middle-man patterns in non-critical paths
+- [red] Critical: an entire subsystem built around a speculative requirement, or framework overhead dominates domain logic
+- [yellow] Warning: several unnecessary abstractions or wrapper classes, unused configuration systems
+- [green] Suggestion: one or two lazy classes or middle-man patterns in non-critical paths
 
 ### What Not to Flag
 
@@ -217,9 +217,9 @@ When business logic depends on infrastructure, infrastructure changes cascade in
 
 ### Severity Guide
 
-- 🔴 Critical: dependency cycles present, or domain layer directly depends on infrastructure layer
-- 🟡 Warning: several SDP or DIP violations but no cycles; conceptual inconsistency across modules
-- 🟢 Suggestion: minor Demeter violations, slightly elevated fan-out in isolated modules
+- [red] Critical: dependency cycles present, or domain layer directly depends on infrastructure layer
+- [yellow] Warning: several SDP or DIP violations but no cycles; conceptual inconsistency across modules
+- [green] Suggestion: minor Demeter violations, slightly elevated fan-out in isolated modules
 
 ### What Not to Flag
 
@@ -260,9 +260,9 @@ Code that mismatches business language forces mental translation. Over time it m
 
 ### Severity Guide
 
-- 🔴 Critical: domain logic entirely in service layer, domain objects are pure data bags with no behavior
-- 🟡 Warning: partial anemia, some naming inconsistency between code and domain language
-- 🟢 Suggestion: minor naming drift in non-core areas, isolated cases of Feature Envy
+- [red] Critical: domain logic entirely in service layer, domain objects are pure data bags with no behavior
+- [yellow] Warning: partial anemia, some naming inconsistency between code and domain language
+- [green] Suggestion: minor naming drift in non-core areas, isolated cases of Feature Envy
 
 ### What Not to Flag
 

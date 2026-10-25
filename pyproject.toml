@@ -13,6 +13,12 @@ dependencies = ["pydantic==2.14.1", "torch==2.14.1"]
 minimal-nn-competition = "minimal_nn_competition.__main__:main"
 minimal_nn_competition = "minimal_nn_competition.__main__:main"
 mnnc = "minimal_nn_competition.__main__:main"
+dev-tools = "minimal_nn_competition.dev_tools:main"
+
+[tool.custom-harbor.char-encoding]
+extensions = [".md", ".py", ".toml", ".json", ".yaml", ".yml", ".txt"]
+filenames = ["Dockerfile", "Makefile", "LICENSE"]
+evidence_directories = ["evidence", "captures"]
 
 [dependency-groups]
 dev = [
