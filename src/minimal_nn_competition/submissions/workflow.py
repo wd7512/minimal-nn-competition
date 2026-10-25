@@ -43,7 +43,7 @@ def _validate_pr(pr: PullRequest, root: Path) -> Path:
     if pr.base_ref != "submission":
         raise WorkflowError("PR does not target submission")
     if not pr.checks_passed:
-        raise WorkflowError("required GitHub checks have not passed")
+        raise WorkflowError(f"required GitHub checks have not passed ({pr.checks_summary})")
     diff = _git(["diff", "--name-status", f"origin/submission...{pr.head_sha}"], root)
     with tempfile.TemporaryDirectory(prefix=f"mnnc-validate-{pr.number}-") as temp:
         worktree = Path(temp) / "tree"
@@ -91,6 +91,7 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
 
     _git(["fetch", "origin", "main", "submission"], root)
     accepted = 0
+    skipped = 0
     for pr in prs:
         try:
             _git(
@@ -114,11 +115,15 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
             accepted += 1
             logger.info("Accepted PR #%d (%s)", pr.number, result.submission)
         except (GitHubError, OSError, RuntimeError, ValueError, TypeError) as exc:
+            skipped += 1
             message = f"Automated submission validation failed:\n\n{exc}"
             logger.error("PR #%d skipped: %s", pr.number, exc)
             comment(pr.number, message)
 
     if not accepted:
+        logger.info(
+            "Validation summary: %d processed, %d accepted, %d skipped", len(prs), accepted, skipped
+        )
         logger.info("No submissions accepted; skipping promotion")
         return 0
     promotion = create_promotion_pr()
@@ -126,4 +131,8 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
     _git(["fetch", "origin", "main"], root)
     _git(["merge", "--ff-only", "origin/main"], root)
     _git(["push", "origin", "submission"], root)
+    logger.info(
+        "Validation summary: %d processed, %d accepted, %d skipped", len(prs), accepted, skipped
+    )
+    logger.info("Promoted accepted submissions to main")
     return 0
