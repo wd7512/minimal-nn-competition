@@ -79,6 +79,17 @@ def _source_files(root: Path) -> list[Path]:
     )
 
 
+def _markdown_files(root: Path, *, respect_gitignore: bool = False) -> list[Path]:
+    if respect_gitignore:
+        return [
+            root / path
+            for path in _git(
+                "ls-files", "--cached", "--others", "--exclude-standard", "*.md"
+            ).splitlines()
+        ]
+    return sorted(root.rglob("*.md"))
+
+
 def _delta_message(delta: int, scale: int = 1) -> str:
     if delta > 100 * scale:
         return "this does not feel very minimal to me ..."
@@ -108,8 +119,11 @@ def tokens() -> int:
             current = score_files(scope_files(scope, ROOT))
             old = score_files(scope_files(scope, baseline))
             rows.append((name, old, current, current - old, 1))
-        current_md = sum(len(path.read_text(encoding="utf-8")) for path in ROOT.rglob("*.md"))
-        old_md = sum(len(path.read_text(encoding="utf-8")) for path in baseline.rglob("*.md"))
+        current_md = sum(
+            len(path.read_text(encoding="utf-8"))
+            for path in _markdown_files(ROOT, respect_gitignore=True)
+        )
+        old_md = sum(len(path.read_text(encoding="utf-8")) for path in _markdown_files(baseline))
         rows.append(("# chars in .md files", old_md, current_md, current_md - old_md, 10))
     print("Scope                         Main   Current       Delta")
     print("-" * 62)
