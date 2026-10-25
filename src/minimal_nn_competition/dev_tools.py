@@ -37,6 +37,7 @@ TOKEN_SCOPES = (
 TEXT_EXTENSIONS = {".md", ".py", ".toml", ".json", ".yaml", ".yml", ".txt"}
 SPECIAL_FILES = {"Dockerfile", "Makefile", "LICENSE"}
 EVIDENCE_DIRECTORIES = {"evidence", "captures"}
+IGNORED_MARKDOWN_PARTS = {".opencode"}
 SPEED_TOLERANCE = 0.05
 
 
@@ -81,13 +82,17 @@ def _source_files(root: Path) -> list[Path]:
 
 def _markdown_files(root: Path, *, respect_gitignore: bool = False) -> list[Path]:
     if respect_gitignore:
-        return [
+        paths = [
             root / path
             for path in _git(
                 "ls-files", "--cached", "--others", "--exclude-standard", "*.md"
             ).splitlines()
         ]
-    return sorted(root.rglob("*.md"))
+    else:
+        paths = sorted(root.rglob("*.md"))
+    return [
+        path for path in paths if IGNORED_MARKDOWN_PARTS.isdisjoint(path.relative_to(root).parts)
+    ]
 
 
 def _delta_message(delta: int, scale: int = 1) -> str:
