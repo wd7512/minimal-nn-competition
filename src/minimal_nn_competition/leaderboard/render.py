@@ -168,8 +168,8 @@ _SITE_STYLE = """
 .rail nav { display: grid; border-top: 1px solid var(--rule); }
 .rail a {
   display: grid;
-  grid-template-columns: 6px 22px minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: 6px 22px minmax(0, 1fr);
+  gap: 2px 8px;
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid var(--rule);
@@ -180,7 +180,7 @@ _SITE_STYLE = """
 .rail__index { font: 10px/1.4 var(--mono); color: var(--muted); }
 .rail a strong { font-weight: 600; }
 .rail a:hover strong { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
-.rail a small { font: 10px/1.4 var(--mono); color: var(--muted); white-space: nowrap; }
+.rail a small { grid-column: 3; font: 10px/1.4 var(--mono); color: var(--muted); white-space: nowrap; }
 .rail__note { margin: 20px 0 0; font: 11px/1.5 var(--mono); color: var(--muted); }
 .main { min-width: 0; }
 .masthead { border-bottom: 1px solid var(--rule-strong); padding-bottom: 32px; }
