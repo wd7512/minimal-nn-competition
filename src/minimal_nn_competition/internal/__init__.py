@@ -151,6 +151,7 @@ tests/test_chess_eval_data.py::test_chess_eval_100k_contains_10k""".splitlines()
         tuple(
             """tests/test_rl_environments.py::test_cartpole_engine_is_deterministic
 tests/test_rl_environments.py::test_cartpole_reset_bounds
+tests/test_rl_environments.py::test_cartpole_seeds_vary_position_and_angle
 tests/test_rl_environments.py::test_registry_includes_control_benchmarks
 tests/test_rl_environments.py::test_cartpole_rejects_wrong_config
 tests/test_rl_environments.py::test_cartpole_calibration
@@ -168,6 +169,7 @@ tests/test_control_replay.py""".splitlines()
         tuple(
             """tests/test_rl_environments.py::test_pendulum_engine_is_deterministic
 tests/test_rl_environments.py::test_pendulum_reset_bounds
+tests/test_rl_environments.py::test_pendulum_seeds_vary_initial_state
 tests/test_rl_environments.py::test_pendulum_rejects_wrong_config
 tests/test_rl_environments.py::test_pendulum_calibration
 tests/test_rl_environments.py::test_control_score_is_pass_fraction[pendulum-3-5]""".splitlines()
@@ -179,6 +181,7 @@ tests/test_rl_environments.py::test_control_score_is_pass_fraction[pendulum-3-5]
         tuple(
             """tests/test_rl_environments.py::test_lunarlander_engine_is_deterministic
 tests/test_rl_environments.py::test_lunarlander_reset_bounds
+tests/test_rl_environments.py::test_lunarlander_seeds_vary_initial_state
 tests/test_rl_environments.py::test_lunarlander_rejects_wrong_config
 tests/test_rl_environments.py::test_lunarlander_calibration
 tests/test_rl_environments.py::test_control_score_is_pass_fraction[lunarlander-8-4]""".splitlines()

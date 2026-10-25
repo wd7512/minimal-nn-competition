@@ -67,8 +67,26 @@ def test_cartpole_engine_is_deterministic() -> None:
 
 def test_cartpole_reset_bounds() -> None:
     for seed in range(20):
-        state = cartpole_engine.reset(random.Random(seed))
-        assert all(-0.05 <= value <= 0.05 for value in state)
+        x, x_dot, theta, theta_dot = cartpole_engine.reset(random.Random(seed))
+        assert -cartpole_engine.INITIAL_X_LIMIT <= x <= cartpole_engine.INITIAL_X_LIMIT
+        assert (
+            -cartpole_engine.INITIAL_VELOCITY_LIMIT
+            <= x_dot
+            <= cartpole_engine.INITIAL_VELOCITY_LIMIT
+        )
+        assert -cartpole_engine.INITIAL_THETA_LIMIT <= theta <= cartpole_engine.INITIAL_THETA_LIMIT
+        assert (
+            -cartpole_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= theta_dot
+            <= cartpole_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+        )
+
+
+def test_cartpole_seeds_vary_position_and_angle() -> None:
+    states = [cartpole_engine.reset(random.Random(seed)) for seed in range(100)]
+    assert len({state[0] for state in states}) == 100
+    assert len({state[2] for state in states}) == 100
+    assert pytest.approx(math.radians(40.0)) == cartpole_engine.THETA_LIMIT
 
 
 def test_pendulum_engine_is_deterministic() -> None:
@@ -82,12 +100,21 @@ def test_pendulum_engine_is_deterministic() -> None:
 def test_pendulum_reset_bounds() -> None:
     for seed in range(20):
         theta, theta_dot = pendulum_engine.reset(random.Random(seed))
-        assert -math.pi <= theta <= math.pi
-        assert -1.0 <= theta_dot <= 1.0
+        assert -pendulum_engine.INITIAL_ANGLE_LIMIT <= theta <= pendulum_engine.INITIAL_ANGLE_LIMIT
+        assert (
+            -pendulum_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= theta_dot
+            <= pendulum_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+        )
         cos_theta, sin_theta, velocity = pendulum_engine.observation((theta, theta_dot))
         assert cos_theta == pytest.approx(math.cos(theta))
         assert sin_theta == pytest.approx(math.sin(theta))
         assert velocity == theta_dot
+
+
+def test_pendulum_seeds_vary_initial_state() -> None:
+    states = [pendulum_engine.reset(random.Random(seed)) for seed in range(100)]
+    assert len(set(states)) == 100
 
 
 def test_lunarlander_engine_is_deterministic() -> None:
@@ -101,13 +128,34 @@ def test_lunarlander_engine_is_deterministic() -> None:
 def test_lunarlander_reset_bounds() -> None:
     for seed in range(20):
         x, y, vx, vy, angle, angular_velocity = lunarlander_engine.reset(random.Random(seed))
-        assert -0.2 <= x <= 0.2
-        assert 1.0 <= y <= 1.2
-        assert -0.05 <= vx <= 0.05
-        assert -0.05 <= vy <= 0.05
-        assert -0.1 <= angle <= 0.1
-        assert -0.01 <= angular_velocity <= 0.01
+        assert -lunarlander_engine.INITIAL_X_LIMIT <= x <= lunarlander_engine.INITIAL_X_LIMIT
+        assert lunarlander_engine.INITIAL_Y_MIN <= y <= lunarlander_engine.INITIAL_Y_MAX
+        assert (
+            -lunarlander_engine.INITIAL_VELOCITY_LIMIT
+            <= vx
+            <= lunarlander_engine.INITIAL_VELOCITY_LIMIT
+        )
+        assert (
+            -lunarlander_engine.INITIAL_VELOCITY_LIMIT
+            <= vy
+            <= lunarlander_engine.INITIAL_VELOCITY_LIMIT
+        )
+        assert (
+            -lunarlander_engine.INITIAL_ANGLE_LIMIT
+            <= angle
+            <= lunarlander_engine.INITIAL_ANGLE_LIMIT
+        )
+        assert (
+            -lunarlander_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= angular_velocity
+            <= lunarlander_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+        )
         assert len(lunarlander_engine.observation((x, y, vx, vy, angle, angular_velocity))) == 8
+
+
+def test_lunarlander_seeds_vary_initial_state() -> None:
+    states = [lunarlander_engine.reset(random.Random(seed)) for seed in range(100)]
+    assert len(set(states)) == 100
 
 
 def test_registry_includes_control_benchmarks() -> None:

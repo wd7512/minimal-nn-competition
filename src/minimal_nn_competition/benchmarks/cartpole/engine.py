@@ -7,16 +7,20 @@ LENGTH = 0.5
 FORCE_MAG = 10.0
 TAU = 0.02
 X_LIMIT = 2.4
-THETA_LIMIT = 0.20944
+THETA_LIMIT = math.radians(40.0)
+INITIAL_X_LIMIT = 2.0
+INITIAL_THETA_LIMIT = math.radians(25.0)
+INITIAL_VELOCITY_LIMIT = 0.02
+INITIAL_ANGULAR_VELOCITY_LIMIT = 0.02
 
 
 def reset(rng):
-    """Return a near-upright state with small uniform noise."""
+    """Return a varied state with bounded uniform initialization noise."""
     return (
-        rng.uniform(-0.05, 0.05),
-        rng.uniform(-0.05, 0.05),
-        rng.uniform(-0.05, 0.05),
-        rng.uniform(-0.05, 0.05),
+        rng.uniform(-INITIAL_X_LIMIT, INITIAL_X_LIMIT),
+        rng.uniform(-INITIAL_VELOCITY_LIMIT, INITIAL_VELOCITY_LIMIT),
+        rng.uniform(-INITIAL_THETA_LIMIT, INITIAL_THETA_LIMIT),
+        rng.uniform(-INITIAL_ANGULAR_VELOCITY_LIMIT, INITIAL_ANGULAR_VELOCITY_LIMIT),
     )
 
 
