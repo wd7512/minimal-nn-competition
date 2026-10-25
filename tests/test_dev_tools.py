@@ -28,6 +28,16 @@ def test_baseline_is_cleaned_up() -> None:
     assert not path.exists()
 
 
+def test_markdown_files_exclude_opencode(tmp_path: Path) -> None:
+    opencode = tmp_path / ".opencode" / "skills"
+    opencode.mkdir(parents=True)
+    (opencode / "SKILL.md").write_text("skill", encoding="utf-8")
+    readme = tmp_path / "README.md"
+    readme.write_text("readme", encoding="utf-8")
+
+    assert dev_tools._markdown_files(tmp_path) == [readme]
+
+
 def test_markdown_files_follow_gitignore(monkeypatch, tmp_path: Path) -> None:
     calls = []
 
