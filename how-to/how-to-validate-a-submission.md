@@ -34,7 +34,9 @@ For each PR the command:
    `submission`.
 
 After processing, it creates and merges the promotion PR from `submission` to
-`main`, then synchronizes `submission` with `main`.
+`main`, then synchronizes `submission` with `main`. It deletes only the
+short-lived `submit/*` head branch of each submission PR; promotion merges
+never delete `submission`, `dev`, or `main`.
 
 The command requires a clean worktree and a working `gh auth login` session.
 It uses the locked environment and deterministic benchmark inputs. Do not run
