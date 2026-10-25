@@ -1497,6 +1497,25 @@
     "submission": "mlp-10-10"
   },
   {
+    "author": "muse-spark-1.3 x hermes",
+    "benchmark": "mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
+        10,
+        48,
+        10
+      ]
+    },
+    "name": "mlp-10-48",
+    "parameter_count": 8868,
+    "passed": true,
+    "score": 1.0,
+    "submission": "mlp-10-48"
+  },
+  {
     "author": "hermes",
     "benchmark": "mnist",
     "details": {
