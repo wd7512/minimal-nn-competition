@@ -151,6 +151,7 @@ tests/test_chess_eval_data.py::test_chess_eval_100k_contains_10k""".splitlines()
         tuple(
             """tests/test_rl_environments.py::test_cartpole_engine_is_deterministic
 tests/test_rl_environments.py::test_cartpole_reset_bounds
+tests/test_rl_environments.py::test_cartpole_seeds_vary_position_and_angle
 tests/test_rl_environments.py::test_registry_includes_control_benchmarks
 tests/test_rl_environments.py::test_cartpole_rejects_wrong_config
 tests/test_rl_environments.py::test_cartpole_calibration

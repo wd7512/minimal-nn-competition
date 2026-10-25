@@ -67,8 +67,26 @@ def test_cartpole_engine_is_deterministic() -> None:
 
 def test_cartpole_reset_bounds() -> None:
     for seed in range(20):
-        state = cartpole_engine.reset(random.Random(seed))
-        assert all(-0.05 <= value <= 0.05 for value in state)
+        x, x_dot, theta, theta_dot = cartpole_engine.reset(random.Random(seed))
+        assert -cartpole_engine.INITIAL_X_LIMIT <= x <= cartpole_engine.INITIAL_X_LIMIT
+        assert (
+            -cartpole_engine.INITIAL_VELOCITY_LIMIT
+            <= x_dot
+            <= cartpole_engine.INITIAL_VELOCITY_LIMIT
+        )
+        assert -cartpole_engine.INITIAL_THETA_LIMIT <= theta <= cartpole_engine.INITIAL_THETA_LIMIT
+        assert (
+            -cartpole_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= theta_dot
+            <= cartpole_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+        )
+
+
+def test_cartpole_seeds_vary_position_and_angle() -> None:
+    states = [cartpole_engine.reset(random.Random(seed)) for seed in range(100)]
+    assert len({state[0] for state in states}) == 100
+    assert len({state[2] for state in states}) == 100
+    assert pytest.approx(math.radians(40.0)) == cartpole_engine.THETA_LIMIT
 
 
 def test_pendulum_engine_is_deterministic() -> None:
