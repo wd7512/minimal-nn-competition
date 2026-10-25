@@ -73,7 +73,7 @@ CartPole observes `(x, x_dot, theta, theta_dot)` and chooses `0` (push left) or
 `1` (push right). It runs for 500 steps per seed; the episode also ends early if
 the cart leaves the track or the pole falls past 40 degrees. Each of the 100
 fixed seeds deterministically initializes the cart position uniformly in
-`[-2.0, 2.0]`, the pole angle uniformly in `[-25 degrees, 25 degrees]`, the cart velocity
+`[-1.5, 1.5]`, the pole angle uniformly in `[-25 degrees, 25 degrees]`, the cart velocity
 uniformly in `[-0.02, 0.02]`, and the pole angular velocity uniformly in
 `[-0.02, 0.02]`.
 
