@@ -33,8 +33,14 @@ Maintainers: follow [How to validate a submission](how-to/how-to-validate-a-subm
 ## Development
 
 Code, docs, and workflow changes go through a pull request to `dev`, then
-`main`. `main` and `submission` require pull requests; admins may bypass
-protection when needed. Only submissions use the `submission` branch.
+`main`. `main`, `dev`, and `submission` require pull requests. `main` and `dev`
+require the `test` check and an up-to-date branch; `submission` requires the
+`validate` check. Admins may bypass protection when needed. Only submissions
+use the `submission` branch.
+
+Never enable automatic branch deletion, and never use
+`gh pr merge --delete-branch` when the PR head is `main`, `dev`, or
+`submission`. Delete only short-lived `submit/*` and feature branches.
 
 ```bash
 uv sync --dev --locked

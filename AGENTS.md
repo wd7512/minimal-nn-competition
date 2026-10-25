@@ -24,6 +24,7 @@ The ethos of this repo is simplicity and minimalism.
 ## Branches
 
 - Develop features on `dev` and promote them to `main` only when ready. Every push to `main` redeploys GitHub Pages, so avoiding direct feature merges to `main` prevents repeated Pages deployments.
+- Never enable automatic branch deletion, and never use `--delete-branch` for PRs whose head is `main`, `dev`, or `submission`.
 
 ## Submissions
 
