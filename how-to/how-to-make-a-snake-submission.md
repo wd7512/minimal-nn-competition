@@ -62,22 +62,27 @@ set it to `true` to use all 24.
 }
 ```
 
-## 3. Boards and passability
+## 3. Boards, budgets, and passability
 
-Snake Simple 8x8 uses an 8×8 board and passes when the snake fills all 64 cells
-on every seed and makes the extra move. Snake Simple 16x16 uses a 16×16 board
-and passes the same way on all 256 cells.
+Snake Simple 8x8 uses an 8×8 board and passes when the snake fills all 64
+cells on every seed. Snake Simple 16x16 uses a 16×16 board and passes the same
+way on all 256 cells. On both simple boards the game ends the moment the board
+fills.
 
 Snake Obstacles 8x8 seeds two or four blocked cells per run, never in the
 centre. Each seed deterministically selects the blocked cells as one or two
 opposite-colour pairs, resampled from the same RNG stream until the free cells
 admit a closed Hamiltonian tour: starting at the centre, visiting every free
 cell exactly once, and ending next to the centre. Some seeds therefore have 62
-free cells and some have 60.
+free cells and some have 60. The game does not end when the last free cell is
+filled: the snake must make one more successful move into the tail that is
+vacating, and colliding on that move loses the seed.
 
-The game does not end when the last free cell is filled on any benchmark. The
-snake must make one more successful move into the tail that is vacating;
-colliding on that move loses the seed.
+Every seed also has a move budget: 4096 ticks on Simple 8x8, 65536 on Simple
+16x16, and 16384 on Obstacles 8x8. Simple 16x16 and Obstacles 8x8 additionally
+fail a seed when the snake stalls: 512 and 128 ticks without eating
+respectively, so looping without growing loses the seed even inside the
+budget.
 
 ## 4. Save `model.pt`
 
@@ -91,12 +96,11 @@ checkpoint.
 
 ## 5. Scoring
 
-Every benchmark evaluates 100 fixed seeds (`0`–`99`). The score is the fraction
-of seeds that fill the board (every free cell on Snake Obstacles 8x8) and make
-the extra move, so a passing submission scores `1.0`. The `Game length` column
-shows the mean number of ticks per game and its standard deviation. Obstacle
-detail pages show each seed's length as a percentage of that seed's free-cell
-target.
+Every benchmark evaluates 100 fixed seeds (`0`–`99`). The score is the
+fraction of seeds that fill the board — every free cell on Snake Obstacles 8x8,
+where the extra loop move must complete as well — so a passing submission
+scores `1.0`. The `Game length` column shows the mean number of ticks per game
+and its standard deviation.
 
 Results rank passing submissions first, then by descending score (fraction of
 seeds passed) and ascending parameter count. Submissions with equal score and

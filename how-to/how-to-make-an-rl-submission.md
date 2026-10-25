@@ -96,7 +96,8 @@ checkpoint.
 
 Every benchmark evaluates 100 fixed seeds (`0`–`99`). The score is the fraction
 of seeds that pass, so a passing submission scores `1.0`. The `Reward` column
-shows the mean episode return, or the mean balanced steps for CartPole.
+shows the mean episode return (for CartPole, the mean balanced steps with
+their standard deviation).
 
 - **CartPole**: a seed passes when the pole stays balanced for all 500 steps.
   The checked-in example's mean reward is about 500 steps.

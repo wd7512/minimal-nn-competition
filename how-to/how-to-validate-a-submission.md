@@ -35,6 +35,10 @@ Starting from the latest `main` avoids stale leaderboard and `docs/` conflicts.
 
 ## 3. Merge the submission
 
+`--delete-branch` deletes the PR head branch. It is safe here because the head
+is a short-lived `submit/*` branch; never use it for a promotion PR whose head
+is `submission` or `dev`.
+
 ```bash
 gh pr merge <number> --merge --delete-branch
 git pull --ff-only origin submission
@@ -60,11 +64,13 @@ Expected scores: `1.0` everywhere — every seed or sample must pass. MNIST and
 Fashion-MNIST classify all 70,000 examples; Chess places every position within
 0.1 pawns of Stockfish; Snake fills the board on every seed; CartPole survives
 500 steps on every seed; Pendulum clears `-500` per seed; LunarLander lands
-every seed. Confirm the score and parameter count match the PR description,
-and that an image cache is the correct benchmark's data.
+every seed. The checked-in chess-eval-100k example is the one expected
+failure: it fails the larger tier on purpose. Confirm the score and parameter
+count match the PR description, and that an image cache is the correct
+benchmark's data.
 
 Snake Obstacles 8x8 passes only when every seed fills its free cells and
-completes the extra loop move. Inspect `seed_passed` and `target_lengths` in
+completes the extra loop move. Inspect `seed_passed` and `seed_target_lengths` in
 the result, and validate the layouts separately:
 
 ```bash
@@ -83,7 +89,8 @@ uv run mnnc render leaderboard.json docs --replays replays
 ```
 
 `collect` re-evaluates every model and is the authoritative rebuild. It also
-records a seed-0 replay for each Snake submission. `replays/` is temporary;
+records a seed-0 replay for each Snake and control submission. `replays/` is
+temporary;
 commit only `leaderboard.json`, `docs/leaderboard.json`, and `docs/`.
 
 ## 6. Check the site
@@ -111,7 +118,7 @@ gh pr create --base main --head submission \
   --title "Promote submission leaderboard updates"
 ```
 
-Wait for CI, then merge:
+Wait for CI, then merge without `--delete-branch`:
 
 ```bash
 gh pr merge <number> --merge
