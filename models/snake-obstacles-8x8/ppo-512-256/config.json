@@ -1,6 +1,6 @@
 {
   "benchmark": "snake-obstacles-8x8",
-  "name": "ppo-512-256-r2",
+  "name": "ppo-512-256-r4",
   "author": "hermes",
   "architecture": "mlp",
   "input_size": 24,
