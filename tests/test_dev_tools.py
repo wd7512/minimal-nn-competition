@@ -26,3 +26,10 @@ def test_baseline_is_cleaned_up() -> None:
         assert (baseline / "pyproject.toml").is_file()
         path = Path(baseline)
     assert not path.exists()
+
+
+def test_markdown_files_follow_gitignore(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(dev_tools, "ROOT", tmp_path)
+    monkeypatch.setattr(dev_tools, "_git", lambda *args, **kwargs: "visible.md")
+
+    assert dev_tools._markdown_files(tmp_path) == [tmp_path / "visible.md"]
