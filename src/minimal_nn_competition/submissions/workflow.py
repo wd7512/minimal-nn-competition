@@ -106,9 +106,11 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
             result = _score_candidate(pr, directory, root, root / data_root)
             merge(pr.number, delete_branch=True)
             _git(["pull", "--ff-only", "origin", "submission"], root)
-            upsert_result(root / "leaderboard.json", result)
-            render_site(load_results(root / "leaderboard.json"), root / "docs", _load_replays(root))
-            _git(["add", "leaderboard.json", "docs"], root)
+            upsert_result(root / "docs" / "leaderboard.json", result)
+            render_site(
+                load_results(root / "docs" / "leaderboard.json"), root / "docs", _load_replays(root)
+            )
+            _git(["add", "docs"], root)
             if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root).returncode:
                 _git(["commit", "-m", f"Score submission PR #{pr.number}"], root)
             _git(["push", "origin", "submission"], root)

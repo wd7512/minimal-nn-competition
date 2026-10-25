@@ -962,7 +962,10 @@ def _plural(count, singular):
 
 def _ranking_text(benchmark):
     if benchmark in SNAKE_BENCHMARKS:
-        return "pass status, score, parameter count, then game length"
+        return (
+            "pass status, score, parameter count, then game length; "
+            "failed submissions rank by longest game first"
+        )
     if benchmark in CHESS_BENCHMARKS:
         return "pass status, score, parameter count, then mean error"
     return "pass status, score, then parameter count"

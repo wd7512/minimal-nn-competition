@@ -79,12 +79,12 @@ def _parser():
     speed.add_argument("--duration", type=float, default=1.0)
     speed.add_argument("--runs", type=int, default=10)
     speed.add_argument("--warmup", type=float, default=1.0)
-    speed.add_argument("--output", type=Path, default=Path("speed-leaderboard.json"))
+    speed.add_argument("--output", type=Path, default=Path("docs/internal/speed/leaderboard.json"))
     render_speed = add("render-speed", help="Render the hidden Snake Simple 8x8 speed leaderboard")
     _render_args(render_speed)
     internal = add("internal", help="Score this repo's own code against its test scopes")
     internal.add_argument("--root", type=Path, default=Path("."))
-    internal.add_argument("--output", type=Path, default=Path("internal-leaderboard.json"))
+    internal.add_argument("--output", type=Path, default=Path("docs/internal/leaderboard.json"))
     render_internal = add("render-internal", help="Render the internal token leaderboard")
     _render_args(render_internal)
     collect = add("collect", help="Evaluate every model under models/")
@@ -102,7 +102,7 @@ def _parser():
     )
     target.add_argument("--pr", type=int, help="Process one open submission PR")
     submissions.add_argument("--data-root", type=Path, default=Path("data"))
-    collect.add_argument("--output", type=Path, default=Path("leaderboard.json"))
+    collect.add_argument("--output", type=Path, default=Path("docs/leaderboard.json"))
     collect.add_argument(
         "--replay-dir",
         type=Path,
