@@ -29,9 +29,9 @@ jobs:
         run: uv sync --frozen --no-dev
       - name: Render leaderboard
         run: |
-          uv run --no-sync mnnc render leaderboard.json docs --replays docs/games
-          uv run --no-sync mnnc render-speed speed-leaderboard.json docs/internal
-          uv run --no-sync mnnc render-internal internal-leaderboard.json docs
+          uv run --no-sync mnnc render docs/leaderboard.json docs --replays docs/games
+          uv run --no-sync mnnc render-speed docs/internal/speed/leaderboard.json docs/internal
+          uv run --no-sync mnnc render-internal docs/internal/leaderboard.json docs
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
         with:
