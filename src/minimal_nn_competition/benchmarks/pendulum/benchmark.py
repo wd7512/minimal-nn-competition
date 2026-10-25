@@ -11,7 +11,7 @@ from minimal_nn_competition.benchmarks.pendulum.engine import observation, reset
 from minimal_nn_competition.model.entry import materialize_submission
 
 DEFAULT_SEEDS = tuple(range(100))
-DEFAULT_HORIZON = 200
+DEFAULT_MAX_STEPS = 200
 INPUT_SIZE = 3
 OUTPUT_SIZE = 5
 # Tuned after measuring the PPO example and a uniform random policy; see
@@ -22,11 +22,11 @@ PASS_THRESHOLD = -500.0
 class PendulumBenchmark:
     name = "pendulum"
 
-    def __init__(self, seeds=DEFAULT_SEEDS, horizon=DEFAULT_HORIZON, threshold=PASS_THRESHOLD):
-        if not seeds or horizon <= 0:
-            raise ValueError("Pendulum benchmark requires seeds and positive horizon")
+    def __init__(self, seeds=DEFAULT_SEEDS, max_steps=DEFAULT_MAX_STEPS, threshold=PASS_THRESHOLD):
+        if not seeds or max_steps <= 0:
+            raise ValueError("Pendulum benchmark requires seeds and positive max_steps")
         self.seeds = seeds
-        self.horizon = horizon
+        self.max_steps = max_steps
         self.threshold = threshold
 
     def load_submission(self, submission):
@@ -48,7 +48,7 @@ class PendulumBenchmark:
             for seed in self.seeds:
                 state = reset(random.Random(seed))
                 total = 0.0
-                for _ in range(self.horizon):
+                for _ in range(self.max_steps):
                     features = observation(state)
                     inputs = torch.tensor(features, dtype=torch.float32)[None]
                     action = int(submission.model(inputs).argmax(dim=1).item())
@@ -59,11 +59,5 @@ class PendulumBenchmark:
         return (
             statistics.fmean(passed_flags),
             all(passed_flags),
-            {
-                "seed_returns": returns,
-                "mean_return": statistics.fmean(returns),
-                "horizon": self.horizon,
-                "seeds": len(self.seeds),
-                "threshold": self.threshold,
-            },
+            {"seed_returns": returns, "mean_return": statistics.fmean(returns)},
         )

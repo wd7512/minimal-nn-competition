@@ -226,7 +226,7 @@ def test_cartpole_calibration(tmp_path: Path) -> None:
     result = evaluate_submission(example, benchmark)
     assert result.score == 1.0
     assert result.passed is True
-    assert result.details["mean_steps"] == benchmark.max_steps
+    assert result.details["seed_steps"] == [benchmark.max_steps] * len(benchmark.seeds)
 
 
 def test_pendulum_calibration(tmp_path: Path) -> None:
@@ -236,7 +236,7 @@ def test_pendulum_calibration(tmp_path: Path) -> None:
         rng = random.Random(seed)
         state = pendulum_engine.reset(rng)
         total = 0.0
-        for _ in range(benchmark.horizon):
+        for _ in range(benchmark.max_steps):
             state, reward, _ = pendulum_engine.step(state, rng.randrange(5))
             total += reward
         returns.append(total)
@@ -404,13 +404,9 @@ def test_control_train_commands_wire_examples(
 
 def test_render_control_group(tmp_path: Path) -> None:
     results = [
-        BenchmarkResult("cart", "cartpole", 1.0, True, 10, {"max_steps": 500, "seed_steps": [500]}),
-        BenchmarkResult(
-            "pend", "pendulum", 1.0, True, 4741, {"horizon": 200, "mean_return": -140.0}
-        ),
-        BenchmarkResult(
-            "land", "lunarlander", 1.0, True, 4996, {"max_steps": 300, "mean_return": 8.0}
-        ),
+        BenchmarkResult("cart", "cartpole", 1.0, True, 10, {"seed_steps": [500]}),
+        BenchmarkResult("pend", "pendulum", 1.0, True, 4741, {"mean_return": -140.0}),
+        BenchmarkResult("land", "lunarlander", 1.0, True, 4996, {"mean_return": 8.0}),
     ]
     html = render_site(results, tmp_path).read_text()
     assert 'id="control"' in html

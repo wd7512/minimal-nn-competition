@@ -9,7 +9,7 @@ from dataclasses import asdict
 from minimal_nn_competition import __version__
 from minimal_nn_competition.benchmarks.chess_eval.names import CHESS_BENCHMARKS
 from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
-from minimal_nn_competition.benchmarks.control.replay import mean_steps
+from minimal_nn_competition.benchmarks.control.replay import steps_text
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
 from minimal_nn_competition.benchmarks.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
@@ -56,19 +56,6 @@ _VERSION_LABELS = {
     "pendulum": "Discrete torque",
     "lunarlander": "Lunar touchdown",
 }
-_PANEL_NOTES = {
-    "snake-simple-8x8": "An open study",
-    "snake-simple-16x16": "A larger open study",
-    "snake-obstacles-8x8": "A constrained study",
-    "mnist": "A first light study",
-    "fashion-mnist": "A second light study",
-    "chess-eval-10k": "A measured study",
-    "chess-eval-100k": "A larger measured study",
-    "cartpole": "A 500-step challenge",
-    "pendulum": "A return study",
-    "lunarlander": "A soft-landing study",
-}
-
 _STYLE = """
 :root {
   color-scheme: light dark;
@@ -229,16 +216,6 @@ h1 {
   align-items: start;
 }
 .group__index { color: var(--accent); }
-.group__title {
-  margin: 8px 0 0;
-  font: 400 clamp(2rem, 3.6vw, 3.2rem)/1 var(--display);
-  letter-spacing: -.03em;
-}
-.group__title-trigger {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 12px;
-}
 .version-row {
   display: none;
   flex-wrap: wrap;
@@ -249,13 +226,6 @@ h1 {
   border-top: 1px solid var(--rule);
 }
 .js .version-row { display: flex; }
-.version-row__label {
-  margin: 0;
-  font: 700 10px/1.4 var(--mono);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
 .version-links { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: baseline; }
 .version-link {
   appearance: none;
@@ -269,12 +239,9 @@ h1 {
 }
 .version-link:hover { color: var(--ink); }
 .version-link.is-active { color: var(--ink); border-bottom-color: var(--accent); }
-.version-hint { margin: 0; font: 10px/1.4 var(--mono); color: var(--muted); }
 .version-panel { margin-top: 20px; }
 .version-panel + .version-panel { margin-top: 40px; }
 .js .version-panel:not(.is-active) { display: none; }
-.table-note { margin: 0 0 8px; font: 10px/1.4 var(--mono); color: var(--muted); }
-.table-note strong { color: var(--ink); font-weight: 600; }
 .passed-toggle { display: none; margin: 0 0 8px; font: 11px/1.4 var(--mono); color: var(--muted); }
 .js .passed-toggle { display: flex; align-items: center; gap: 8px; }
 .passed-toggle input { width: 14px; height: 14px; accent-color: var(--pass); }
@@ -358,8 +325,6 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
 .footer p { margin: 0; }
 .version { color: inherit; opacity: .9; text-decoration: underline; text-underline-offset: 3px; }
 .version:hover, .version:focus-visible { opacity: 1; }
-.js-only { display: none; }
-.js .js-only { display: inline; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
@@ -933,9 +898,9 @@ _SITE_SCRIPT = """
 
 def _score_text(result):
     # Score is the fraction of seeds or samples that pass for every benchmark.
-    mean = result.score * 100
-    digits = 4 if not result.passed and mean >= 99.995 else 2
-    return f"{mean:.{digits}f}%"
+    percent = result.score * 100
+    digits = 4 if not result.passed and percent >= 99.995 else 2
+    return f"{percent:.{digits}f}%"
 
 
 def _game_length_text(result):
@@ -956,14 +921,14 @@ def _error_text(result):
 
 def _reward_text(result):
     if result.benchmark == "cartpole":
-        return mean_steps(result)
+        return steps_text(result)
     mean_return = result.details.get("mean_return")
     if not isinstance(mean_return, (int, float)):
         return "-"
     return f"{mean_return:.2f}"
 
 
-def _length_text(result):
+def _fourth_text(result):
     if result.benchmark in SNAKE_BENCHMARKS:
         return _game_length_text(result)
     if result.benchmark in CHESS_BENCHMARKS:
@@ -973,8 +938,8 @@ def _length_text(result):
     return "-"
 
 
-def _length_html(result):
-    text = _length_text(result)
+def _fourth_html(result):
+    text = _fourth_text(result)
     if "±" in text:
         main, std = text.split("±", 1)
         return f'{html.escape(main.strip())} <span class="std">± {html.escape(std.strip())}</span>'
@@ -1069,7 +1034,7 @@ def _table(results, submission_links=None):
         row_class = "is-pass" if result.passed else "is-fail"
         cells = f'<td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link, status, html.escape(_score_text(result)))}</td><td class="num">{result.parameter_count:,}</td>'
         if fourth is not None:
-            cells += f'<td class="num">{_length_html(result)}</td>'
+            cells += f'<td class="num">{_fourth_html(result)}</td>'
         rows.append(f'<tr class="{row_class}">{cells}</tr>')
     label = _version_label(results[0].benchmark) if results else "Results"
     fourth_header = (
@@ -1161,10 +1126,6 @@ def render_submission_html(result, payload, rank, total):
         rows.append(
             _detail_row("Mean error", html.escape(f"{error} pawns" if error != "-" else "-"))
         )
-    elif result.benchmark not in ("mnist", "fashion-mnist"):
-        samples = result.details.get("samples")
-        if isinstance(samples, int):
-            rows.append(_detail_row("Samples", f"{samples:,}"))
     tolerance = result.details.get("tolerance_pawns")
     if isinstance(tolerance, (int, float)):
         rows.append(_detail_row("Tolerance", f"{tolerance:g} pawns"))
@@ -1211,11 +1172,7 @@ def render_submission_html(result, payload, rank, total):
         script_tag = ""
         grid_class = "detail-grid detail-grid--single"
 
-    if group_label == version_label:
-        eyebrow_second = _PANEL_NOTES.get(result.benchmark, version_label)
-        eyebrow_html = f'<span class="detail-group">{html.escape(group_label)}</span> · {html.escape(eyebrow_second)}'
-    else:
-        eyebrow_html = f'<span class="detail-group">{html.escape(group_label)}</span> · {html.escape(version_label)}'
+    eyebrow_html = f'<span class="detail-group">{html.escape(group_label)}</span> · {html.escape(version_label)}'
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)} — {html.escape(version_label)} — Minimal NN Competition</title><style>{_STYLE}{_DETAIL_STYLE}</style></head><body data-accent="{html.escape(accent)}"><div class="detail-shell"><header class="detail-head"><p class="eyebrow">{eyebrow_html}</p><h1 class="detail-title">{html.escape(title)}</h1><p class="detail-subtitle">Submission details</p><p class="detail-links"><a href="../">← Back to leaderboard</a><span>·</span><a href="../leaderboard.json">Raw leaderboard JSON</a></p></header><div class="{grid_class}">{game_section}<aside class="detail-panel" aria-labelledby="details-title"><h2 class="detail-kicker" id="details-title">Submission</h2><dl class="detail-meta">{meta}</dl></aside></div><footer class="detail-footer"><a href="../">Back to leaderboard</a><span>Minimal NN Competition · <a href="../internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard">speed board</a></span></footer></div>{script_tag}</body></html>"""
 
 
@@ -1278,7 +1235,7 @@ def render_html(results, submission_links=None):
         default_label = _version_label(default_benchmark)
         group_count = sum(len(entries[benchmark]) for benchmark in versions)
         rail_links.append(
-            f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong><small>{group_count} {_plural(group_count, "run")} total</small></a>'
+            f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong><small>{group_count} {_plural(group_count, "submission")} total</small></a>'
         )
         version_buttons = []
         for benchmark in versions:
@@ -1317,11 +1274,11 @@ def render_html(results, submission_links=None):
                 f"</div>"
             )
         sections.append(
-            f'<section class="group" id="{html.escape(group_id)}" data-group-section data-accent="{html.escape(accent)}" data-title="{html.escape(label)}" aria-labelledby="{html.escape(group_id)}-title">'
+            f'<section class="group" id="{html.escape(group_id)}" data-group-section data-accent="{html.escape(accent)}" aria-labelledby="{html.escape(group_id)}-title">'
             f'<div class="group__head"><div><p class="eyebrow" id="{html.escape(group_id)}-title"><span class="group__index">{group_number:02d}</span> / {html.escape(label)}</p></div></div>'
             f"{version_row}{''.join(panels)}</section>"
         )
-    rail_note = f"{total} {_plural(total, 'run')} total · {passed} pass" if groups else ""
+    rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><p class="links"><a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit a model</a><span>·</span><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """

@@ -136,7 +136,6 @@ class SnakeBenchmark:
                     and (won if self.loop_on_full else True)
                 )
         score = statistics.fmean(seed_passed)
-        max_length = max(target_lengths)
         return (
             score,
             all(seed_passed),
@@ -144,10 +143,8 @@ class SnakeBenchmark:
                 "seed_lengths": lengths,
                 "seed_moves": moves,
                 "seed_passed": seed_passed,
-                "target_lengths": target_lengths,
+                "seed_target_lengths": target_lengths,
                 "seed_blocked": seed_blocked,
-                "max_length": max_length,
-                "seeds": len(self.seeds),
             },
         )
 

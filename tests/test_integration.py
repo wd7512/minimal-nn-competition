@@ -159,7 +159,7 @@ def test_render_shows_name_and_author(tmp_path: Path) -> None:
             8.0,
             False,
             20,
-            {"max_length": 64},
+            {},
             name="Cool Net",
             author="tester",
         ),
@@ -216,7 +216,7 @@ def test_render_site(tmp_path: Path) -> None:
             0.0,
             False,
             20,
-            {"seed_lengths": [1], "max_length": 64, "seed_moves": [10, 20]},
+            {"seed_lengths": [1], "seed_moves": [10, 20]},
         ),
     ]
     index = render_site(results, tmp_path)
@@ -346,10 +346,8 @@ def test_rank_chess_eval_breaks_score_ties_by_mean_error() -> None:
 
 def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
     results = [
-        BenchmarkResult(
-            "snake-8", "snake-simple-8x8", 1.0, False, 10, {"seed_lengths": [1], "max_length": 64}
-        ),
-        BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {"max_length": 256}),
+        BenchmarkResult("snake-8", "snake-simple-8x8", 1.0, False, 10, {"seed_lengths": [1]}),
+        BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {}),
         BenchmarkResult("mnist", "mnist", 0.5, False, 10, {"normalisation": False}),
         BenchmarkResult("fashion", "fashion-mnist", 0.5, False, 10, {"normalisation": True}),
         BenchmarkResult("chess-10k", "chess-eval-10k", 1.0, True, 10, {"tolerance_pawns": 0.1}),

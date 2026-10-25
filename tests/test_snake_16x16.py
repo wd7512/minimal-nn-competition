@@ -11,7 +11,6 @@ from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.snake.benchmark import SnakeSimple16x16Benchmark
 from minimal_nn_competition.benchmarks.snake.replay import record_game, replay_stem
 from minimal_nn_competition.leaderboard.render import (
-    _score_text,
     render_site,
     render_submission_pages,
 )
@@ -98,7 +97,6 @@ def test_16x16_evaluation_uses_256_cell_board(tmp_path: Path) -> None:
     assert passed is False
     assert details["seed_lengths"] == [1, 1]
     assert details["seed_moves"] == [9, 9]
-    assert details["max_length"] == 256
 
 
 def test_16x16_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -139,7 +137,6 @@ def test_16x16_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert score == 1.0
     assert passed is True
     assert details["seed_lengths"] == [256, 256]
-    assert details["max_length"] == 256
 
 
 def test_record_game_records_board_size() -> None:
@@ -158,7 +155,7 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
         0.5,
         False,
         20,
-        {"max_length": 256, "seed_moves": [10, 20], "seed_lengths": [128, 128]},
+        {"seed_moves": [10, 20], "seed_lengths": [128, 128]},
     )
     payload = record_game(_right_model(), size=16)
     index = render_site([result], tmp_path, {"snake-simple-16x16--example": payload})
@@ -243,7 +240,7 @@ def test_train_16x16_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     assert calls[0][1]["benchmark"] == "snake-simple-16x16"
 
 
-def test_16x16_defaults_are_100_seeds_and_4096_moves() -> None:
+def test_16x16_defaults_are_100_seeds_and_65536_moves() -> None:
     benchmark = SnakeSimple16x16Benchmark()
     assert benchmark.seeds == tuple(range(100))
     assert benchmark.max_moves == 65536
@@ -251,17 +248,12 @@ def test_16x16_defaults_are_100_seeds_and_4096_moves() -> None:
     assert benchmark.size == 16
 
 
-def test_near_perfect_failing_image_score_keeps_precision() -> None:
-    result = BenchmarkResult("example", "mnist", 0.99996, False, 10, {})
-    assert _score_text(result) == "99.9960%"
-
-
 def test_replay_links_are_scoped_by_benchmark(tmp_path: Path) -> None:
     payload_8 = record_game(_right_model())
     payload_16 = record_game(_right_model(), size=16)
     results = [
-        BenchmarkResult("example", "snake-simple-8x8", 8.0, False, 20, {"max_length": 64}),
-        BenchmarkResult("example", "snake-simple-16x16", 128.0, False, 20, {"max_length": 256}),
+        BenchmarkResult("example", "snake-simple-8x8", 8.0, False, 20, {}),
+        BenchmarkResult("example", "snake-simple-16x16", 128.0, False, 20, {}),
     ]
     links = render_submission_pages(
         results,

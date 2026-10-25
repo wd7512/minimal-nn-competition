@@ -1,1 +1,0 @@
-"""have a benchmark ABC here, so that we can have a common interface for all benchmarks."""

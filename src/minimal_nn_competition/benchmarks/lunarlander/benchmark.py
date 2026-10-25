@@ -71,7 +71,5 @@ class LunarLanderBenchmark:
                 "seed_landed": landed,
                 "seed_steps": steps,
                 "mean_return": statistics.fmean(returns),
-                "max_steps": self.max_steps,
-                "seeds": len(self.seeds),
             },
         )

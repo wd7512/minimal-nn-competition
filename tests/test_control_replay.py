@@ -7,10 +7,10 @@ from minimal_nn_competition.__main__ import main
 from minimal_nn_competition.benchmarks.control.replay import (
     REPLAY_SEED,
     load_replay,
-    mean_steps,
     record_game,
     replay_stem,
     save_replay,
+    steps_text,
 )
 from minimal_nn_competition.leaderboard.render import (
     render_site,
@@ -97,19 +97,15 @@ def test_replay_stem_matches_snake_format() -> None:
     assert replay_stem("cartpole", "my model/v2") == "cartpole--my_model_v2"
 
 
-def test_mean_steps() -> None:
-    cartpole = _result("cartpole", {"seed_steps": [500] * 100, "max_steps": 500, "seeds": 100})
-    assert mean_steps(cartpole) == "500.0 ± 0.0"
-    pendulum = _result("pendulum", {"seed_returns": [-140.0], "horizon": 200})
-    assert mean_steps(pendulum) == "200 ± 0.0"
-    assert mean_steps(_result("cartpole", {})) == "-"
+def test_steps_text() -> None:
+    cartpole = _result("cartpole", {"seed_steps": [500] * 100})
+    assert steps_text(cartpole) == "500.0 ± 0.0"
+    assert steps_text(_result("cartpole", {})) == "-"
 
 
 def test_render_submission_html_embeds_control_replay() -> None:
     details = {
         "seed_steps": [500] * 100,
-        "max_steps": 500,
-        "seeds": 100,
     }
     payload = record_game("cartpole", _FixedAction(2, 0), seed=REPLAY_SEED, steps=8)
     page = render_submission_html(_result("cartpole", details), payload, 1, 1)
@@ -133,8 +129,6 @@ def test_render_submission_html_lunarlander_rows() -> None:
     details = {
         "seed_steps": [40, 60],
         "seed_landed": [True, False],
-        "max_steps": 300,
-        "seeds": 2,
     }
     payload = record_game("lunarlander", _FixedAction(4, 0), seed=REPLAY_SEED, steps=10)
     page = render_submission_html(_result("lunarlander", details), payload, 1, 1)
@@ -147,7 +141,7 @@ def test_render_submission_html_lunarlander_rows() -> None:
 
 
 def test_render_submission_html_without_replay() -> None:
-    page = render_submission_html(_result("cartpole", {"seed_steps": [8], "seeds": 1}), None, 1, 1)
+    page = render_submission_html(_result("cartpole", {"seed_steps": [8]}), None, 1, 1)
     assert "<canvas" not in page
     assert "Not recorded" in page
     assert "Reward" in page
@@ -156,8 +150,6 @@ def test_render_submission_html_without_replay() -> None:
 def test_render_site_writes_control_games(tmp_path: Path) -> None:
     details = {
         "seed_steps": [8],
-        "max_steps": 500,
-        "seeds": 1,
     }
     payload = record_game("cartpole", _FixedAction(2, 0), seed=REPLAY_SEED, steps=8)
     index = render_site([_result("cartpole", details)], tmp_path, {"cartpole--example": payload})
@@ -172,7 +164,7 @@ def test_render_site_writes_control_games(tmp_path: Path) -> None:
 
 def test_render_submission_pages_keeps_snake_behaviour(tmp_path: Path) -> None:
     payload = record_game("cartpole", _FixedAction(2, 0), seed=REPLAY_SEED, steps=8)
-    result = _result("cartpole", {"seed_steps": [8], "seeds": 1})
+    result = _result("cartpole", {"seed_steps": [8]})
     links = render_submission_pages([result], {"cartpole--example": payload}, tmp_path)
     assert links == {("cartpole", "example"): "submissions/cartpole--example.html"}
     assert (tmp_path / "submissions" / "cartpole--example.html").is_file()

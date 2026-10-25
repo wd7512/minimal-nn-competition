@@ -56,10 +56,5 @@ class CartPoleBenchmark:
         return (
             statistics.fmean(passed_flags),
             all(passed_flags),
-            {
-                "seed_steps": counts,
-                "mean_steps": statistics.fmean(counts),
-                "max_steps": self.max_steps,
-                "seeds": len(self.seeds),
-            },
+            {"seed_steps": counts},
         )

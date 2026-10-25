@@ -63,7 +63,7 @@ def _parser():
     validate_obstacles.add_argument("--seeds", type=int, default=100)
     evaluate = add("evaluate", help="Evaluate a submission directory")
     evaluate.add_argument("benchmark", choices=available_benchmarks())
-    evaluate.add_argument("submission", type=Path)
+    evaluate.add_argument("submission_dir", type=Path)
     evaluate.add_argument("--data-path", type=Path)
     leaderboard = add("leaderboard", help="Print a saved leaderboard")
     leaderboard.add_argument("path", type=Path)
@@ -150,7 +150,7 @@ def _record_replay(replay_dir, name, benchmark, submission):
             save_replay,
         )
 
-        steps = benchmark.horizon if benchmark.name == "pendulum" else benchmark.max_steps
+        steps = benchmark.max_steps
         loaded = benchmark.load_submission(submission)
         save_replay(
             replay_dir / f"{replay_stem(benchmark.name, name)}.json",
@@ -435,7 +435,7 @@ def main(argv=None):
         kwargs["data_path"] = Path("data/fashion-mnist.pt")
     try:
         benchmark = create_benchmark(args.benchmark, **kwargs)
-        result = evaluate_submission(Submission.from_directory(args.submission), benchmark)
+        result = evaluate_submission(Submission.from_directory(args.submission_dir), benchmark)
     except (FileNotFoundError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:
         return _fail(exc)
     _emit(result.to_json())
