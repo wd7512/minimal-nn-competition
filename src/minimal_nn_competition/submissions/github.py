@@ -20,6 +20,7 @@ class PullRequest:
     base_ref: str
     head_ref: str
     checks_passed: bool
+    checks_summary: str = ""
 
 
 def _gh(args: list[str], *, check: bool = True) -> str:
@@ -59,6 +60,17 @@ def open_submission_prs() -> list[PullRequest]:
         checks = item.get("statusCheckRollup", [])
         conclusions = [check.get("conclusion") for check in checks if check.get("conclusion")]
         passed = bool(conclusions) and all(conclusion == "SUCCESS" for conclusion in conclusions)
+        if not checks:
+            checks_summary = "no GitHub checks have run"
+        elif passed:
+            checks_summary = "all GitHub checks passed"
+        else:
+            failed = [
+                check.get("name", "unnamed check")
+                for check in checks
+                if check.get("conclusion") not in (None, "SUCCESS")
+            ]
+            checks_summary = "failed checks: " + ", ".join(failed or ["checks are still pending"])
         prs.append(
             PullRequest(
                 item["number"],
@@ -67,6 +79,7 @@ def open_submission_prs() -> list[PullRequest]:
                 item["baseRefName"],
                 item["headRefName"],
                 passed,
+                checks_summary,
             )
         )
     return sorted(prs, key=lambda pr: pr.number)

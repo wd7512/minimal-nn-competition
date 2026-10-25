@@ -34,6 +34,7 @@ def test_open_submission_prs_requires_successful_check(monkeypatch) -> None:
     assert [pr.number for pr in prs] == [1, 2]
     assert prs[0].checks_passed is True
     assert prs[1].checks_passed is False
+    assert prs[1].checks_summary == "no GitHub checks have run"
 
 
 def test_open_submission_prs_rejects_failed_check(monkeypatch) -> None:
@@ -45,14 +46,15 @@ def test_open_submission_prs_rejects_failed_check(monkeypatch) -> None:
             "headRefOid": "a" * 40,
             "baseRefName": "submission",
             "statusCheckRollup": [
-                {"conclusion": "SUCCESS"},
-                {"conclusion": "FAILURE"},
+                {"name": "validate", "conclusion": "SUCCESS"},
+                {"name": "validate", "conclusion": "FAILURE"},
             ],
         }
     ]
     monkeypatch.setattr(github, "_gh", lambda args: json.dumps(payload))
 
     assert github.open_submission_prs()[0].checks_passed is False
+    assert github.open_submission_prs()[0].checks_summary == "failed checks: validate"
 
 
 def test_score_candidate_accepts_partial_result(monkeypatch, tmp_path: Path) -> None:
