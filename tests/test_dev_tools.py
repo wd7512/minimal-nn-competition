@@ -16,6 +16,7 @@ def test_delta_messages_have_normal_and_extreme_bands() -> None:
 
 
 def test_baseline_is_cleaned_up() -> None:
+    assert dev_tools._baseline_ref()
     with dev_tools._baseline() as baseline:
         assert (baseline / "pyproject.toml").is_file()
         path = Path(baseline)

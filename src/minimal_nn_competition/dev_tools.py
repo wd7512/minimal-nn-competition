@@ -44,12 +44,26 @@ def _git(*args: str, cwd: Path = ROOT) -> str:
     return subprocess.check_output(["git", *args], cwd=cwd, text=True).strip()
 
 
+def _baseline_ref() -> str:
+    for ref in ("main", "origin/main", "dev", "origin/dev"):
+        if (
+            subprocess.run(
+                ["git", "rev-parse", "--verify", ref], cwd=ROOT, capture_output=True
+            ).returncode
+            == 0
+        ):
+            return ref
+    raise RuntimeError("Cannot find a baseline ref; expected main or dev")
+
+
 @contextlib.contextmanager
 def _baseline():
     directory = Path(tempfile.mkdtemp(prefix="dev-tools-main-"))
     try:
         with (directory / "tree.tar").open("wb") as archive:
-            subprocess.run(["git", "archive", "main"], cwd=ROOT, stdout=archive, check=True)
+            subprocess.run(
+                ["git", "archive", _baseline_ref()], cwd=ROOT, stdout=archive, check=True
+            )
         subprocess.run(["tar", "xf", str(directory / "tree.tar"), "-C", str(directory)], check=True)
         (directory / "tree.tar").unlink()
         yield directory
