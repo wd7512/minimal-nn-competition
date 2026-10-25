@@ -137,6 +137,34 @@ def test_registry_and_leaderboard_ranking() -> None:
     ]
 
 
+def test_rank_snake_zero_score_ties_favour_longest_game() -> None:
+    results = [
+        BenchmarkResult("small", "snake-obstacles-8x8", 0, True, 10, {"seed_moves": [50]}),
+        BenchmarkResult("large", "snake-obstacles-8x8", 0, True, 500, {"seed_moves": [200]}),
+        BenchmarkResult("unknown", "snake-obstacles-8x8", 0, True, 1, {}),
+        BenchmarkResult("gone", "snake-obstacles-8x8", 0, True, 1, {"seed_moves": []}),
+        BenchmarkResult("winner", "snake-obstacles-8x8", 0.5, True, 900, {"seed_moves": [10]}),
+    ]
+    assert [result.submission for result in rank_results(results)] == [
+        "winner",
+        "large",
+        "small",
+        "gone",
+        "unknown",
+    ]
+
+
+def test_rank_snake_keeps_score_over_parameters() -> None:
+    results = [
+        BenchmarkResult("tiny-zero", "snake-simple-8x8", 0, True, 1, {"seed_moves": [999]}),
+        BenchmarkResult("any-positive", "snake-simple-8x8", 0.1, True, 900, {"seed_moves": [2]}),
+    ]
+    assert [result.submission for result in rank_results(results)] == [
+        "any-positive",
+        "tiny-zero",
+    ]
+
+
 def test_leaderboard_round_trip(tmp_path: Path) -> None:
     result = BenchmarkResult(
         "example", "snake-simple-8x8", 1, True, 8, {"seed_lengths": [1]}, score_std=0.5
