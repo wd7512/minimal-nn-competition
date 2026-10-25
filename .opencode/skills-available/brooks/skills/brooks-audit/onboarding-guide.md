@@ -19,9 +19,9 @@ Draw the same Mermaid dependency graph as architecture audit Step 1, but color n
 **recommended reading order** using a DISTINCT palette from the severity palette
 (which uses red/yellow/green). This avoids confusing "red = danger" with "red = read last":
 
-- 🔵 Blue (`#339af0`): start here — entry points, core domain
-- 🟣 Purple (`#9775fa`): read next — supporting modules
-- ⚪ Gray (`#ced4da`): read last — infrastructure, generated code, utilities
+- [blue] Blue (`#339af0`): start here — entry points, core domain
+- [purple] Purple (`#9775fa`): read next — supporting modules
+- [white] Gray (`#ced4da`): read last — infrastructure, generated code, utilities
 
 Add numbered labels: `CoreModule["1. CoreModule"]`
 

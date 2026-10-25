@@ -31,9 +31,9 @@ Unclear test intent breeds distrust, missed failures, and duplicates — one ste
 
 ### Severity Guide
 
-- 🔴 Critical: no test name in the file describes the behavior being tested; all assertions lack messages
-- 🟡 Warning: multiple Mystery Guests; several ambiguous test names
-- 🟢 Suggestion: minor naming issues; isolated General Fixture
+- [red] Critical: no test name in the file describes the behavior being tested; all assertions lack messages
+- [yellow] Warning: multiple Mystery Guests; several ambiguous test names
+- [green] Suggestion: minor naming issues; isolated General Fixture
 
 ### What Not to Flag
 
@@ -72,9 +72,9 @@ Brittle tests punish refactoring — eventually developers stop refactoring and 
 
 ### Severity Guide
 
-- 🔴 Critical: refactoring with no behavior change causes test failures; > 5 tests coupled to a single implementation detail
-- 🟡 Warning: Eager Tests common across the suite; moderate implementation-detail assertions
-- 🟢 Suggestion: isolated over-specification in non-critical tests
+- [red] Critical: refactoring with no behavior change causes test failures; > 5 tests coupled to a single implementation detail
+- [yellow] Warning: Eager Tests common across the suite; moderate implementation-detail assertions
+- [green] Suggestion: isolated over-specification in non-critical tests
 
 ### What Not to Flag
 
@@ -109,9 +109,9 @@ Duplicated tests must change in multiple places and create false confidence with
 
 ### Severity Guide
 
-- 🔴 Critical: core business scenario fully duplicated across all three test layers with no differentiation
-- 🟡 Warning: common scenario setup repeated in 5 or more tests without extraction
-- 🟢 Suggestion: minor helper duplication; isolated Lazy Tests
+- [red] Critical: core business scenario fully duplicated across all three test layers with no differentiation
+- [yellow] Warning: common scenario setup repeated in 5 or more tests without extraction
+- [green] Suggestion: minor helper duplication; isolated Lazy Tests
 
 ### What Not to Flag
 
@@ -148,9 +148,9 @@ Mock abuse produces tests that pass while verifying nothing — production code 
 
 ### Severity Guide
 
-- 🔴 Critical: mock setup > 50% of test code; production class has methods only called from tests
-- 🟡 Warning: mocks consistently > 3 per test; primary assertions are mock call verifications
-- 🟢 Suggestion: isolated Incomplete Mocks; minor Hard-Coded Test Data
+- [red] Critical: mock setup > 50% of test code; production class has methods only called from tests
+- [yellow] Warning: mocks consistently > 3 per test; primary assertions are mock call verifications
+- [green] Suggestion: isolated Incomplete Mocks; minor Hard-Coded Test Data
 
 ### What Not to Flag
 
@@ -187,9 +187,9 @@ Coverage measures execution, not verification. 90% line coverage can still miss 
 
 ### Severity Guide
 
-- 🔴 Critical: legacy code area actively being modified with no tests; error-handling paths entirely absent
-- 🟡 Warning: coverage > 80% but edge and exception paths are systematically absent
-- 🟢 Suggestion: a few non-critical paths missing sad-path tests
+- [red] Critical: legacy code area actively being modified with no tests; error-handling paths entirely absent
+- [yellow] Warning: coverage > 80% but edge and exception paths are systematically absent
+- [green] Suggestion: a few non-critical paths missing sad-path tests
 
 ### What Not to Flag
 
@@ -228,9 +228,9 @@ Wrong suite shape is slow and expensive — not from bad tests, but from using t
 
 ### Severity Guide
 
-- 🔴 Critical: legacy code being modified has no seams and no characterization tests; pyramid fully inverted
-- 🟡 Warning: suite execution > 10 minutes; integration/E2E count exceeds unit tests
-- 🟢 Suggestion: localized pyramid ratio deviation; a few legacy areas missing characterization tests
+- [red] Critical: legacy code being modified has no seams and no characterization tests; pyramid fully inverted
+- [yellow] Warning: suite execution > 10 minutes; integration/E2E count exceeds unit tests
+- [green] Suggestion: localized pyramid ratio deviation; a few legacy areas missing characterization tests
 
 ### What Not to Flag
 
