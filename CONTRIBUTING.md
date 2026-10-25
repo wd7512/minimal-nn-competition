@@ -58,9 +58,9 @@ The site also publishes the Snake Simple 8x8 speed and internal token boards:
 
 ```bash
 uv run mnnc speed
-uv run mnnc render-speed speed-leaderboard.json docs/internal
+uv run mnnc render-speed docs/internal/speed/leaderboard.json docs/internal
 uv run mnnc internal
-uv run mnnc render-internal internal-leaderboard.json docs
+uv run mnnc render-internal docs/internal/leaderboard.json docs
 ```
 
 Pages deploys `docs/` on every push to `main`.
