@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from minimal_nn_competition.submissions import github
 from minimal_nn_competition.submissions.github import PullRequest
-from minimal_nn_competition.submissions.workflow import WorkflowError, _score_candidate
+from minimal_nn_competition.submissions.workflow import _score_candidate
 
 
 def test_open_submission_prs_requires_successful_check(monkeypatch) -> None:
@@ -97,17 +99,59 @@ def test_score_candidate_accepts_partial_result(monkeypatch, tmp_path: Path) -> 
     )
 
 
-def test_run_requires_submission_branch(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setattr(
-        "minimal_nn_competition.submissions.workflow._git",
-        lambda args, cwd: "dev\n" if args == ["branch", "--show-current"] else "",
-    )
+def test_run_checks_out_submission_and_updates_with_main(monkeypatch, tmp_path: Path) -> None:
+    from minimal_nn_competition.submissions import workflow
 
-    from minimal_nn_competition.submissions.workflow import run
+    calls: list[list[str]] = []
 
-    try:
-        run(tmp_path, None, Path("data"))
-    except WorkflowError as exc:
-        assert "submission branch" in str(exc)
-    else:
-        raise AssertionError("run should reject non-submission branches")
+    def fake_git(args: list[str], cwd: Path) -> str:
+        calls.append(args)
+        if args == ["branch", "--show-current"]:
+            return "main\n"
+        return ""
+
+    monkeypatch.setattr(workflow, "_git", fake_git)
+    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
+    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [])
+
+    assert workflow.run(tmp_path, None, Path("data")) == 0
+    assert ["checkout", "submission"] in calls
+    assert ["merge", "--ff-only", "origin/main"] in calls
+
+
+def test_run_skips_checkout_on_submission_branch(monkeypatch, tmp_path: Path) -> None:
+    from minimal_nn_competition.submissions import workflow
+
+    calls: list[list[str]] = []
+
+    def fake_git(args: list[str], cwd: Path) -> str:
+        calls.append(args)
+        if args == ["branch", "--show-current"]:
+            return "submission\n"
+        return ""
+
+    monkeypatch.setattr(workflow, "_git", fake_git)
+    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
+    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [])
+
+    assert workflow.run(tmp_path, None, Path("data")) == 0
+    assert ["checkout", "submission"] not in calls
+    assert ["merge", "--ff-only", "origin/main"] in calls
+
+
+def test_run_rejects_dirty_worktree(monkeypatch, tmp_path: Path) -> None:
+    from minimal_nn_competition.submissions import workflow
+
+    def fake_git(args: list[str], cwd: Path) -> str:
+        if args == ["status", "--porcelain", "--untracked-files=no"]:
+            return " M src/main.py\n"
+        if args == ["branch", "--show-current"]:
+            return "main\n"
+        return ""
+
+    monkeypatch.setattr(workflow, "_git", fake_git)
+    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
+    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [])
+
+    with pytest.raises(workflow.WorkflowError, match="uncommitted changes"):
+        workflow.run(tmp_path, None, Path("data"))
