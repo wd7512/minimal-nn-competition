@@ -195,6 +195,8 @@ tests/test_core.py::test_config_rejects_duplicate_input_indices
 tests/test_core.py::test_config_rejects_missing_identity
 tests/test_core.py::test_config_rejects_linear_hidden_sizes
 tests/test_core.py::test_registry_and_leaderboard_ranking
+tests/test_core.py::test_rank_snake_zero_score_ties_favour_longest_game
+tests/test_core.py::test_rank_snake_keeps_score_over_parameters
 tests/test_core.py::test_leaderboard_round_trip
 tests/test_core.py::test_leaderboard_cli
 tests/test_import.py
@@ -205,6 +207,7 @@ tests/test_integration.py::test_render_near_perfect_failure_is_not_shown_as_100
 tests/test_integration.py::test_render_mnist_has_no_game_length_column
 tests/test_integration.py::test_render_chess_eval
 tests/test_integration.py::test_rank_chess_eval_breaks_score_ties_by_mean_error
+tests/test_integration.py::test_render_snake_caption_explains_zero_score_tiebreak
 tests/test_integration.py::test_render_groups_versions_and_defaults
 tests/test_integration.py::test_render_cli
 tests/test_integration.py::test_render_shows_name_and_author

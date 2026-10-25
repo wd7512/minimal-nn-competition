@@ -26,6 +26,12 @@ def _game_length(result):
     return statistics.fmean(moves)
 
 
+def _longest_game_first(result):
+    """Negated game length for descending order; missing games rank last."""
+    length = _game_length(result)
+    return float("inf") if length == float("inf") else -length
+
+
 def _mean_error(result):
     if result.benchmark not in CHESS_BENCHMARKS:
         return 0.0
@@ -34,20 +40,27 @@ def _mean_error(result):
 
 
 def rank_results(results):
-    """Rank by passing status, score, parameter count, Snake game length, then Chess mean error."""
+    """Rank by passing status, score, parameter count, Snake game length, then Chess mean error.
+
+    Snake entries tied at 0% score instead rank by longest game first, then
+    parameter count, since survival is the only signal when nothing is won.
+    """
     # For the Snake competition it would be nice to have some renderings of the games.
-    return sorted(
-        results,
-        key=lambda result: (
+
+    def key(result):
+        snake_tied_at_zero = result.benchmark in SNAKE_BENCHMARKS and result.score == 0
+        return (
             result.benchmark,
             not result.passed,
             -result.score,
-            result.parameter_count,
-            _game_length(result),
+            # Snakes holding a 0% score rank the longest survival first.
+            _longest_game_first(result) if snake_tied_at_zero else result.parameter_count,
+            result.parameter_count if snake_tied_at_zero else _game_length(result),
             _mean_error(result),
             result.submission,
-        ),
-    )
+        )
+
+    return sorted(results, key=key)
 
 
 def save_results(path, results):
