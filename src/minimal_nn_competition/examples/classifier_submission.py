@@ -102,7 +102,7 @@ def run(display_name, data_path, output, argv=None):
     add("--epochs", type=int, default=20)
     add("--device", dest="device_name", default="auto", choices=("auto", "mps", "cpu"))
     add("--name", default=None, help="Display name (defaults to the output directory)")
-    add("--author", default="unknown", help="Author credited on the leaderboard")
+    add("--author", default="unknown", help="Submission author")
     add(
         "--normalise",
         action="store_true",

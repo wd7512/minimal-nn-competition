@@ -6,6 +6,7 @@ from dataclasses import asdict
 from itertools import groupby
 
 from minimal_nn_competition.internal import rank_internal_results, scope_rank
+from minimal_nn_competition.leaderboard import format_measured, short_commit
 
 _SCOPE_TITLES = {"snake-simple-8x8": "SNAKE SIMPLE 8X8"}
 
@@ -23,8 +24,8 @@ th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
 def _table(results):
     rows = []
     for result in results:
-        commit = result.commit[:7] if result.commit != "unknown" else result.commit
-        measured = result.measured_at.replace("T", " ").replace("+00:00", " UTC") or "-"
+        commit = short_commit(result.commit)
+        measured = format_measured(result.measured_at)
         rows.append(
             f"""<tr><td>{scope_rank(result, results)}</td><td>{result.tokens:,}</td><td><code title="{html.escape(result.commit)}">{html.escape(commit)}</code>{' <span class="muted">(dirty)</span>' if result.dirty else ""}</td><td>{html.escape(measured)}</td><td>{html.escape(result.machine or "-")}</td></tr>"""
             if result.status == "pass"
