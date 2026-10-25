@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from minimal_nn_competition.submissions import github
 from minimal_nn_competition.submissions.github import PullRequest
 from minimal_nn_competition.submissions.workflow import _score_candidate
@@ -104,7 +106,9 @@ def test_run_checks_out_submission_and_updates_with_main(monkeypatch, tmp_path: 
 
     def fake_git(args: list[str], cwd: Path) -> str:
         calls.append(args)
-        return "main\n" if args == ["branch", "--show-current"] else ""
+        if args == ["branch", "--show-current"]:
+            return "main\n"
+        return ""
 
     monkeypatch.setattr(workflow, "_git", fake_git)
     monkeypatch.setattr(workflow, "check_authentication", lambda: None)
@@ -122,7 +126,9 @@ def test_run_skips_checkout_on_submission_branch(monkeypatch, tmp_path: Path) ->
 
     def fake_git(args: list[str], cwd: Path) -> str:
         calls.append(args)
-        return "submission\n" if args == ["branch", "--show-current"] else ""
+        if args == ["branch", "--show-current"]:
+            return "submission\n"
+        return ""
 
     monkeypatch.setattr(workflow, "_git", fake_git)
     monkeypatch.setattr(workflow, "check_authentication", lambda: None)
@@ -131,3 +137,21 @@ def test_run_skips_checkout_on_submission_branch(monkeypatch, tmp_path: Path) ->
     assert workflow.run(tmp_path, None, Path("data")) == 0
     assert ["checkout", "submission"] not in calls
     assert ["merge", "--ff-only", "origin/main"] in calls
+
+
+def test_run_rejects_dirty_worktree(monkeypatch, tmp_path: Path) -> None:
+    from minimal_nn_competition.submissions import workflow
+
+    def fake_git(args: list[str], cwd: Path) -> str:
+        if args == ["status", "--porcelain", "--untracked-files=no"]:
+            return " M src/main.py\n"
+        if args == ["branch", "--show-current"]:
+            return "main\n"
+        return ""
+
+    monkeypatch.setattr(workflow, "_git", fake_git)
+    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
+    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [])
+
+    with pytest.raises(workflow.WorkflowError, match="uncommitted changes"):
+        workflow.run(tmp_path, None, Path("data"))

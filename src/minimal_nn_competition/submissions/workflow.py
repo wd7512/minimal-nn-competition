@@ -76,6 +76,11 @@ def _load_replays(root: Path) -> dict:
 
 
 def run(root: Path, pr_number: int | None, data_root: Path) -> int:
+    if _git(["status", "--porcelain", "--untracked-files=no"], root).strip():
+        raise WorkflowError(
+            "working tree has uncommitted changes; commit or stash them first so they "
+            "cannot be carried or committed by the acceptance workflow"
+        )
     branch = _git(["branch", "--show-current"], root).strip()
     if branch != "submission":
         _git(["checkout", "submission"], root)
