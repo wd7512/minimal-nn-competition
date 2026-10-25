@@ -14,7 +14,7 @@ Only for PRs targeting `submission`:
 
 ## Maintainer checklist
 
-- [ ] `uv run dev-tools check` passed; the PR description includes its result summary.
+- [ ] `uv run dev-tools check` passed; the PR description includes its raw output in the validation section.
 - [ ] The submission check passed.
 - [ ] I evaluated the submission locally and updated the leaderboard.
 - [ ] I promoted the result to `main` and synced `submission` with `main`.

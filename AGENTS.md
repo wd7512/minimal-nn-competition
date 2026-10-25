@@ -13,7 +13,7 @@ The ethos of this repo is simplicity and minimalism.
 - Use `uv` for dependency management and command execution.
 - Keep changes small and focused.
 - Add or update tests for behavior changes.
-- Run `uv run dev-tools check` before finishing code changes and report its results in the PR.
+- Run `uv run dev-tools check` before finishing code changes and paste its raw output into the PR.
 - Do not add runtime dependencies unless they are required by package behavior.
 - Prefer clear, boring Python over clever abstractions.
 - Use `logging` (stdlib) for all output — never `print()`. Configure via `logging.basicConfig()` in entry points.

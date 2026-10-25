@@ -39,7 +39,7 @@
   "command": {
     "check": {
       "description": "Run format, lint, type, test, and build checks",
-      "template": "Run `uv run dev-tools check`; report the command's pass/fail result and summarize its output in the PR."
+      "template": "Run `uv run dev-tools check`; paste its raw output into the PR validation section."
     },
     "grill-me": {
       "description": "Stress-test a plan or design",
