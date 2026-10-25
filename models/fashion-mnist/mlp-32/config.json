@@ -1,0 +1,14 @@
+{
+  "benchmark": "fashion-mnist",
+  "name": "mlp-32",
+  "author": "agent",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    32
+  ],
+  "activation": "relu",
+  "normalisation": true,
+  "description": "32-hidden ReLU MLP pruned from mlp-35 by removing 3 dead neurons; identical 100% accuracy with 25450 params."
+}
