@@ -20,7 +20,7 @@ once so later steps never have to ask.
    the user is agreeing to this exact scope.
 
    ```
-   ⚠️  /brooks-sweep — Full Repository Sweep & Auto-Fix
+   [warning]️  /brooks-sweep — Full Repository Sweep & Auto-Fix
 
    Scope:    Four analysis dimensions run in sequence — PR code decay (R1–R6),
              test quality (T1–T6), tech debt, architecture. Edits are made in
@@ -178,9 +178,9 @@ cap, or no progress.
 
 6b. Re-run Steps 2–5 on the re-scan scope. For each new finding in this round:
    - If it matches an entry in `unresolvable` → skip.
-   - Else if 🔴 Critical → queue and fix; Critical findings iterate until
+   - Else if [red] Critical → queue and fix; Critical findings iterate until
      resolved OR retired (3 failed attempts → `unresolvable`).
-   - Else 🟡 Warning / 🟢 Suggestion → queue and fix, subject to cap below.
+   - Else [yellow] Warning / [green] Suggestion → queue and fix, subject to cap below.
 
 6c. Classify the round after all fixes attempted:
    - **Clean round** (no new findings outside `unresolvable`): pipeline

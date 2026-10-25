@@ -647,7 +647,7 @@ function drawCartpole(state) {
   ctx.fill();
   let text = "step " + frame + "/" + last()
     + ", x " + Number(state[0]).toFixed(2)
-    + ", θ " + deg(state[2]) + "°";
+    + ", θ " + deg(state[2]) + " degrees";
   if (frame === last()) {
     text += " · " + OUTCOME;
   }
@@ -709,7 +709,7 @@ function drawPendulum(state, action) {
     ctx.fill();
   }
   let text = "step " + frame + "/" + last()
-    + ", θ " + deg(state[0]) + "°"
+    + ", θ " + deg(state[0]) + " degrees"
     + ", ω " + Number(state[1]).toFixed(2);
   if (frame === last()) {
     text += " · " + OUTCOME;
