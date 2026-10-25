@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import subprocess
 import sys
 import tempfile
@@ -13,7 +14,16 @@ from minimal_nn_competition.internal import PACKAGE, scope_files
 from minimal_nn_competition.internal.scoring import score_files
 from minimal_nn_competition.speed.benchmark import measure_snake_speed
 
-ROOT = Path.cwd()
+
+def _repo_root() -> Path:
+    return Path(
+        subprocess.check_output(
+            ["git", "rev-parse", "--show-toplevel"], cwd=Path.cwd(), text=True
+        ).strip()
+    )
+
+
+ROOT = _repo_root()
 TOKEN_SCOPES = (
     "core",
     "snake-simple-8x8",
@@ -34,13 +44,19 @@ def _git(*args: str, cwd: Path = ROOT) -> str:
     return subprocess.check_output(["git", *args], cwd=cwd, text=True).strip()
 
 
-def _baseline() -> Path:
+@contextlib.contextmanager
+def _baseline():
     directory = Path(tempfile.mkdtemp(prefix="dev-tools-main-"))
-    with (directory / "tree.tar").open("wb") as archive:
-        subprocess.run(["git", "archive", "main"], cwd=ROOT, stdout=archive, check=True)
-    subprocess.run(["tar", "xf", str(directory / "tree.tar"), "-C", str(directory)], check=True)
-    (directory / "tree.tar").unlink()
-    return directory
+    try:
+        with (directory / "tree.tar").open("wb") as archive:
+            subprocess.run(["git", "archive", "main"], cwd=ROOT, stdout=archive, check=True)
+        subprocess.run(["tar", "xf", str(directory / "tree.tar"), "-C", str(directory)], check=True)
+        (directory / "tree.tar").unlink()
+        yield directory
+    finally:
+        import shutil
+
+        shutil.rmtree(directory, ignore_errors=True)
 
 
 def _source_files(root: Path) -> list[Path]:
@@ -70,17 +86,17 @@ def _signed(delta: int, scale: int = 1) -> str:
 def tokens() -> int:
     from minimal_nn_competition.internal import SCOPES
 
-    baseline = _baseline()
-    scope_map = {scope.name: scope for scope in SCOPES}
-    rows: list[tuple[str, int, int, int, int]] = []
-    for name in TOKEN_SCOPES:
-        scope = scope_map[name]
-        current = score_files(scope_files(scope, ROOT))
-        old = score_files(scope_files(scope, baseline))
-        rows.append((name, old, current, current - old, 1))
-    current_md = sum(len(path.read_text(encoding="utf-8")) for path in ROOT.rglob("*.md"))
-    old_md = sum(len(path.read_text(encoding="utf-8")) for path in baseline.rglob("*.md"))
-    rows.append(("# chars in .md files", old_md, current_md, current_md - old_md, 10))
+    with _baseline() as baseline:
+        scope_map = {scope.name: scope for scope in SCOPES}
+        rows: list[tuple[str, int, int, int, int]] = []
+        for name in TOKEN_SCOPES:
+            scope = scope_map[name]
+            current = score_files(scope_files(scope, ROOT))
+            old = score_files(scope_files(scope, baseline))
+            rows.append((name, old, current, current - old, 1))
+        current_md = sum(len(path.read_text(encoding="utf-8")) for path in ROOT.rglob("*.md"))
+        old_md = sum(len(path.read_text(encoding="utf-8")) for path in baseline.rglob("*.md"))
+        rows.append(("# chars in .md files", old_md, current_md, current_md - old_md, 10))
     print("Scope                         Main   Current       Delta")
     print("-" * 62)
     for name, old, current, delta, scale in rows:
@@ -89,14 +105,14 @@ def tokens() -> int:
 
 
 def snake_speed() -> int:
-    baseline = _baseline()
     current = measure_snake_speed(duration=0.1, runs=2, warmup=0.1)
     command = [
         sys.executable,
         "-c",
         "from minimal_nn_competition.speed.benchmark import measure_snake_speed; print(measure_snake_speed(duration=.1, runs=2, warmup=.1).ticks_per_second)",
     ]
-    old = float(subprocess.check_output(command, cwd=baseline, text=True).strip())
+    with _baseline() as baseline:
+        old = float(subprocess.check_output(command, cwd=baseline, text=True).strip())
     change = (current.ticks_per_second - old) / old
     print(
         f"Snake speed: main {old:,.0f}, current {current.ticks_per_second:,.0f}, change {change:+.1%}"

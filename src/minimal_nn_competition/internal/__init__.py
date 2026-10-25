@@ -210,6 +210,7 @@ tests/test_integration.py::test_render_cli
 tests/test_integration.py::test_render_shows_name_and_author
 tests/test_integration.py::test_collect_cli
 tests/test_internal.py
+tests/test_dev_tools.py
 tests/test_model.py
 tests/test_speed.py
 tests/test_submission_check.py""".splitlines()
