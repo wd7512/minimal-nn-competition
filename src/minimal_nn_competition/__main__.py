@@ -95,6 +95,13 @@ def _parser():
         type=Path,
         default=Path("data/fashion-mnist.pt"),
     )
+    submissions = add("validate-submissions", help="Validate and promote open submission PRs")
+    target = submissions.add_mutually_exclusive_group(required=True)
+    target.add_argument(
+        "--all", action="store_true", help="Process every open PR targeting submission"
+    )
+    target.add_argument("--pr", type=int, help="Process one open submission PR")
+    submissions.add_argument("--data-root", type=Path, default=Path("data"))
     collect.add_argument("--output", type=Path, default=Path("leaderboard.json"))
     collect.add_argument(
         "--replay-dir",
@@ -192,6 +199,13 @@ def main(argv=None):
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     args = _parser().parse_args(argv)
+    if args.command == "validate-submissions":
+        from minimal_nn_competition.submissions.workflow import run
+
+        try:
+            return run(Path.cwd(), None if args.all else args.pr, args.data_root)
+        except (OSError, RuntimeError, ValueError, TypeError) as exc:
+            return _fail(exc)
     if args.command == "list":
         _emit("\n".join(available_benchmarks()))
         return 0

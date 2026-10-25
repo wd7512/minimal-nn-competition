@@ -468,6 +468,44 @@
     "submission": "mistral-lqr"
   },
   {
+    "author": "opencode",
+    "benchmark": "chess-eval-100k",
+    "details": {
+      "fold_scores": [
+        1.0,
+        0.9995999932289124,
+        1.0,
+        0.9998000264167786,
+        0.9995999932289124,
+        1.0,
+        0.9998000264167786,
+        0.9998000264167786,
+        0.9995999932289124,
+        0.9998000264167786,
+        0.9998000264167786,
+        1.0,
+        0.9995999932289124,
+        0.9998000264167786,
+        1.0,
+        0.9998000264167786,
+        0.9995999932289124,
+        1.0,
+        1.0,
+        0.9998000264167786
+      ],
+      "folds": 20,
+      "mae": 0.0019490456907078624,
+      "samples": 100000,
+      "tolerance_pawns": 0.1
+    },
+    "name": "mlp-512-512",
+    "parameter_count": 657409,
+    "passed": false,
+    "score": 0.9998199939727783,
+    "score_std": 0.00015362396415610966,
+    "submission": "mlp-512-512"
+  },
+  {
     "author": "example author",
     "benchmark": "chess-eval-100k",
     "details": {
@@ -595,6 +633,20 @@
     "passed": true,
     "score": 1.0,
     "submission": "example"
+  },
+  {
+    "author": "agent",
+    "benchmark": "fashion-mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000
+    },
+    "name": "mlp-32",
+    "parameter_count": 25450,
+    "passed": true,
+    "score": 1.0,
+    "score_std": 0.0,
+    "submission": "mlp-32"
   },
   {
     "author": "hermes",
