@@ -4,6 +4,7 @@ import html
 import json
 from dataclasses import asdict
 
+from minimal_nn_competition.leaderboard import format_measured, short_commit
 from minimal_nn_competition.speed.leaderboard import rank_speed_results
 
 _STYLE = """
@@ -19,8 +20,8 @@ th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
 def _table(results):
     rows = []
     for rank, result in enumerate(results, 1):
-        commit = result.commit[:7] if result.commit != "unknown" else result.commit
-        measured = result.measured_at.replace("T", " ").replace("+00:00", " UTC") or "-"
+        commit = short_commit(result.commit)
+        measured = format_measured(result.measured_at)
         rows.append(
             f"""<tr><td>{rank}</td><td><code title="{html.escape(result.commit)}">{html.escape(commit)}</code></td><td>{result.ticks_per_second:,.0f} ± {result.ticks_std:,.0f}</td><td>{html.escape(result.harness)}</td><td>{html.escape(measured)}</td><td>{html.escape(result.cpu or result.machine or "-")}</td></tr>"""
         )
