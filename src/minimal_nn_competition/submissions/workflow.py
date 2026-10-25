@@ -78,7 +78,9 @@ def _load_replays(root: Path) -> dict:
 def run(root: Path, pr_number: int | None, data_root: Path) -> int:
     branch = _git(["branch", "--show-current"], root).strip()
     if branch != "submission":
-        raise WorkflowError(f"run from the submission branch, not {branch or 'detached HEAD'}")
+        _git(["checkout", "submission"], root)
+    _git(["fetch", "origin", "main", "submission"], root)
+    _git(["merge", "--ff-only", "origin/main"], root)
     check_authentication()
     prs = open_submission_prs()
     if pr_number is not None:
@@ -89,7 +91,6 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
         logger.info("No open submission PRs found")
         return 0
 
-    _git(["fetch", "origin", "main", "submission"], root)
     accepted = 0
     skipped = 0
     for pr in prs:
