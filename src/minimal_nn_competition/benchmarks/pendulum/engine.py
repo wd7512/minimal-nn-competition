@@ -8,6 +8,8 @@ LENGTH = 1.0
 MAX_SPEED = 8.0
 MAX_TORQUE = 2.0
 DT = 0.05
+INITIAL_ANGLE_LIMIT = math.pi
+INITIAL_ANGULAR_VELOCITY_LIMIT = 2.0
 TORQUES = (-MAX_TORQUE, -MAX_TORQUE / 2, 0.0, MAX_TORQUE / 2, MAX_TORQUE)
 
 
@@ -17,8 +19,10 @@ def angle_normalize(theta):
 
 
 def reset(rng):
-    """Return a random angle and angular velocity within the Gym bounds."""
-    return rng.uniform(-math.pi, math.pi), rng.uniform(-1.0, 1.0)
+    """Return a random angle and a challenging initial angular velocity."""
+    return rng.uniform(-INITIAL_ANGLE_LIMIT, INITIAL_ANGLE_LIMIT), rng.uniform(
+        -INITIAL_ANGULAR_VELOCITY_LIMIT, INITIAL_ANGULAR_VELOCITY_LIMIT
+    )
 
 
 def observation(state):

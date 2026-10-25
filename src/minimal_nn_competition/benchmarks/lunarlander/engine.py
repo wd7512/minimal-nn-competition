@@ -13,17 +13,23 @@ LANDING_MAX_VERTICAL_SPEED = 0.2
 LANDING_MAX_ANGLE = 0.5
 LANDING_REWARD = 10.0
 CRASH_PENALTY = 10.0
+INITIAL_X_LIMIT = 0.4
+INITIAL_Y_MIN = 1.0
+INITIAL_Y_MAX = 1.3
+INITIAL_VELOCITY_LIMIT = 0.1
+INITIAL_ANGLE_LIMIT = 0.2
+INITIAL_ANGULAR_VELOCITY_LIMIT = 0.03
 
 
 def reset(rng):
-    """Return a lander above the pad with small random drift."""
+    """Return a lander above the pad with varied initial drift and tilt."""
     return (
-        rng.uniform(-0.2, 0.2),
-        rng.uniform(1.0, 1.2),
-        rng.uniform(-0.05, 0.05),
-        rng.uniform(-0.05, 0.05),
-        rng.uniform(-0.1, 0.1),
-        rng.uniform(-0.01, 0.01),
+        rng.uniform(-INITIAL_X_LIMIT, INITIAL_X_LIMIT),
+        rng.uniform(INITIAL_Y_MIN, INITIAL_Y_MAX),
+        rng.uniform(-INITIAL_VELOCITY_LIMIT, INITIAL_VELOCITY_LIMIT),
+        rng.uniform(-INITIAL_VELOCITY_LIMIT, INITIAL_VELOCITY_LIMIT),
+        rng.uniform(-INITIAL_ANGLE_LIMIT, INITIAL_ANGLE_LIMIT),
+        rng.uniform(-INITIAL_ANGULAR_VELOCITY_LIMIT, INITIAL_ANGULAR_VELOCITY_LIMIT),
     )
 
 
