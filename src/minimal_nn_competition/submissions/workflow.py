@@ -103,7 +103,7 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
             )
             directory = _validate_pr(pr, root)
             result = _score_candidate(pr, directory, root, root / data_root)
-            merge(pr.number)
+            merge(pr.number, delete_branch=True)
             _git(["pull", "--ff-only", "origin", "submission"], root)
             upsert_result(root / "leaderboard.json", result)
             render_site(load_results(root / "leaderboard.json"), root / "docs", _load_replays(root))
