@@ -1,0 +1,22 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "cycle-17x7",
+  "author": "chatgpt think harder",
+  "architecture": "mlp",
+  "input_size": 6,
+  "output_size": 4,
+  "hidden_sizes": [
+    17,
+    7
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "Pruned 17x7 policy of the existing 16x16 Hamiltonian-cycle leader; matches its action on all 256 head positions and fills all 100 fixed seeds in a local reproduction of the benchmark engine. 277 parameters."
+}
