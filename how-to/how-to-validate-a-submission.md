@@ -45,9 +45,11 @@ pinned to the validated head commit, and the workflow verifies that the merge
 commit's second parent matches it before publishing. The workflow then
 synchronizes from `origin/submission`, upserts the leaderboard entry by
 `(benchmark, submission)`, records a deterministic replay for Snake, CartPole,
-Pendulum, or LunarLander, renders the site, commits and pushes the artifacts,
-and reads the remote leaderboard back to verify that both the new entry and the
-previously recorded entries remain present. If another workflow run advances
+Pendulum, or LunarLander from the same commit that was scored (in a temporary
+worktree, never from the live submission checkout), renders the site, commits
+and pushes the artifacts, and reads the remote leaderboard back to verify that
+both the new entry and the previously recorded entries remain present. If
+another workflow run advances
 `submission` during publication, the generated score commit is rebuilt from the
 newer remote ledger, with a bounded retry. An unrelated or ambiguous branch
 divergence fails closed rather than being force-pushed.

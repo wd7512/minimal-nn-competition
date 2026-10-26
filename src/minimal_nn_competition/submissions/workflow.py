@@ -88,6 +88,18 @@ def _git(args: list[str], cwd: Path) -> str:
         raise WorkflowError(f"git {' '.join(args)} failed: {(exc.stderr or '').strip()}") from exc
 
 
+@contextmanager
+def _worktree(root: Path, sha: str, *, name: str):
+    """Yield a temporary detached worktree checked out at ``sha``."""
+    with tempfile.TemporaryDirectory(prefix=name) as temp:
+        tree = Path(temp) / "tree"
+        _git(["worktree", "add", "--detach", str(tree), sha], root)
+        try:
+            yield tree
+        finally:
+            _git(["worktree", "remove", "--force", str(tree)], root)
+
+
 def _is_ancestor(ancestor: str, descendant: str, root: Path) -> bool:
     result = subprocess.run(
         ["git", "merge-base", "--is-ancestor", ancestor, descendant],
@@ -261,56 +273,45 @@ def _validate_pr(
             )
         diff = _git(["diff", "--name-status", f"{base}...{candidate}"], root)
 
-    with tempfile.TemporaryDirectory(prefix=f"mnnc-validate-{pr.number}-") as temp:
-        worktree = Path(temp) / "tree"
-        _git(["worktree", "add", "--detach", str(worktree), candidate], root)
-        try:
-            errors = validate_diff(diff, worktree)
-        finally:
-            _git(["worktree", "remove", "--force", str(worktree)], root)
-        if errors:
-            raise WorkflowError("\n".join(errors))
+    with _worktree(root, candidate, name=f"mnnc-validate-{pr.number}-") as worktree:
+        errors = validate_diff(diff, worktree)
+    if errors:
+        raise WorkflowError("\n".join(errors))
     return candidate, submission_directory(diff)
 
 
 def _score_candidate(candidate: str, pr_number: int, directory: Path, root: Path, data_root: Path):
-    with tempfile.TemporaryDirectory(prefix=f"mnnc-pr-{pr_number}-") as temp:
-        worktree = Path(temp) / "tree"
-        _git(["worktree", "add", "--detach", str(worktree), candidate], root)
-        try:
-            result = score_submission(worktree, directory, data_root)
-        finally:
-            _git(["worktree", "remove", "--force", str(worktree)], root)
-    return result
+    with _worktree(root, candidate, name=f"mnnc-pr-{pr_number}-") as worktree:
+        return score_submission(worktree, directory, data_root)
 
 
-def _record_submission_replay(root: Path, directory: Path) -> Path | None:
-    """Write the deterministic detail-page replay for an accepted game submission."""
-    submission = Submission.from_directory(root / directory)
-    benchmark_name = submission.config.benchmark
-    if benchmark_name not in SNAKE_BENCHMARKS + RL_BENCHMARKS:
-        return None
+def _record_submission_replay(root: Path, directory: Path, scored_sha: str) -> Path | None:
+    """Write the replay from the exact commit that was scored and published."""
+    with _worktree(root, scored_sha, name="mnnc-replay-") as worktree:
+        submission = Submission.from_directory(worktree / directory)
+        benchmark_name = submission.config.benchmark
+        if benchmark_name not in SNAKE_BENCHMARKS + RL_BENCHMARKS:
+            return None
 
-    benchmark = create_benchmark(benchmark_name)
-    loaded = benchmark.load_submission(submission)
-    name = directory.name
-    replay_dir = root / "docs" / "games"
-    stem = replay_stem(benchmark_name, name)
+        benchmark = create_benchmark(benchmark_name)
+        loaded = benchmark.load_submission(submission)
+        name = directory.name
+        stem = replay_stem(benchmark_name, name)
 
-    if benchmark_name in SNAKE_BENCHMARKS:
-        payload = record_snake_game(
-            loaded.model,
-            seed=SNAKE_REPLAY_SEED,
-            max_moves=benchmark.max_moves,
-            input_indices=selected_input_indices(submission.config, benchmark_name),
-            **benchmark.environment_options(SNAKE_REPLAY_SEED),
-        )
-    else:
-        from minimal_nn_competition.benchmarks.control.replay import record_game
+        if benchmark_name in SNAKE_BENCHMARKS:
+            payload = record_snake_game(
+                loaded.model,
+                seed=SNAKE_REPLAY_SEED,
+                max_moves=benchmark.max_moves,
+                input_indices=selected_input_indices(submission.config, benchmark_name),
+                **benchmark.environment_options(SNAKE_REPLAY_SEED),
+            )
+        else:
+            from minimal_nn_competition.benchmarks.control.replay import record_game
 
-        payload = record_game(benchmark_name, loaded.model, steps=benchmark.max_steps)
+            payload = record_game(benchmark_name, loaded.model, steps=benchmark.max_steps)
 
-    return save_replay(replay_dir / f"{stem}.json", payload)
+    return save_replay(root / "docs" / "games" / f"{stem}.json", payload)
 
 
 def _expected_replay_stems(results) -> set[str]:
@@ -405,7 +406,14 @@ def _stage_generated(root: Path, paths: tuple[str, ...]) -> None:
         _git(["add", "-A", "--", *sorted(set(staged))], root)
 
 
-def _publish_result(root: Path, directory: Path, result, *, pr_number: int | None = None) -> None:
+def _publish_result(
+    root: Path,
+    directory: Path,
+    result,
+    *,
+    scored_sha: str,
+    pr_number: int | None = None,
+) -> None:
     """Upsert and publish artifacts, rebasing the generated commit on concurrent writes."""
     ledger_path = root / "docs" / "leaderboard.json"
 
@@ -427,7 +435,7 @@ def _publish_result(root: Path, directory: Path, result, *, pr_number: int | Non
             raise WorkflowError("leaderboard upsert did not record the scored submission")
 
         try:
-            _record_submission_replay(root, directory)
+            _record_submission_replay(root, directory, scored_sha)
         except _RECOVERY_ERRORS as replay_error:
             # Presentation artifacts must not strand an already-scored submission.
             logger.error(
@@ -438,12 +446,22 @@ def _publish_result(root: Path, directory: Path, result, *, pr_number: int | Non
             )
 
         results = load_results(ledger_path)
+        rendered = True
         try:
             _render_site_atomically(root, results)
         except Exception as render_error:
+            rendered = False
             logger.exception("Could not render site for %s: %s", result.submission, render_error)
 
-        _stage_generated(root, _GENERATED_PATHS)
+        if rendered:
+            generated = _GENERATED_PATHS
+        else:
+            generated = ("docs/leaderboard.json",)
+            for stem in sorted(_expected_replay_stems(results)):
+                path = root / "docs" / "games" / f"{stem}.json"
+                if path.is_file():
+                    generated += (f"docs/games/{stem}.json",)
+        _stage_generated(root, generated)
 
         staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root, check=False)
         if staged.returncode == 1:
@@ -598,7 +616,7 @@ def _accept_pr(pr: PullRequest, root: Path, data_root: Path) -> str:
         merge(pr.number, delete_branch=False, head_sha=scored_sha)
         _verified_merge(pr, root, scored_sha)
     _git(["pull", "--ff-only", "origin", "submission"], root)
-    _publish_result(root, directory, result, pr_number=pr.number)
+    _publish_result(root, directory, result, scored_sha=scored_sha, pr_number=pr.number)
     return result.submission
 
 

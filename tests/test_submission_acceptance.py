@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -119,6 +120,7 @@ def test_record_submission_replay_writes_snake_replay(monkeypatch, tmp_path: Pat
         },
     )
     captured = {}
+    monkeypatch.setattr(workflow, "_worktree", lambda root, sha, name: nullcontext(tmp_path))
     monkeypatch.setattr(workflow.Submission, "from_directory", lambda path: submission)
     monkeypatch.setattr(workflow, "create_benchmark", lambda name: benchmark)
 
@@ -130,7 +132,7 @@ def test_record_submission_replay_writes_snake_replay(monkeypatch, tmp_path: Pat
     monkeypatch.setattr(workflow, "record_snake_game", fake_record)
 
     replay_path = workflow._record_submission_replay(
-        tmp_path, Path("models/snake-obstacles-8x8/test-agent")
+        tmp_path, Path("models/snake-obstacles-8x8/test-agent"), "a" * 40
     )
 
     assert replay_path == (tmp_path / "docs" / "games" / "snake-obstacles-8x8--test-agent.json")
@@ -143,9 +145,10 @@ def test_record_submission_replay_writes_snake_replay(monkeypatch, tmp_path: Pat
 
 def test_non_game_submission_does_not_record_replay(monkeypatch, tmp_path: Path) -> None:
     submission = SimpleNamespace(config=SimpleNamespace(benchmark="mnist"))
+    monkeypatch.setattr(workflow, "_worktree", lambda root, sha, name: nullcontext(tmp_path))
     monkeypatch.setattr(workflow.Submission, "from_directory", lambda path: submission)
 
-    assert workflow._record_submission_replay(tmp_path, Path("models/mnist/test")) is None
+    assert workflow._record_submission_replay(tmp_path, Path("models/mnist/test"), "a" * 40) is None
 
 
 def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -> None:
@@ -233,7 +236,9 @@ def test_publish_rebuilds_ledger_after_concurrent_push(monkeypatch, tmp_path: Pa
         "upsert_result",
         lambda path, scored: local_keys.add(scoring.result_key(scored)),
     )
-    monkeypatch.setattr(workflow, "_record_submission_replay", lambda root, directory: None)
+    monkeypatch.setattr(
+        workflow, "_record_submission_replay", lambda root, directory, scored_sha: None
+    )
     monkeypatch.setattr(workflow, "_render_site_atomically", lambda root, results: None)
     monkeypatch.setattr(workflow, "load_results", lambda path: [result])
     monkeypatch.setattr(
@@ -242,7 +247,7 @@ def test_publish_rebuilds_ledger_after_concurrent_push(monkeypatch, tmp_path: Pa
         lambda *args, **kwargs: SimpleNamespace(returncode=1),
     )
 
-    workflow._publish_result(tmp_path, Path("models/mnist/new-model"), result)
+    workflow._publish_result(tmp_path, Path("models/mnist/new-model"), result, scored_sha="a" * 40)
 
     assert push_count == 2
     assert remote_keys == {

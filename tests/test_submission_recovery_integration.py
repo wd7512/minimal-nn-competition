@@ -193,11 +193,13 @@ def test_stage_generated_ignores_unrelated_docs_files(tmp_path: Path) -> None:
     assert _git(work, "diff", "--cached", "--name-only").splitlines() == ["docs/index.html"]
 
 
-def test_publish_still_records_score_when_presentation_fails(tmp_path: Path, monkeypatch) -> None:
+def test_render_failure_stages_only_the_ledger(tmp_path: Path, monkeypatch) -> None:
     _remote, work = _repo(tmp_path)
     result = _result("new-model")
+    (work / "docs" / "games").mkdir(parents=True)
+    (work / "docs" / "games" / "notes.json").write_text("{}\n")
 
-    def fail_replay(root: Path, directory: Path) -> None:
+    def fail_replay(root: Path, directory: Path, scored_sha: str) -> None:
         raise RuntimeError("replay unavailable")
 
     def fail_render(results, output_dir, replays=None) -> None:
@@ -206,11 +208,16 @@ def test_publish_still_records_score_when_presentation_fails(tmp_path: Path, mon
     monkeypatch.setattr(workflow, "_record_submission_replay", fail_replay)
     monkeypatch.setattr(workflow, "render_site", fail_render)
 
-    workflow._publish_result(work, Path("models/mnist/new-model"), result, pr_number=99)
+    scored_sha = _rev(work, "submission")
+    workflow._publish_result(
+        work, Path("models/mnist/new-model"), result, scored_sha=scored_sha, pr_number=99
+    )
 
     assert _git(work, "log", "-1", "--pretty=%s") == "Score submission PR #99 (new-model)"
     committed = _git(work, "show", "--name-only", "--pretty=format:", "HEAD").splitlines()
     assert committed == ["docs/leaderboard.json"]
+    assert "docs/games/notes.json" not in committed
+    assert (work / "docs" / "games" / "notes.json").is_file()
     payload = json.loads(_git(work, "show", "origin/submission:docs/leaderboard.json"))
     assert {(row["benchmark"], row["submission"]) for row in payload} == {("mnist", "new-model")}
 
@@ -218,13 +225,15 @@ def test_publish_still_records_score_when_presentation_fails(tmp_path: Path, mon
 def test_publish_does_not_swallow_programming_errors(tmp_path: Path, monkeypatch) -> None:
     _remote, work = _repo(tmp_path)
 
-    def bug(root: Path, directory: Path) -> None:
+    def bug(root: Path, directory: Path, scored_sha: str) -> None:
         raise KeyError("programming error")
 
     monkeypatch.setattr(workflow, "_record_submission_replay", bug)
 
     with pytest.raises(KeyError):
-        workflow._publish_result(work, Path("models/mnist/broken"), _result("broken"))
+        workflow._publish_result(
+            work, Path("models/mnist/broken"), _result("broken"), scored_sha="a" * 40
+        )
 
 
 def test_concurrent_runs_cannot_share_a_checkout(tmp_path: Path) -> None:
@@ -330,6 +339,54 @@ def test_stale_pr_is_rejected_when_remote_advances(tmp_path: Path, monkeypatch) 
     assert "not based on the validation base" in comments[0]
 
 
+def test_replay_uses_the_scored_checkpoint(tmp_path: Path, monkeypatch) -> None:
+    _remote, work = _repo(tmp_path)
+    directory = Path("models/snake-simple-8x8/agent")
+    checkpoint = work / directory / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_text("old-model\n")
+    _git(work, "add", "models")
+    _git(work, "commit", "-m", "old model")
+    scored_sha = _rev(work, "HEAD")
+
+    checkpoint.write_text("new-model\n")
+    _git(work, "commit", "-am", "new model")
+    assert _rev(work, "HEAD") != scored_sha
+
+    monkeypatch.setattr(
+        workflow.Submission,
+        "from_directory",
+        classmethod(
+            lambda cls, path: SimpleNamespace(
+                config=SimpleNamespace(benchmark="snake-simple-8x8", input_indices=None),
+                checkpoint=path / "model.pt",
+            )
+        ),
+    )
+
+    class FakeBenchmark:
+        max_moves = 1
+
+        def load_submission(self, submission):
+            return SimpleNamespace(model=submission.checkpoint.read_text().strip())
+
+        def environment_options(self, seed):
+            return {}
+
+    monkeypatch.setattr(workflow, "create_benchmark", lambda name: FakeBenchmark())
+    monkeypatch.setattr(
+        workflow,
+        "record_snake_game",
+        lambda model, **kwargs: {"frames": [], "model": model},
+    )
+
+    replay = workflow._record_submission_replay(work, directory, scored_sha)
+
+    assert replay is not None
+    assert (work / directory / "model.pt").read_text().strip() == "new-model"
+    assert json.loads(replay.read_text())["model"] == "old-model"
+
+
 def test_install_site_failure_restores_previous_tree(tmp_path: Path, monkeypatch) -> None:
     _remote, work = _repo(tmp_path)
     docs = work / "docs"
@@ -353,9 +410,16 @@ def test_install_site_failure_restores_previous_tree(tmp_path: Path, monkeypatch
         real_replace(source, target)
 
     monkeypatch.setattr(workflow.os, "replace", fail_index_once)
-    monkeypatch.setattr(workflow, "_record_submission_replay", lambda root, directory: None)
+    monkeypatch.setattr(
+        workflow, "_record_submission_replay", lambda root, directory, scored_sha: None
+    )
 
-    workflow._publish_result(work, Path("models/mnist/new-model"), _result("new-model"))
+    workflow._publish_result(
+        work,
+        Path("models/mnist/new-model"),
+        _result("new-model"),
+        scored_sha=_rev(work, "submission"),
+    )
 
     assert failed
     assert (docs / "index.html").read_text() == "old index\n"
