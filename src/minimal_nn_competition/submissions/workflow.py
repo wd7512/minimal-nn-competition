@@ -415,6 +415,46 @@ def _restore_file(path: Path, previous: bytes | None) -> None:
         path.write_bytes(previous)
 
 
+def _snapshot_generated(root: Path) -> tuple[Path, tuple[str, ...]]:
+    """Copy generated artifacts so a failed pre-commit publish can be undone."""
+    backup = Path(tempfile.mkdtemp(prefix="mnnc-publish-backup-"))
+    existing = []
+    try:
+        for relative in _GENERATED_PATHS:
+            source = root / relative
+            if not source.exists() and not source.is_symlink():
+                continue
+            existing.append(relative)
+            target = backup / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if source.is_dir() and not source.is_symlink():
+                shutil.copytree(source, target, symlinks=True)
+            else:
+                shutil.copy2(source, target, follow_symlinks=False)
+    except BaseException:
+        shutil.rmtree(backup, ignore_errors=True)
+        raise
+    return backup, tuple(existing)
+
+
+def _restore_generated(root: Path, backup: Path, existing: tuple[str, ...]) -> None:
+    """Restore generated artifacts from a pre-publication snapshot."""
+    for relative in reversed(_GENERATED_PATHS):
+        target = root / relative
+        if target.is_dir() and not target.is_symlink():
+            shutil.rmtree(target)
+        elif target.exists() or target.is_symlink():
+            target.unlink()
+    for relative in existing:
+        source = backup / relative
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_dir() and not source.is_symlink():
+            shutil.copytree(source, target, symlinks=True)
+        else:
+            shutil.copy2(source, target, follow_symlinks=False)
+
+
 def _publish_result(
     root: Path,
     directory: Path,
@@ -439,8 +479,9 @@ def _publish_result(
         replay_path = (
             root / "docs" / "games" / f"{replay_stem(result.benchmark, result.submission)}.json"
         )
-        previous_ledger = ledger_path.read_bytes() if ledger_path.exists() else None
         previous_replay = replay_path.read_bytes() if replay_path.exists() else None
+        backup, existing_generated = _snapshot_generated(root)
+        score_commit_created = False
         try:
             upsert_result(ledger_path, result)
             new_keys = _local_ledger_keys(root)
@@ -470,29 +511,34 @@ def _publish_result(
                 logger.exception(
                     "Could not render site for %s: %s", result.submission, render_error
                 )
+            if rendered:
+                generated = _GENERATED_PATHS
+            else:
+                generated = ("docs/leaderboard.json",)
+                for stem in sorted(_expected_replay_stems(results)):
+                    path = root / "docs" / "games" / f"{stem}.json"
+                    if path.is_file():
+                        generated += (f"docs/games/{stem}.json",)
+            _stage_generated(root, generated)
+
+            staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root, check=False)
+            if staged.returncode == 1:
+                message = f"Score submission {result.submission}"
+                if pr_number is not None:
+                    message = f"Score submission PR #{pr_number} ({result.submission})"
+                _git(["commit", "-m", message], root)
+                score_commit_created = True
+            elif staged.returncode != 0:
+                raise WorkflowError("could not inspect staged leaderboard changes")
         except BaseException:
-            _restore_file(ledger_path, previous_ledger)
-            _restore_file(replay_path, previous_replay)
+            if not score_commit_created:
+                try:
+                    _git(["reset", "--", *_GENERATED_PATHS], root)
+                finally:
+                    _restore_generated(root, backup, existing_generated)
             raise
-
-        if rendered:
-            generated = _GENERATED_PATHS
-        else:
-            generated = ("docs/leaderboard.json",)
-            for stem in sorted(_expected_replay_stems(results)):
-                path = root / "docs" / "games" / f"{stem}.json"
-                if path.is_file():
-                    generated += (f"docs/games/{stem}.json",)
-        _stage_generated(root, generated)
-
-        staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root, check=False)
-        if staged.returncode == 1:
-            message = f"Score submission {result.submission}"
-            if pr_number is not None:
-                message = f"Score submission PR #{pr_number} ({result.submission})"
-            _git(["commit", "-m", message], root)
-        elif staged.returncode != 0:
-            raise WorkflowError("could not inspect staged leaderboard changes")
+        finally:
+            shutil.rmtree(backup, ignore_errors=True)
 
         try:
             _git(["push", "origin", "submission"], root)

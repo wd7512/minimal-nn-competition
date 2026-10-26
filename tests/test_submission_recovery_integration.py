@@ -253,6 +253,82 @@ def test_replay_write_failure_preserves_previous_replay_on_render_failure(
     assert replay_path.read_text() == previous_replay
 
 
+def test_commit_failure_restores_artifacts_and_allows_retry(tmp_path: Path, monkeypatch) -> None:
+    _remote, work = _repo(tmp_path)
+    result = _result("retry-model")
+    original_ledger = (work / "docs" / "leaderboard.json").read_bytes()
+    original_head = _rev(work, "HEAD")
+    fail_commit = True
+    original_git = workflow._git
+
+    def git(args: list[str], cwd: Path) -> str:
+        nonlocal fail_commit
+        if args[:1] == ["commit"] and fail_commit:
+            fail_commit = False
+            raise workflow.WorkflowError("simulated commit failure")
+        return original_git(args, cwd)
+
+    def record_replay(root: Path, directory: Path, scored_sha: str) -> Path:
+        path = root / "docs" / "games" / f"{replay_stem(result.benchmark, result.submission)}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('{"frames": []}\n')
+        return path
+
+    def render(root: Path, results) -> None:
+        (root / "docs" / "index.html").write_text("rendered\n")
+        pages = root / "docs" / "submissions"
+        pages.mkdir(parents=True, exist_ok=True)
+        (pages / "retry-model.html").write_text("rendered\n")
+
+    monkeypatch.setattr(workflow, "_git", git)
+    monkeypatch.setattr(workflow, "_record_submission_replay", record_replay)
+    monkeypatch.setattr(workflow, "_render_site_atomically", render)
+
+    with pytest.raises(workflow.WorkflowError, match="simulated commit failure"):
+        workflow._publish_result(
+            work, Path("models/mnist/retry-model"), result, scored_sha=original_head
+        )
+
+    assert _rev(work, "HEAD") == original_head
+    assert (work / "docs" / "leaderboard.json").read_bytes() == original_ledger
+    assert _git(work, "status", "--porcelain", "--untracked-files=all") == ""
+
+    workflow._publish_result(
+        work, Path("models/mnist/retry-model"), result, scored_sha=original_head
+    )
+
+    assert _git(work, "log", "-1", "--pretty=%s") == "Score submission retry-model"
+    assert "retry-model" in _git(work, "show", "HEAD:docs/leaderboard.json")
+
+
+def test_push_failure_keeps_score_commit_for_recovery(tmp_path: Path, monkeypatch) -> None:
+    _remote, work = _repo(tmp_path)
+    result = _result("push-retry")
+    original_head = _rev(work, "HEAD")
+    original_git = workflow._git
+
+    def fail_push(args: list[str], cwd: Path) -> str:
+        if args == ["push", "origin", "submission"]:
+            raise workflow.WorkflowError("simulated push failure")
+        return original_git(args, cwd)
+
+    monkeypatch.setattr(workflow, "_git", fail_push)
+    monkeypatch.setattr(
+        workflow, "_record_submission_replay", lambda root, directory, scored_sha: None
+    )
+    monkeypatch.setattr(workflow, "_render_site_atomically", lambda root, results: None)
+
+    with pytest.raises(workflow.WorkflowError, match="simulated push failure"):
+        workflow._publish_result(
+            work, Path("models/mnist/push-retry"), result, scored_sha=original_head
+        )
+
+    assert _rev(work, "HEAD") != original_head
+    assert _rev(work, "origin/submission") == original_head
+    assert "push-retry" in _git(work, "show", "HEAD:docs/leaderboard.json")
+    assert _git(work, "status", "--porcelain", "--untracked-files=all") == ""
+
+
 def test_publish_does_not_swallow_programming_errors(tmp_path: Path, monkeypatch) -> None:
     _remote, work = _repo(tmp_path)
 
