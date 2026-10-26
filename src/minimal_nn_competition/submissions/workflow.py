@@ -406,6 +406,15 @@ def _stage_generated(root: Path, paths: tuple[str, ...]) -> None:
         _git(["add", "-A", "--", *sorted(set(staged))], root)
 
 
+def _restore_file(path: Path, previous: bytes | None) -> None:
+    """Restore one generated file to its pre-publication contents or absence."""
+    if previous is None:
+        path.unlink(missing_ok=True)
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(previous)
+
+
 def _publish_result(
     root: Path,
     directory: Path,
@@ -427,31 +436,43 @@ def _publish_result(
                 "origin/submission"
             )
 
-        upsert_result(ledger_path, result)
-        new_keys = _local_ledger_keys(root)
-        if not old_keys.issubset(new_keys):
-            raise WorkflowError("leaderboard upsert removed an existing entry")
-        if result_key(result) not in new_keys:
-            raise WorkflowError("leaderboard upsert did not record the scored submission")
-
+        replay_path = (
+            root / "docs" / "games" / f"{replay_stem(result.benchmark, result.submission)}.json"
+        )
+        previous_ledger = ledger_path.read_bytes()
+        previous_replay = replay_path.read_bytes() if replay_path.exists() else None
         try:
-            _record_submission_replay(root, directory, scored_sha)
-        except _RECOVERY_ERRORS as replay_error:
-            # Presentation artifacts must not strand an already-scored submission.
-            logger.error(
-                "Could not record replay for %s: %s. The score will still be published; "
-                "rerun to repair the replay artifact.",
-                result.submission,
-                replay_error,
-            )
+            upsert_result(ledger_path, result)
+            new_keys = _local_ledger_keys(root)
+            if not old_keys.issubset(new_keys):
+                raise WorkflowError("leaderboard upsert removed an existing entry")
+            if result_key(result) not in new_keys:
+                raise WorkflowError("leaderboard upsert did not record the scored submission")
 
-        results = load_results(ledger_path)
-        rendered = True
-        try:
-            _render_site_atomically(root, results)
-        except _RECOVERY_ERRORS as render_error:
-            rendered = False
-            logger.exception("Could not render site for %s: %s", result.submission, render_error)
+            try:
+                _record_submission_replay(root, directory, scored_sha)
+            except _RECOVERY_ERRORS as replay_error:
+                # Presentation artifacts must not strand an already-scored submission.
+                logger.error(
+                    "Could not record replay for %s: %s. The score will still be published; "
+                    "rerun to repair the replay artifact.",
+                    result.submission,
+                    replay_error,
+                )
+
+            results = load_results(ledger_path)
+            rendered = True
+            try:
+                _render_site_atomically(root, results)
+            except _RECOVERY_ERRORS as render_error:
+                rendered = False
+                logger.exception(
+                    "Could not render site for %s: %s", result.submission, render_error
+                )
+        except BaseException:
+            _restore_file(ledger_path, previous_ledger)
+            _restore_file(replay_path, previous_replay)
+            raise
 
         if rendered:
             generated = _GENERATED_PATHS
