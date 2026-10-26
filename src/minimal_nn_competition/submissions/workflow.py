@@ -6,6 +6,7 @@ import fcntl
 import hashlib
 import json
 import logging
+import os
 import shutil
 import subprocess
 import tempfile
@@ -58,6 +59,8 @@ _GENERATED_PATHS = (
     "docs/submissions",
     "docs/games",
 )
+_SITE_FILES = ("leaderboard.json", "index.html", ".nojekyll")
+_SITE_DIRS = ("submissions", "games")
 
 
 class WorkflowError(RuntimeError):
@@ -132,6 +135,44 @@ def _remote_ledger_keys(root: Path, ref: str = "origin/submission") -> set[tuple
     return _ledger_keys_from_payload(payload, ref)
 
 
+def _is_generated_path(path: str) -> bool:
+    return path in _GENERATED_PATHS or path.startswith(("docs/submissions/", "docs/games/"))
+
+
+def _unpublished_score_commits(root: Path) -> list[str]:
+    """Return local commits that are neither on origin/submission nor already on main."""
+    return _git(["rev-list", "origin/submission..submission", "--not", "origin/main"], root).split()
+
+
+def _publish_local_score_commits(root: Path) -> None:
+    """Push workflow-generated score commits left behind by a failed push."""
+    commits = _unpublished_score_commits(root)
+    if not commits:
+        return
+    for sha in commits:
+        subject = _git(["log", "-1", "--pretty=%s", sha], root)
+        paths = _git(["diff-tree", "--no-commit-id", "--name-only", "-r", sha], root).splitlines()
+        if not subject.startswith("Score submission ") or not paths:
+            raise WorkflowError(
+                "local submission has unpublished commits that were not produced by the scoring "
+                f"workflow ({subject or sha}). Push or reconcile them manually before rerunning."
+            )
+        if not all(_is_generated_path(path) for path in paths):
+            raise WorkflowError(
+                "local submission has an unpublished score commit that touches files outside "
+                f"generated artifacts ({sha}). Reconcile it manually before rerunning."
+            )
+    try:
+        _git(["push", "origin", "submission"], root)
+    except WorkflowError as exc:
+        raise WorkflowError(
+            "local score commits could not be pushed to origin/submission; the result is not "
+            "published yet. Fix the push failure and rerun."
+        ) from exc
+    _git(["fetch", "origin", "submission"], root)
+    logger.info("Published %d local score commit(s)", len(commits))
+
+
 def _sync_submission(root: Path) -> None:
     """Fetch and reconcile branches without rewriting or force-pushing history."""
     _git(["fetch", "origin", "main", "submission"], root)
@@ -147,8 +188,7 @@ def _sync_submission(root: Path) -> None:
             _git(["fetch", "origin", "submission"], root)
             logger.info("Fast-forwarded submission to the promoted main tip")
         elif _is_ancestor("origin/main", "submission", root):
-            _git(["push", "origin", "submission"], root)
-            _git(["fetch", "origin", "submission"], root)
+            _publish_local_score_commits(root)
         else:
             raise WorkflowError(
                 "local submission diverged from the promoted main tip. Reconcile them "
@@ -156,8 +196,7 @@ def _sync_submission(root: Path) -> None:
             )
     elif submission_ahead:
         if _is_ancestor("origin/submission", "submission", root):
-            # Local submission is current or contains local commits that still need pushing.
-            pass
+            _publish_local_score_commits(root)
         elif _is_ancestor("submission", "origin/submission", root):
             _git(["merge", "--ff-only", "origin/submission"], root)
         else:
@@ -182,6 +221,10 @@ def _sync_submission(root: Path) -> None:
             "local leaderboard is missing entries from origin/submission; refusing to push "
             f"a possibly stale ledger. Missing keys: {missing[:8]}"
         )
+
+
+def _current_validation_base(root: Path) -> str:
+    return _git(["rev-parse", "origin/submission"], root).strip()
 
 
 def _validate_pr(pr: PullRequest, root: Path, validation_base: str | None = None) -> Path:
@@ -298,24 +341,50 @@ def _load_replays(root: Path, results=None) -> dict:
     return replays
 
 
+def _install_site(rendered: Path, output_dir: Path) -> None:
+    """Swap rendered artifacts into place, restoring the previous tree on failure."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=".mnnc-stage-", dir=output_dir))
+    backup = Path(tempfile.mkdtemp(prefix=".mnnc-backup-", dir=output_dir))
+    touched: list[str] = []
+    try:
+        for name in _SITE_FILES:
+            shutil.copyfile(rendered / name, staging / name)
+        for name in _SITE_DIRS:
+            source = rendered / name
+            if source.is_dir():
+                shutil.copytree(source, staging / name)
+            else:
+                (staging / name).mkdir()
+        for name in _SITE_FILES + _SITE_DIRS:
+            target = output_dir / name
+            if target.exists() or target.is_symlink():
+                os.replace(target, backup / name)
+            touched.append(name)
+            os.replace(staging / name, target)
+    except BaseException:
+        for name in reversed(touched):
+            target = output_dir / name
+            if target.is_dir() and not target.is_symlink():
+                shutil.rmtree(target, ignore_errors=True)
+            elif target.exists() or target.is_symlink():
+                target.unlink()
+            saved = backup / name
+            if saved.exists() or saved.is_symlink():
+                os.replace(saved, target)
+        raise
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+        shutil.rmtree(backup, ignore_errors=True)
+
+
 def _render_site_atomically(root: Path, results) -> None:
-    """Render into a scratch directory so a failure cannot corrupt committed pages."""
+    """Render to a scratch directory, then swap outputs into place with rollback."""
     output_dir = root / "docs"
     with tempfile.TemporaryDirectory(prefix="mnnc-render-") as temp:
         rendered = Path(temp) / "docs"
         render_site(results, rendered, _load_replays(root, results))
-        for name in ("leaderboard.json", "index.html", ".nojekyll"):
-            target = output_dir / name
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(rendered / name, target)
-        for name in ("submissions", "games"):
-            source = rendered / name
-            target = output_dir / name
-            if source.is_dir():
-                shutil.rmtree(target, ignore_errors=True)
-                shutil.copytree(source, target)
-            else:
-                shutil.rmtree(target, ignore_errors=True)
+        _install_site(rendered, output_dir)
 
 
 def _stage_generated(root: Path, paths: tuple[str, ...]) -> None:
@@ -473,6 +542,11 @@ def _verify_promoted(root: Path) -> None:
 def _promote(root: Path) -> None:
     """Idempotently promote submission to main, resuming after partial failures."""
     _git(["fetch", "origin", "main", "submission"], root)
+    if _unpublished_score_commits(root):
+        raise WorkflowError(
+            "local submission has commit(s) that are not published to origin/submission; "
+            "refusing to report promotion success. Resolve the publication failure and rerun."
+        )
     if _is_ancestor("origin/submission", "origin/main", root):
         _verify_promoted(root)
         logger.info("All scored artifacts are already promoted to main")
@@ -517,7 +591,6 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
 
     check_authentication()
     _sync_submission(root)
-    validation_base = _git(["rev-parse", "origin/submission"], root).strip()
     prs = open_submission_prs()
     if pr_number is not None:
         prs = [pr for pr in prs if pr.number == pr_number]
@@ -559,7 +632,7 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
                 ],
                 root,
             )
-            directory = _validate_pr(pr, root, validation_base)
+            directory = _validate_pr(pr, root, _current_validation_base(root))
             result = _score_candidate(pr, directory, root, root / data_root)
 
             if not pr.merged:
@@ -587,7 +660,8 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
                 # scoring/artifacts now; an explicit `--pr N` rerun can resume if this fails.
                 try:
                     if directory is None:
-                        directory = _validate_pr(current_pr, root, validation_base)
+                        _sync_submission(root)
+                        directory = _validate_pr(current_pr, root, _current_validation_base(root))
                     if result is None:
                         result = _score_candidate(current_pr, directory, root, root / data_root)
                     _sync_submission(root)

@@ -31,12 +31,14 @@ git fetch origin
 git switch -c submit/<name> origin/submission
 ```
 
-For each open PR, the workflow checks the PR's validation status, verifies that
-the current integration tip is an ancestor of the submitted head, and allows a
-short bounded retry when GitHub has not reported any checks yet. Pending or
-failed checks are not accepted. It then validates that the diff changes only
-`models/<benchmark>/<name>/config.json` and `model.pt`, and scores the candidate
-in a temporary worktree.
+For each open PR, the workflow refreshes the current integration tip immediately
+before validating that PR, so a branch based on an older tip is rejected even if
+another run advanced `origin/submission` during this run. It checks the PR's
+validation status, verifies that the tip is an ancestor of the submitted head,
+and allows a short bounded retry when GitHub has not reported any checks yet.
+Pending or failed checks are not accepted. It then validates that the diff
+changes only `models/<benchmark>/<name>/config.json` and `model.pt`, and scores
+the candidate in a temporary worktree.
 
 A passing PR is merged without branch cleanup in the critical path. The
 workflow then synchronizes from `origin/submission`, upserts the leaderboard
@@ -64,7 +66,12 @@ Publishing stages only the generated artifacts (`docs/leaderboard.json`,
 `docs/index.html`, `docs/submissions`, and replay JSON under `docs/games`), so
 unrelated files in `docs/` are never committed. Replay recording and site
 rendering are best-effort: a presentation failure is logged and the score is
-still published, and a later rerun repairs the missing artifacts.
+still published, and a later rerun repairs the missing artifacts. Rendered
+output is staged inside `docs/` and swapped into place; if an installation step
+fails, the previous site tree is restored before the score-only fallback runs.
+A score commit left behind by a failed push is verified and published on the
+next run; any other unpublished local commit stops the run with a recovery
+error instead of being reported as promoted.
 
 Promotion is an independent, idempotent stage that runs on every invocation,
 including when there are no open PRs. It resumes an existing open promotion PR

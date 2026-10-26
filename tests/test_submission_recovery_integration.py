@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -53,7 +54,7 @@ def _repo(tmp_path: Path) -> tuple[Path, Path]:
     return remote, work
 
 
-def _score_commit(work: Path) -> None:
+def _score_commit(work: Path, *, push: bool = True) -> None:
     submission = _result("scored-model")
     rows = [
         {
@@ -68,9 +69,21 @@ def _score_commit(work: Path) -> None:
         }
     ]
     (work / "docs" / "leaderboard.json").write_text(json.dumps(rows) + "\n")
-    _git(work, "commit", "-am", "score")
-    _git(work, "push", "origin", "submission")
+    _git(work, "commit", "-am", "Score submission scored-model")
+    if push:
+        _git(work, "push", "origin", "submission")
     _git(work, "fetch", "origin")
+
+
+def _is_ancestor(cwd: Path, ancestor: str, descendant: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+            cwd=cwd,
+            check=False,
+        ).returncode
+        == 0
+    )
 
 
 def _result(submission: str, benchmark: str = "mnist") -> BenchmarkResult:
@@ -252,3 +265,111 @@ def test_load_replays_ignores_unrelated_files(tmp_path: Path) -> None:
     replays = workflow._load_replays(work, [result])
 
     assert set(replays) == {stem}
+
+
+def test_stale_pr_is_rejected_when_remote_advances(tmp_path: Path, monkeypatch) -> None:
+    remote, work = _repo(tmp_path)
+    _git(work, "checkout", "-b", "submit/stale")
+    (work / "stale.txt").write_text("stale\n")
+    _git(work, "add", "stale.txt")
+    _git(work, "commit", "-m", "stale submission")
+    head = _rev(work, "HEAD")
+    _git(work, "push", "origin", "submit/stale")
+    _git(work, "push", "origin", f"{head}:refs/pull/1/head")
+    _git(work, "checkout", "submission")
+    pr = PullRequest(1, "stale", head, "submission", "submit/stale", True, checks_status="passed")
+    comments: list[str] = []
+
+    def advance_then_list() -> list[PullRequest]:
+        other = _clone(remote, tmp_path / "other")
+        _git(other, "checkout", "submission")
+        (other / "docs" / "leaderboard.json").write_text(
+            '[{"benchmark": "mnist", "submission": "other"}]\n'
+        )
+        _git(other, "commit", "-am", "advance")
+        _git(other, "push", "origin", "submission")
+        return [pr]
+
+    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
+    monkeypatch.setattr(workflow, "open_submission_prs", advance_then_list)
+    monkeypatch.setattr(workflow, "_is_merged_now", lambda pr: pr)
+    monkeypatch.setattr(workflow, "comment", lambda number, message: comments.append(message))
+    monkeypatch.setattr(workflow, "_promote", lambda root: None)
+
+    assert workflow._run(work, None, Path("data")) == 0
+    assert comments
+    assert "not based on the validation base" in comments[0]
+
+
+def test_install_site_failure_restores_previous_tree(tmp_path: Path, monkeypatch) -> None:
+    _remote, work = _repo(tmp_path)
+    docs = work / "docs"
+    (docs / "index.html").write_text("old index\n")
+    (docs / ".nojekyll").write_text("")
+    (docs / "submissions").mkdir()
+    (docs / "submissions" / "keep.html").write_text("old page\n")
+    (docs / "games").mkdir()
+    (docs / "games" / "keep.json").write_text('{"frames": []}\n')
+    _git(work, "add", "docs")
+    _git(work, "commit", "-m", "existing site")
+
+    real_replace = os.replace
+    failed = False
+
+    def fail_index_once(source, target) -> None:
+        nonlocal failed
+        if not failed and Path(source).name == "index.html":
+            failed = True
+            raise OSError("disk full")
+        real_replace(source, target)
+
+    monkeypatch.setattr(workflow.os, "replace", fail_index_once)
+    monkeypatch.setattr(workflow, "_record_submission_replay", lambda root, directory: None)
+
+    workflow._publish_result(work, Path("models/mnist/new-model"), _result("new-model"))
+
+    assert failed
+    assert (docs / "index.html").read_text() == "old index\n"
+    assert (docs / "submissions" / "keep.html").read_text() == "old page\n"
+    assert (docs / "games" / "keep.json").read_text() == '{"frames": []}\n'
+    assert not list(docs.glob(".mnnc-*"))
+    assert _git(work, "status", "--porcelain", "--untracked-files=all") == ""
+    rows = json.loads(_git(work, "show", "origin/submission:docs/leaderboard.json"))
+    assert ("mnist", "new-model") in {(row["benchmark"], row["submission"]) for row in rows}
+
+
+def test_rerun_publishes_local_score_commit(tmp_path: Path, monkeypatch) -> None:
+    remote, work = _repo(tmp_path)
+    _score_commit(work, push=False)
+    local = _rev(work, "submission")
+    assert local != _rev(work, "origin/submission")
+
+    other = _clone(remote, tmp_path / "other")
+    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
+    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [])
+    monkeypatch.setattr(workflow, "find_promotion_pr", lambda: None)
+    monkeypatch.setattr(workflow, "create_promotion_pr", lambda: 11)
+
+    def fake_merge(number: int) -> None:
+        assert number == 11
+        _git(other, "fetch", "origin")
+        _git(other, "merge", "--no-ff", "-m", "promote", "origin/submission")
+        _git(other, "push", "origin", "main")
+
+    monkeypatch.setattr(workflow, "merge_promotion", fake_merge)
+
+    assert workflow._run(work, None, Path("data")) == 0
+    assert _is_ancestor(work, local, "origin/main")
+    rows = json.loads(_git(work, "show", "origin/main:docs/leaderboard.json"))
+    assert ("mnist", "scored-model") in {(row["benchmark"], row["submission"]) for row in rows}
+
+
+def test_rerun_rejects_unpublished_manual_commit(tmp_path: Path, monkeypatch) -> None:
+    _remote, work = _repo(tmp_path)
+    (work / "notes.txt").write_text("manual\n")
+    _git(work, "add", "notes.txt")
+    _git(work, "commit", "-m", "manual change")
+    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
+
+    with pytest.raises(workflow.WorkflowError, match="not produced by the scoring workflow"):
+        workflow._run(work, None, Path("data"))
