@@ -173,7 +173,7 @@ def tokens() -> int:
                 f"  {name:26} {_format_count(old)} {current:8,} {_format_delta(old, current):>25}"
             )
     print(
-        f"  {'overall (unique files)':26} {_format_count(old_overall)} {current_overall:8,} "
+        f"  {'Total':26} {_format_count(old_overall)} {current_overall:8,} "
         f"{_format_delta(old_overall, current_overall):>25}"
     )
     print(
