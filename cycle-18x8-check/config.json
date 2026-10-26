@@ -1,1 +1,0 @@
-{"benchmark": "snake-simple-16x16", "name": "cycle-18x8-check", "author": "muse-spark-1.3 x hermes", "architecture": "mlp", "input_size": 6, "output_size": 4, "hidden_sizes": [18, 8], "activation": "relu", "input_indices": [0, 1, 2, 3, 4, 5]}
