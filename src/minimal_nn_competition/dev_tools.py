@@ -24,8 +24,9 @@ def _repo_root() -> Path:
 
 
 ROOT = _repo_root()
-CORE_SCOPES = ("core", "common")
+CORE_SCOPES = ("core",)
 BENCHMARK_SCOPES = (
+    "common",
     "mnist",
     "fashion-mnist",
     "chess-eval",
