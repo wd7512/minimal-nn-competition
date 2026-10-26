@@ -14,7 +14,7 @@ Do not change code, dependencies, workflows, the leaderboard, or `docs/`.
 `config.json` must include non-empty `name` and `author` strings; `description`
 is optional.
 
-**Base submission branches on the latest `origin/submission`, not `main` or `dev`.**
+**Base submission branches on the latest `upstream/submission`, not `main` or `dev`.**
 The validator compares the PR against the integration branch so unrelated code and
 leaderboard history cannot be mistaken for submission changes. Fork the repository on GitHub first, clone your fork, then add the
 upstream remote:
@@ -29,8 +29,8 @@ git switch -c submit/<name> upstream/submission
 
 Keep `origin` as your fork and `upstream` as the source repository.
 
-If `origin/submission` advances before your PR is merged, rebase your short-lived
-branch onto the latest `origin/submission` and push the updated branch. Stale or
+If `upstream/submission` advances before your PR is merged, rebase your short-lived
+branch onto the latest `upstream/submission` and push the updated branch. Stale or
 diverged PR heads are rejected with a remediation message instead of being merged
 with an ambiguous file diff.
 
