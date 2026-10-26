@@ -301,6 +301,38 @@ def test_commit_failure_restores_artifacts_and_allows_retry(tmp_path: Path, monk
     assert "retry-model" in _git(work, "show", "HEAD:docs/leaderboard.json")
 
 
+def test_failed_publication_rollback_retains_backup(tmp_path: Path, monkeypatch, caplog) -> None:
+    _remote, work = _repo(tmp_path)
+    original_head = _rev(work, "HEAD")
+    original_ledger = (work / "docs" / "leaderboard.json").read_bytes()
+    original_git = workflow._git
+    backups: list[Path] = []
+
+    def fail_commit(args: list[str], cwd: Path) -> str:
+        if args[:1] == ["commit"]:
+            raise workflow.WorkflowError("simulated commit failure")
+        return original_git(args, cwd)
+
+    def fail_restore(root: Path, backup: Path, existing: tuple[str, ...]) -> None:
+        backups.append(backup)
+        raise OSError("simulated restore failure")
+
+    monkeypatch.setattr(workflow, "_git", fail_commit)
+    monkeypatch.setattr(workflow, "_restore_generated", fail_restore)
+
+    with pytest.raises(workflow.WorkflowError, match="recovery backup retained"):
+        workflow._publish_result(
+            work,
+            Path("models/mnist/backup-model"),
+            _result("backup-model"),
+            scored_sha=original_head,
+        )
+
+    assert len(backups) == 1
+    assert (backups[0] / "docs" / "leaderboard.json").read_bytes() == original_ledger
+    assert f"recovery backup retained at {backups[0]}" in caplog.text
+
+
 def test_push_failure_keeps_score_commit_for_recovery(tmp_path: Path, monkeypatch) -> None:
     _remote, work = _repo(tmp_path)
     result = _result("push-retry")
@@ -550,6 +582,43 @@ def test_install_site_failure_restores_previous_tree(tmp_path: Path, monkeypatch
     assert _git(work, "status", "--porcelain", "--untracked-files=all") == ""
     rows = json.loads(_git(work, "show", "origin/submission:docs/leaderboard.json"))
     assert ("mnist", "new-model") in {(row["benchmark"], row["submission"]) for row in rows}
+
+
+def test_install_site_retains_backup_when_restore_fails(
+    tmp_path: Path, monkeypatch, caplog
+) -> None:
+    output = tmp_path / "docs"
+    output.mkdir()
+    old_ledger = output / "leaderboard.json"
+    old_ledger.write_text("old ledger\n")
+    rendered = tmp_path / "rendered"
+    rendered.mkdir()
+    for name in workflow._SITE_FILES:
+        (rendered / name).write_text("new output\n")
+    for name in workflow._SITE_DIRS:
+        (rendered / name).mkdir()
+
+    real_replace = os.replace
+    backups: list[Path] = []
+
+    def fail_install_and_restore(source, target) -> None:
+        source = Path(source)
+        target = Path(target)
+        if source.parent.name.startswith(".mnnc-stage-") and target == old_ledger:
+            raise OSError("simulated install failure")
+        if source.parent.name.startswith(".mnnc-backup-"):
+            backups.append(source.parent)
+            raise OSError("simulated restore failure")
+        real_replace(source, target)
+
+    monkeypatch.setattr(workflow.os, "replace", fail_install_and_restore)
+
+    with pytest.raises(OSError, match="simulated restore failure"):
+        workflow._install_site(rendered, output)
+
+    assert backups
+    assert (backups[0] / "leaderboard.json").read_text() == "old ledger\n"
+    assert f"backup retained at {backups[0]}" in caplog.text
 
 
 def test_rerun_publishes_local_score_commit(tmp_path: Path, monkeypatch) -> None:

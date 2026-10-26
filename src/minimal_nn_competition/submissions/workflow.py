@@ -348,6 +348,7 @@ def _install_site(rendered: Path, output_dir: Path) -> None:
     staging = Path(tempfile.mkdtemp(prefix=".mnnc-stage-", dir=output_dir))
     backup = Path(tempfile.mkdtemp(prefix=".mnnc-backup-", dir=output_dir))
     touched: list[str] = []
+    preserve_backup = False
     try:
         for name in _SITE_FILES:
             shutil.copyfile(rendered / name, staging / name)
@@ -364,19 +365,27 @@ def _install_site(rendered: Path, output_dir: Path) -> None:
             touched.append(name)
             os.replace(staging / name, target)
     except BaseException:
-        for name in reversed(touched):
-            target = output_dir / name
-            if target.is_dir() and not target.is_symlink():
-                shutil.rmtree(target, ignore_errors=True)
-            elif target.exists() or target.is_symlink():
-                target.unlink()
-            saved = backup / name
-            if saved.exists() or saved.is_symlink():
-                os.replace(saved, target)
+        try:
+            for name in reversed(touched):
+                target = output_dir / name
+                if target.is_dir() and not target.is_symlink():
+                    shutil.rmtree(target, ignore_errors=True)
+                elif target.exists() or target.is_symlink():
+                    target.unlink()
+                saved = backup / name
+                if saved.exists() or saved.is_symlink():
+                    os.replace(saved, target)
+        except BaseException:
+            preserve_backup = True
+            logger.exception(
+                "Could not restore the previous site tree; backup retained at %s", backup
+            )
+            raise
         raise
     finally:
         shutil.rmtree(staging, ignore_errors=True)
-        shutil.rmtree(backup, ignore_errors=True)
+        if not preserve_backup:
+            shutil.rmtree(backup, ignore_errors=True)
 
 
 def _render_site_atomically(root: Path, results) -> None:
@@ -482,6 +491,7 @@ def _publish_result(
         previous_replay = replay_path.read_bytes() if replay_path.exists() else None
         backup, existing_generated = _snapshot_generated(root)
         score_commit_created = False
+        preserve_backup = False
         try:
             upsert_result(ledger_path, result)
             new_keys = _local_ledger_keys(root)
@@ -534,11 +544,20 @@ def _publish_result(
             if not score_commit_created:
                 try:
                     _git(["reset", "--", *_GENERATED_PATHS], root)
-                finally:
                     _restore_generated(root, backup, existing_generated)
+                except BaseException as rollback_error:
+                    preserve_backup = True
+                    logger.exception(
+                        "Could not restore generated artifacts; recovery backup retained at %s",
+                        backup,
+                    )
+                    raise WorkflowError(
+                        f"publication rollback failed; recovery backup retained at {backup}"
+                    ) from rollback_error
             raise
         finally:
-            shutil.rmtree(backup, ignore_errors=True)
+            if not preserve_backup:
+                shutil.rmtree(backup, ignore_errors=True)
 
         try:
             _git(["push", "origin", "submission"], root)
