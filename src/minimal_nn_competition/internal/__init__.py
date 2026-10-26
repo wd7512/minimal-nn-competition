@@ -125,7 +125,8 @@ tests/test_integration.py::test_data_path_rejected_for_snake
 tests/test_observation.py
 tests/test_snake_16x16.py
 tests/test_snake_replay.py
-tests/test_snake_obstacles.py""".splitlines()
+tests/test_snake_obstacles.py
+tests/test_snake_example_evaluation.py""".splitlines()
         ),
     ),
     Scope(

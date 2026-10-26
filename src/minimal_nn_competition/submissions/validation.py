@@ -7,6 +7,9 @@ import re
 from pathlib import Path
 from typing import Any
 
+from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.snake.observation import OBSERVATION_SIZE
+from minimal_nn_competition.model.entry import SubmissionConfig
 from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,
     MAX_PARAMETERS,
@@ -17,16 +20,24 @@ SUBMISSION_PATH = re.compile(r"^models/([^/]+)/([^/]+)/(config\.json|model\.pt)$
 ALLOWED_STATUSES = {"A", "M", "C"}
 ALLOWED_ARCHITECTURES = {"linear", "mlp"}
 ALLOWED_ACTIVATIONS = {"relu", "identity"}
+ALLOWED_CONFIG_KEYS = set(SubmissionConfig.model_fields)
 
 
 def _validate_input_indices(
-    config: dict[str, Any], config_path: Path, input_size: Any
+    config: dict[str, Any],
+    config_path: Path,
+    input_size: Any,
+    is_snake: bool = False,
 ) -> list[str]:
     indices = config.get("input_indices")
-    if indices is None or indices is True:
+    if indices is None:
         return []
     if indices is False:
         return [f"{config_path}: input_indices must be true or a list of feature indices"]
+    if indices is True:
+        if not is_snake:
+            return [f"{config_path}: input_indices is only supported for snake benchmarks"]
+        return []
     if not isinstance(indices, list) or not indices:
         return [f"{config_path}: input_indices must be a non-empty list of feature indices"]
     if any(type(index) is not int or index < 0 for index in indices):
@@ -35,6 +46,10 @@ def _validate_input_indices(
         return [f"{config_path}: input_indices must not contain duplicates"]
     if type(input_size) is int and input_size > 0 and len(indices) != input_size:
         return [f"{config_path}: input_indices length must match input_size"]
+    if is_snake and any(index >= OBSERVATION_SIZE for index in indices):
+        return [f"{config_path}: input_indices must be in 0..{OBSERVATION_SIZE - 1}"]
+    if not is_snake:
+        return [f"{config_path}: input_indices is only supported for snake benchmarks"]
     return []
 
 
@@ -46,6 +61,9 @@ def validate_config(config: Any, directory: Path) -> list[str]:
     benchmark = directory.parts[1] if len(directory.parts) > 1 else ""
     if config.get("benchmark") != benchmark:
         errors.append(f"{config_path}: benchmark must be {benchmark!r}")
+    unknown_keys = sorted(set(config) - ALLOWED_CONFIG_KEYS)
+    if unknown_keys:
+        errors.append(f"{config_path}: unknown config keys: {', '.join(unknown_keys)}")
     for field in ("name", "author"):
         value = config.get(field)
         if not isinstance(value, str) or not value.strip():
@@ -57,7 +75,14 @@ def validate_config(config: Any, directory: Path) -> list[str]:
     input_size = config.get("input_size")
     if type(input_size) is not int or input_size <= 0:
         errors.append(f"{config_path}: input_size must be a positive integer")
-    errors.extend(_validate_input_indices(config, config_path, input_size))
+    errors.extend(
+        _validate_input_indices(
+            config,
+            config_path,
+            input_size,
+            is_snake=config.get("benchmark") in SNAKE_BENCHMARKS,
+        )
+    )
     output_size = config.get("output_size")
     if type(output_size) is not int or output_size <= 0:
         errors.append(f"{config_path}: output_size must be a positive integer")
