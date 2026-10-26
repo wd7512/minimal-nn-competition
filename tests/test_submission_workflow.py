@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from minimal_nn_competition.submissions import github
-from minimal_nn_competition.submissions.github import PullRequest
 from minimal_nn_competition.submissions.workflow import WorkflowError, _score_candidate
 
 
@@ -55,6 +54,17 @@ def test_merge_promotion_keeps_long_lived_branch(monkeypatch) -> None:
     assert calls == [["pr", "merge", "2", "--merge"]]
 
 
+def test_merge_pins_the_validated_head(monkeypatch) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(github, "_gh", lambda args: calls.append(args) or "")
+
+    github.merge(3, delete_branch=False, head_sha="a" * 40)
+
+    assert calls == [
+        ["pr", "merge", "3", "--merge", "--match-head-commit", "a" * 40],
+    ]
+
+
 def test_open_submission_prs_rejects_failed_check(monkeypatch) -> None:
     payload = [
         {
@@ -88,7 +98,8 @@ def test_score_candidate_accepts_partial_result(monkeypatch, tmp_path: Path) -> 
 
     assert (
         _score_candidate(
-            PullRequest(1, "partial", "a" * 40, "submission", "branch", True),
+            "a" * 40,
+            1,
             Path("models/mnist/partial"),
             tmp_path,
             tmp_path / "data",

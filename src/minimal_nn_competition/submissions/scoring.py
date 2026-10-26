@@ -27,8 +27,15 @@ def score_submission(root: Path, directory: Path, data_root: Path):
     return evaluate_submission(submission, benchmark)
 
 
+def result_key(result) -> tuple[str, str]:
+    """Return the stable identity of a leaderboard row."""
+    return result.benchmark, result.submission
+
+
 def upsert_result(path: Path, result) -> None:
+    """Replace only the matching benchmark/submission pair, preserving other rows."""
     results = load_results(path) if path.exists() else []
-    results = [item for item in results if item.submission != result.submission]
+    key = result_key(result)
+    results = [item for item in results if result_key(item) != key]
     results.append(result)
     save_results(path, results)
