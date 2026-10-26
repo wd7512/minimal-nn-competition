@@ -304,3 +304,43 @@ def test_snake_input_indices_outside_zero_to_twenty_three_are_rejected(
     )
     errors = _load_script().validate_diff(diff, tmp_path)
     assert any("input_indices" in error and "0..23" in error for error in errors)
+
+
+def test_input_indices_true_rejected_for_non_snake(tmp_path: Path) -> None:
+    _write_submission(
+        tmp_path,
+        config={
+            "benchmark": "mnist",
+            "name": "tiny",
+            "author": "tester",
+            "architecture": "mlp",
+            "input_size": 784,
+            "output_size": 10,
+            "hidden_sizes": [7],
+            "activation": "relu",
+            "input_indices": True,
+        },
+    )
+    diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
+    errors = _load_script().validate_diff(diff, tmp_path)
+    assert any("input_indices is only supported for snake benchmarks" in error for error in errors)
+
+
+def test_input_indices_list_rejected_for_non_snake(tmp_path: Path) -> None:
+    _write_submission(
+        tmp_path,
+        config={
+            "benchmark": "mnist",
+            "name": "tiny",
+            "author": "tester",
+            "architecture": "mlp",
+            "input_size": 2,
+            "output_size": 10,
+            "hidden_sizes": [7],
+            "activation": "relu",
+            "input_indices": [0, 1],
+        },
+    )
+    diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
+    errors = _load_script().validate_diff(diff, tmp_path)
+    assert any("input_indices is only supported for snake benchmarks" in error for error in errors)

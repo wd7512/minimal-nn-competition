@@ -66,3 +66,74 @@ def test_snake_example_evaluate_handles_full_board_state(
 
     assert len(lengths) == 1
     assert lengths[0] >= 1
+
+
+def test_snake_example_evaluate_applies_per_food_stall_cutoff(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    environments: list[object] = []
+
+    class _StallingEnvironment:
+        def __init__(self, **kwargs: object) -> None:
+            self._calls = 0
+            self.snake = [(0, 0)]
+            self.won = False
+            self.food = (1, 0)
+            environments.append(self)
+
+        def reset(self) -> tuple[float, ...]:
+            self._calls = 0
+            return (0.0,) * 24
+
+        def step(self, action: int) -> tuple[tuple[float, ...], float, bool]:
+            self._calls += 1
+            return (0.0,) * 24, 0.0, False
+
+    import minimal_nn_competition.benchmarks.snake.environment as snake_environment
+
+    monkeypatch.setattr(snake_environment, "SnakeEnvironment", _StallingEnvironment)
+    benchmark = create_benchmark("snake-obstacles-8x8")
+    policy = torch.nn.Linear(24, 4)
+    policy.eval()
+
+    lengths = snake_submission._evaluate(policy, torch.device("cpu"), (0,), benchmark)
+
+    assert lengths == [1]
+    assert environments[0]._calls == benchmark.moves_per_food + 1
+
+
+def test_snake_example_evaluate_resets_stall_counter_after_growth(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    environments: list[object] = []
+
+    class _GrowingThenStallingEnvironment:
+        def __init__(self, **kwargs: object) -> None:
+            self._calls = 0
+            self.snake = [(0, 0)]
+            self.won = False
+            self.food = (1, 0)
+            environments.append(self)
+
+        def reset(self) -> tuple[float, ...]:
+            self._calls = 0
+            self.snake = [(0, 0)]
+            return (0.0,) * 24
+
+        def step(self, action: int) -> tuple[tuple[float, ...], float, bool]:
+            self._calls += 1
+            if self._calls == 1:
+                self.snake.append((1, 0))
+            return (0.0,) * 24, 0.0, False
+
+    import minimal_nn_competition.benchmarks.snake.environment as snake_environment
+
+    monkeypatch.setattr(snake_environment, "SnakeEnvironment", _GrowingThenStallingEnvironment)
+    benchmark = create_benchmark("snake-obstacles-8x8")
+    policy = torch.nn.Linear(24, 4)
+    policy.eval()
+
+    lengths = snake_submission._evaluate(policy, torch.device("cpu"), (0,), benchmark)
+
+    assert lengths == [2]
+    assert environments[0]._calls == benchmark.moves_per_food + 2

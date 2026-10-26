@@ -30,10 +30,14 @@ def _validate_input_indices(
     is_snake: bool = False,
 ) -> list[str]:
     indices = config.get("input_indices")
-    if indices is None or indices is True:
+    if indices is None:
         return []
     if indices is False:
         return [f"{config_path}: input_indices must be true or a list of feature indices"]
+    if indices is True:
+        if not is_snake:
+            return [f"{config_path}: input_indices is only supported for snake benchmarks"]
+        return []
     if not isinstance(indices, list) or not indices:
         return [f"{config_path}: input_indices must be a non-empty list of feature indices"]
     if any(type(index) is not int or index < 0 for index in indices):
@@ -44,6 +48,8 @@ def _validate_input_indices(
         return [f"{config_path}: input_indices length must match input_size"]
     if is_snake and any(index >= OBSERVATION_SIZE for index in indices):
         return [f"{config_path}: input_indices must be in 0..{OBSERVATION_SIZE - 1}"]
+    if not is_snake:
+        return [f"{config_path}: input_indices is only supported for snake benchmarks"]
     return []
 
 
