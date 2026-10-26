@@ -358,6 +358,7 @@ def _install_site(rendered: Path, output_dir: Path) -> None:
                 shutil.copytree(source, staging / name)
             else:
                 (staging / name).mkdir()
+            _preserve_unrendered_files(output_dir / name, staging / name)
         for name in _SITE_FILES + _SITE_DIRS:
             target = output_dir / name
             if target.exists() or target.is_symlink():
@@ -386,6 +387,25 @@ def _install_site(rendered: Path, output_dir: Path) -> None:
         shutil.rmtree(staging, ignore_errors=True)
         if not preserve_backup:
             shutil.rmtree(backup, ignore_errors=True)
+
+
+def _preserve_unrendered_files(source: Path, target: Path) -> None:
+    """Keep files in generated directories that the renderer did not produce."""
+    if not source.is_dir():
+        return
+    for path in source.rglob("*"):
+        relative = path.relative_to(source)
+        destination = target / relative
+        if destination.exists() or destination.is_symlink():
+            continue
+        if path.is_dir() and not path.is_symlink():
+            destination.mkdir(parents=True, exist_ok=True)
+        else:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            if path.is_symlink():
+                destination.symlink_to(os.readlink(path))
+            else:
+                shutil.copy2(path, destination)
 
 
 def _render_site_atomically(root: Path, results) -> None:

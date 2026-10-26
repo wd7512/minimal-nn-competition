@@ -193,6 +193,30 @@ def test_stage_generated_ignores_unrelated_docs_files(tmp_path: Path) -> None:
     assert _git(work, "diff", "--cached", "--name-only").splitlines() == ["docs/index.html"]
 
 
+def test_install_site_preserves_unrendered_files_in_generated_directories(
+    tmp_path: Path,
+) -> None:
+    _remote, work = _repo(tmp_path)
+    games = work / "docs" / "games"
+    submissions = work / "docs" / "submissions"
+    games.mkdir()
+    submissions.mkdir()
+    (games / "notes.json").write_text('{"local": true}\n')
+    (submissions / "notes.txt").write_text("keep me\n")
+    rendered = tmp_path / "rendered"
+    (rendered / "games").mkdir(parents=True)
+    (rendered / "submissions").mkdir()
+    for name in workflow._SITE_FILES:
+        (rendered / name).write_text("rendered\n")
+    (rendered / "games" / "known.json").write_text('{"rendered": true}\n')
+
+    workflow._install_site(rendered, work / "docs")
+
+    assert (games / "notes.json").read_text() == '{"local": true}\n'
+    assert (submissions / "notes.txt").read_text() == "keep me\n"
+    assert (games / "known.json").is_file()
+
+
 def test_render_failure_stages_only_the_ledger(tmp_path: Path, monkeypatch) -> None:
     _remote, work = _repo(tmp_path)
     result = _result("new-model")
