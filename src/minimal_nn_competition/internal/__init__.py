@@ -224,6 +224,7 @@ tests/test_model.py
 tests/test_speed.py
 tests/test_submission_check.py""".splitlines()
             + ["tests/test_submission_workflow.py"]
+            + ["tests/test_issue_145_regressions.py"]
         ),
     ),
 )

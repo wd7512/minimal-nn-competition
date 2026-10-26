@@ -21,6 +21,9 @@ class PullRequest:
     head_ref: str
     checks_passed: bool
     checks_summary: str = ""
+    state: str = "OPEN"
+    merged: bool = False
+    merge_commit_sha: str | None = None
 
 
 def _gh(args: list[str], *, check: bool = True) -> str:
@@ -34,6 +37,63 @@ def _gh(args: list[str], *, check: bool = True) -> str:
             detail = "run `gh auth login`"
         raise GitHubError(f"GitHub CLI request failed: {detail or 'unknown error'}") from exc
     return result.stdout
+
+
+def _checks(item: dict) -> tuple[bool, str]:
+    checks = item.get("statusCheckRollup") or []
+    if not checks:
+        return False, "no GitHub checks have run"
+
+    # A successful check alongside a pending check is still pending. Each item
+    # must have an explicit successful conclusion/state before the PR is eligible.
+    passed = all(
+        check.get("conclusion") == "SUCCESS"
+        if check.get("conclusion") is not None
+        else check.get("state") == "SUCCESS"
+        for check in checks
+    )
+    if passed:
+        return True, "all GitHub checks passed"
+
+    failed = []
+    pending = False
+    for check in checks:
+        conclusion = check.get("conclusion")
+        state = check.get("state")
+        if conclusion is not None and conclusion != "SUCCESS":
+            failed.append(check.get("name", "unnamed check"))
+        elif conclusion is None and state not in (None, "SUCCESS"):
+            if state in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED"):
+                pending = True
+            else:
+                failed.append(check.get("name", "unnamed check"))
+        elif conclusion is None and state is None:
+            pending = True
+    if failed:
+        return False, "failed checks: " + ", ".join(failed)
+    if pending:
+        return False, "GitHub checks are still pending"
+    return False, "GitHub checks have not all succeeded"
+
+
+def _pull_request(item: dict) -> PullRequest:
+    checks_passed, checks_summary = _checks(item)
+    state = str(item.get("state", "OPEN")).upper()
+    merged = state == "MERGED" or bool(item.get("mergedAt"))
+    merge_commit = item.get("mergeCommit") or {}
+    merge_commit_sha = merge_commit.get("oid") if isinstance(merge_commit, dict) else None
+    return PullRequest(
+        number=int(item["number"]),
+        title=str(item.get("title", "")),
+        head_sha=str(item["headRefOid"]),
+        base_ref=str(item["baseRefName"]),
+        head_ref=str(item["headRefName"]),
+        checks_passed=checks_passed,
+        checks_summary=checks_summary,
+        state=state,
+        merged=merged,
+        merge_commit_sha=merge_commit_sha,
+    )
 
 
 def check_authentication() -> None:
@@ -52,37 +112,24 @@ def open_submission_prs() -> list[PullRequest]:
             "--limit",
             "100",
             "--json",
-            "number,title,headRefName,headRefOid,baseRefName,statusCheckRollup",
+            "number,title,headRefName,headRefOid,baseRefName,statusCheckRollup,state,mergedAt,mergeCommit",
         ]
     )
-    prs = []
-    for item in json.loads(raw):
-        checks = item.get("statusCheckRollup", [])
-        conclusions = [check.get("conclusion") for check in checks if check.get("conclusion")]
-        passed = bool(conclusions) and all(conclusion == "SUCCESS" for conclusion in conclusions)
-        if not checks:
-            checks_summary = "no GitHub checks have run"
-        elif passed:
-            checks_summary = "all GitHub checks passed"
-        else:
-            failed = [
-                check.get("name", "unnamed check")
-                for check in checks
-                if check.get("conclusion") not in (None, "SUCCESS")
-            ]
-            checks_summary = "failed checks: " + ", ".join(failed or ["checks are still pending"])
-        prs.append(
-            PullRequest(
-                item["number"],
-                item["title"],
-                item["headRefOid"],
-                item["baseRefName"],
-                item["headRefName"],
-                passed,
-                checks_summary,
-            )
-        )
-    return sorted(prs, key=lambda pr: pr.number)
+    return sorted((_pull_request(item) for item in json.loads(raw)), key=lambda pr: pr.number)
+
+
+def get_pull_request(number: int) -> PullRequest:
+    """Read a PR even if already merged, enabling recovery of post-merge failures."""
+    raw = _gh(
+        [
+            "pr",
+            "view",
+            str(number),
+            "--json",
+            "number,title,headRefName,headRefOid,baseRefName,statusCheckRollup,state,mergedAt,mergeCommit",
+        ]
+    )
+    return _pull_request(json.loads(raw))
 
 
 def comment(number: int, body: str) -> None:
@@ -94,6 +141,47 @@ def merge(number: int, *, delete_branch: bool) -> None:
     if delete_branch:
         args.append("--delete-branch")
     _gh(args)
+
+
+def delete_remote_branch(number: int) -> None:
+    """Best-effort delete of a merged PR's head branch, only if it is in this repo."""
+    raw = _gh(
+        [
+            "pr",
+            "view",
+            str(number),
+            "--json",
+            "headRefName,headRepository,headRepositoryOwner",
+        ]
+    )
+    item = json.loads(raw)
+    repository = item.get("headRepository") or {}
+    owner = item.get("headRepositoryOwner") or {}
+    branch = item.get("headRefName")
+    repo_name = repository.get("name") if isinstance(repository, dict) else None
+    owner_name = owner.get("login") if isinstance(owner, dict) else None
+    if (
+        not branch
+        or not branch.startswith("submit/")
+        or branch in {"main", "dev", "submission"}
+        or not repo_name
+        or not owner_name
+    ):
+        return
+    base = json.loads(_gh(["repo", "view", "--json", "nameWithOwner"]))
+    if f"{owner_name}/{repo_name}" != base.get("nameWithOwner"):
+        return
+    # Deleting the remote ref is separate from merging: it cannot trigger gh's
+    # local-branch cleanup, which can fail when that branch is checked out in a worktree.
+    _gh(
+        [
+            "api",
+            "--method",
+            "DELETE",
+            f"repos/{owner_name}/{repo_name}/git/refs/heads/{branch}",
+        ],
+        check=False,
+    )
 
 
 def create_promotion_pr() -> int:

@@ -14,6 +14,21 @@ Do not change code, dependencies, workflows, the leaderboard, or `docs/`.
 `config.json` must include non-empty `name` and `author` strings; `description`
 is optional.
 
+**Base submission branches on the latest `origin/submission`, not `main` or `dev`.**
+The validator compares the PR against the integration branch so unrelated code and
+leaderboard history cannot be mistaken for submission changes. Before opening a PR:
+
+```bash
+git fetch origin
+git switch -c submit/<name> origin/submission
+# add only the two model files, commit, and open a PR targeting submission
+```
+
+If `origin/submission` advances before your PR is merged, rebase your short-lived
+branch onto the latest `origin/submission` and push the updated branch. Stale or
+diverged PR heads are rejected with a remediation message instead of being merged
+with an ambiguous file diff.
+
 Benchmark guides:
 
 - [Snake](how-to/how-to-make-a-snake-submission.md)
