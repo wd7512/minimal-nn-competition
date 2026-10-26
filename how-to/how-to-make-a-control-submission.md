@@ -1,4 +1,4 @@
-# How to make a Control (RL) submission
+# How to make a Control submission
 
 The Control group contains three fixed-seed tasks: CartPole, Pendulum, and
 LunarLander. Each submission is a feed-forward policy that observes the
@@ -143,6 +143,18 @@ small PPO trainer as the Snake example. Training uses Apple MPS automatically
 when available.
 
 ## 7. Open the pull request
+
+Fork this repository on GitHub first. Then clone your fork and create a
+short-lived submission branch from the integration branch:
+
+```bash
+git fetch origin
+git switch -c submit/<name> origin/submission
+```
+
+Add only `config.json` and `model.pt`, commit, push the branch to your fork,
+and open a pull request targeting the upstream `submission` branch. Include
+only the two model files.
 
 Target the `submission` branch and include only `config.json` and `model.pt`.
 See [How to validate a submission](how-to-validate-a-submission.md) for the

@@ -16,12 +16,14 @@ is optional.
 
 **Base submission branches on the latest `origin/submission`, not `main` or `dev`.**
 The validator compares the PR against the integration branch so unrelated code and
-leaderboard history cannot be mistaken for submission changes. Before opening a PR:
+leaderboard history cannot be mistaken for submission changes. Fork the repository on GitHub first, then work in your fork. Before
+opening a PR:
 
 ```bash
 git fetch origin
 git switch -c submit/<name> origin/submission
-# add only the two model files, commit, and open a PR targeting submission
+# add only the two model files, commit, push to your fork, and open a PR
+# targeting submission
 ```
 
 If `origin/submission` advances before your PR is merged, rebase your short-lived
@@ -32,10 +34,9 @@ with an ambiguous file diff.
 Benchmark guides:
 
 - [Snake](how-to/how-to-make-a-snake-submission.md)
-- [MNIST](how-to/how-to-make-an-mnist-submission.md)
-- [Fashion-MNIST](how-to/how-to-make-a-fashion-mnist-submission.md)
-- [Chess evaluation](how-to/how-to-make-a-chess-eval-submission.md)
-- [Control (RL)](how-to/how-to-make-an-rl-submission.md)
+- [Image compression](how-to/how-to-make-an-image-compression-submission.md)
+- [Chess](how-to/how-to-make-a-chess-submission.md)
+- [Control](how-to/how-to-make-a-control-submission.md)
 
 Each submission's detail page shows its structure — for example
 `[784,14,14,10]` — directly above the parameter count, taken from

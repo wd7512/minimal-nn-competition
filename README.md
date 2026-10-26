@@ -24,10 +24,9 @@ Open a pull request against `submission` with exactly
 dependencies, workflows, the leaderboard, or `docs/`.
 
 - [How to make a Snake submission](how-to/how-to-make-a-snake-submission.md)
-- [How to make an MNIST submission](how-to/how-to-make-an-mnist-submission.md)
-- [How to make a Fashion-MNIST submission](how-to/how-to-make-a-fashion-mnist-submission.md)
-- [How to make a Chess evaluation submission](how-to/how-to-make-a-chess-eval-submission.md)
-- [How to make a Control (RL) submission](how-to/how-to-make-an-rl-submission.md)
+- [How to make an Image compression submission](how-to/how-to-make-an-image-compression-submission.md)
+- [How to make a Chess submission](how-to/how-to-make-a-chess-submission.md)
+- [How to make a Control submission](how-to/how-to-make-a-control-submission.md)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and
 [how to validate a submission](how-to/how-to-validate-a-submission.md).
