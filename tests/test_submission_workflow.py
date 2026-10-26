@@ -55,6 +55,17 @@ def test_merge_promotion_keeps_long_lived_branch(monkeypatch) -> None:
     assert calls == [["pr", "merge", "2", "--merge"]]
 
 
+def test_merge_pins_the_validated_head(monkeypatch) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(github, "_gh", lambda args: calls.append(args) or "")
+
+    github.merge(3, delete_branch=False, head_sha="a" * 40)
+
+    assert calls == [
+        ["pr", "merge", "3", "--merge", "--match-head-commit", "a" * 40],
+    ]
+
+
 def test_open_submission_prs_rejects_failed_check(monkeypatch) -> None:
     payload = [
         {

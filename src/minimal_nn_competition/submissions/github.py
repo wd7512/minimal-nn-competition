@@ -138,8 +138,10 @@ def comment(number: int, body: str) -> None:
     _gh(["pr", "comment", str(number), "--body", body])
 
 
-def merge(number: int, *, delete_branch: bool) -> None:
+def merge(number: int, *, delete_branch: bool, head_sha: str | None = None) -> None:
     args = ["pr", "merge", str(number), "--merge"]
+    if head_sha is not None:
+        args.extend(["--match-head-commit", head_sha])
     if delete_branch:
         args.append("--delete-branch")
     _gh(args)

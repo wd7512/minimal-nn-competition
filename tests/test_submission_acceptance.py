@@ -164,8 +164,9 @@ def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -
     monkeypatch.setattr(workflow, "_verify_promoted", lambda root: None)
     monkeypatch.setattr(workflow, "_is_ancestor", lambda ancestor, descendant, root: True)
     monkeypatch.setattr(
-        workflow, "merge", lambda number, delete_branch: calls.append(("merge", number))
+        workflow, "merge", lambda number, delete_branch, **kwargs: calls.append(("merge", number))
     )
+    monkeypatch.setattr(workflow, "_verified_merge", lambda pr, root: pr)
     monkeypatch.setattr(
         workflow,
         "delete_remote_branch",

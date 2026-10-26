@@ -40,15 +40,17 @@ Pending or failed checks are not accepted. It then validates that the diff
 changes only `models/<benchmark>/<name>/config.json` and `model.pt`, and scores
 the candidate in a temporary worktree.
 
-A passing PR is merged without branch cleanup in the critical path. The
-workflow then synchronizes from `origin/submission`, upserts the leaderboard
-entry by `(benchmark, submission)`, records a deterministic replay for Snake,
-CartPole, Pendulum, or LunarLander, renders the site, commits and pushes the
-artifacts, and reads the remote leaderboard back to verify that both the new
-entry and the previously recorded entries remain present. If another workflow
-run advances `submission` during publication, the generated score commit is
-rebuilt from the newer remote ledger, with a bounded retry. An unrelated or
-ambiguous branch divergence fails closed rather than being force-pushed.
+A passing PR is merged without branch cleanup in the critical path. The merge is
+pinned to the validated head commit, and the workflow verifies that the merge
+commit's second parent matches it before publishing. The workflow then
+synchronizes from `origin/submission`, upserts the leaderboard entry by
+`(benchmark, submission)`, records a deterministic replay for Snake, CartPole,
+Pendulum, or LunarLander, renders the site, commits and pushes the artifacts,
+and reads the remote leaderboard back to verify that both the new entry and the
+previously recorded entries remain present. If another workflow run advances
+`submission` during publication, the generated score commit is rebuilt from the
+newer remote ledger, with a bounded retry. An unrelated or ambiguous branch
+divergence fails closed rather than being force-pushed.
 
 If a PR has merged but local scoring, rendering, publishing, or verification
 fails, the workflow does not label the submission as rejected or post a

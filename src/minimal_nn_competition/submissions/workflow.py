@@ -524,6 +524,23 @@ def _is_merged_now(pr: PullRequest) -> PullRequest:
     return latest if latest.merged else pr
 
 
+def _verified_merge(pr: PullRequest, root: Path) -> PullRequest:
+    """Confirm the merged commit is the exact head that was validated."""
+    _git(["fetch", "origin", "submission"], root)
+    merged_pr = get_pull_request(pr.number)
+    if not merged_pr.merged or not merged_pr.merge_commit_sha:
+        raise WorkflowError(
+            "GitHub did not report the PR as merged with a merge commit; refusing to publish"
+        )
+    parents = _git(["rev-list", "--parents", "-n", "1", merged_pr.merge_commit_sha], root).split()
+    if len(parents) != 3 or parents[2] != pr.head_sha:
+        raise WorkflowError(
+            "merged PR head does not match the validated commit; refusing to publish. "
+            "Rerun validation so the scored commit is the merged commit."
+        )
+    return merged_pr
+
+
 def _verify_promoted(root: Path) -> None:
     _git(["fetch", "origin", "main", "submission"], root)
     if not _is_ancestor("origin/submission", "origin/main", root):
@@ -638,7 +655,8 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
             if not pr.merged:
                 # Do not use `--delete-branch`: gh may fail deleting a local branch that
                 # is checked out in another worktree after the remote merge has succeeded.
-                merge(pr.number, delete_branch=False)
+                merge(pr.number, delete_branch=False, head_sha=pr.head_sha)
+                pr = _verified_merge(pr, root)
                 merged = True
             _git(["pull", "--ff-only", "origin", "submission"], root)
             _publish_result(root, directory, result, pr_number=pr.number)
