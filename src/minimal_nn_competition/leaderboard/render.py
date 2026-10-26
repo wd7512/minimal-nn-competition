@@ -11,6 +11,7 @@ from minimal_nn_competition.benchmarks.common.control.replay import steps_text
 from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem
 from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
+    IMAGE_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
 )
@@ -20,29 +21,25 @@ _GROUP_SPECS = (
     {
         "id": "snake",
         "label": "Snake",
-        "benchmarks": (
-            "snake-simple-8x8",
-            "snake-simple-16x16",
-            "snake-obstacles-8x8",
-        ),
+        "benchmarks": SNAKE_BENCHMARKS,
         "accent": "snake",
     },
     {
         "id": "image-compression",
         "label": "Image compression",
-        "benchmarks": ("mnist", "fashion-mnist"),
+        "benchmarks": IMAGE_BENCHMARKS,
         "accent": "image-compression",
     },
     {
         "id": "chess",
         "label": "Chess evaluation",
-        "benchmarks": ("chess-eval-10k", "chess-eval-100k"),
+        "benchmarks": CHESS_BENCHMARKS,
         "accent": "chess",
     },
     {
         "id": "control",
         "label": "Control",
-        "benchmarks": ("cartpole", "pendulum", "lunarlander"),
+        "benchmarks": RL_BENCHMARKS,
         "accent": "control",
     },
 )

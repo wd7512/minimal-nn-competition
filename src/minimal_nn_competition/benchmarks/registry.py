@@ -6,6 +6,7 @@ chess tiers share one implementation module.
 """
 
 CHESS_BENCHMARKS = ("chess-eval-10k", "chess-eval-100k")
+IMAGE_BENCHMARKS = ("mnist", "fashion-mnist")
 SNAKE_BENCHMARKS = ("snake-simple-8x8", "snake-simple-16x16", "snake-obstacles-8x8")
 RL_BENCHMARKS = ("cartpole", "pendulum", "lunarlander")
 

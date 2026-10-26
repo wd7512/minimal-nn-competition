@@ -218,6 +218,7 @@ def test_benchmark_scope_coverage_rejects_unknown() -> None:
 def test_benchmark_families_partition_registry() -> None:
     from minimal_nn_competition.benchmarks.registry import (
         CHESS_BENCHMARKS,
+        IMAGE_BENCHMARKS,
         RL_BENCHMARKS,
         SNAKE_BENCHMARKS,
         available_benchmarks,
@@ -225,13 +226,14 @@ def test_benchmark_families_partition_registry() -> None:
 
     families = (
         ("CHESS_BENCHMARKS", CHESS_BENCHMARKS),
+        ("IMAGE_BENCHMARKS", IMAGE_BENCHMARKS),
         ("RL_BENCHMARKS", RL_BENCHMARKS),
         ("SNAKE_BENCHMARKS", SNAKE_BENCHMARKS),
     )
     grouped = [name for _, names in families for name in names]
     assert len(grouped) == len(set(grouped))
     ungrouped = set(available_benchmarks()) - set(grouped)
-    assert ungrouped == {"fashion-mnist", "mnist"}
+    assert ungrouped == set()
     for label, names in families:
         for name in names:
             assert scope_for_benchmark(name) in {scope.name for scope in SCOPES}, label
