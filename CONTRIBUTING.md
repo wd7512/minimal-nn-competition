@@ -14,28 +14,32 @@ Do not change code, dependencies, workflows, the leaderboard, or `docs/`.
 `config.json` must include non-empty `name` and `author` strings; `description`
 is optional.
 
-**Base submission branches on the latest `origin/submission`, not `main` or `dev`.**
+**Base submission branches on the latest `upstream/submission`, not `main` or `dev`.**
 The validator compares the PR against the integration branch so unrelated code and
-leaderboard history cannot be mistaken for submission changes. Before opening a PR:
+leaderboard history cannot be mistaken for submission changes. Fork the repository on GitHub first, clone your fork, then add the
+upstream remote:
 
 ```bash
-git fetch origin
-git switch -c submit/<name> origin/submission
-# add only the two model files, commit, and open a PR targeting submission
+git remote add upstream https://github.com/wd7512/minimal-nn-competition.git
+git fetch upstream
+git switch -c submit/<name> upstream/submission
+# add only the two model files, commit, push to origin, and open a PR
+# targeting upstream submission
 ```
 
-If `origin/submission` advances before your PR is merged, rebase your short-lived
-branch onto the latest `origin/submission` and push the updated branch. Stale or
+Keep `origin` as your fork and `upstream` as the source repository.
+
+If `upstream/submission` advances before your PR is merged, rebase your short-lived
+branch onto the latest `upstream/submission` and push the updated branch. Stale or
 diverged PR heads are rejected with a remediation message instead of being merged
 with an ambiguous file diff.
 
 Benchmark guides:
 
 - [Snake](how-to/how-to-make-a-snake-submission.md)
-- [MNIST](how-to/how-to-make-an-mnist-submission.md)
-- [Fashion-MNIST](how-to/how-to-make-a-fashion-mnist-submission.md)
-- [Chess evaluation](how-to/how-to-make-a-chess-eval-submission.md)
-- [Control (RL)](how-to/how-to-make-an-rl-submission.md)
+- [Image compression](how-to/how-to-make-an-image-compression-submission.md)
+- [Chess](how-to/how-to-make-a-chess-submission.md)
+- [Control](how-to/how-to-make-a-control-submission.md)
 
 Each submission's detail page shows its structure — for example
 `[784,14,14,10]` — directly above the parameter count, taken from

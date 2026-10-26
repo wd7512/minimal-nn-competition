@@ -7,6 +7,12 @@ import re
 from pathlib import Path
 from typing import Any
 
+from minimal_nn_competition.model.limits import (
+    MAX_CHECKPOINT_BYTES,
+    MAX_PARAMETERS,
+    parameter_count_from_dimensions,
+)
+
 SUBMISSION_PATH = re.compile(r"^models/([^/]+)/([^/]+)/(config\.json|model\.pt)$")
 ALLOWED_STATUSES = {"A", "M", "C"}
 ALLOWED_ARCHITECTURES = {"linear", "mlp"}
@@ -64,6 +70,26 @@ def validate_config(config: Any, directory: Path) -> list[str]:
         errors.append(f"{config_path}: linear submissions cannot declare hidden_sizes")
     if config.get("activation", "relu") not in ALLOWED_ACTIVATIONS:
         errors.append(f"{config_path}: activation must be relu or identity")
+
+    # Estimate parameters from the raw config before building anything.
+    input_size = config.get("input_size")
+    output_size = config.get("output_size")
+    hidden_sizes = config.get("hidden_sizes", [])
+    if (
+        type(input_size) is int
+        and input_size > 0
+        and type(output_size) is int
+        and output_size > 0
+        and isinstance(hidden_sizes, list)
+        and all(type(size) is int and size > 0 for size in hidden_sizes)
+        and config.get("architecture") in {"linear", "mlp"}
+    ):
+        total = parameter_count_from_dimensions(input_size, hidden_sizes, output_size)
+        if total > MAX_PARAMETERS:
+            errors.append(
+                f"{config_path}: submission would require {total} parameters, "
+                f"above the {MAX_PARAMETERS} maximum"
+            )
     if type(config.get("normalisation", False)) is not bool:
         errors.append(f"{config_path}: normalisation must be a boolean")
     return errors
@@ -115,6 +141,11 @@ def validate_diff(diff_text: str, root: Path) -> list[str]:
         errors.append(f"{model_path}: missing")
     elif model_path.stat().st_size == 0:
         errors.append(f"{model_path}: must not be empty")
+    elif model_path.stat().st_size > MAX_CHECKPOINT_BYTES:
+        errors.append(
+            f"{model_path}: checkpoint is too large "
+            f"({model_path.stat().st_size} bytes; maximum is {MAX_CHECKPOINT_BYTES})"
+        )
     return errors
 
 

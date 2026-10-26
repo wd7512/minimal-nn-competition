@@ -44,6 +44,9 @@ _GROUP_SPECS = (
         "accent": "control",
     },
 )
+BENCHMARK_GROUPS = tuple(spec["id"] for spec in _GROUP_SPECS)
+GROUP_NAMES = BENCHMARK_GROUPS
+
 _VERSION_LABELS = {
     "snake-simple-8x8": "Simple 8×8",
     "snake-simple-16x16": "Simple 16×16",
