@@ -253,6 +253,36 @@ def test_merged_pr_recovery_rejects_single_parent_commit(tmp_path: Path) -> None
         workflow._validate_pr(pr, work, None)
 
 
+def test_verified_merge_requires_the_validated_head(tmp_path: Path, monkeypatch) -> None:
+    _remote, work = _repo(tmp_path)
+    base = _rev(work, "submission")
+    _git(work, "checkout", "-b", "feature")
+    (work / "feature.txt").write_text("feature\n")
+    _git(work, "add", "feature.txt")
+    _git(work, "commit", "-m", "feature")
+    _git(work, "checkout", "submission")
+    _git(work, "merge", "--no-ff", "-m", "merge feature", "feature")
+    head = _rev(work, "submission^2")
+    merge_sha = _rev(work, "submission")
+    merged = PullRequest(
+        7,
+        "merged",
+        head,
+        "submission",
+        "feature",
+        True,
+        merged=True,
+        merge_commit_sha=merge_sha,
+    )
+    monkeypatch.setattr(workflow, "get_pull_request", lambda number: merged)
+
+    assert workflow._verified_merge(merged, work) is merged
+
+    stale = PullRequest(7, "stale", base, "submission", "feature", True)
+    with pytest.raises(workflow.WorkflowError, match="does not match the validated commit"):
+        workflow._verified_merge(stale, work)
+
+
 def test_load_replays_ignores_unrelated_files(tmp_path: Path) -> None:
     _remote, work = _repo(tmp_path)
     games = work / "docs" / "games"
