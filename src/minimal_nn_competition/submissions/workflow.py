@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import fcntl
+import hashlib
 import json
 import logging
+import shutil
 import subprocess
 import tempfile
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
@@ -34,6 +38,7 @@ from minimal_nn_competition.submissions.github import (
     comment,
     create_promotion_pr,
     delete_remote_branch,
+    find_promotion_pr,
     get_pull_request,
     merge,
     merge_promotion,
@@ -43,11 +48,38 @@ from minimal_nn_competition.submissions.scoring import result_key, score_submiss
 from minimal_nn_competition.submissions.validation import submission_directory, validate_diff
 
 logger = logging.getLogger(__name__)
-_RECOVERY_ERRORS = (GitHubError, OSError, RuntimeError, ValueError, TypeError, KeyError)
+# Only expected operational failures are recoverable. Programming errors such as
+# KeyError or TypeError deliberately escape so they stay diagnosable.
+_RECOVERY_ERRORS = (GitHubError, OSError, RuntimeError, ValueError)
+_GENERATED_PATHS = (
+    "docs/leaderboard.json",
+    "docs/index.html",
+    "docs/.nojekyll",
+    "docs/submissions",
+    "docs/games",
+)
 
 
 class WorkflowError(RuntimeError):
     """Raised when the acceptance workflow cannot safely continue."""
+
+
+@contextmanager
+def _exclusive_run_lock(root: Path):
+    """Refuse concurrent runs that would share this checkout."""
+    digest = hashlib.sha256(str(root.resolve()).encode()).hexdigest()[:16]
+    lock_path = Path(tempfile.gettempdir()) / f"mnnc-submission-{digest}.lock"
+    with open(lock_path, "a", encoding="utf-8") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            raise WorkflowError(
+                "another submission validation run is already active for this repository"
+            ) from exc
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 def _git(args: list[str], cwd: Path) -> str:
@@ -101,24 +133,43 @@ def _remote_ledger_keys(root: Path, ref: str = "origin/submission") -> set[tuple
 
 
 def _sync_submission(root: Path) -> None:
-    """Fetch and fast-forward from the integration branch without reconciling histories."""
+    """Fetch and reconcile branches without rewriting or force-pushing history."""
     _git(["fetch", "origin", "main", "submission"], root)
-    if not _is_ancestor("origin/main", "origin/submission", root):
-        raise WorkflowError(
-            "origin/submission does not contain origin/main. Promote or reconcile the branches "
-            "using the normal PR flow before accepting submissions; the workflow will not merge "
-            "main into submission or rewrite either branch during acceptance."
-        )
 
-    if _is_ancestor("origin/submission", "submission", root):
-        # Local submission is current or contains local commits that still need pushing.
-        pass
-    elif _is_ancestor("submission", "origin/submission", root):
-        _git(["merge", "--ff-only", "origin/submission"], root)
+    main_ahead = _is_ancestor("origin/submission", "origin/main", root)
+    submission_ahead = _is_ancestor("origin/main", "origin/submission", root)
+    if main_ahead and not submission_ahead:
+        # A promotion merged but the final synchronisation of `submission` did not
+        # finish. Fast-forward only; never reset away local unpushed work.
+        if _is_ancestor("submission", "origin/main", root):
+            _git(["merge", "--ff-only", "origin/main"], root)
+            _git(["push", "origin", "submission"], root)
+            _git(["fetch", "origin", "submission"], root)
+            logger.info("Fast-forwarded submission to the promoted main tip")
+        elif _is_ancestor("origin/main", "submission", root):
+            _git(["push", "origin", "submission"], root)
+            _git(["fetch", "origin", "submission"], root)
+        else:
+            raise WorkflowError(
+                "local submission diverged from the promoted main tip. Reconcile them "
+                "explicitly; the acceptance workflow will not reset, rebase, or force-push submission."
+            )
+    elif submission_ahead:
+        if _is_ancestor("origin/submission", "submission", root):
+            # Local submission is current or contains local commits that still need pushing.
+            pass
+        elif _is_ancestor("submission", "origin/submission", root):
+            _git(["merge", "--ff-only", "origin/submission"], root)
+        else:
+            raise WorkflowError(
+                "local submission and origin/submission have diverged. Reconcile them explicitly; "
+                "the acceptance workflow will not reset, rebase, or force-push submission."
+            )
     else:
         raise WorkflowError(
-            "local submission and origin/submission have diverged. Reconcile them explicitly; "
-            "the acceptance workflow will not reset, rebase, or force-push submission."
+            "origin/submission and origin/main have diverged. Promote or reconcile the branches "
+            "using the normal PR flow before accepting submissions; the workflow will not merge "
+            "main into submission or rewrite either branch during acceptance."
         )
 
     # A local commit left behind by a previous run must not be allowed to erase rows
@@ -144,8 +195,15 @@ def _validate_pr(pr: PullRequest, root: Path, validation_base: str | None = None
             raise WorkflowError(
                 "PR is merged but GitHub did not return its merge commit; rerun once metadata is available"
             )
-        # For a merged PR, compare the merge commit to its first parent. Comparing the
-        # head to the now-advanced integration branch would produce an empty diff.
+        # Recovery diffs the merge commit against its first parent. That is only the
+        # full PR change set for true merge commits; squash and rebase merges need a
+        # strategy-aware diff, so they are rejected rather than scored incorrectly.
+        parents = _git(["rev-list", "--parents", "-n", "1", pr.merge_commit_sha], root).split()
+        if len(parents) < 3:
+            raise WorkflowError(
+                "merged PR does not have a two-parent merge commit. Recovery supports only "
+                "merge commits (the workflow's merge strategy); reconcile other merges manually."
+            )
         diff = _git(
             ["diff", "--name-status", f"{pr.merge_commit_sha}^1", pr.merge_commit_sha], root
         )
@@ -212,14 +270,73 @@ def _record_submission_replay(root: Path, directory: Path) -> Path | None:
     return save_replay(replay_dir / f"{stem}.json", payload)
 
 
-def _load_replays(root: Path) -> dict:
+def _expected_replay_stems(results) -> set[str]:
+    return {
+        replay_stem(result.benchmark, result.submission)
+        for result in results
+        if result.benchmark in SNAKE_BENCHMARKS + RL_BENCHMARKS
+    }
+
+
+def _load_replays(root: Path, results=None) -> dict:
+    """Load replays for the known leaderboard rows only, ignoring stray files."""
     replay_dir = root / "docs" / "games"
     if not replay_dir.is_dir():
         return {}
-    return {path.stem: load_replay(path) for path in sorted(replay_dir.glob("*.json"))}
+    if results is None:
+        paths = sorted(replay_dir.glob("*.json"))
+    else:
+        paths = sorted(replay_dir / f"{stem}.json" for stem in _expected_replay_stems(results))
+    replays = {}
+    for path in paths:
+        if not path.is_file():
+            continue
+        try:
+            replays[path.stem] = load_replay(path)
+        except (OSError, ValueError) as exc:
+            logger.warning("Skipping unreadable replay %s: %s", path, exc)
+    return replays
 
 
-def _publish_result(root: Path, directory: Path, result) -> None:
+def _render_site_atomically(root: Path, results) -> None:
+    """Render into a scratch directory so a failure cannot corrupt committed pages."""
+    output_dir = root / "docs"
+    with tempfile.TemporaryDirectory(prefix="mnnc-render-") as temp:
+        rendered = Path(temp) / "docs"
+        render_site(results, rendered, _load_replays(root, results))
+        for name in ("leaderboard.json", "index.html", ".nojekyll"):
+            target = output_dir / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(rendered / name, target)
+        for name in ("submissions", "games"):
+            source = rendered / name
+            target = output_dir / name
+            if source.is_dir():
+                shutil.rmtree(target, ignore_errors=True)
+                shutil.copytree(source, target)
+            else:
+                shutil.rmtree(target, ignore_errors=True)
+
+
+def _stage_generated(root: Path, paths: tuple[str, ...]) -> None:
+    """Stage only the given generated artifacts, never arbitrary docs files."""
+    if not paths:
+        return
+    status = _git(
+        ["status", "--porcelain", "--untracked-files=all", "--", *paths],
+        root,
+    )
+    staged = []
+    for line in status.splitlines():
+        path = line[3:]
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        staged.append(path)
+    if staged:
+        _git(["add", "-A", "--", *sorted(set(staged))], root)
+
+
+def _publish_result(root: Path, directory: Path, result, *, pr_number: int | None = None) -> None:
     """Upsert and publish artifacts, rebasing the generated commit on concurrent writes."""
     ledger_path = root / "docs" / "leaderboard.json"
 
@@ -240,12 +357,41 @@ def _publish_result(root: Path, directory: Path, result) -> None:
         if result_key(result) not in new_keys:
             raise WorkflowError("leaderboard upsert did not record the scored submission")
 
-        _record_submission_replay(root, directory)
-        render_site(load_results(ledger_path), root / "docs", _load_replays(root))
-        _git(["add", "docs"], root)
+        try:
+            _record_submission_replay(root, directory)
+        except _RECOVERY_ERRORS as replay_error:
+            # Presentation artifacts must not strand an already-scored submission.
+            logger.error(
+                "Could not record replay for %s: %s. The score will still be published; "
+                "rerun to repair the replay artifact.",
+                result.submission,
+                replay_error,
+            )
+
+        results = load_results(ledger_path)
+        rendered = True
+        try:
+            _render_site_atomically(root, results)
+        except Exception as render_error:
+            rendered = False
+            logger.exception("Could not render site for %s: %s", result.submission, render_error)
+
+        if rendered:
+            generated = _GENERATED_PATHS
+        else:
+            generated = ("docs/leaderboard.json",)
+            for stem in sorted(_expected_replay_stems(results)):
+                path = root / "docs" / "games" / f"{stem}.json"
+                if path.is_file():
+                    generated += (f"docs/games/{stem}.json",)
+        _stage_generated(root, generated)
+
         staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root, check=False)
         if staged.returncode == 1:
-            _git(["commit", "-m", f"Score submission {result.submission}"], root)
+            message = f"Score submission {result.submission}"
+            if pr_number is not None:
+                message = f"Score submission PR #{pr_number} ({result.submission})"
+            _git(["commit", "-m", message], root)
         elif staged.returncode != 0:
             raise WorkflowError("could not inspect staged leaderboard changes")
 
@@ -289,12 +435,12 @@ def _publish_result(root: Path, directory: Path, result) -> None:
 
 def _refresh_missing_checks(pr: PullRequest) -> PullRequest:
     """Give delayed GitHub check events a short bounded window to appear."""
-    if pr.merged or pr.checks_summary != "no GitHub checks have run":
+    if pr.merged or pr.checks_status != "none":
         return pr
     for delay in (1, 2):
         time.sleep(delay)
         pr = get_pull_request(pr.number)
-        if pr.merged or pr.checks_summary != "no GitHub checks have run":
+        if pr.merged or pr.checks_status != "none":
             return pr
     return pr
 
@@ -309,7 +455,57 @@ def _is_merged_now(pr: PullRequest) -> PullRequest:
     return latest if latest.merged else pr
 
 
+def _verify_promoted(root: Path) -> None:
+    _git(["fetch", "origin", "main", "submission"], root)
+    if not _is_ancestor("origin/submission", "origin/main", root):
+        raise WorkflowError(
+            "promotion did not reach main: origin/main does not contain origin/submission"
+        )
+    main_keys = _remote_ledger_keys(root, "origin/main")
+    submission_keys = _remote_ledger_keys(root)
+    if not submission_keys.issubset(main_keys):
+        missing = sorted(submission_keys - main_keys)
+        raise WorkflowError(
+            f"promotion did not carry every ledger entry to main. Missing keys: {missing[:8]}"
+        )
+
+
+def _promote(root: Path) -> None:
+    """Idempotently promote submission to main, resuming after partial failures."""
+    _git(["fetch", "origin", "main", "submission"], root)
+    if _is_ancestor("origin/submission", "origin/main", root):
+        _verify_promoted(root)
+        logger.info("All scored artifacts are already promoted to main")
+        return
+    if not _is_ancestor("origin/main", "origin/submission", root):
+        raise WorkflowError(
+            "origin/submission and origin/main have diverged; reconcile them with the normal PR flow"
+        )
+    ahead = int(_git(["rev-list", "--count", "origin/main..origin/submission"], root).strip())
+    if ahead == 0:
+        logger.info("All scored artifacts are already promoted to main")
+        return
+
+    number = find_promotion_pr()
+    if number is None:
+        number = create_promotion_pr()
+        logger.info("Created promotion PR #%d", number)
+    else:
+        logger.info("Resuming promotion PR #%d", number)
+    merge_promotion(number)
+    _git(["fetch", "origin", "main"], root)
+    _git(["merge", "--ff-only", "origin/main"], root)
+    _git(["push", "origin", "submission"], root)
+    _verify_promoted(root)
+    logger.info("Promoted accepted submissions to main")
+
+
 def run(root: Path, pr_number: int | None, data_root: Path) -> int:
+    with _exclusive_run_lock(root):
+        return _run(root, pr_number, data_root)
+
+
+def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
     branch = _git(["branch", "--show-current"], root).strip()
     if branch != "submission":
         raise WorkflowError(f"run from the submission branch, not {branch or 'detached HEAD'}")
@@ -337,7 +533,6 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
             prs = [recovered_pr]
     if not prs:
         logger.info("No open submission PRs found")
-        return 0
 
     accepted = 0
     skipped = 0
@@ -347,7 +542,7 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
         result = None
         merged = pr.merged
         try:
-            if not pr.merged and pr.checks_summary == "no GitHub checks have run":
+            if not pr.merged and pr.checks_status == "none":
                 pr = _refresh_missing_checks(pr)
             if not pr.merged and not pr.checks_passed:
                 raise WorkflowError(
@@ -373,7 +568,7 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
                 merge(pr.number, delete_branch=False)
                 merged = True
             _git(["pull", "--ff-only", "origin", "submission"], root)
-            _publish_result(root, directory, result)
+            _publish_result(root, directory, result, pr_number=pr.number)
             accepted += 1
             logger.info("Accepted PR #%d (%s)", pr.number, result.submission)
 
@@ -397,7 +592,7 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
                         result = _score_candidate(current_pr, directory, root, root / data_root)
                     _sync_submission(root)
                     _git(["pull", "--ff-only", "origin", "submission"], root)
-                    _publish_result(root, directory, result)
+                    _publish_result(root, directory, result, pr_number=pr.number)
                     accepted += 1
                     logger.warning("Recovered post-merge acceptance for PR #%d", pr.number)
                     continue
@@ -420,19 +615,7 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
     logger.info(
         "Validation summary: %d processed, %d accepted, %d skipped", len(prs), accepted, skipped
     )
-    if not accepted:
-        logger.info("No submissions accepted; skipping promotion")
-        return 0
-
-    _git(["fetch", "origin", "main", "submission"], root)
-    ahead = int(_git(["rev-list", "--count", "origin/main..origin/submission"], root).strip())
-    if ahead == 0:
-        logger.info("All scored artifacts are already promoted to main")
-        return 0
-    promotion = create_promotion_pr()
-    merge_promotion(promotion)
-    _git(["fetch", "origin", "main"], root)
-    _git(["merge", "--ff-only", "origin/main"], root)
-    _git(["push", "origin", "submission"], root)
-    logger.info("Promoted accepted submissions to main")
+    # Promotion is an independent, idempotent stage: it also resumes a promotion
+    # whose merge or final synchronisation failed on an earlier run.
+    _promote(root)
     return 0

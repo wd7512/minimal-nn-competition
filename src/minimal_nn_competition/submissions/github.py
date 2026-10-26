@@ -21,6 +21,7 @@ class PullRequest:
     head_ref: str
     checks_passed: bool
     checks_summary: str = ""
+    checks_status: str = "none"
     state: str = "OPEN"
     merged: bool = False
     merge_commit_sha: str | None = None
@@ -39,10 +40,11 @@ def _gh(args: list[str], *, check: bool = True) -> str:
     return result.stdout
 
 
-def _checks(item: dict) -> tuple[bool, str]:
+def _checks(item: dict) -> tuple[bool, str, str]:
+    """Return (passed, status, summary); status is none/pending/failed/passed."""
     checks = item.get("statusCheckRollup") or []
     if not checks:
-        return False, "no GitHub checks have run"
+        return False, "none", "no GitHub checks have run"
 
     # A successful check alongside a pending check is still pending. Each item
     # must have an explicit successful conclusion/state before the PR is eligible.
@@ -53,31 +55,30 @@ def _checks(item: dict) -> tuple[bool, str]:
         for check in checks
     )
     if passed:
-        return True, "all GitHub checks passed"
+        return True, "passed", "all GitHub checks passed"
 
     failed = []
-    pending = False
     for check in checks:
         conclusion = check.get("conclusion")
         state = check.get("state")
-        if conclusion is not None and conclusion != "SUCCESS":
+        settled_failure = conclusion is not None and conclusion != "SUCCESS"
+        unexpected_state = conclusion is None and state not in (
+            None,
+            "SUCCESS",
+            "PENDING",
+            "IN_PROGRESS",
+            "QUEUED",
+            "EXPECTED",
+        )
+        if settled_failure or unexpected_state:
             failed.append(check.get("name", "unnamed check"))
-        elif conclusion is None and state not in (None, "SUCCESS"):
-            if state in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED"):
-                pending = True
-            else:
-                failed.append(check.get("name", "unnamed check"))
-        elif conclusion is None and state is None:
-            pending = True
     if failed:
-        return False, "failed checks: " + ", ".join(failed)
-    if pending:
-        return False, "GitHub checks are still pending"
-    return False, "GitHub checks have not all succeeded"
+        return False, "failed", "failed checks: " + ", ".join(failed)
+    return False, "pending", "GitHub checks are still pending"
 
 
 def _pull_request(item: dict) -> PullRequest:
-    checks_passed, checks_summary = _checks(item)
+    checks_passed, checks_status, checks_summary = _checks(item)
     state = str(item.get("state", "OPEN")).upper()
     merged = state == "MERGED" or bool(item.get("mergedAt"))
     merge_commit = item.get("mergeCommit") or {}
@@ -90,6 +91,7 @@ def _pull_request(item: dict) -> PullRequest:
         head_ref=str(item["headRefName"]),
         checks_passed=checks_passed,
         checks_summary=checks_summary,
+        checks_status=checks_status,
         state=state,
         merged=merged,
         merge_commit_sha=merge_commit_sha,
@@ -182,6 +184,28 @@ def delete_remote_branch(number: int) -> None:
         ],
         check=False,
     )
+
+
+def find_promotion_pr() -> int | None:
+    """Return an already-open submission-to-main promotion PR, if one exists."""
+    raw = _gh(
+        [
+            "pr",
+            "list",
+            "--base",
+            "main",
+            "--head",
+            "submission",
+            "--state",
+            "open",
+            "--limit",
+            "1",
+            "--json",
+            "number",
+        ]
+    )
+    items = json.loads(raw)
+    return int(items[0]["number"]) if items else None
 
 
 def create_promotion_pr() -> int:

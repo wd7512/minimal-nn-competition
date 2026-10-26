@@ -35,7 +35,7 @@ def test_upsert_preserves_same_submission_name_in_other_benchmark(tmp_path: Path
 
 
 def test_check_rollup_does_not_pass_while_a_check_is_pending() -> None:
-    passed, summary = github._checks(
+    passed, status, summary = github._checks(
         {
             "statusCheckRollup": [
                 {"name": "lint", "conclusion": "SUCCESS"},
@@ -45,7 +45,22 @@ def test_check_rollup_does_not_pass_while_a_check_is_pending() -> None:
     )
 
     assert passed is False
+    assert status == "pending"
     assert "pending" in summary
+
+
+def test_check_rollup_reports_structured_status() -> None:
+    assert github._checks({}) == (False, "none", "no GitHub checks have run")
+    assert github._checks({"statusCheckRollup": [{"name": "lint", "conclusion": "SUCCESS"}]}) == (
+        True,
+        "passed",
+        "all GitHub checks passed",
+    )
+    assert github._checks({"statusCheckRollup": [{"name": "lint", "conclusion": "FAILURE"}]}) == (
+        False,
+        "failed",
+        "failed checks: lint",
+    )
 
 
 def test_pr_parser_retains_merged_metadata() -> None:
@@ -133,7 +148,7 @@ def test_non_game_submission_does_not_record_replay(monkeypatch, tmp_path: Path)
 
 
 def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -> None:
-    pr = PullRequest(7, "test", "a" * 40, "submission", "submit/test", True)
+    pr = PullRequest(7, "test", "a" * 40, "submission", "submit/test", True, checks_status="passed")
     result = _result("test", "mnist")
     calls: list[tuple[str, int | None]] = []
     monkeypatch.setattr(workflow, "_sync_submission", lambda root: None)
@@ -142,8 +157,12 @@ def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -
     monkeypatch.setattr(workflow, "_validate_pr", lambda pr, root, base: Path("models/mnist/test"))
     monkeypatch.setattr(workflow, "_score_candidate", lambda pr, directory, root, data: result)
     monkeypatch.setattr(
-        workflow, "_publish_result", lambda root, directory, scored: calls.append(("publish", None))
+        workflow,
+        "_publish_result",
+        lambda root, directory, scored, **kwargs: calls.append(("publish", None)),
     )
+    monkeypatch.setattr(workflow, "_verify_promoted", lambda root: None)
+    monkeypatch.setattr(workflow, "_is_ancestor", lambda ancestor, descendant, root: True)
     monkeypatch.setattr(
         workflow, "merge", lambda number, delete_branch: calls.append(("merge", number))
     )
@@ -209,8 +228,7 @@ def test_publish_rebuilds_ledger_after_concurrent_push(monkeypatch, tmp_path: Pa
         lambda path, scored: local_keys.add(scoring.result_key(scored)),
     )
     monkeypatch.setattr(workflow, "_record_submission_replay", lambda root, directory: None)
-    monkeypatch.setattr(workflow, "render_site", lambda results, output, replays: None)
-    monkeypatch.setattr(workflow, "_load_replays", lambda root: {})
+    monkeypatch.setattr(workflow, "_render_site_atomically", lambda root, results: None)
     monkeypatch.setattr(workflow, "load_results", lambda path: [result])
     monkeypatch.setattr(
         workflow.subprocess,

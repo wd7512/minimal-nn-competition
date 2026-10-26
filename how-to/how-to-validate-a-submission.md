@@ -53,18 +53,31 @@ fails, the workflow does not label the submission as rejected or post a
 validation-failure comment on the merged PR. It attempts recovery immediately.
 If that still fails, fix the reported cause and rerun the command with that PR
 number; the merged PR is re-scored and its result/replay are upserted
-idempotently. Local branch/worktree cleanup is never allowed to undo acceptance;
-remote cleanup is best-effort and limited to short-lived `submit/*` branches;
-protected branches and fork branches are left alone.
+idempotently. Recovery requires the PR to have been merged with a merge commit
+(the workflow's merge strategy); PRs merged with squash or rebase must be
+reconciled manually rather than scored from a partial diff. Local
+branch/worktree cleanup is never allowed to undo acceptance; remote cleanup is
+best-effort and limited to short-lived `submit/*` branches; protected branches
+and fork branches are left alone.
 
-After processing, the workflow creates and merges the promotion PR from
-`submission` to `main`, then synchronizes `submission` with `main`. It does not
-merge `main` into `submission` during acceptance preflight. If `origin/main` is
-not an ancestor of `origin/submission`, or if local and remote `submission`
-refs have diverged, it stops with a remediation message instead of attempting
-a reset, rebase, or force-push automatically.
+Publishing stages only the generated artifacts (`docs/leaderboard.json`,
+`docs/index.html`, `docs/submissions`, and replay JSON under `docs/games`), so
+unrelated files in `docs/` are never committed. Replay recording and site
+rendering are best-effort: a presentation failure is logged and the score is
+still published, and a later rerun repairs the missing artifacts.
 
-The command requires a clean tracked worktree and a working `gh auth login`
-session. Use the locked environment and deterministic benchmark inputs. Do not
-run submission code directly; checkpoints are loaded by the evaluator with
-`weights_only=True`.
+Promotion is an independent, idempotent stage that runs on every invocation,
+including when there are no open PRs. It resumes an existing open promotion PR
+instead of creating a duplicate, verifies that `origin/main` contains
+`origin/submission` and every ledger entry, and fast-forwards `submission` after
+a promotion merge. If a previous run merged the promotion but failed to
+synchronise `submission`, the next run fast-forwards it to the promoted `main`
+tip. The workflow never merges `main` into `submission`, and if the branches
+have genuinely diverged it stops with a remediation message instead of
+attempting a reset, rebase, or force-push automatically.
+
+The command holds an exclusive lock for the checkout, so two runs cannot mutate
+the same working tree. It requires a clean tracked worktree and a working
+`gh auth login` session. Use the locked environment and deterministic benchmark
+inputs. Do not run submission code directly; checkpoints are loaded by the
+evaluator with `weights_only=True`.
