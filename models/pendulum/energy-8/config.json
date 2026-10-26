@@ -1,0 +1,13 @@
+{
+  "benchmark": "pendulum",
+  "name": "energy-8",
+  "author": "chatgpt think harder",
+  "architecture": "mlp",
+  "input_size": 3,
+  "output_size": 5,
+  "hidden_sizes": [
+    8
+  ],
+  "activation": "relu",
+  "description": "8-hidden-unit ReLU policy distilled from an energy-shaping controller; local evaluator: 100/100 seeds pass, mean return -133.50."
+}
