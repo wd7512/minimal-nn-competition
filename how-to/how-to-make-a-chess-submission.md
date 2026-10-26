@@ -143,3 +143,25 @@ uv run mnnc train-chess-eval-100k --output models/chess-eval-100k/example
 
 Training the 100k tier takes longer and needs a larger network than the 10k
 example to pass.
+
+## 8. Open the pull request
+
+Fork this repository on GitHub first. Clone your fork, then add the upstream
+remote once:
+
+```bash
+git remote add upstream https://github.com/wd7512/minimal-nn-competition.git
+git fetch upstream
+git switch -c submit/<name> upstream/submission
+```
+
+`origin` stays your fork; push the branch there:
+
+```bash
+git push -u origin submit/<name>
+```
+
+Open a pull request targeting the upstream `submission` branch. Keep
+`config.json` and `model.pt` as the only changed files. See
+[How to validate a submission](how-to-validate-a-submission.md) for the
+review flow.
