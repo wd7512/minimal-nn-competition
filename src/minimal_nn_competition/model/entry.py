@@ -19,6 +19,11 @@ from pydantic import (
 )
 
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+from minimal_nn_competition.model.limits import (
+    MAX_CHECKPOINT_BYTES,
+    MAX_PARAMETERS,
+    parameter_count_from_dimensions,
+)
 
 ARCHITECTURES = ("linear", "mlp")
 ACTIVATIONS = ("relu", "identity")
@@ -82,11 +87,18 @@ class SubmissionConfig(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def _validate_cross_fields(self):
+    def _validate_submission(self):
         if self.architecture == "linear" and self.hidden_sizes:
             raise ValueError("linear submissions must not declare hidden_sizes")
         if self.benchmark not in SNAKE_BENCHMARKS and self.input_indices is not None:
             raise ValueError("input_indices is only supported for snake benchmarks")
+        total = parameter_count_from_dimensions(
+            self.input_size, self.hidden_sizes, self.output_size
+        )
+        if total > MAX_PARAMETERS:
+            raise ValueError(
+                f"submission would require {total} parameters, above the {MAX_PARAMETERS} maximum"
+            )
         return self
 
     @classmethod
@@ -129,6 +141,17 @@ class LoadedSubmission:
 
 def load_state_dict(submission):
     """Load a CPU state dict without enabling arbitrary pickle execution."""
+    checkpoint = submission.checkpoint
+    try:
+        size = checkpoint.stat().st_size
+    except OSError as exc:
+        raise SubmissionError(f"Could not stat checkpoint {checkpoint}: {exc}") from exc
+    if size == 0:
+        raise SubmissionError(f"Checkpoint must not be empty: {checkpoint}")
+    if size > MAX_CHECKPOINT_BYTES:
+        raise SubmissionError(
+            f"Checkpoint is too large ({size} bytes); maximum is {MAX_CHECKPOINT_BYTES} bytes"
+        )
     try:
         import torch
     except ImportError as exc:
@@ -165,6 +188,20 @@ def build_model(config):
 def materialize_submission(submission):
     """Validate and materialize a submission for evaluation."""
     state_dict = load_state_dict(submission)
+    total = parameter_count(state_dict)
+    if total > MAX_PARAMETERS:
+        raise SubmissionError(
+            f"Checkpoint contains {total} parameters, above the {MAX_PARAMETERS} maximum"
+        )
+    try:
+        import torch
+    except ImportError as exc:
+        raise SubmissionError("PyTorch is required to validate model.pt submissions") from exc
+    for name, value in state_dict.items():
+        if not isinstance(value, torch.Tensor):
+            raise SubmissionError(f"State-dict entry {name!r} is not a tensor")
+        if value.is_floating_point() and not torch.isfinite(value).all().item():
+            raise SubmissionError(f"State-dict entry {name!r} contains non-finite values")
     model = build_model(submission.config)
     try:
         model.load_state_dict(state_dict, strict=True)

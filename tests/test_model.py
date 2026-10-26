@@ -102,3 +102,51 @@ def test_input_indices_accepted_for_snake(tmp_path: Path) -> None:
         '"input_size":3,"output_size":4,"hidden_sizes":[4],"input_indices":[0,1,2]}'
     )
     assert SubmissionConfig.from_file(path).input_indices == (0, 1, 2)
+
+
+@pytest.mark.parametrize("bad_value", [float("nan"), float("inf")])
+def test_non_finite_weights_are_rejected(tmp_path: Path, bad_value: float) -> None:
+    directory = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake-simple-8x8",
+            "architecture": "linear",
+            "input_size": 7,
+            "output_size": 4,
+        },
+        {"weight": torch.full((4, 7), bad_value), "bias": torch.zeros(4)},
+    )
+    with pytest.raises(SubmissionError, match="non-finite"):
+        materialize_submission(Submission.from_directory(directory))
+
+
+def test_over_parameter_checkpoint_is_rejected(tmp_path: Path) -> None:
+    hidden = 1_500_000
+    directory = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake-simple-8x8",
+            "architecture": "mlp",
+            "input_size": 3,
+            "output_size": 4,
+            "hidden_sizes": [hidden],
+        },
+        {
+            "0.weight": torch.zeros((hidden, 3)),
+            "0.bias": torch.zeros(hidden),
+            "2.weight": torch.zeros((4, hidden)),
+            "2.bias": torch.zeros(4),
+        },
+    )
+    with pytest.raises(SubmissionError, match="parameters"):
+        materialize_submission(Submission.from_directory(directory))
+
+
+def test_declared_parameter_cap_is_enforced(tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+    path.write_text(
+        '{"benchmark":"mnist","name":"too_big","author":"tester","architecture":"mlp",'
+        '"input_size":784,"output_size":10,"hidden_sizes":[1000000]}'
+    )
+    with pytest.raises(SubmissionError, match="parameters"):
+        SubmissionConfig.from_file(path)

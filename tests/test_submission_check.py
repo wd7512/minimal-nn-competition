@@ -240,3 +240,22 @@ def test_description_must_be_a_string(tmp_path: Path) -> None:
     diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
     errors = _load_script().validate_diff(diff, tmp_path)
     assert any("description must be a string" in error for error in errors)
+
+
+def test_over_parameter_submission_is_rejected(tmp_path: Path) -> None:
+    _write_submission(
+        tmp_path,
+        config={
+            "benchmark": "mnist",
+            "name": "tiny",
+            "author": "tester",
+            "architecture": "mlp",
+            "input_size": 784,
+            "output_size": 10,
+            "hidden_sizes": [1_000_001],
+            "activation": "relu",
+        },
+    )
+    diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
+    errors = _load_script().validate_diff(diff, tmp_path)
+    assert any("parameters" in error for error in errors)

@@ -45,7 +45,11 @@ from minimal_nn_competition.submissions.github import (
     merge_promotion,
     open_submission_prs,
 )
-from minimal_nn_competition.submissions.scoring import result_key, score_submission, upsert_result
+from minimal_nn_competition.submissions.scoring import (
+    result_key,
+    score_submission_process,
+    upsert_result,
+)
 from minimal_nn_competition.submissions.validation import submission_directory, validate_diff
 
 logger = logging.getLogger(__name__)
@@ -282,7 +286,7 @@ def _validate_pr(
 
 def _score_candidate(candidate: str, pr_number: int, directory: Path, root: Path, data_root: Path):
     with _worktree(root, candidate, name=f"mnnc-pr-{pr_number}-") as worktree:
-        return score_submission(worktree, directory, data_root)
+        return score_submission_process(worktree, directory, data_root, timeout=600)
 
 
 def _record_submission_replay(root: Path, directory: Path, scored_sha: str) -> Path | None:
