@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 import pytest
 import torch
 
@@ -47,8 +49,12 @@ def test_snake_example_evaluate_uses_benchmark_move_cap(
 
 @pytest.mark.parametrize("benchmark_name", SNAKE_BENCHMARKS)
 def test_snake_example_evaluate_handles_full_board_state(
-    monkeypatch: pytest.MonkeyPatch, benchmark_name: str
+    monkeypatch: pytest.MonkeyPatch,
+    benchmark_name: str,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
+    caplog.set_level(logging.INFO)
+
     class _FullBoardEnvironment(_CapturingEnvironment):
         def __init__(self, **kwargs: object) -> None:
             super().__init__(**kwargs)
@@ -64,8 +70,8 @@ def test_snake_example_evaluate_handles_full_board_state(
 
     lengths = snake_submission._evaluate(policy, torch.device("cpu"), (0,), benchmark)
 
-    assert len(lengths) == 1
-    assert lengths[0] >= 1
+    assert lengths == [2]
+    assert "Greedy evaluation wins 1/1" in caplog.text
 
 
 def test_snake_example_evaluate_applies_per_food_stall_cutoff(
