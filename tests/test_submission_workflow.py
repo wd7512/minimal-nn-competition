@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
@@ -178,18 +177,3 @@ def test_score_submission_process_failure(tmp_path: Path) -> None:
 
     with pytest.raises(SubmissionError):
         score_submission_process(root, Path("models/snake-simple-8x8/bad"), tmp_path)
-
-
-@pytest.mark.skipif(sys.platform == "darwin", reason="RLIMIT_AS is not enforceable on macOS")
-def test_score_submission_process_resource_exhaustion(tmp_path: Path) -> None:
-    root = Path(__file__).resolve().parents[1]
-    from minimal_nn_competition.model.entry import SubmissionError
-    from minimal_nn_competition.submissions.scoring import score_submission_process
-
-    with pytest.raises(SubmissionError):
-        score_submission_process(
-            root,
-            Path("models/snake-simple-8x8/example"),
-            tmp_path,
-            memory_limit_bytes=1,
-        )

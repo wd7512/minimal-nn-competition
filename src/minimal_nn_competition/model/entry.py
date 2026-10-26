@@ -24,6 +24,7 @@ ARCHITECTURES = ("linear", "mlp")
 ACTIVATIONS = ("relu", "identity")
 
 MAX_PARAMETERS = 10_000_000
+MAX_HIDDEN_LAYERS = 10
 MAX_CHECKPOINT_BYTES = 100 * 1024 * 1024
 
 
@@ -58,6 +59,8 @@ class SubmissionConfig(BaseModel):
     @field_validator("hidden_sizes")
     @classmethod
     def _validate_hidden_sizes(cls, value):
+        if len(value) > MAX_HIDDEN_LAYERS:
+            raise ValueError(f"hidden_sizes may contain at most {MAX_HIDDEN_LAYERS} layers")
         if min(value, default=1) <= 0:
             raise ValueError("hidden_sizes must be a list of positive integers")
         return value

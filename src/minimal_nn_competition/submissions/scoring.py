@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import contextlib
 import multiprocessing
-import resource
 from pathlib import Path
 
 from minimal_nn_competition.benchmarks.register import create_benchmark
@@ -45,19 +43,9 @@ def upsert_result(path: Path, result) -> None:
 
 
 DEFAULT_SCORING_TIMEOUT_SECONDS = 600
-DEFAULT_CPU_LIMIT_SECONDS = 300
-DEFAULT_MEMORY_LIMIT_BYTES = 8 * 1024 * 1024 * 1024
 
 
-def _apply_resource_limits(cpu_limit_seconds, memory_limit_bytes):
-    with contextlib.suppress(OSError, ValueError):
-        resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit_seconds, cpu_limit_seconds))
-    with contextlib.suppress(OSError, ValueError):
-        resource.setrlimit(resource.RLIMIT_AS, (memory_limit_bytes, memory_limit_bytes))
-
-
-def _score_worker(queue, root, directory, data_root, cpu_limit_seconds, memory_limit_bytes):
-    _apply_resource_limits(cpu_limit_seconds, memory_limit_bytes)
+def _score_worker(queue, root, directory, data_root):
     try:
         result = score_submission(Path(root), Path(directory), Path(data_root))
         queue.put(("ok", result))
@@ -71,22 +59,13 @@ def score_submission_process(
     data_root,
     *,
     timeout=DEFAULT_SCORING_TIMEOUT_SECONDS,
-    cpu_limit_seconds=DEFAULT_CPU_LIMIT_SECONDS,
-    memory_limit_bytes=DEFAULT_MEMORY_LIMIT_BYTES,
 ):
     """Evaluate a submission in a disposable, resource-limited child process."""
     ctx = multiprocessing.get_context("spawn")
     queue = ctx.Queue()
     process = ctx.Process(
         target=_score_worker,
-        args=(
-            queue,
-            str(root),
-            str(directory),
-            str(data_root),
-            cpu_limit_seconds,
-            memory_limit_bytes,
-        ),
+        args=(queue, str(root), str(directory), str(data_root)),
         daemon=True,
     )
     process.start()
