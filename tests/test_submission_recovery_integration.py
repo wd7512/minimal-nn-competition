@@ -236,6 +236,20 @@ def test_publish_does_not_swallow_programming_errors(tmp_path: Path, monkeypatch
         )
 
 
+def test_publish_does_not_swallow_rendering_programming_errors(tmp_path: Path, monkeypatch) -> None:
+    _remote, work = _repo(tmp_path)
+
+    def bug(results, output_dir, replays=None) -> None:
+        raise KeyError("programming error")
+
+    monkeypatch.setattr(workflow, "render_site", bug)
+
+    with pytest.raises(KeyError):
+        workflow._publish_result(
+            work, Path("models/mnist/broken"), _result("broken"), scored_sha="a" * 40
+        )
+
+
 def test_concurrent_runs_cannot_share_a_checkout(tmp_path: Path) -> None:
     with workflow._exclusive_run_lock(tmp_path):  # noqa: SIM117 - outer lock must stay held
         with pytest.raises(workflow.WorkflowError, match="already active"):

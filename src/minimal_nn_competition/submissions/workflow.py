@@ -449,7 +449,7 @@ def _publish_result(
         rendered = True
         try:
             _render_site_atomically(root, results)
-        except Exception as render_error:
+        except _RECOVERY_ERRORS as render_error:
             rendered = False
             logger.exception("Could not render site for %s: %s", result.submission, render_error)
 
