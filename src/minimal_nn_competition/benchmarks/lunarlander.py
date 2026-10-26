@@ -151,7 +151,7 @@ class LunarLanderBenchmark:
         except ImportError as exc:
             raise RuntimeError("PyTorch is required for LunarLander evaluation") from exc
         returns = []
-        landed_flags = []
+        passed = []
         steps = []
         with torch.no_grad():
             for seed in self.seeds:
@@ -171,14 +171,14 @@ class LunarLanderBenchmark:
                         success = state[1] <= 0.0 and landed(state)
                         break
                 returns.append(total)
-                landed_flags.append(success)
+                passed.append(success)
                 steps.append(taken)
         return (
-            statistics.fmean(landed_flags),
-            all(landed_flags),
+            statistics.fmean(passed),
+            all(passed),
             {
                 "seed_returns": returns,
-                "seed_landed": landed_flags,
+                "seed_landed": passed,
                 "seed_steps": steps,
                 "mean_return": statistics.fmean(returns),
             },

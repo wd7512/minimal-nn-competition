@@ -112,9 +112,8 @@ def train(
     from torch import nn
     from torch.distributions import Categorical
 
-    from minimal_nn_competition.benchmarks.common.names import SNAKE_BENCHMARKS
     from minimal_nn_competition.benchmarks.common.snake.environment import SnakeEnvironment
-    from minimal_nn_competition.benchmarks.registry import create_benchmark
+    from minimal_nn_competition.benchmarks.registry import SNAKE_BENCHMARKS, create_benchmark
     from minimal_nn_competition.benchmarks.snake_simple_8x8 import DEFAULT_SEEDS
 
     if benchmark not in SNAKE_BENCHMARKS:

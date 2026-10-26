@@ -8,12 +8,12 @@ from dataclasses import asdict
 
 from minimal_nn_competition import __version__
 from minimal_nn_competition.benchmarks.common.control.replay import steps_text
-from minimal_nn_competition.benchmarks.common.names import (
+from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem
+from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
 )
-from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem
 from minimal_nn_competition.leaderboard import rank_results
 
 _GROUP_SPECS = (

@@ -7,7 +7,7 @@ import random
 import statistics
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks import pendulum as engine
+from minimal_nn_competition.benchmarks import pendulum
 from minimal_nn_competition.examples.ppo import train_ppo
 
 HIDDEN_SIZES = (64, 64)
@@ -31,13 +31,13 @@ class PendulumEnvironment:
         self.rng = random.Random(seed)
 
     def reset(self):
-        return engine.reset(self.rng)
+        return pendulum.reset(self.rng)
 
     def observation(self, state):
-        return engine.observation(state)
+        return pendulum.observation(state)
 
     def step(self, state, action):
-        return engine.step(state, action)
+        return pendulum.step(state, action)
 
 
 def evaluate(policy, seeds, device, horizon=HORIZON):
@@ -47,14 +47,14 @@ def evaluate(policy, seeds, device, horizon=HORIZON):
     returns = []
     with torch.no_grad():
         for seed in seeds:
-            state = engine.reset(random.Random(seed))
+            state = pendulum.reset(random.Random(seed))
             total = 0.0
             for _ in range(horizon):
                 features = torch.tensor(
-                    engine.observation(state), dtype=torch.float32, device=device
+                    pendulum.observation(state), dtype=torch.float32, device=device
                 )
                 action = int(torch.argmax(policy(features[None]), dim=1).item())
-                state, reward, _ = engine.step(state, action)
+                state, reward, _ = pendulum.step(state, action)
                 total += reward
             returns.append(total)
     return returns

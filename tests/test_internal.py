@@ -215,6 +215,38 @@ def test_benchmark_scope_coverage_rejects_unknown() -> None:
         check_benchmark_scope_coverage(("mnist", "not-a-benchmark"))
 
 
+def test_benchmark_families_partition_registry() -> None:
+    from minimal_nn_competition.benchmarks.registry import (
+        CHESS_BENCHMARKS,
+        RL_BENCHMARKS,
+        SNAKE_BENCHMARKS,
+        available_benchmarks,
+    )
+
+    families = (
+        ("CHESS_BENCHMARKS", CHESS_BENCHMARKS),
+        ("RL_BENCHMARKS", RL_BENCHMARKS),
+        ("SNAKE_BENCHMARKS", SNAKE_BENCHMARKS),
+    )
+    grouped = [name for _, names in families for name in names]
+    assert len(grouped) == len(set(grouped))
+    ungrouped = set(available_benchmarks()) - set(grouped)
+    assert ungrouped == {"fashion-mnist", "mnist"}
+    for label, names in families:
+        for name in names:
+            assert scope_for_benchmark(name) in {scope.name for scope in SCOPES}, label
+
+
+def test_scope_groups_partition_scopes() -> None:
+    from minimal_nn_competition.internal import scope_groups
+
+    groups = scope_groups()
+    assert [title for title, _ in groups] == ["Core", "Benchmarks"]
+    grouped = [name for _, names in groups for name in names]
+    assert sorted(grouped) == sorted(scope.name for scope in SCOPES)
+    assert len(grouped) == len(set(grouped))
+
+
 def test_scope_tests_cover_suite_exactly_once() -> None:
     from minimal_nn_competition.internal import expand_scope_tests
 

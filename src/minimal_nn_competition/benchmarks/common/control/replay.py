@@ -3,9 +3,7 @@
 import random
 import statistics
 
-from minimal_nn_competition.benchmarks import cartpole as cartpole_engine
-from minimal_nn_competition.benchmarks import lunarlander as lunarlander_engine
-from minimal_nn_competition.benchmarks import pendulum as pendulum_engine
+from minimal_nn_competition.benchmarks import cartpole, lunarlander, pendulum
 from minimal_nn_competition.benchmarks.common.snake.replay import (
     REPLAY_SEED,
     load_replay,
@@ -35,14 +33,14 @@ def _record_cartpole(model, seed, max_steps):
         raise RuntimeError("PyTorch is required for CartPole replays") from exc
     terminated = False
     frames = []
-    state = cartpole_engine.reset(random.Random(seed))
+    state = cartpole.reset(random.Random(seed))
     frames.append(_frame(state, None, 0.0))
     total = 0.0
     with torch.no_grad():
         for _ in range(max_steps):
             observation = torch.tensor(state, dtype=torch.float32)[None]
             action = int(model(observation).argmax(dim=1).item())
-            state, reward, done = cartpole_engine.step(state, action)
+            state, reward, done = cartpole.step(state, action)
             total += reward
             frames.append(_frame(state, action, reward))
             if done:
@@ -64,15 +62,15 @@ def _record_pendulum(model, seed, horizon):
         import torch
     except ImportError as exc:
         raise RuntimeError("PyTorch is required for Pendulum replays") from exc
-    state = pendulum_engine.reset(random.Random(seed))
+    state = pendulum.reset(random.Random(seed))
     frames = [_frame(state, None, 0.0)]
     total = 0.0
     with torch.no_grad():
         for _ in range(horizon):
-            features = pendulum_engine.observation(state)
+            features = pendulum.observation(state)
             inputs = torch.tensor(features, dtype=torch.float32)[None]
             action = int(model(inputs).argmax(dim=1).item())
-            state, reward, _ = pendulum_engine.step(state, action)
+            state, reward, _ = pendulum.step(state, action)
             total += reward
             frames.append(_frame(state, action, reward))
     return {
@@ -93,20 +91,20 @@ def _record_lunarlander(model, seed, max_steps):
         raise RuntimeError("PyTorch is required for LunarLander replays") from exc
     terminated = False
     success = False
-    state = lunarlander_engine.reset(random.Random(seed))
+    state = lunarlander.reset(random.Random(seed))
     frames = [_frame(state, None, 0.0)]
     total = 0.0
     with torch.no_grad():
         for _ in range(max_steps):
-            features = lunarlander_engine.observation(state)
+            features = lunarlander.observation(state)
             inputs = torch.tensor(features, dtype=torch.float32)[None]
             action = int(model(inputs).argmax(dim=1).item())
-            state, reward, done = lunarlander_engine.step(state, action)
+            state, reward, done = lunarlander.step(state, action)
             total += reward
             frames.append(_frame(state, action, reward))
             if done:
                 terminated = True
-                success = state[1] <= 0.0 and lunarlander_engine.landed(state)
+                success = state[1] <= 0.0 and lunarlander.landed(state)
                 break
     return {
         "kind": "lunarlander",
@@ -123,15 +121,15 @@ def record_game(benchmark, model, seed=REPLAY_SEED, steps=None):
     """Play one game and return a JSON-serialisable replay payload."""
     if benchmark == "cartpole":
         if steps is None:
-            steps = cartpole_engine.DEFAULT_MAX_STEPS
+            steps = cartpole.DEFAULT_MAX_STEPS
         return _record_cartpole(model, seed, steps)
     if benchmark == "pendulum":
         if steps is None:
-            steps = pendulum_engine.DEFAULT_MAX_STEPS
+            steps = pendulum.DEFAULT_MAX_STEPS
         return _record_pendulum(model, seed, steps)
     if benchmark == "lunarlander":
         if steps is None:
-            steps = lunarlander_engine.DEFAULT_MAX_STEPS
+            steps = lunarlander.DEFAULT_MAX_STEPS
         return _record_lunarlander(model, seed, steps)
     raise ValueError(f"Unknown control benchmark: {benchmark}")
 

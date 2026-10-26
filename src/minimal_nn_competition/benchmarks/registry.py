@@ -1,4 +1,13 @@
-"""Benchmark registry."""
+"""Benchmark registry: canonical benchmark IDs, family groups, and factories.
+
+The ``*_BENCHMARKS`` tuples group the canonical IDs used in submissions and
+on the leaderboard. The factories map each ID to its implementation; the two
+chess tiers share one implementation module.
+"""
+
+CHESS_BENCHMARKS = ("chess-eval-10k", "chess-eval-100k")
+SNAKE_BENCHMARKS = ("snake-simple-8x8", "snake-simple-16x16", "snake-obstacles-8x8")
+RL_BENCHMARKS = ("cartpole", "pendulum", "lunarlander")
 
 
 def _factories():
@@ -12,7 +21,7 @@ def _factories():
     from minimal_nn_competition.benchmarks.mnist import MnistBenchmark
     from minimal_nn_competition.benchmarks.pendulum import PendulumBenchmark
     from minimal_nn_competition.benchmarks.snake_obstacles_8x8 import SnakeObstacles8x8Benchmark
-    from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeBenchmark
+    from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeSimple8x8Benchmark
     from minimal_nn_competition.benchmarks.snake_simple_16x16 import SnakeSimple16x16Benchmark
 
     return {
@@ -23,7 +32,7 @@ def _factories():
         "lunarlander": LunarLanderBenchmark,
         "mnist": MnistBenchmark,
         "pendulum": PendulumBenchmark,
-        "snake-simple-8x8": SnakeBenchmark,
+        "snake-simple-8x8": SnakeSimple8x8Benchmark,
         "snake-simple-16x16": SnakeSimple16x16Benchmark,
         "snake-obstacles-8x8": SnakeObstacles8x8Benchmark,
     }

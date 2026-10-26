@@ -6,9 +6,9 @@ from minimal_nn_competition.benchmarks.common.snake.benchmark import (
     selected_input_indices,
 )
 
-__all__ = ["DEFAULT_SEEDS", "SnakeBenchmark", "selected_input_indices"]
+__all__ = ["DEFAULT_SEEDS", "SnakeSimple8x8Benchmark", "selected_input_indices"]
 
 
-class SnakeBenchmark(BaseSnakeBenchmark):
+class SnakeSimple8x8Benchmark(BaseSnakeBenchmark):
     name = "snake-simple-8x8"
     size = 8

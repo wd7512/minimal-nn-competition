@@ -11,12 +11,11 @@ from minimal_nn_competition.benchmarks.chess_eval import (
     encode,
     load_tensors,
 )
-from minimal_nn_competition.benchmarks.common.names import CHESS_BENCHMARKS
 from minimal_nn_competition.benchmarks.common.snake import benchmark as snake_benchmark
 from minimal_nn_competition.benchmarks.fashion_mnist import FashionMnistBenchmark
 from minimal_nn_competition.benchmarks.mnist import MnistBenchmark
-from minimal_nn_competition.benchmarks.registry import create_benchmark
-from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeBenchmark
+from minimal_nn_competition.benchmarks.registry import CHESS_BENCHMARKS, create_benchmark
+from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeSimple8x8Benchmark
 from minimal_nn_competition.model.entry import (
     Submission,
     SubmissionError,
@@ -46,7 +45,7 @@ def test_snake_partial_run_does_not_pass(tmp_path: Path) -> None:
         },
         {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
-    result = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(materialize_submission(submission))
+    result = SnakeSimple8x8Benchmark(seeds=(0, 1, 2)).evaluate(materialize_submission(submission))
     score, passed, details = result
     assert score == 0.0
     assert passed is False
@@ -86,7 +85,7 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         },
         {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
     )
-    score, passed, details = SnakeBenchmark(seeds=(0, 1, 2)).evaluate(
+    score, passed, details = SnakeSimple8x8Benchmark(seeds=(0, 1, 2)).evaluate(
         materialize_submission(submission)
     )
     assert score == 1.0
@@ -96,7 +95,7 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
 
 def test_snake_defaults_to_100_seeds() -> None:
-    assert SnakeBenchmark().seeds == tuple(range(100))
+    assert SnakeSimple8x8Benchmark().seeds == tuple(range(100))
 
 
 def test_snake_rejects_wrong_config(tmp_path: Path) -> None:
@@ -111,7 +110,7 @@ def test_snake_rejects_wrong_config(tmp_path: Path) -> None:
         {"weight": torch.zeros((4, 8)), "bias": torch.zeros(4)},
     )
     with pytest.raises(ValueError, match="input_size 24"):
-        SnakeBenchmark().load_submission(submission)
+        SnakeSimple8x8Benchmark().load_submission(submission)
 
 
 def test_snake_selected_input_indices_build_smaller_model(tmp_path: Path) -> None:
@@ -126,7 +125,7 @@ def test_snake_selected_input_indices_build_smaller_model(tmp_path: Path) -> Non
         },
         {"weight": torch.zeros((4, 5)), "bias": torch.zeros(4)},
     )
-    loaded = SnakeBenchmark().load_submission(submission)
+    loaded = SnakeSimple8x8Benchmark().load_submission(submission)
     assert loaded.model.in_features == 5
 
 
@@ -142,7 +141,7 @@ def test_snake_selected_inputs_evaluate(tmp_path: Path) -> None:
         },
         {"weight": torch.zeros((4, 5)), "bias": torch.zeros(4)},
     )
-    result = SnakeBenchmark(seeds=(0,)).evaluate(materialize_submission(submission))
+    result = SnakeSimple8x8Benchmark(seeds=(0,)).evaluate(materialize_submission(submission))
     score, passed, details = result
     assert score == 0.0
     assert passed is False
@@ -162,7 +161,7 @@ def test_snake_rejects_out_of_range_input_indices(tmp_path: Path) -> None:
         {"weight": torch.zeros((4, 1)), "bias": torch.zeros(4)},
     )
     with pytest.raises(ValueError, match="input_indices"):
-        SnakeBenchmark().load_submission(submission)
+        SnakeSimple8x8Benchmark().load_submission(submission)
 
 
 def _write_mnist_cache(path: Path) -> None:

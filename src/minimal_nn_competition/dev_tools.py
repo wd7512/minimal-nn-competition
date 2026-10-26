@@ -24,20 +24,6 @@ def _repo_root() -> Path:
 
 
 ROOT = _repo_root()
-CORE_SCOPES = ("core",)
-BENCHMARK_SCOPES = (
-    "common",
-    "mnist",
-    "fashion-mnist",
-    "chess-eval",
-    "cartpole",
-    "pendulum",
-    "lunarlander",
-    "snake-simple-8x8",
-    "snake-simple-16x16",
-    "snake-obstacles-8x8",
-)
-TOKEN_SCOPES = CORE_SCOPES + BENCHMARK_SCOPES
 TEXT_EXTENSIONS = {".md", ".py", ".toml", ".json", ".yaml", ".yml", ".txt"}
 SPECIAL_FILES = {"Dockerfile", "Makefile", "LICENSE"}
 EVIDENCE_DIRECTORIES = {"evidence", "captures"}
@@ -138,20 +124,17 @@ def _format_delta(old, current, scale=1):
 
 
 def tokens() -> int:
-    from minimal_nn_competition.internal import SCOPES, all_scope_files
+    from minimal_nn_competition.internal import SCOPES, all_scope_files, scope_groups
 
     with _baseline() as baseline:
         scope_map = {scope.name: scope for scope in SCOPES}
-        groups: list[tuple[str, list[tuple[str, int | None, int]]]] = [
-            ("Core", []),
-            ("Benchmarks", []),
-        ]
-        for name in CORE_SCOPES:
-            scope = scope_map[name]
-            groups[0][1].append((name, _score_scope(scope, baseline), _score_scope(scope, ROOT)))
-        for name in BENCHMARK_SCOPES:
-            scope = scope_map[name]
-            groups[1][1].append((name, _score_scope(scope, baseline), _score_scope(scope, ROOT)))
+        groups: list[tuple[str, list[tuple[str, int | None, int]]]] = []
+        for title, names in scope_groups():
+            rows = [
+                (name, _score_scope(scope_map[name], baseline), _score_scope(scope_map[name], ROOT))
+                for name in names
+            ]
+            groups.append((title, rows))
         try:
             old_overall: int | None = score_files(all_scope_files(baseline))
         except ValueError:

@@ -114,9 +114,9 @@ class PendulumBenchmark:
                     state, reward, _ = step(state, action)
                     total += reward
                 returns.append(total)
-        passed_flags = [total >= self.threshold for total in returns]
+        passed = [total >= self.threshold for total in returns]
         return (
-            statistics.fmean(passed_flags),
-            all(passed_flags),
+            statistics.fmean(passed),
+            all(passed),
             {"seed_returns": returns, "mean_return": statistics.fmean(returns)},
         )

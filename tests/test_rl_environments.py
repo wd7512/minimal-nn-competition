@@ -8,11 +8,8 @@ import pytest
 import torch
 
 import minimal_nn_competition.__main__ as cli
-from minimal_nn_competition.benchmarks import cartpole as cartpole_engine
-from minimal_nn_competition.benchmarks import lunarlander as lunarlander_engine
-from minimal_nn_competition.benchmarks import pendulum as pendulum_engine
-from minimal_nn_competition.benchmarks.common.names import RL_BENCHMARKS
-from minimal_nn_competition.benchmarks.registry import create_benchmark
+from minimal_nn_competition.benchmarks import cartpole, lunarlander, pendulum
+from minimal_nn_competition.benchmarks.registry import RL_BENCHMARKS, create_benchmark
 from minimal_nn_competition.examples import (
     cartpole_submission,
     lunarlander_submission,
@@ -57,104 +54,88 @@ def _zero_submission(tmp_path: Path, benchmark: str, input_size: int, output_siz
 
 
 def test_cartpole_engine_is_deterministic() -> None:
-    first = cartpole_engine.reset(random.Random(7))
-    second = cartpole_engine.reset(random.Random(7))
+    first = cartpole.reset(random.Random(7))
+    second = cartpole.reset(random.Random(7))
     assert first == second
-    first_rollout = [cartpole_engine.step(first, 1)]
-    second_rollout = [cartpole_engine.step(second, 1)]
+    first_rollout = [cartpole.step(first, 1)]
+    second_rollout = [cartpole.step(second, 1)]
     assert first_rollout == second_rollout
 
 
 def test_cartpole_reset_bounds() -> None:
     for seed in range(20):
-        x, x_dot, theta, theta_dot = cartpole_engine.reset(random.Random(seed))
-        assert -cartpole_engine.INITIAL_X_LIMIT <= x <= cartpole_engine.INITIAL_X_LIMIT
+        x, x_dot, theta, theta_dot = cartpole.reset(random.Random(seed))
+        assert -cartpole.INITIAL_X_LIMIT <= x <= cartpole.INITIAL_X_LIMIT
+        assert -cartpole.INITIAL_VELOCITY_LIMIT <= x_dot <= cartpole.INITIAL_VELOCITY_LIMIT
+        assert -cartpole.INITIAL_THETA_LIMIT <= theta <= cartpole.INITIAL_THETA_LIMIT
         assert (
-            -cartpole_engine.INITIAL_VELOCITY_LIMIT
-            <= x_dot
-            <= cartpole_engine.INITIAL_VELOCITY_LIMIT
-        )
-        assert -cartpole_engine.INITIAL_THETA_LIMIT <= theta <= cartpole_engine.INITIAL_THETA_LIMIT
-        assert (
-            -cartpole_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            -cartpole.INITIAL_ANGULAR_VELOCITY_LIMIT
             <= theta_dot
-            <= cartpole_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= cartpole.INITIAL_ANGULAR_VELOCITY_LIMIT
         )
 
 
 def test_cartpole_seeds_vary_position_and_angle() -> None:
-    states = [cartpole_engine.reset(random.Random(seed)) for seed in range(100)]
+    states = [cartpole.reset(random.Random(seed)) for seed in range(100)]
     assert len({state[0] for state in states}) == 100
     assert len({state[2] for state in states}) == 100
-    assert pytest.approx(math.radians(40.0)) == cartpole_engine.THETA_LIMIT
+    assert pytest.approx(math.radians(40.0)) == cartpole.THETA_LIMIT
 
 
 def test_pendulum_engine_is_deterministic() -> None:
-    first = pendulum_engine.reset(random.Random(7))
-    second = pendulum_engine.reset(random.Random(7))
+    first = pendulum.reset(random.Random(7))
+    second = pendulum.reset(random.Random(7))
     assert first == second
-    assert pendulum_engine.step(first, 1) == pendulum_engine.step(second, 1)
-    assert pendulum_engine.observation(first) == pendulum_engine.observation(second)
+    assert pendulum.step(first, 1) == pendulum.step(second, 1)
+    assert pendulum.observation(first) == pendulum.observation(second)
 
 
 def test_pendulum_reset_bounds() -> None:
     for seed in range(20):
-        theta, theta_dot = pendulum_engine.reset(random.Random(seed))
-        assert -pendulum_engine.INITIAL_ANGLE_LIMIT <= theta <= pendulum_engine.INITIAL_ANGLE_LIMIT
+        theta, theta_dot = pendulum.reset(random.Random(seed))
+        assert -pendulum.INITIAL_ANGLE_LIMIT <= theta <= pendulum.INITIAL_ANGLE_LIMIT
         assert (
-            -pendulum_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            -pendulum.INITIAL_ANGULAR_VELOCITY_LIMIT
             <= theta_dot
-            <= pendulum_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= pendulum.INITIAL_ANGULAR_VELOCITY_LIMIT
         )
-        cos_theta, sin_theta, velocity = pendulum_engine.observation((theta, theta_dot))
+        cos_theta, sin_theta, velocity = pendulum.observation((theta, theta_dot))
         assert cos_theta == pytest.approx(math.cos(theta))
         assert sin_theta == pytest.approx(math.sin(theta))
         assert velocity == theta_dot
 
 
 def test_pendulum_seeds_vary_initial_state() -> None:
-    states = [pendulum_engine.reset(random.Random(seed)) for seed in range(100)]
+    states = [pendulum.reset(random.Random(seed)) for seed in range(100)]
     assert len(set(states)) == 100
 
 
 def test_lunarlander_engine_is_deterministic() -> None:
-    first = lunarlander_engine.reset(random.Random(7))
-    second = lunarlander_engine.reset(random.Random(7))
+    first = lunarlander.reset(random.Random(7))
+    second = lunarlander.reset(random.Random(7))
     assert first == second
-    assert lunarlander_engine.step(first, 1) == lunarlander_engine.step(second, 1)
-    assert lunarlander_engine.observation(first) == lunarlander_engine.observation(second)
+    assert lunarlander.step(first, 1) == lunarlander.step(second, 1)
+    assert lunarlander.observation(first) == lunarlander.observation(second)
 
 
 def test_lunarlander_reset_bounds() -> None:
     for seed in range(20):
-        x, y, vx, vy, angle, angular_velocity = lunarlander_engine.reset(random.Random(seed))
-        assert -lunarlander_engine.INITIAL_X_LIMIT <= x <= lunarlander_engine.INITIAL_X_LIMIT
-        assert lunarlander_engine.INITIAL_Y_MIN <= y <= lunarlander_engine.INITIAL_Y_MAX
+        x, y, vx, vy, angle, angular_velocity = lunarlander.reset(random.Random(seed))
+        assert -lunarlander.INITIAL_X_LIMIT <= x <= lunarlander.INITIAL_X_LIMIT
+        assert lunarlander.INITIAL_Y_MIN <= y <= lunarlander.INITIAL_Y_MAX
+        assert -lunarlander.INITIAL_VELOCITY_LIMIT <= vx <= lunarlander.INITIAL_VELOCITY_LIMIT
+        assert -lunarlander.INITIAL_VELOCITY_LIMIT <= vy <= lunarlander.INITIAL_VELOCITY_LIMIT
+        assert -lunarlander.INITIAL_ANGLE_LIMIT <= angle <= lunarlander.INITIAL_ANGLE_LIMIT
         assert (
-            -lunarlander_engine.INITIAL_VELOCITY_LIMIT
-            <= vx
-            <= lunarlander_engine.INITIAL_VELOCITY_LIMIT
-        )
-        assert (
-            -lunarlander_engine.INITIAL_VELOCITY_LIMIT
-            <= vy
-            <= lunarlander_engine.INITIAL_VELOCITY_LIMIT
-        )
-        assert (
-            -lunarlander_engine.INITIAL_ANGLE_LIMIT
-            <= angle
-            <= lunarlander_engine.INITIAL_ANGLE_LIMIT
-        )
-        assert (
-            -lunarlander_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            -lunarlander.INITIAL_ANGULAR_VELOCITY_LIMIT
             <= angular_velocity
-            <= lunarlander_engine.INITIAL_ANGULAR_VELOCITY_LIMIT
+            <= lunarlander.INITIAL_ANGULAR_VELOCITY_LIMIT
         )
-        assert len(lunarlander_engine.observation((x, y, vx, vy, angle, angular_velocity))) == 8
+        assert len(lunarlander.observation((x, y, vx, vy, angle, angular_velocity))) == 8
 
 
 def test_lunarlander_seeds_vary_initial_state() -> None:
-    states = [lunarlander_engine.reset(random.Random(seed)) for seed in range(100)]
+    states = [lunarlander.reset(random.Random(seed)) for seed in range(100)]
     assert len(set(states)) == 100
 
 
@@ -254,11 +235,11 @@ def test_cartpole_calibration(tmp_path: Path) -> None:
     benchmark = create_benchmark("cartpole", seeds=FAST_SEEDS)
     random_steps = []
     for seed in FAST_SEEDS:
-        state = cartpole_engine.reset(random.Random(seed))
+        state = cartpole.reset(random.Random(seed))
         actions = random.Random(seed + 100)
         steps = 0
         for _ in range(500):
-            state, _, done = cartpole_engine.step(state, actions.randrange(2))
+            state, _, done = cartpole.step(state, actions.randrange(2))
             steps += 1
             if done:
                 break
@@ -282,10 +263,10 @@ def test_pendulum_calibration(tmp_path: Path) -> None:
     returns = []
     for seed in FAST_SEEDS:
         rng = random.Random(seed)
-        state = pendulum_engine.reset(rng)
+        state = pendulum.reset(rng)
         total = 0.0
         for _ in range(benchmark.max_steps):
-            state, reward, _ = pendulum_engine.step(state, rng.randrange(5))
+            state, reward, _ = pendulum.step(state, rng.randrange(5))
             total += reward
         returns.append(total)
     assert sum(returns) / len(returns) < benchmark.threshold
@@ -307,10 +288,10 @@ def test_lunarlander_calibration(tmp_path: Path) -> None:
     returns = []
     for seed in FAST_SEEDS:
         rng = random.Random(seed)
-        state = lunarlander_engine.reset(rng)
+        state = lunarlander.reset(rng)
         total = 0.0
         for _ in range(benchmark.max_steps):
-            state, reward, done = lunarlander_engine.step(state, rng.randrange(4))
+            state, reward, done = lunarlander.step(state, rng.randrange(4))
             total += reward
             if done:
                 break

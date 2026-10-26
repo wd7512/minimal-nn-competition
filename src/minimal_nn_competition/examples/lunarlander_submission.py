@@ -7,7 +7,7 @@ import random
 import statistics
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks import lunarlander as engine
+from minimal_nn_competition.benchmarks import lunarlander
 from minimal_nn_competition.examples.ppo import train_ppo
 
 HIDDEN_SIZES = (64, 64)
@@ -31,13 +31,13 @@ class LunarLanderEnvironment:
         self.rng = random.Random(seed)
 
     def reset(self):
-        return engine.reset(self.rng)
+        return lunarlander.reset(self.rng)
 
     def observation(self, state):
-        return engine.observation(state)
+        return lunarlander.observation(state)
 
     def step(self, state, action):
-        return engine.step(state, action)
+        return lunarlander.step(state, action)
 
 
 def evaluate(policy, seeds, device, max_steps=MAX_STEPS):
@@ -48,18 +48,18 @@ def evaluate(policy, seeds, device, max_steps=MAX_STEPS):
     landings = []
     with torch.no_grad():
         for seed in seeds:
-            state = engine.reset(random.Random(seed))
+            state = lunarlander.reset(random.Random(seed))
             total = 0.0
             landed = False
             for _ in range(max_steps):
                 features = torch.tensor(
-                    engine.observation(state), dtype=torch.float32, device=device
+                    lunarlander.observation(state), dtype=torch.float32, device=device
                 )
                 action = int(torch.argmax(policy(features[None]), dim=1).item())
-                state, reward, done = engine.step(state, action)
+                state, reward, done = lunarlander.step(state, action)
                 total += reward
                 if done:
-                    landed = state[1] <= 0.0 and engine.landed(state)
+                    landed = state[1] <= 0.0 and lunarlander.landed(state)
                     break
             returns.append(total)
             landings.append(landed)

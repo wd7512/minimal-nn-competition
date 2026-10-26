@@ -5,12 +5,13 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.common.names import (
+from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    available_benchmarks,
+    create_benchmark,
 )
-from minimal_nn_competition.benchmarks.registry import available_benchmarks, create_benchmark
 from minimal_nn_competition.leaderboard import load_results, rank_results, save_results
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission, SubmissionError

@@ -1,4 +1,4 @@
-"""Compatibility wrapper combining the Snake engine and observation encoding."""
+"""Snake environment: engine plus observation encoding for evaluation and training."""
 
 from minimal_nn_competition.benchmarks.common.snake.engine import DIRECTIONS, SnakeEngine
 from minimal_nn_competition.benchmarks.common.snake.observation import observe

@@ -250,6 +250,20 @@ tests/test_integration.py::test_data_path_rejected_for_snake""".splitlines()
 )
 
 
+CORE_SCOPE_NAMES = ("core",)
+
+
+def scope_groups():
+    """Group scope names for the token report: Core first, then Benchmarks.
+
+    The Benchmarks section holds ``common`` followed by one scope per
+    benchmark implementation, in SCOPES order, so the report always covers
+    every defined scope without a second hand-maintained list.
+    """
+    benchmarks = tuple(scope.name for scope in SCOPES if scope.name not in CORE_SCOPE_NAMES)
+    return (("Core", CORE_SCOPE_NAMES), ("Benchmarks", benchmarks))
+
+
 def expand_scope_tests(scope, collected):
     """Expand a scope's entries (files and node IDs) against collected IDs."""
     nodes = []

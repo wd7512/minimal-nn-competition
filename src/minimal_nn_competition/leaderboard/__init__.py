@@ -4,7 +4,7 @@ import json
 import statistics
 from dataclasses import asdict
 
-from minimal_nn_competition.benchmarks.common.names import CHESS_BENCHMARKS, SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import CHESS_BENCHMARKS, SNAKE_BENCHMARKS
 from minimal_nn_competition.runner.entry import BenchmarkResult
 
 

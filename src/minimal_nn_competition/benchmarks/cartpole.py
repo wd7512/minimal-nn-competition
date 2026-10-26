@@ -105,9 +105,9 @@ class CartPoleBenchmark:
                     if done:
                         break
                 counts.append(balanced)
-        passed_flags = [count == self.max_steps for count in counts]
+        passed = [count == self.max_steps for count in counts]
         return (
-            statistics.fmean(passed_flags),
-            all(passed_flags),
+            statistics.fmean(passed),
+            all(passed),
             {"seed_steps": counts},
         )

@@ -14,7 +14,6 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.common.names import RL_BENCHMARKS, SNAKE_BENCHMARKS
 from minimal_nn_competition.benchmarks.common.snake.replay import (
     REPLAY_SEED as SNAKE_REPLAY_SEED,
 )
@@ -26,7 +25,11 @@ from minimal_nn_competition.benchmarks.common.snake.replay import (
 from minimal_nn_competition.benchmarks.common.snake.replay import (
     record_game as record_snake_game,
 )
-from minimal_nn_competition.benchmarks.registry import create_benchmark
+from minimal_nn_competition.benchmarks.registry import (
+    RL_BENCHMARKS,
+    SNAKE_BENCHMARKS,
+    create_benchmark,
+)
 from minimal_nn_competition.benchmarks.snake_simple_8x8 import selected_input_indices
 from minimal_nn_competition.leaderboard import load_results
 from minimal_nn_competition.leaderboard.render import render_site

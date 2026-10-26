@@ -103,7 +103,7 @@ class BaseSnakeBenchmark:
         indices = selected_input_indices(submission.config, label)
         lengths = []
         moves = []
-        seed_passed = []
+        passed = []
         target_lengths = []
         seed_blocked = []
         with torch.no_grad():
@@ -137,19 +137,19 @@ class BaseSnakeBenchmark:
                 moves.append(ticks)
                 target_lengths.append(target)
                 seed_blocked.append([list(cell) for cell in blocked])
-                seed_passed.append(
+                passed.append(
                     length == target
                     and ticks <= self.max_moves
                     and (won if self.loop_on_full else True)
                 )
-        score = statistics.fmean(seed_passed)
+        score = statistics.fmean(passed)
         return (
             score,
-            all(seed_passed),
+            all(passed),
             {
                 "seed_lengths": lengths,
                 "seed_moves": moves,
-                "seed_passed": seed_passed,
+                "seed_passed": passed,
                 "seed_target_lengths": target_lengths,
                 "seed_blocked": seed_blocked,
             },
