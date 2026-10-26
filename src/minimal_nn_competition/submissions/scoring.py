@@ -60,7 +60,7 @@ def score_submission_process(
     *,
     timeout=DEFAULT_SCORING_TIMEOUT_SECONDS,
 ):
-    """Evaluate a submission in a disposable, resource-limited child process."""
+    """Evaluate a submission in a disposable, timeout-bounded child process."""
     ctx = multiprocessing.get_context("spawn")
     queue = ctx.Queue()
     process = ctx.Process(

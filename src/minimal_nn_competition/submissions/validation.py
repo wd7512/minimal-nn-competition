@@ -7,9 +7,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from minimal_nn_competition.model.entry import (
+from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,
-    MAX_HIDDEN_LAYERS,
     MAX_PARAMETERS,
 )
 
@@ -66,8 +65,6 @@ def validate_config(config: Any, directory: Path) -> list[str]:
         type(size) is not int or size <= 0 for size in hidden_sizes
     ):
         errors.append(f"{config_path}: hidden_sizes must be positive integers")
-    elif len(hidden_sizes) > MAX_HIDDEN_LAYERS:
-        errors.append(f"{config_path}: hidden_sizes may contain at most {MAX_HIDDEN_LAYERS} layers")
     elif config.get("architecture") == "linear" and hidden_sizes:
         errors.append(f"{config_path}: linear submissions cannot declare hidden_sizes")
     if config.get("activation", "relu") not in ALLOWED_ACTIVATIONS:

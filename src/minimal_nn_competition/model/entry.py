@@ -19,13 +19,14 @@ from pydantic import (
 )
 
 from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+from minimal_nn_competition.model.limits import (
+    MAX_CHECKPOINT_BYTES,
+    MAX_PARAMETERS,
+    parameter_count_from_dimensions,
+)
 
 ARCHITECTURES = ("linear", "mlp")
 ACTIVATIONS = ("relu", "identity")
-
-MAX_PARAMETERS = 10_000_000
-MAX_HIDDEN_LAYERS = 100
-MAX_CHECKPOINT_BYTES = 100 * 1024 * 1024
 
 
 class SubmissionError(ValueError):
@@ -59,8 +60,6 @@ class SubmissionConfig(BaseModel):
     @field_validator("hidden_sizes")
     @classmethod
     def _validate_hidden_sizes(cls, value):
-        if len(value) > MAX_HIDDEN_LAYERS:
-            raise ValueError(f"hidden_sizes may contain at most {MAX_HIDDEN_LAYERS} layers")
         if min(value, default=1) <= 0:
             raise ValueError("hidden_sizes must be a list of positive integers")
         return value
@@ -89,7 +88,9 @@ class SubmissionConfig(BaseModel):
 
     @model_validator(mode="after")
     def _validate_parameter_count(self):
-        total = declared_parameter_count(self)
+        total = parameter_count_from_dimensions(
+            self.input_size, self.hidden_sizes, self.output_size
+        )
         if total > MAX_PARAMETERS:
             raise ValueError(
                 f"submission would require {total} parameters, above the {MAX_PARAMETERS} maximum"
@@ -140,16 +141,6 @@ class LoadedSubmission:
     config: SubmissionConfig
     state_dict: dict[str, Any]
     model: Any
-
-
-def declared_parameter_count(config):
-    """Return the number of parameters implied by a submission's config."""
-    total = 0
-    previous = config.input_size
-    for hidden_size in (*config.hidden_sizes, config.output_size):
-        total += previous * hidden_size + hidden_size
-        previous = hidden_size
-    return total
 
 
 def load_state_dict(submission):

@@ -164,24 +164,3 @@ def test_declared_parameter_cap_is_enforced(tmp_path: Path) -> None:
     )
     with pytest.raises(SubmissionError, match="parameters"):
         SubmissionConfig.from_file(path)
-
-
-def test_too_many_hidden_layers_is_rejected(tmp_path: Path) -> None:
-    path = tmp_path / "config.json"
-    import json
-
-    path.write_text(
-        json.dumps(
-            {
-                "benchmark": "mnist",
-                "name": "x",
-                "author": "tester",
-                "architecture": "mlp",
-                "input_size": 1,
-                "output_size": 1,
-                "hidden_sizes": [1] * 101,
-            }
-        )
-    )
-    with pytest.raises(SubmissionError, match="hidden_sizes may contain"):
-        SubmissionConfig.from_file(path)
