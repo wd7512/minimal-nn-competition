@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -154,8 +155,12 @@ def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -
     monkeypatch.setattr(workflow, "_sync_submission", lambda root: None)
     monkeypatch.setattr(workflow, "check_authentication", lambda: None)
     monkeypatch.setattr(workflow, "open_submission_prs", lambda: [pr])
-    monkeypatch.setattr(workflow, "_validate_pr", lambda pr, root, base: Path("models/mnist/test"))
-    monkeypatch.setattr(workflow, "_score_candidate", lambda pr, directory, root, data: result)
+    monkeypatch.setattr(
+        workflow, "_validate_pr", lambda pr, root, base: ("a" * 40, Path("models/mnist/test"))
+    )
+    monkeypatch.setattr(
+        workflow, "_score_candidate", lambda candidate, number, directory, root, data: result
+    )
     monkeypatch.setattr(
         workflow,
         "_publish_result",
@@ -166,7 +171,7 @@ def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -
     monkeypatch.setattr(
         workflow, "merge", lambda number, delete_branch, **kwargs: calls.append(("merge", number))
     )
-    monkeypatch.setattr(workflow, "_verified_merge", lambda pr, root: pr)
+    monkeypatch.setattr(workflow, "_verified_merge", lambda pr, root, expected: pr)
     monkeypatch.setattr(
         workflow,
         "delete_remote_branch",
@@ -266,3 +271,60 @@ def test_remote_cleanup_leaves_non_submit_branches_alone(monkeypatch) -> None:
 
     assert len(calls) == 1
     assert calls[0][:3] == ["pr", "view", "9"]
+
+
+def test_recovery_does_not_publish_unverified_merge(monkeypatch, tmp_path: Path, caplog) -> None:
+    pr = PullRequest(8, "test", "a" * 40, "submission", "submit/test", True, checks_status="passed")
+    merged = PullRequest(
+        8,
+        "test",
+        "b" * 40,
+        "submission",
+        "submit/test",
+        True,
+        merged=True,
+        merge_commit_sha="c" * 40,
+    )
+    result = _result("test", "mnist")
+    published: list[str] = []
+    comments: list[str] = []
+    monkeypatch.setattr(workflow, "_sync_submission", lambda root: None)
+    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
+    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [pr])
+    monkeypatch.setattr(
+        workflow, "_validate_pr", lambda pr, root, base: ("a" * 40, Path("models/mnist/test"))
+    )
+    monkeypatch.setattr(
+        workflow, "_score_candidate", lambda candidate, number, directory, root, data: result
+    )
+    monkeypatch.setattr(workflow, "merge", lambda number, delete_branch, **kwargs: None)
+    monkeypatch.setattr(
+        workflow,
+        "_verified_merge",
+        lambda pr, root, expected: (_ for _ in ()).throw(
+            workflow.WorkflowError("merge metadata unavailable")
+        ),
+    )
+    monkeypatch.setattr(workflow, "_is_merged_now", lambda pr: merged)
+    monkeypatch.setattr(workflow, "_candidate_sha", lambda pr, root: "b" * 40)
+    monkeypatch.setattr(
+        workflow, "_publish_result", lambda root, directory, scored, **kwargs: published.append("x")
+    )
+    monkeypatch.setattr(workflow, "comment", lambda number, body: comments.append(body))
+    monkeypatch.setattr(workflow, "_promote", lambda root: None)
+
+    def fake_git(args: list[str], cwd: Path) -> str:
+        if args == ["branch", "--show-current"]:
+            return "submission\n"
+        if args == ["rev-parse", "origin/submission"]:
+            return "b" * 40 + "\n"
+        return ""
+
+    monkeypatch.setattr(workflow, "_git", fake_git)
+
+    with caplog.at_level(logging.ERROR):
+        assert workflow.run(tmp_path, None, Path("data")) == 0
+
+    assert published == []
+    assert comments == []
+    assert "does not match the scored commit" in caplog.text

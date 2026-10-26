@@ -227,56 +227,71 @@ def _current_validation_base(root: Path) -> str:
     return _git(["rev-parse", "origin/submission"], root).strip()
 
 
-def _validate_pr(pr: PullRequest, root: Path, validation_base: str | None = None) -> Path:
+def _candidate_sha(pr: PullRequest, root: Path) -> str:
+    """Return the exact commit to validate and score for this PR."""
+    if not pr.merged:
+        return pr.head_sha
+    if not pr.merge_commit_sha:
+        raise WorkflowError(
+            "PR is merged but GitHub did not return its merge commit; rerun once metadata is available"
+        )
+    # The head branch can advance after the merge. The second parent of the merge
+    # commit is the commit that was actually accepted and is safe to score.
+    parents = _git(["rev-list", "--parents", "-n", "1", pr.merge_commit_sha], root).split()
+    if len(parents) != 3:
+        raise WorkflowError(
+            "merged PR does not have a two-parent merge commit. Recovery supports only "
+            "merge commits (the workflow's merge strategy); reconcile other merges manually."
+        )
+    return parents[2]
+
+
+def _validate_pr(
+    pr: PullRequest, root: Path, validation_base: str | None = None
+) -> tuple[str, Path]:
     if pr.base_ref != "submission":
         raise WorkflowError("PR does not target submission")
     if not pr.merged and not pr.checks_passed:
         raise WorkflowError(f"required GitHub checks have not passed ({pr.checks_summary})")
 
+    candidate = _candidate_sha(pr, root)
     if pr.merged:
-        if not pr.merge_commit_sha:
+        merge_sha = pr.merge_commit_sha
+        if merge_sha is None:
             raise WorkflowError(
                 "PR is merged but GitHub did not return its merge commit; rerun once metadata is available"
             )
         # Recovery diffs the merge commit against its first parent. That is only the
         # full PR change set for true merge commits; squash and rebase merges need a
         # strategy-aware diff, so they are rejected rather than scored incorrectly.
-        parents = _git(["rev-list", "--parents", "-n", "1", pr.merge_commit_sha], root).split()
-        if len(parents) < 3:
-            raise WorkflowError(
-                "merged PR does not have a two-parent merge commit. Recovery supports only "
-                "merge commits (the workflow's merge strategy); reconcile other merges manually."
-            )
-        diff = _git(
-            ["diff", "--name-status", f"{pr.merge_commit_sha}^1", pr.merge_commit_sha], root
-        )
+        diff = _git(["diff", "--name-status", f"{merge_sha}^1", merge_sha], root)
     else:
         # A three-dot diff is only safe when the current integration tip is the PR base
         # (or its ancestor). Otherwise unrelated files can leak into the candidate diff.
         base = validation_base or "origin/submission"
-        if not _is_ancestor(base, pr.head_sha, root):
+        if not _is_ancestor(base, candidate, root):
             raise WorkflowError(
                 f"PR head is not based on the validation base {base}. Rebase the submission "
                 "branch onto the current origin/submission tip, then rerun validation."
             )
-        diff = _git(["diff", "--name-status", f"{base}...{pr.head_sha}"], root)
+        diff = _git(["diff", "--name-status", f"{base}...{candidate}"], root)
 
     with tempfile.TemporaryDirectory(prefix=f"mnnc-validate-{pr.number}-") as temp:
         worktree = Path(temp) / "tree"
-        _git(["worktree", "add", "--detach", str(worktree), pr.head_sha], root)
+        _git(["worktree", "add", "--detach", str(worktree), candidate], root)
         try:
             errors = validate_diff(diff, worktree)
         finally:
             _git(["worktree", "remove", "--force", str(worktree)], root)
         if errors:
             raise WorkflowError("\n".join(errors))
-    return submission_directory(diff)
+    return candidate, submission_directory(diff)
 
 
-def _score_candidate(pr: PullRequest, directory: Path, root: Path, data_root: Path):
-    with tempfile.TemporaryDirectory(prefix=f"mnnc-pr-{pr.number}-") as temp:
+def _score_candidate(candidate: str, pr_number: int, directory: Path, root: Path, data_root: Path):
+    with tempfile.TemporaryDirectory(prefix=f"mnnc-pr-{pr_number}-") as temp:
         worktree = Path(temp) / "tree"
-        _git(["worktree", "add", "--detach", str(worktree), pr.head_sha], root)
+        _git(["worktree", "add", "--detach", str(worktree), candidate], root)
         try:
             result = score_submission(worktree, directory, data_root)
         finally:
@@ -524,7 +539,7 @@ def _is_merged_now(pr: PullRequest) -> PullRequest:
     return latest if latest.merged else pr
 
 
-def _verified_merge(pr: PullRequest, root: Path) -> PullRequest:
+def _verified_merge(pr: PullRequest, root: Path, expected_sha: str) -> PullRequest:
     """Confirm the merged commit is the exact head that was validated."""
     _git(["fetch", "origin", "submission"], root)
     merged_pr = get_pull_request(pr.number)
@@ -533,7 +548,7 @@ def _verified_merge(pr: PullRequest, root: Path) -> PullRequest:
             "GitHub did not report the PR as merged with a merge commit; refusing to publish"
         )
     parents = _git(["rev-list", "--parents", "-n", "1", merged_pr.merge_commit_sha], root).split()
-    if len(parents) != 3 or parents[2] != pr.head_sha:
+    if len(parents) != 3 or parents[2] != expected_sha:
         raise WorkflowError(
             "merged PR head does not match the validated commit; refusing to publish. "
             "Rerun validation so the scored commit is the merged commit."
@@ -630,6 +645,7 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
         pr = listed_pr
         directory = None
         result = None
+        scored_sha: str | None = None
         merged = pr.merged
         try:
             if not pr.merged and pr.checks_status == "none":
@@ -649,14 +665,14 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
                 ],
                 root,
             )
-            directory = _validate_pr(pr, root, _current_validation_base(root))
-            result = _score_candidate(pr, directory, root, root / data_root)
+            scored_sha, directory = _validate_pr(pr, root, _current_validation_base(root))
+            result = _score_candidate(scored_sha, pr.number, directory, root, root / data_root)
 
             if not pr.merged:
                 # Do not use `--delete-branch`: gh may fail deleting a local branch that
                 # is checked out in another worktree after the remote merge has succeeded.
-                merge(pr.number, delete_branch=False, head_sha=pr.head_sha)
-                pr = _verified_merge(pr, root)
+                merge(pr.number, delete_branch=False, head_sha=scored_sha)
+                pr = _verified_merge(pr, root, scored_sha)
                 merged = True
             _git(["pull", "--ff-only", "origin", "submission"], root)
             _publish_result(root, directory, result, pr_number=pr.number)
@@ -679,9 +695,27 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
                 try:
                     if directory is None:
                         _sync_submission(root)
-                        directory = _validate_pr(current_pr, root, _current_validation_base(root))
+                        scored_sha, directory = _validate_pr(
+                            current_pr, root, _current_validation_base(root)
+                        )
                     if result is None:
-                        result = _score_candidate(current_pr, directory, root, root / data_root)
+                        if scored_sha is None:
+                            raise WorkflowError(
+                                "no validated commit is available for the merged PR; rerun validation"
+                            )
+                        result = _score_candidate(
+                            scored_sha, current_pr.number, directory, root, root / data_root
+                        )
+                    # Hard publication barrier: the result may only be published when the
+                    # merge commit contains the exact commit that was validated and scored.
+                    _git(["fetch", "origin", "submission"], root)
+                    merged_sha = _candidate_sha(current_pr, root)
+                    if scored_sha is None or merged_sha != scored_sha:
+                        raise WorkflowError(
+                            "merged PR head does not match the scored commit; refusing to publish. "
+                            f"Rerun `mnnc validate-submissions --pr {pr.number}` to score the "
+                            "merged commit."
+                        )
                     _sync_submission(root)
                     _git(["pull", "--ff-only", "origin", "submission"], root)
                     _publish_result(root, directory, result, pr_number=pr.number)

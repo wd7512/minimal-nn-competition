@@ -57,7 +57,10 @@ fails, the workflow does not label the submission as rejected or post a
 validation-failure comment on the merged PR. It attempts recovery immediately.
 If that still fails, fix the reported cause and rerun the command with that PR
 number; the merged PR is re-scored and its result/replay are upserted
-idempotently. Recovery requires the PR to have been merged with a merge commit
+idempotently. Recovery validates and scores the merge commit's second parent, so
+later updates to the PR head cannot change the assessed model. A score is never
+published unless the merge commit contains the exact commit that was validated
+and scored. Recovery requires the PR to have been merged with a merge commit
 (the workflow's merge strategy); PRs merged with squash or rebase must be
 reconciled manually rather than scored from a partial diff. Local
 branch/worktree cleanup is never allowed to undo acceptance; remote cleanup is

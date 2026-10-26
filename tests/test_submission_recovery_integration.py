@@ -276,11 +276,11 @@ def test_verified_merge_requires_the_validated_head(tmp_path: Path, monkeypatch)
     )
     monkeypatch.setattr(workflow, "get_pull_request", lambda number: merged)
 
-    assert workflow._verified_merge(merged, work) is merged
+    assert workflow._verified_merge(merged, work, head) is merged
 
     stale = PullRequest(7, "stale", base, "submission", "feature", True)
     with pytest.raises(workflow.WorkflowError, match="does not match the validated commit"):
-        workflow._verified_merge(stale, work)
+        workflow._verified_merge(stale, work, base)
 
 
 def test_load_replays_ignores_unrelated_files(tmp_path: Path) -> None:
@@ -403,3 +403,46 @@ def test_rerun_rejects_unpublished_manual_commit(tmp_path: Path, monkeypatch) ->
 
     with pytest.raises(workflow.WorkflowError, match="not produced by the scoring workflow"):
         workflow._run(work, None, Path("data"))
+
+
+def test_merged_recovery_uses_the_merge_parent_after_head_advances(
+    tmp_path: Path, monkeypatch
+) -> None:
+    _remote, work = _repo(tmp_path)
+    _git(work, "checkout", "-b", "feature")
+    submission_dir = work / "models" / "mnist" / "merged"
+    submission_dir.mkdir(parents=True)
+    (submission_dir / "config.json").write_text("{}\n")
+    _git(work, "add", "models")
+    _git(work, "commit", "-m", "submission")
+    _git(work, "push", "origin", "feature")
+    head = _rev(work, "HEAD")
+    _git(work, "checkout", "submission")
+    _git(work, "merge", "--no-ff", "-m", "merge feature", "feature")
+    merge_sha = _rev(work, "submission")
+    _git(work, "push", "origin", "submission")
+
+    _git(work, "checkout", "feature")
+    (work / "advanced.txt").write_text("advanced\n")
+    _git(work, "add", "advanced.txt")
+    _git(work, "commit", "-m", "advance")
+    advanced = _rev(work, "HEAD")
+    _git(work, "push", "origin", "feature")
+    _git(work, "checkout", "submission")
+    monkeypatch.setattr(workflow, "validate_diff", lambda diff, worktree: [])
+
+    pr = PullRequest(
+        9,
+        "advanced",
+        advanced,
+        "submission",
+        "feature",
+        True,
+        merged=True,
+        merge_commit_sha=merge_sha,
+    )
+    candidate, directory = workflow._validate_pr(pr, work, None)
+
+    assert candidate == head
+    assert candidate != pr.head_sha
+    assert directory == Path("models/mnist/merged")

@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from minimal_nn_competition.submissions import github
-from minimal_nn_competition.submissions.github import PullRequest
 from minimal_nn_competition.submissions.workflow import WorkflowError, _score_candidate
 
 
@@ -99,7 +98,8 @@ def test_score_candidate_accepts_partial_result(monkeypatch, tmp_path: Path) -> 
 
     assert (
         _score_candidate(
-            PullRequest(1, "partial", "a" * 40, "submission", "branch", True),
+            "a" * 40,
+            1,
             Path("models/mnist/partial"),
             tmp_path,
             tmp_path / "data",
