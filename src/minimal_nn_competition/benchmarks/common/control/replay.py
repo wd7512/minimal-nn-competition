@@ -3,13 +3,10 @@
 import random
 import statistics
 
-from minimal_nn_competition.benchmarks.cartpole import benchmark as cartpole_benchmark
-from minimal_nn_competition.benchmarks.cartpole import engine as cartpole_engine
-from minimal_nn_competition.benchmarks.lunarlander import benchmark as lunarlander_benchmark
-from minimal_nn_competition.benchmarks.lunarlander import engine as lunarlander_engine
-from minimal_nn_competition.benchmarks.pendulum import benchmark as pendulum_benchmark
-from minimal_nn_competition.benchmarks.pendulum import engine as pendulum_engine
-from minimal_nn_competition.benchmarks.snake.replay import (
+from minimal_nn_competition.benchmarks import cartpole as cartpole_engine
+from minimal_nn_competition.benchmarks import lunarlander as lunarlander_engine
+from minimal_nn_competition.benchmarks import pendulum as pendulum_engine
+from minimal_nn_competition.benchmarks.common.snake.replay import (
     REPLAY_SEED,
     load_replay,
     replay_slug,
@@ -126,15 +123,15 @@ def record_game(benchmark, model, seed=REPLAY_SEED, steps=None):
     """Play one game and return a JSON-serialisable replay payload."""
     if benchmark == "cartpole":
         if steps is None:
-            steps = cartpole_benchmark.DEFAULT_MAX_STEPS
+            steps = cartpole_engine.DEFAULT_MAX_STEPS
         return _record_cartpole(model, seed, steps)
     if benchmark == "pendulum":
         if steps is None:
-            steps = pendulum_benchmark.DEFAULT_MAX_STEPS
+            steps = pendulum_engine.DEFAULT_MAX_STEPS
         return _record_pendulum(model, seed, steps)
     if benchmark == "lunarlander":
         if steps is None:
-            steps = lunarlander_benchmark.DEFAULT_MAX_STEPS
+            steps = lunarlander_engine.DEFAULT_MAX_STEPS
         return _record_lunarlander(model, seed, steps)
     raise ValueError(f"Unknown control benchmark: {benchmark}")
 

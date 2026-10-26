@@ -1,10 +1,15 @@
-"""Snake benchmarks: pass/fail on filling the board, then minimum parameters."""
+"""Evaluation loop shared by the Snake benchmarks.
+
+The per-size variants in :mod:`minimal_nn_competition.benchmarks.snake_simple_8x8`,
+:mod:`minimal_nn_competition.benchmarks.snake_simple_16x16`, and
+:mod:`minimal_nn_competition.benchmarks.snake_obstacles_8x8` only set the board
+configuration; the pass/fail rule lives here.
+"""
 
 import statistics
 
-from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
-from minimal_nn_competition.benchmarks.snake.layout import obstacles_for_seed
-from minimal_nn_competition.benchmarks.snake.observation import OBSERVATION_SIZE
+from minimal_nn_competition.benchmarks.common.snake.environment import SnakeEnvironment
+from minimal_nn_competition.benchmarks.common.snake.observation import OBSERVATION_SIZE
 from minimal_nn_competition.model.entry import materialize_submission
 
 # Score is the fraction of seeds that fill the board (1.0 = every seed passes),
@@ -31,8 +36,10 @@ def selected_input_indices(config, label=None):
     return tuple(indices)
 
 
-class SnakeBenchmark:
-    name = "snake-simple-8x8"
+class BaseSnakeBenchmark:
+    """Shared fill-the-board evaluation; subclasses set the board configuration."""
+
+    name = ""
     size = 8
     loop_on_full = False
     # Per-food tick budget (None = no per-food limit). When set, a seed fails
@@ -81,7 +88,7 @@ class SnakeBenchmark:
         if submission.config.input_size != expected_input:
             raise ValueError(
                 f"{label} submissions must declare input_size {expected_input} "
-                f"for the selected observation features"
+                "for the selected observation features"
             )
         if submission.config.output_size != 4:
             raise ValueError(f"{label} submissions must declare output_size 4")
@@ -147,23 +154,3 @@ class SnakeBenchmark:
                 "seed_blocked": seed_blocked,
             },
         )
-
-
-class SnakeSimple16x16Benchmark(SnakeBenchmark):
-    name = "snake-simple-16x16"
-    size = 16
-    # Correct play needs ~16 ticks/food, not 256: cap each feed at 2x the
-    # board and lift the total backstop so the clock never decides a fill.
-    moves_per_food = 2 * 16 * 16
-    max_moves_default = 65536
-
-
-class SnakeObstacles8x8Benchmark(SnakeBenchmark):
-    name = "snake-obstacles-8x8"
-    size = 8
-    loop_on_full = True
-    moves_per_food = 2 * 8 * 8
-    max_moves_default = 16384
-
-    def obstacles(self, seed):
-        return obstacles_for_seed(self.size, seed)

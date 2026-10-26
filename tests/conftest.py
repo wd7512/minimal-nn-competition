@@ -5,12 +5,10 @@ from typing import Any
 import pytest
 
 import minimal_nn_competition.__main__ as cli
-from minimal_nn_competition.benchmarks.register import create_benchmark
-from minimal_nn_competition.benchmarks.snake.benchmark import (
-    SnakeBenchmark,
-    SnakeObstacles8x8Benchmark,
-    SnakeSimple16x16Benchmark,
-)
+from minimal_nn_competition.benchmarks.registry import create_benchmark
+from minimal_nn_competition.benchmarks.snake_obstacles_8x8 import SnakeObstacles8x8Benchmark
+from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeBenchmark
+from minimal_nn_competition.benchmarks.snake_simple_16x16 import SnakeSimple16x16Benchmark
 
 FAST_SEEDS = (0, 1, 2)
 

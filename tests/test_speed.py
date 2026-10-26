@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.snake.engine import SnakeEngine
+from minimal_nn_competition.benchmarks.common.snake.engine import SnakeEngine
 from minimal_nn_competition.speed.agent import (
     BOARD_SIZE,
     HAMILTONIAN_CYCLE,

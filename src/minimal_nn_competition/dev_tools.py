@@ -10,7 +10,7 @@ import tempfile
 import unicodedata
 from pathlib import Path
 
-from minimal_nn_competition.internal import PACKAGE, scope_files
+from minimal_nn_competition.internal import PACKAGE
 from minimal_nn_competition.internal.scoring import score_files
 from minimal_nn_competition.speed.benchmark import measure_snake_speed
 
@@ -24,16 +24,19 @@ def _repo_root() -> Path:
 
 
 ROOT = _repo_root()
-TOKEN_SCOPES = (
-    "core",
-    "snake-simple-8x8",
+CORE_SCOPES = ("core", "common")
+BENCHMARK_SCOPES = (
     "mnist",
     "fashion-mnist",
     "chess-eval",
     "cartpole",
     "pendulum",
     "lunarlander",
+    "snake-simple-8x8",
+    "snake-simple-16x16",
+    "snake-obstacles-8x8",
 )
+TOKEN_SCOPES = CORE_SCOPES + BENCHMARK_SCOPES
 TEXT_EXTENSIONS = {".md", ".py", ".toml", ".json", ".yaml", ".yml", ".txt"}
 SPECIAL_FILES = {"Dockerfile", "Makefile", "LICENSE"}
 EVIDENCE_DIRECTORIES = {"evidence", "captures"}
@@ -113,27 +116,69 @@ def _signed(delta: int, scale: int = 1) -> str:
     return f"{value} ({message})" if message else value
 
 
+def _score_scope(scope, root):
+    """Score a scope, returning None when its files do not exist in the tree."""
+    from minimal_nn_competition.internal import scope_files
+
+    try:
+        return score_files(scope_files(scope, root))
+    except ValueError:
+        return None
+
+
+def _format_count(value):
+    return f"{value:7,}" if value is not None else "    n/a"
+
+
+def _format_delta(old, current, scale=1):
+    if old is None:
+        return "(new scope)"
+    return _signed(current - old, scale)
+
+
 def tokens() -> int:
-    from minimal_nn_competition.internal import SCOPES
+    from minimal_nn_competition.internal import SCOPES, all_scope_files
 
     with _baseline() as baseline:
         scope_map = {scope.name: scope for scope in SCOPES}
-        rows: list[tuple[str, int, int, int, int]] = []
-        for name in TOKEN_SCOPES:
+        groups: list[tuple[str, list[tuple[str, int | None, int]]]] = [
+            ("Core", []),
+            ("Benchmarks", []),
+        ]
+        for name in CORE_SCOPES:
             scope = scope_map[name]
-            current = score_files(scope_files(scope, ROOT))
-            old = score_files(scope_files(scope, baseline))
-            rows.append((name, old, current, current - old, 1))
+            groups[0][1].append((name, _score_scope(scope, baseline), _score_scope(scope, ROOT)))
+        for name in BENCHMARK_SCOPES:
+            scope = scope_map[name]
+            groups[1][1].append((name, _score_scope(scope, baseline), _score_scope(scope, ROOT)))
+        try:
+            old_overall: int | None = score_files(all_scope_files(baseline))
+        except ValueError:
+            old_overall = None
+        current_overall = score_files(all_scope_files(ROOT))
         current_md = sum(
             len(path.read_text(encoding="utf-8"))
             for path in _markdown_files(ROOT, respect_gitignore=True)
         )
         old_md = sum(len(path.read_text(encoding="utf-8")) for path in _markdown_files(baseline))
-        rows.append(("# chars in .md files", old_md, current_md, current_md - old_md, 10))
+    print("Benchmark scopes measure unique implementation cost;")
+    print("shared helpers live in common, the rest in core.")
     print("Scope                         Main   Current       Delta")
     print("-" * 62)
-    for name, old, current, delta, scale in rows:
-        print(f"{name:28} {old:7,} {current:8,} {_signed(delta, scale):>25}")
+    for title, rows in groups:
+        print(title)
+        for name, old, current in rows:
+            print(
+                f"  {name:26} {_format_count(old)} {current:8,} {_format_delta(old, current):>25}"
+            )
+    print(
+        f"  {'overall (unique files)':26} {_format_count(old_overall)} {current_overall:8,} "
+        f"{_format_delta(old_overall, current_overall):>25}"
+    )
+    print(
+        f"  {'# chars in .md files':26} {old_md:7,} {current_md:8,} "
+        f"{_signed(current_md - old_md, 10):>25}"
+    )
     return 0
 
 

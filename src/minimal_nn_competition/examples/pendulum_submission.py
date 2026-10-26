@@ -7,7 +7,7 @@ import random
 import statistics
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.pendulum import engine
+from minimal_nn_competition.benchmarks import pendulum as engine
 from minimal_nn_competition.examples.ppo import train_ppo
 
 HIDDEN_SIZES = (64, 64)

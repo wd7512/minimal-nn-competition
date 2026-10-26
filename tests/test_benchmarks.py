@@ -5,18 +5,18 @@ from typing import Any
 import pytest
 import torch
 
-from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
+from minimal_nn_competition.benchmarks.chess_eval import (
     ChessEval10kBenchmark,
     ChessEval100kBenchmark,
     encode,
     load_tensors,
 )
-from minimal_nn_competition.benchmarks.chess_eval.names import CHESS_BENCHMARKS
-from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
-from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
-from minimal_nn_competition.benchmarks.register import create_benchmark
-from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
-from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
+from minimal_nn_competition.benchmarks.common.names import CHESS_BENCHMARKS
+from minimal_nn_competition.benchmarks.common.snake import benchmark as snake_benchmark
+from minimal_nn_competition.benchmarks.fashion_mnist import FashionMnistBenchmark
+from minimal_nn_competition.benchmarks.mnist import MnistBenchmark
+from minimal_nn_competition.benchmarks.registry import create_benchmark
+from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeBenchmark
 from minimal_nn_competition.model.entry import (
     Submission,
     SubmissionError,

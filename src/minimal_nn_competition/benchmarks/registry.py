@@ -2,22 +2,18 @@
 
 
 def _factories():
-    from minimal_nn_competition.benchmarks.cartpole.benchmark import CartPoleBenchmark
-    from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
+    from minimal_nn_competition.benchmarks.cartpole import CartPoleBenchmark
+    from minimal_nn_competition.benchmarks.chess_eval import (
         ChessEval10kBenchmark,
         ChessEval100kBenchmark,
     )
-    from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import (
-        FashionMnistBenchmark,
-    )
-    from minimal_nn_competition.benchmarks.lunarlander.benchmark import LunarLanderBenchmark
-    from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
-    from minimal_nn_competition.benchmarks.pendulum.benchmark import PendulumBenchmark
-    from minimal_nn_competition.benchmarks.snake.benchmark import (
-        SnakeBenchmark,
-        SnakeObstacles8x8Benchmark,
-        SnakeSimple16x16Benchmark,
-    )
+    from minimal_nn_competition.benchmarks.fashion_mnist import FashionMnistBenchmark
+    from minimal_nn_competition.benchmarks.lunarlander import LunarLanderBenchmark
+    from minimal_nn_competition.benchmarks.mnist import MnistBenchmark
+    from minimal_nn_competition.benchmarks.pendulum import PendulumBenchmark
+    from minimal_nn_competition.benchmarks.snake_obstacles_8x8 import SnakeObstacles8x8Benchmark
+    from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeBenchmark
+    from minimal_nn_competition.benchmarks.snake_simple_16x16 import SnakeSimple16x16Benchmark
 
     return {
         "cartpole": CartPoleBenchmark,

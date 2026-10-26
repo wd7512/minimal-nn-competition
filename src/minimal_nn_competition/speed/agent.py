@@ -1,6 +1,6 @@
 """Fixed perfect-play agent used by the Snake Simple 8x8 environment speed benchmark."""
 
-from minimal_nn_competition.benchmarks.snake.engine import DIRECTIONS
+from minimal_nn_competition.benchmarks.common.snake.engine import DIRECTIONS
 
 SIZE = 8
 BOARD_SIZE = SIZE * SIZE

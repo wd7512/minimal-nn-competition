@@ -113,7 +113,7 @@ score within ±10 pawns.
   superset of the 10k tier, so the 10k positions keep the same labels.
 
 The datasets and their provenance metadata live in
-`src/minimal_nn_competition/benchmarks/chess_eval/`. Maintainers can rebuild
+`src/minimal_nn_competition/benchmarks/data/chess_eval/`. Maintainers can rebuild
 them with:
 
 ```bash

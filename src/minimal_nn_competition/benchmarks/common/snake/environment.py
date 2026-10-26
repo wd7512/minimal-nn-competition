@@ -1,7 +1,7 @@
 """Compatibility wrapper combining the Snake engine and observation encoding."""
 
-from minimal_nn_competition.benchmarks.snake.engine import DIRECTIONS, SnakeEngine
-from minimal_nn_competition.benchmarks.snake.observation import observe
+from minimal_nn_competition.benchmarks.common.snake.engine import DIRECTIONS, SnakeEngine
+from minimal_nn_competition.benchmarks.common.snake.observation import observe
 
 __all__ = ["DIRECTIONS", "SnakeEngine", "SnakeEnvironment"]
 

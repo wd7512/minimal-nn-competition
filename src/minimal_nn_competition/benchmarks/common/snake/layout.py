@@ -9,7 +9,11 @@ and resampled from the same RNG stream.
 import random
 from functools import cache, lru_cache
 
-from minimal_nn_competition.benchmarks.snake.engine import DIRECTIONS, SnakeEngine, geometry
+from minimal_nn_competition.benchmarks.common.snake.engine import (
+    DIRECTIONS,
+    SnakeEngine,
+    geometry,
+)
 
 TOUR_NODE_BUDGET = 50_000
 MAX_LAYOUT_ATTEMPTS = 1000

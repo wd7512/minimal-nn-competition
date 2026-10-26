@@ -11,13 +11,16 @@ from minimal_nn_competition.internal import (
     SCOPES,
     InternalResult,
     Scope,
+    check_benchmark_scope_coverage,
     load_internal_results,
     measure_scope,
     rank_internal_results,
     save_internal_results,
     scope_files,
+    scope_for_benchmark,
     scope_rank,
     upsert_internal_result,
+    validate_scope_ownership,
 )
 from minimal_nn_competition.internal.render import (
     render_internal_html,
@@ -181,25 +184,35 @@ def test_unparseable_source_is_rejected() -> None:
 
 
 def test_scope_files_cover_src() -> None:
-    from minimal_nn_competition.internal import _SHARED_IMAGE_FILES
-
     root = Path(__file__).resolve().parent.parent
-    shared = {(root / source).resolve() for source in _SHARED_IMAGE_FILES}
-    covered: dict[Path, set[str]] = {}
-    for scope in SCOPES:
-        for path in scope_files(scope, root):
-            covered.setdefault(path.resolve(), set()).add(scope.name)
-    every = {
-        path.resolve() for path in (root / "src").rglob("*.py") if "__pycache__" not in path.parts
-    }
-    assert set(covered) == every
-    for path, scopes in covered.items():
-        if len(scopes) > 1:
-            if scopes == {"pendulum", "lunarlander"}:
-                assert path.name == "ppo.py"
-            else:
-                assert scopes == {"mnist", "fashion-mnist"}
-                assert path in shared
+    seen = validate_scope_ownership(root)
+    assert len(set(seen.values())) == len(SCOPES)
+
+
+def test_scope_files_reject_empty_scopes(tmp_path: Path) -> None:
+    empty = Scope(name="empty", sources=("does-not-exist",), tests=())
+    with pytest.raises(ValueError, match="matched no Python files"):
+        scope_files(empty, tmp_path)
+
+
+def test_registry_has_scope_coverage() -> None:
+    from minimal_nn_competition.benchmarks.registry import available_benchmarks
+
+    assert available_benchmarks()
+    assert check_benchmark_scope_coverage(available_benchmarks()) == sorted(
+        scope_for_benchmark(name) for name in available_benchmarks()
+    )
+
+
+def test_scope_for_benchmark_groups_chess_tiers() -> None:
+    assert scope_for_benchmark("chess-eval-10k") == "chess-eval"
+    assert scope_for_benchmark("chess-eval-100k") == "chess-eval"
+    assert scope_for_benchmark("mnist") == "mnist"
+
+
+def test_benchmark_scope_coverage_rejects_unknown() -> None:
+    with pytest.raises(ValueError, match="without a token scope"):
+        check_benchmark_scope_coverage(("mnist", "not-a-benchmark"))
 
 
 def test_scope_tests_cover_suite_exactly_once() -> None:
@@ -334,11 +347,14 @@ def test_internal_cli(tmp_path: Path) -> None:
     assert {result.scope for result in results} == {
         "cartpole",
         "chess-eval",
+        "common",
         "core",
         "fashion-mnist",
         "lunarlander",
         "mnist",
         "pendulum",
+        "snake-obstacles-8x8",
+        "snake-simple-16x16",
         "snake-simple-8x8",
     }
     assert all(result.status == "pass" for result in results)

@@ -3,7 +3,7 @@
 import json
 import re
 
-from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
+from minimal_nn_competition.benchmarks.common.snake.environment import SnakeEnvironment
 
 REPLAY_SEED = 0
 

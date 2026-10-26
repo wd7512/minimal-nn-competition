@@ -8,21 +8,19 @@ import pytest
 import torch
 
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.register import create_benchmark
-from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
-from minimal_nn_competition.benchmarks.snake.benchmark import (
-    DEFAULT_SEEDS,
-    SnakeObstacles8x8Benchmark,
-)
-from minimal_nn_competition.benchmarks.snake.engine import DIRECTIONS, SnakeEngine
-from minimal_nn_competition.benchmarks.snake.layout import (
+from minimal_nn_competition.benchmarks.common.snake import benchmark as snake_benchmark
+from minimal_nn_competition.benchmarks.common.snake.benchmark import DEFAULT_SEEDS
+from minimal_nn_competition.benchmarks.common.snake.engine import DIRECTIONS, SnakeEngine
+from minimal_nn_competition.benchmarks.common.snake.layout import (
     _check_tour,
     find_closed_tour,
     obstacles_for_seed,
     validate_seed,
 )
-from minimal_nn_competition.benchmarks.snake.observation import observe
-from minimal_nn_competition.benchmarks.snake.replay import record_game, replay_stem
+from minimal_nn_competition.benchmarks.common.snake.observation import observe
+from minimal_nn_competition.benchmarks.common.snake.replay import record_game, replay_stem
+from minimal_nn_competition.benchmarks.registry import create_benchmark
+from minimal_nn_competition.benchmarks.snake_obstacles_8x8 import SnakeObstacles8x8Benchmark
 from minimal_nn_competition.leaderboard.render import (
     _score_text,
     render_site,

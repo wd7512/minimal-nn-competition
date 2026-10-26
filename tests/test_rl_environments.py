@@ -8,11 +8,11 @@ import pytest
 import torch
 
 import minimal_nn_competition.__main__ as cli
-from minimal_nn_competition.benchmarks.cartpole import engine as cartpole_engine
-from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
-from minimal_nn_competition.benchmarks.lunarlander import engine as lunarlander_engine
-from minimal_nn_competition.benchmarks.pendulum import engine as pendulum_engine
-from minimal_nn_competition.benchmarks.register import create_benchmark
+from minimal_nn_competition.benchmarks import cartpole as cartpole_engine
+from minimal_nn_competition.benchmarks import lunarlander as lunarlander_engine
+from minimal_nn_competition.benchmarks import pendulum as pendulum_engine
+from minimal_nn_competition.benchmarks.common.names import RL_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import create_benchmark
 from minimal_nn_competition.examples import (
     cartpole_submission,
     lunarlander_submission,

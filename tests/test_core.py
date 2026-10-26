@@ -3,8 +3,8 @@ from pathlib import Path
 import pytest
 
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.register import create_benchmark
-from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
+from minimal_nn_competition.benchmarks.common.snake.environment import SnakeEnvironment
+from minimal_nn_competition.benchmarks.registry import create_benchmark
 from minimal_nn_competition.leaderboard import load_results, rank_results, save_results
 from minimal_nn_competition.model.entry import SubmissionConfig, SubmissionError, parameter_count
 from minimal_nn_competition.runner.entry import BenchmarkResult
