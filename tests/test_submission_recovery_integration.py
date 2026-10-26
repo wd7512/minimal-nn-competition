@@ -244,7 +244,6 @@ def test_merged_pr_recovery_rejects_single_parent_commit(tmp_path: Path) -> None
         "submission",
         "submit/model",
         True,
-        state="MERGED",
         merged=True,
         merge_commit_sha=sha,
     )
@@ -276,7 +275,7 @@ def test_verified_merge_requires_the_validated_head(tmp_path: Path, monkeypatch)
     )
     monkeypatch.setattr(workflow, "get_pull_request", lambda number: merged)
 
-    assert workflow._verified_merge(merged, work, head) is merged
+    assert workflow._verified_merge(merged, work, head) is None
 
     stale = PullRequest(7, "stale", base, "submission", "feature", True)
     with pytest.raises(workflow.WorkflowError, match="does not match the validated commit"):

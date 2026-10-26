@@ -273,7 +273,7 @@ def test_remote_cleanup_leaves_non_submit_branches_alone(monkeypatch) -> None:
     assert calls[0][:3] == ["pr", "view", "9"]
 
 
-def test_recovery_does_not_publish_unverified_merge(monkeypatch, tmp_path: Path, caplog) -> None:
+def test_recovery_revalidates_the_merged_commit(monkeypatch, tmp_path: Path, caplog) -> None:
     pr = PullRequest(8, "test", "a" * 40, "submission", "submit/test", True, checks_status="passed")
     merged = PullRequest(
         8,
@@ -288,12 +288,18 @@ def test_recovery_does_not_publish_unverified_merge(monkeypatch, tmp_path: Path,
     result = _result("test", "mnist")
     published: list[str] = []
     comments: list[str] = []
+    validations: list[bool] = []
     monkeypatch.setattr(workflow, "_sync_submission", lambda root: None)
     monkeypatch.setattr(workflow, "check_authentication", lambda: None)
     monkeypatch.setattr(workflow, "open_submission_prs", lambda: [pr])
-    monkeypatch.setattr(
-        workflow, "_validate_pr", lambda pr, root, base: ("a" * 40, Path("models/mnist/test"))
-    )
+
+    def validate(pr, root, base):
+        validations.append(pr.merged)
+        if pr.merged:
+            raise workflow.WorkflowError("merged commit could not be validated")
+        return "a" * 40, Path("models/mnist/test")
+
+    monkeypatch.setattr(workflow, "_validate_pr", validate)
     monkeypatch.setattr(
         workflow, "_score_candidate", lambda candidate, number, directory, root, data: result
     )
@@ -306,7 +312,6 @@ def test_recovery_does_not_publish_unverified_merge(monkeypatch, tmp_path: Path,
         ),
     )
     monkeypatch.setattr(workflow, "_is_merged_now", lambda pr: merged)
-    monkeypatch.setattr(workflow, "_candidate_sha", lambda pr, root: "b" * 40)
     monkeypatch.setattr(
         workflow, "_publish_result", lambda root, directory, scored, **kwargs: published.append("x")
     )
@@ -325,6 +330,7 @@ def test_recovery_does_not_publish_unverified_merge(monkeypatch, tmp_path: Path,
     with caplog.at_level(logging.ERROR):
         assert workflow.run(tmp_path, None, Path("data")) == 0
 
+    assert validations == [False, True]
     assert published == []
     assert comments == []
-    assert "does not match the scored commit" in caplog.text
+    assert "recovery still failed" in caplog.text

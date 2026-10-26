@@ -52,15 +52,9 @@ logger = logging.getLogger(__name__)
 # Only expected operational failures are recoverable. Programming errors such as
 # KeyError or TypeError deliberately escape so they stay diagnosable.
 _RECOVERY_ERRORS = (GitHubError, OSError, RuntimeError, ValueError)
-_GENERATED_PATHS = (
-    "docs/leaderboard.json",
-    "docs/index.html",
-    "docs/.nojekyll",
-    "docs/submissions",
-    "docs/games",
-)
 _SITE_FILES = ("leaderboard.json", "index.html", ".nojekyll")
 _SITE_DIRS = ("submissions", "games")
+_GENERATED_PATHS = tuple(f"docs/{name}" for name in _SITE_FILES + _SITE_DIRS)
 
 
 class WorkflowError(RuntimeError):
@@ -149,6 +143,13 @@ def _publish_local_score_commits(root: Path) -> None:
     commits = _unpublished_score_commits(root)
     if not commits:
         return
+    # A local commit left behind by a previous run must not be allowed to erase
+    # rows present at the current remote tip.
+    if not _remote_ledger_keys(root).issubset(_local_ledger_keys(root)):
+        raise WorkflowError(
+            "local leaderboard is missing entries from origin/submission; refusing to push "
+            "a possibly stale ledger."
+        )
     for sha in commits:
         subject = _git(["log", "-1", "--pretty=%s", sha], root)
         paths = _git(["diff-tree", "--no-commit-id", "--name-only", "-r", sha], root).splitlines()
@@ -211,39 +212,27 @@ def _sync_submission(root: Path) -> None:
             "main into submission or rewrite either branch during acceptance."
         )
 
-    # A local commit left behind by a previous run must not be allowed to erase rows
-    # present at the current remote tip.
-    local_keys = _local_ledger_keys(root)
-    remote_keys = _remote_ledger_keys(root)
-    if not remote_keys.issubset(local_keys):
-        missing = sorted(remote_keys - local_keys)
-        raise WorkflowError(
-            "local leaderboard is missing entries from origin/submission; refusing to push "
-            f"a possibly stale ledger. Missing keys: {missing[:8]}"
-        )
-
 
 def _current_validation_base(root: Path) -> str:
     return _git(["rev-parse", "origin/submission"], root).strip()
 
 
-def _candidate_sha(pr: PullRequest, root: Path) -> str:
-    """Return the exact commit to validate and score for this PR."""
-    if not pr.merged:
-        return pr.head_sha
-    if not pr.merge_commit_sha:
+def _merged_parent(pr: PullRequest, root: Path) -> tuple[str, str]:
+    """Return a merged PR's merge commit and the commit that was accepted."""
+    merge_sha = pr.merge_commit_sha
+    if merge_sha is None:
         raise WorkflowError(
             "PR is merged but GitHub did not return its merge commit; rerun once metadata is available"
         )
     # The head branch can advance after the merge. The second parent of the merge
     # commit is the commit that was actually accepted and is safe to score.
-    parents = _git(["rev-list", "--parents", "-n", "1", pr.merge_commit_sha], root).split()
+    parents = _git(["rev-list", "--parents", "-n", "1", merge_sha], root).split()
     if len(parents) != 3:
         raise WorkflowError(
             "merged PR does not have a two-parent merge commit. Recovery supports only "
             "merge commits (the workflow's merge strategy); reconcile other merges manually."
         )
-    return parents[2]
+    return merge_sha, parents[2]
 
 
 def _validate_pr(
@@ -254,13 +243,9 @@ def _validate_pr(
     if not pr.merged and not pr.checks_passed:
         raise WorkflowError(f"required GitHub checks have not passed ({pr.checks_summary})")
 
-    candidate = _candidate_sha(pr, root)
+    candidate = pr.head_sha
     if pr.merged:
-        merge_sha = pr.merge_commit_sha
-        if merge_sha is None:
-            raise WorkflowError(
-                "PR is merged but GitHub did not return its merge commit; rerun once metadata is available"
-            )
+        merge_sha, candidate = _merged_parent(pr, root)
         # Recovery diffs the merge commit against its first parent. That is only the
         # full PR change set for true merge commits; squash and rebase merges need a
         # strategy-aware diff, so they are rejected rather than scored incorrectly.
@@ -453,22 +438,12 @@ def _publish_result(root: Path, directory: Path, result, *, pr_number: int | Non
             )
 
         results = load_results(ledger_path)
-        rendered = True
         try:
             _render_site_atomically(root, results)
         except Exception as render_error:
-            rendered = False
             logger.exception("Could not render site for %s: %s", result.submission, render_error)
 
-        if rendered:
-            generated = _GENERATED_PATHS
-        else:
-            generated = ("docs/leaderboard.json",)
-            for stem in sorted(_expected_replay_stems(results)):
-                path = root / "docs" / "games" / f"{stem}.json"
-                if path.is_file():
-                    generated += (f"docs/games/{stem}.json",)
-        _stage_generated(root, generated)
+        _stage_generated(root, _GENERATED_PATHS)
 
         staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root, check=False)
         if staged.returncode == 1:
@@ -539,7 +514,7 @@ def _is_merged_now(pr: PullRequest) -> PullRequest:
     return latest if latest.merged else pr
 
 
-def _verified_merge(pr: PullRequest, root: Path, expected_sha: str) -> PullRequest:
+def _verified_merge(pr: PullRequest, root: Path, expected_sha: str) -> None:
     """Confirm the merged commit is the exact head that was validated."""
     _git(["fetch", "origin", "submission"], root)
     merged_pr = get_pull_request(pr.number)
@@ -553,7 +528,6 @@ def _verified_merge(pr: PullRequest, root: Path, expected_sha: str) -> PullReque
             "merged PR head does not match the validated commit; refusing to publish. "
             "Rerun validation so the scored commit is the merged commit."
         )
-    return merged_pr
 
 
 def _verify_promoted(root: Path) -> None:
@@ -606,6 +580,28 @@ def _promote(root: Path) -> None:
     logger.info("Promoted accepted submissions to main")
 
 
+def _accept_pr(pr: PullRequest, root: Path, data_root: Path) -> str:
+    """Validate, score, merge if needed, and publish one submission."""
+    if not pr.merged and pr.checks_status == "none":
+        pr = _refresh_missing_checks(pr)
+    _git(["fetch", "origin", "submission"], root)
+    if not pr.merged:
+        _git(
+            ["fetch", "origin", f"pull/{pr.number}/head:refs/remotes/origin/pr/{pr.number}"],
+            root,
+        )
+    scored_sha, directory = _validate_pr(pr, root, _current_validation_base(root))
+    result = _score_candidate(scored_sha, pr.number, directory, root, root / data_root)
+    if not pr.merged:
+        # Do not use `--delete-branch`: gh may fail deleting a local branch that is
+        # checked out in another worktree after the remote merge has succeeded.
+        merge(pr.number, delete_branch=False, head_sha=scored_sha)
+        _verified_merge(pr, root, scored_sha)
+    _git(["pull", "--ff-only", "origin", "submission"], root)
+    _publish_result(root, directory, result, pr_number=pr.number)
+    return result.submission
+
+
 def run(root: Path, pr_number: int | None, data_root: Path) -> int:
     with _exclusive_run_lock(root):
         return _run(root, pr_number, data_root)
@@ -642,101 +638,43 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
     accepted = 0
     skipped = 0
     for listed_pr in prs:
-        pr = listed_pr
-        directory = None
-        result = None
-        scored_sha: str | None = None
-        merged = pr.merged
         try:
-            if not pr.merged and pr.checks_status == "none":
-                pr = _refresh_missing_checks(pr)
-            if not pr.merged and not pr.checks_passed:
-                raise WorkflowError(
-                    f"required GitHub checks are not successful ({pr.checks_summary}); "
-                    "rerun once checks have completed"
-                )
-
-            _git(["fetch", "origin", "submission"], root)
-            _git(
-                [
-                    "fetch",
-                    "origin",
-                    f"pull/{pr.number}/head:refs/remotes/origin/pr/{pr.number}",
-                ],
-                root,
-            )
-            scored_sha, directory = _validate_pr(pr, root, _current_validation_base(root))
-            result = _score_candidate(scored_sha, pr.number, directory, root, root / data_root)
-
-            if not pr.merged:
-                # Do not use `--delete-branch`: gh may fail deleting a local branch that
-                # is checked out in another worktree after the remote merge has succeeded.
-                merge(pr.number, delete_branch=False, head_sha=scored_sha)
-                pr = _verified_merge(pr, root, scored_sha)
-                merged = True
-            _git(["pull", "--ff-only", "origin", "submission"], root)
-            _publish_result(root, directory, result, pr_number=pr.number)
-            accepted += 1
-            logger.info("Accepted PR #%d (%s)", pr.number, result.submission)
-
-            try:
-                delete_remote_branch(pr.number)
-            except _RECOVERY_ERRORS as cleanup_error:
-                # Branch cleanup is housekeeping, not part of accepting/scoring a model.
-                logger.warning(
-                    "Could not clean remote head branch for PR #%d: %s", pr.number, cleanup_error
-                )
+            submission = _accept_pr(listed_pr, root, data_root)
         except _RECOVERY_ERRORS as exc:
-            current_pr = _is_merged_now(pr)
-            merged = merged or current_pr.merged
-            if merged:
-                # A merged PR is never reported as an unaccepted submission. Try to finish
-                # scoring/artifacts now; an explicit `--pr N` rerun can resume if this fails.
-                try:
-                    if directory is None:
-                        _sync_submission(root)
-                        scored_sha, directory = _validate_pr(
-                            current_pr, root, _current_validation_base(root)
-                        )
-                    if result is None:
-                        if scored_sha is None:
-                            raise WorkflowError(
-                                "no validated commit is available for the merged PR; rerun validation"
-                            )
-                        result = _score_candidate(
-                            scored_sha, current_pr.number, directory, root, root / data_root
-                        )
-                    # Hard publication barrier: the result may only be published when the
-                    # merge commit contains the exact commit that was validated and scored.
-                    _git(["fetch", "origin", "submission"], root)
-                    merged_sha = _candidate_sha(current_pr, root)
-                    if scored_sha is None or merged_sha != scored_sha:
-                        raise WorkflowError(
-                            "merged PR head does not match the scored commit; refusing to publish. "
-                            f"Rerun `mnnc validate-submissions --pr {pr.number}` to score the "
-                            "merged commit."
-                        )
-                    _sync_submission(root)
-                    _git(["pull", "--ff-only", "origin", "submission"], root)
-                    _publish_result(root, directory, result, pr_number=pr.number)
-                    accepted += 1
-                    logger.warning("Recovered post-merge acceptance for PR #%d", pr.number)
-                    continue
-                except _RECOVERY_ERRORS as recovery_error:
-                    skipped += 1
-                    logger.error(
-                        "PR #%d is already merged but scoring/ledger recovery still failed: %s. "
-                        "Rerun `mnnc validate-submissions --pr %d` after fixing the cause.",
-                        pr.number,
-                        recovery_error,
-                        pr.number,
-                    )
-                    continue
-
-            skipped += 1
-            message = f"Automated submission validation failed:\n\n{exc}"
-            logger.error("PR #%d skipped: %s", pr.number, exc)
-            comment(pr.number, message)
+            current_pr = _is_merged_now(listed_pr)
+            if not current_pr.merged:
+                skipped += 1
+                message = f"Automated submission validation failed:\n\n{exc}"
+                logger.error("PR #%d skipped: %s", listed_pr.number, exc)
+                comment(listed_pr.number, message)
+                continue
+            # A merged PR is never reported as an unaccepted submission. Retry from
+            # scratch against the immutable merge commit; an explicit `--pr N` rerun
+            # can resume if this fails.
+            try:
+                submission = _accept_pr(current_pr, root, data_root)
+            except _RECOVERY_ERRORS as recovery_error:
+                skipped += 1
+                logger.error(
+                    "PR #%d is already merged but scoring/ledger recovery still failed: %s. "
+                    "Rerun `mnnc validate-submissions --pr %d` after fixing the cause.",
+                    listed_pr.number,
+                    recovery_error,
+                    listed_pr.number,
+                )
+                continue
+            logger.warning("Recovered post-merge acceptance for PR #%d", listed_pr.number)
+        accepted += 1
+        logger.info("Accepted PR #%d (%s)", listed_pr.number, submission)
+        try:
+            delete_remote_branch(listed_pr.number)
+        except _RECOVERY_ERRORS as cleanup_error:
+            # Branch cleanup is housekeeping, not part of accepting/scoring a model.
+            logger.warning(
+                "Could not clean remote head branch for PR #%d: %s",
+                listed_pr.number,
+                cleanup_error,
+            )
 
     logger.info(
         "Validation summary: %d processed, %d accepted, %d skipped", len(prs), accepted, skipped

@@ -22,7 +22,6 @@ class PullRequest:
     checks_passed: bool
     checks_summary: str = ""
     checks_status: str = "none"
-    state: str = "OPEN"
     merged: bool = False
     merge_commit_sha: str | None = None
 
@@ -48,12 +47,7 @@ def _checks(item: dict) -> tuple[bool, str, str]:
 
     # A successful check alongside a pending check is still pending. Each item
     # must have an explicit successful conclusion/state before the PR is eligible.
-    passed = all(
-        check.get("conclusion") == "SUCCESS"
-        if check.get("conclusion") is not None
-        else check.get("state") == "SUCCESS"
-        for check in checks
-    )
+    passed = all((check.get("conclusion") or check.get("state")) == "SUCCESS" for check in checks)
     if passed:
         return True, "passed", "all GitHub checks passed"
 
@@ -92,7 +86,6 @@ def _pull_request(item: dict) -> PullRequest:
         checks_passed=checks_passed,
         checks_summary=checks_summary,
         checks_status=checks_status,
-        state=state,
         merged=merged,
         merge_commit_sha=merge_commit_sha,
     )
