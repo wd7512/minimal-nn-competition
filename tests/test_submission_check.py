@@ -259,3 +259,48 @@ def test_over_parameter_submission_is_rejected(tmp_path: Path) -> None:
     diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
     errors = _load_script().validate_diff(diff, tmp_path)
     assert any("parameters" in error for error in errors)
+
+
+def test_unknown_config_keys_are_rejected(tmp_path: Path) -> None:
+    _write_submission(
+        tmp_path,
+        config={
+            "benchmark": "mnist",
+            "name": "tiny",
+            "author": "tester",
+            "architecture": "mlp",
+            "input_size": 784,
+            "output_size": 10,
+            "hidden_sizes": [7],
+            "activation": "relu",
+            "foo": 1,
+        },
+    )
+    diff = _diff("models/mnist/tiny/config.json", "models/mnist/tiny/model.pt")
+    errors = _load_script().validate_diff(diff, tmp_path)
+    assert any("unknown config" in error.lower() for error in errors)
+
+
+def test_snake_input_indices_outside_zero_to_twenty_three_are_rejected(
+    tmp_path: Path,
+) -> None:
+    _write_submission(
+        tmp_path,
+        benchmark="snake-simple-8x8",
+        config={
+            "benchmark": "snake-simple-8x8",
+            "name": "tiny",
+            "author": "tester",
+            "architecture": "mlp",
+            "input_size": 1,
+            "output_size": 4,
+            "hidden_sizes": [7],
+            "activation": "relu",
+            "input_indices": [24],
+        },
+    )
+    diff = _diff(
+        "models/snake-simple-8x8/tiny/config.json", "models/snake-simple-8x8/tiny/model.pt"
+    )
+    errors = _load_script().validate_diff(diff, tmp_path)
+    assert any("input_indices" in error and "0..23" in error for error in errors)

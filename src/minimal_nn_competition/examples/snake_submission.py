@@ -75,19 +75,29 @@ def _evaluate(policy, device, seeds, benchmark):
 
     lengths = []
     wins = []
+    moves_per_food = getattr(benchmark, "moves_per_food", None)
     with torch.no_grad():
         for seed in seeds:
             environment = SnakeEnvironment(
                 seed=seed,
-                max_moves=4096,
+                max_moves=benchmark.max_moves,
                 **benchmark.environment_options(seed),
             )
             observation = environment.reset()
             done = False
+            last_length = len(environment.snake)
+            since_eat = 0
             while not done:
                 state = torch.tensor(observation, dtype=torch.float32, device=device)[None]
                 action = int(torch.argmax(policy(state), dim=1).item())
                 observation, _, done = environment.step(action)
+                if len(environment.snake) > last_length:
+                    last_length = len(environment.snake)
+                    since_eat = 0
+                else:
+                    since_eat += 1
+                    if moves_per_food is not None and since_eat > moves_per_food:
+                        done = True
             lengths.append(len(environment.snake))
             wins.append(bool(getattr(environment, "won", False)))
     logging.getLogger(__name__).info("Greedy evaluation wins %d/%d", sum(wins), len(wins))
