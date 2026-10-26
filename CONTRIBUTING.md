@@ -16,15 +16,18 @@ is optional.
 
 **Base submission branches on the latest `origin/submission`, not `main` or `dev`.**
 The validator compares the PR against the integration branch so unrelated code and
-leaderboard history cannot be mistaken for submission changes. Fork the repository on GitHub first, then work in your fork. Before
-opening a PR:
+leaderboard history cannot be mistaken for submission changes. Fork the repository on GitHub first, clone your fork, then add the
+upstream remote:
 
 ```bash
-git fetch origin
-git switch -c submit/<name> origin/submission
-# add only the two model files, commit, push to your fork, and open a PR
-# targeting submission
+git remote add upstream https://github.com/wd7512/minimal-nn-competition.git
+git fetch upstream
+git switch -c submit/<name> upstream/submission
+# add only the two model files, commit, push to origin, and open a PR
+# targeting upstream submission
 ```
+
+Keep `origin` as your fork and `upstream` as the source repository.
 
 If `origin/submission` advances before your PR is merged, rebase your short-lived
 branch onto the latest `origin/submission` and push the updated branch. Stale or
