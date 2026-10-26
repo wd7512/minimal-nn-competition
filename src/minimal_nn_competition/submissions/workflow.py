@@ -439,7 +439,7 @@ def _publish_result(
         replay_path = (
             root / "docs" / "games" / f"{replay_stem(result.benchmark, result.submission)}.json"
         )
-        previous_ledger = ledger_path.read_bytes()
+        previous_ledger = ledger_path.read_bytes() if ledger_path.exists() else None
         previous_replay = replay_path.read_bytes() if replay_path.exists() else None
         try:
             upsert_result(ledger_path, result)
@@ -452,6 +452,7 @@ def _publish_result(
             try:
                 _record_submission_replay(root, directory, scored_sha)
             except _RECOVERY_ERRORS as replay_error:
+                _restore_file(replay_path, previous_replay)
                 # Presentation artifacts must not strand an already-scored submission.
                 logger.error(
                     "Could not record replay for %s: %s. The score will still be published; "

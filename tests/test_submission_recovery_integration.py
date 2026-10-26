@@ -222,6 +222,37 @@ def test_render_failure_stages_only_the_ledger(tmp_path: Path, monkeypatch) -> N
     assert {(row["benchmark"], row["submission"]) for row in payload} == {("mnist", "new-model")}
 
 
+def test_replay_write_failure_preserves_previous_replay_on_render_failure(
+    tmp_path: Path, monkeypatch
+) -> None:
+    _remote, work = _repo(tmp_path)
+    result = _result("agent", "snake-simple-8x8")
+    replay_path = (
+        work / "docs" / "games" / f"{replay_stem(result.benchmark, result.submission)}.json"
+    )
+    replay_path.parent.mkdir(parents=True)
+    previous_replay = '{"frames": [{"snake": [[0, 0]], "food": [1, 1]}]}\n'
+    replay_path.write_text(previous_replay)
+
+    def fail_replay(root: Path, directory: Path, scored_sha: str) -> None:
+        replay_path.write_text('{"frames": [')
+        raise OSError("disk full")
+
+    def fail_render(results, output_dir, replays=None) -> None:
+        raise ValueError("render unavailable")
+
+    monkeypatch.setattr(workflow, "_record_submission_replay", fail_replay)
+    monkeypatch.setattr(workflow, "render_site", fail_render)
+
+    workflow._publish_result(
+        work, Path("models/snake-simple-8x8/agent"), result, scored_sha=_rev(work, "submission")
+    )
+
+    committed_replay = _git(work, "show", f"HEAD:docs/games/{replay_path.name}")
+    assert committed_replay == previous_replay.strip()
+    assert replay_path.read_text() == previous_replay
+
+
 def test_publish_does_not_swallow_programming_errors(tmp_path: Path, monkeypatch) -> None:
     _remote, work = _repo(tmp_path)
 
