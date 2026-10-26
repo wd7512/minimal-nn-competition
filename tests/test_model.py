@@ -104,7 +104,8 @@ def test_input_indices_accepted_for_snake(tmp_path: Path) -> None:
     assert SubmissionConfig.from_file(path).input_indices == (0, 1, 2)
 
 
-def test_nan_weights_are_rejected(tmp_path: Path) -> None:
+@pytest.mark.parametrize("bad_value", [float("nan"), float("inf")])
+def test_non_finite_weights_are_rejected(tmp_path: Path, bad_value: float) -> None:
     directory = _write_submission(
         tmp_path,
         {
@@ -113,22 +114,7 @@ def test_nan_weights_are_rejected(tmp_path: Path) -> None:
             "input_size": 7,
             "output_size": 4,
         },
-        {"weight": torch.full((4, 7), float("nan")), "bias": torch.zeros(4)},
-    )
-    with pytest.raises(SubmissionError, match="non-finite"):
-        materialize_submission(Submission.from_directory(directory))
-
-
-def test_inf_weights_are_rejected(tmp_path: Path) -> None:
-    directory = _write_submission(
-        tmp_path,
-        {
-            "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
-            "input_size": 7,
-            "output_size": 4,
-        },
-        {"weight": torch.full((4, 7), float("inf")), "bias": torch.zeros(4)},
+        {"weight": torch.full((4, 7), bad_value), "bias": torch.zeros(4)},
     )
     with pytest.raises(SubmissionError, match="non-finite"):
         materialize_submission(Submission.from_directory(directory))

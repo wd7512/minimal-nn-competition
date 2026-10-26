@@ -42,9 +42,6 @@ def upsert_result(path: Path, result) -> None:
     save_results(path, results)
 
 
-DEFAULT_SCORING_TIMEOUT_SECONDS = 600
-
-
 def _score_worker(queue, root, directory, data_root):
     try:
         result = score_submission(Path(root), Path(directory), Path(data_root))
@@ -58,7 +55,7 @@ def score_submission_process(
     directory,
     data_root,
     *,
-    timeout=DEFAULT_SCORING_TIMEOUT_SECONDS,
+    timeout=600,
 ):
     """Evaluate a submission in a disposable, timeout-bounded child process."""
     ctx = multiprocessing.get_context("spawn")

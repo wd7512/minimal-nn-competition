@@ -87,7 +87,11 @@ class SubmissionConfig(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def _validate_parameter_count(self):
+    def _validate_submission(self):
+        if self.architecture == "linear" and self.hidden_sizes:
+            raise ValueError("linear submissions must not declare hidden_sizes")
+        if self.benchmark not in SNAKE_BENCHMARKS and self.input_indices is not None:
+            raise ValueError("input_indices is only supported for snake benchmarks")
         total = parameter_count_from_dimensions(
             self.input_size, self.hidden_sizes, self.output_size
         )
@@ -95,14 +99,6 @@ class SubmissionConfig(BaseModel):
             raise ValueError(
                 f"submission would require {total} parameters, above the {MAX_PARAMETERS} maximum"
             )
-        return self
-
-    @model_validator(mode="after")
-    def _validate_cross_fields(self):
-        if self.architecture == "linear" and self.hidden_sizes:
-            raise ValueError("linear submissions must not declare hidden_sizes")
-        if self.benchmark not in SNAKE_BENCHMARKS and self.input_indices is not None:
-            raise ValueError("input_indices is only supported for snake benchmarks")
         return self
 
     @classmethod
@@ -189,7 +185,14 @@ def build_model(config):
     return nn.Sequential(*layers)
 
 
-def _finite_state_dict(state_dict):
+def materialize_submission(submission):
+    """Validate and materialize a submission for evaluation."""
+    state_dict = load_state_dict(submission)
+    total = parameter_count(state_dict)
+    if total > MAX_PARAMETERS:
+        raise SubmissionError(
+            f"Checkpoint contains {total} parameters, above the {MAX_PARAMETERS} maximum"
+        )
     try:
         import torch
     except ImportError as exc:
@@ -199,17 +202,6 @@ def _finite_state_dict(state_dict):
             raise SubmissionError(f"State-dict entry {name!r} is not a tensor")
         if value.is_floating_point() and not torch.isfinite(value).all().item():
             raise SubmissionError(f"State-dict entry {name!r} contains non-finite values")
-
-
-def materialize_submission(submission):
-    """Validate and materialize a submission for evaluation."""
-    state_dict = load_state_dict(submission)
-    total = parameter_count(state_dict)
-    if total > MAX_PARAMETERS:
-        raise SubmissionError(
-            f"Checkpoint contains {total} parameters, above the {MAX_PARAMETERS} maximum"
-        )
-    _finite_state_dict(state_dict)
     model = build_model(submission.config)
     try:
         model.load_state_dict(state_dict, strict=True)

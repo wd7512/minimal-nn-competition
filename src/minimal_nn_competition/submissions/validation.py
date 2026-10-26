@@ -10,6 +10,7 @@ from typing import Any
 from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,
     MAX_PARAMETERS,
+    parameter_count_from_dimensions,
 )
 
 SUBMISSION_PATH = re.compile(r"^models/([^/]+)/([^/]+)/(config\.json|model\.pt)$")
@@ -83,11 +84,7 @@ def validate_config(config: Any, directory: Path) -> list[str]:
         and all(type(size) is int and size > 0 for size in hidden_sizes)
         and config.get("architecture") in {"linear", "mlp"}
     ):
-        total = 0
-        previous = input_size
-        for size in [*hidden_sizes, output_size]:
-            total += previous * size + size
-            previous = size
+        total = parameter_count_from_dimensions(input_size, hidden_sizes, output_size)
         if total > MAX_PARAMETERS:
             errors.append(
                 f"{config_path}: submission would require {total} parameters, "
