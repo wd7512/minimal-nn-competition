@@ -1,8 +1,10 @@
 """Benchmark registry: canonical benchmark IDs, family groups, and factories.
 
-The ``*_BENCHMARKS`` tuples group the canonical IDs used in submissions and
-on the leaderboard. The factories map each ID to its implementation; the two
-chess tiers share one implementation module.
+The factory mapping in :func:`_factories` is canonical: every registered
+benchmark ID appears there exactly once. The ``*_BENCHMARKS`` tuples assign
+each ID to one family for display and grouping; they must partition the
+factory keys exactly (enforced by test_benchmark_families_partition_registry).
+The two chess tiers share one implementation module.
 """
 
 CHESS_BENCHMARKS = ("chess-eval-10k", "chess-eval-100k")

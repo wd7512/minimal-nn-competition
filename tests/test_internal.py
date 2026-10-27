@@ -232,8 +232,8 @@ def test_benchmark_families_partition_registry() -> None:
     )
     grouped = [name for _, names in families for name in names]
     assert len(grouped) == len(set(grouped))
-    ungrouped = set(available_benchmarks()) - set(grouped)
-    assert ungrouped == set()
+    # Exact equality in both directions: no ungrouped IDs, no stale family entries.
+    assert set(grouped) == set(available_benchmarks())
     for label, names in families:
         for name in names:
             assert scope_for_benchmark(name) in {scope.name for scope in SCOPES}, label
@@ -264,6 +264,29 @@ def test_scope_tests_cover_suite_exactly_once() -> None:
     collected = {line.strip() for line in completed.stdout.splitlines() if "::" in line}
     mapped = [node for scope in SCOPES for node in expand_scope_tests(scope, collected)]
     assert sorted(mapped) == sorted(collected)
+
+
+def test_scope_nodes_exist_in_collected_suite() -> None:
+    """Name stale scope entries explicitly instead of failing on a list diff."""
+    from minimal_nn_competition.internal import expand_scope_tests
+
+    root = Path(__file__).resolve().parent.parent
+    completed = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert completed.returncode == 0
+    collected = {line.strip() for line in completed.stdout.splitlines() if "::" in line}
+    stale = sorted(
+        node
+        for scope in SCOPES
+        for node in expand_scope_tests(scope, collected)
+        if node not in collected
+    )
+    assert stale == []
 
 
 def _mini_tree(root: Path, failing: bool = False) -> Scope:
