@@ -60,7 +60,7 @@ def test_mlp_submission_loads(tmp_path: Path) -> None:
     assert loaded.model(torch.zeros((1, 7))).shape == (1, 4)
 
 
-@pytest.mark.parametrize("dtype", [torch.float16, torch.float64, torch.bfloat16])
+@pytest.mark.parametrize("dtype", [torch.float16, torch.float64, torch.bfloat16, torch.int64])
 def test_non_float32_weights_are_rejected(tmp_path: Path, dtype: torch.dtype) -> None:
     directory = _write_submission(
         tmp_path,
