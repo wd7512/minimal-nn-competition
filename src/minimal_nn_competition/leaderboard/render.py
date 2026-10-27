@@ -52,8 +52,8 @@ _VERSION_LABELS = {
     "snake-obstacles-8x8": "Obstacles 8×8",
     "mnist": "MNIST",
     "fashion-mnist": "Fashion-MNIST",
-    "mnist-shuffled": "MNIST shuffled labels",
-    "fashion-mnist-shuffled": "Fashion-MNIST shuffled labels",
+    "mnist-shuffled": "MNIST Shuffled",
+    "fashion-mnist-shuffled": "Fashion-MNIST shuffled",
     "chess-eval-10k": "Stockfish 10k",
     "chess-eval-100k": "Stockfish 100k",
     "cartpole": "CartPole",
@@ -255,6 +255,12 @@ h1 {
   border-top: 1px solid var(--rule-strong);
   border-bottom: 1px solid var(--rule-strong);
   -webkit-overflow-scrolling: touch;
+}
+.empty-state {
+  margin: 0;
+  padding: 16px 12px;
+  border-block: 1px solid var(--rule-strong);
+  color: var(--muted);
 }
 table.results { width: 100%; border-collapse: collapse; min-width: 30rem; }
 .results th, .results td {
@@ -981,64 +987,17 @@ def _version_label(benchmark):
     return benchmark.replace("-", " ").title()
 
 
-def _track_summary(results, benchmark):
-    entries = [result for result in results if result.benchmark == benchmark]
-    if not entries:
-        return "No submissions yet"
-    best = max(entries, key=lambda result: (result.score, result.passed, -result.parameter_count))
-    best_text = (
-        f"Best: {html.escape(best.name)} ({html.escape(_score_text(best))}, "
-        f"{best.parameter_count:,} params)"
-    )
-    passing = [result for result in entries if result.passed]
-    if passing:
-        smallest = min(passing, key=lambda result: result.parameter_count)
-        pass_text = f"Smallest pass: {smallest.parameter_count:,} params"
-    else:
-        pass_text = "Smallest pass: none"
-    return f"{best_text}<br>{pass_text}"
-
-
-def _image_comparison_html(results):
-    rows = (
-        ("MNIST", "11.25%", "mnist", "mnist-shuffled"),
-        ("Fashion-MNIST", "10.00%", "fashion-mnist", "fashion-mnist-shuffled"),
-    )
-    body = "".join(
-        f"<tr><td>{html.escape(dataset)}</td><td>70,000</td>"
-        f'<td class="num">{html.escape(baseline)}</td>'
-        f"<td>{_track_summary(results, true_track)}</td>"
-        f"<td>{_track_summary(results, shuffled_track)}</td></tr>"
-        for dataset, baseline, true_track, shuffled_track in rows
-    )
-    return (
-        '<div class="image-comparison"><h2>True-label and shuffled-label comparison</h2>'
-        "<p>Each pair uses the same 70,000 public images and ten output classes. "
-        "True-label scores test digit or clothing classification; shuffled-label scores "
-        "measure exact recall of one fixed public label assignment. Model sizes are "
-        "shown as parameter counts.</p>"
-        '<div class="table-wrap" role="region" tabindex="0" '
-        'aria-label="True-label and shuffled-label image benchmark comparison">'
-        '<table class="results"><caption class="sr-only">Image benchmark comparison</caption>'
-        '<thead><tr><th scope="col">Dataset</th>'
-        '<th scope="col" class="num">Examples</th>'
-        '<th scope="col" class="num">Constant baseline</th>'
-        '<th scope="col">True-label track</th>'
-        '<th scope="col">Shuffled-label track</th></tr></thead>'
-        f"<tbody>{body}</tbody></table></div>"
-        '<p class="muted">For a shuffled track, storing 70,000 independent ten-way '
-        "labels has an information count of 70,000 × log₂(10) ≈ 232,535 bits. This is "
-        "a counting reference under that independence assumption, not a proven lower "
-        "bound on an MLP’s parameter count or checkpoint size.</p></div>"
-    )
-
-
 def _group_specs(results):
     present = {result.benchmark for result in results}
     groups = []
     covered = set()
     for spec in _GROUP_SPECS:
-        versions = tuple(benchmark for benchmark in spec["benchmarks"] if benchmark in present)
+        if spec["id"] == "image-compression" and any(
+            benchmark in present for benchmark in IMAGE_BENCHMARKS
+        ):
+            versions = IMAGE_BENCHMARKS
+        else:
+            versions = tuple(benchmark for benchmark in spec["benchmarks"] if benchmark in present)
         if not versions:
             continue
         groups.append({**spec, "benchmarks": versions})
@@ -1292,7 +1251,7 @@ def render_html(results, submission_links=None):
         label = spec["label"]
         default_benchmark = versions[0]
         default_label = _version_label(default_benchmark)
-        group_count = sum(len(entries[benchmark]) for benchmark in versions)
+        group_count = sum(len(entries.get(benchmark, ())) for benchmark in versions)
         rail_links.append(
             f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong><small>{group_count} {_plural(group_count, "submission")} total</small></a>'
         )
@@ -1322,10 +1281,14 @@ def render_html(results, submission_links=None):
         )
         panels = []
         for benchmark in versions:
-            version_entries = entries[benchmark]
+            version_entries = entries.get(benchmark, [])
             version_label = _version_label(benchmark)
             active = benchmark == default_benchmark
-            table = _table(version_entries, submission_links)
+            table = (
+                _table(version_entries, submission_links)
+                if version_entries
+                else '<p class="empty-state">No submissions yet.</p>'
+            )
             panels.append(
                 f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}">'
                 f'<label class="passed-toggle"><input type="checkbox" data-passed-toggle> Pass only</label>'
@@ -1335,7 +1298,6 @@ def render_html(results, submission_links=None):
         sections.append(
             f'<section class="group" id="{html.escape(group_id)}" data-group-section data-accent="{html.escape(accent)}" aria-labelledby="{html.escape(group_id)}-title">'
             f'<div class="group__head"><div><p class="eyebrow" id="{html.escape(group_id)}-title"><span class="group__index">{group_number:02d}</span> / {html.escape(label)}</p></div></div>'
-            f"{_image_comparison_html(results) if group_id == 'image-compression' else ''}"
             f"{version_row}{''.join(panels)}</section>"
         )
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
