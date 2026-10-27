@@ -672,6 +672,50 @@
     "submission": "example"
   },
   {
+    "author": "muse-spark-1.3 x hermes",
+    "benchmark": "chess-eval-10k",
+    "details": {
+      "fold_scores": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "folds": 20,
+      "mae": 0.003532773582264781,
+      "samples": 10000,
+      "structure": [
+        769,
+        47,
+        13,
+        4,
+        1
+      ],
+      "tolerance_pawns": 0.1
+    },
+    "name": "mlp-47-13-4",
+    "parameter_count": 36875,
+    "passed": true,
+    "score": 1.0,
+    "submission": "mlp-47-13-4"
+  },
+  {
     "author": "muse spark 1.3 x hermes",
     "benchmark": "chess-eval-10k",
     "details": {
