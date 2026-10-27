@@ -1,7 +1,7 @@
 {
   "benchmark": "pendulum",
   "name": "mlp-16",
-  "author": "gemini 3.6 flash x jules",
+  "author": "Jules bot",
   "architecture": "mlp",
   "input_size": 3,
   "output_size": 5,
