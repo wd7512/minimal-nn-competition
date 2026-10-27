@@ -1291,7 +1291,7 @@ def render_html(results, submission_links=None):
             )
             panels.append(
                 f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}">'
-                f'<label class="passed-toggle"><input type="checkbox" data-passed-toggle> Pass only</label>'
+                f'<label class="passed-toggle"><input type="checkbox" data-passed-toggle checked> Pass only</label>'
                 f'<div class="table-wrap" role="region" tabindex="0" aria-label="{html.escape(version_label)} results">{table}</div>'
                 f"</div>"
             )
