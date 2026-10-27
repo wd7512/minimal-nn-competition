@@ -175,8 +175,7 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 7px;
-  padding: 10px 0;
+  padding: 6px 0;
   color: var(--ink);
   text-decoration: none;
 }
@@ -195,11 +194,6 @@ h1 {
   text-decoration-thickness: 1px;
 }
 .links a:hover .action-title { text-decoration-color: var(--accent-snake); }
-.links .action-note {
-  display: block;
-  color: var(--muted);
-  font: 14px/1.45 var(--body);
-}
 .featured {
   display: flex;
   flex-direction: column;
@@ -1438,7 +1432,7 @@ def render_html(results, submission_links=None):
             f'<p class="featured__author">by {html.escape(featured.author)}</p>'
             '</div></section>'
         )
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span><span class="action-note">Share a compact model and see how it ranks.</span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span><span class="action-note">Suggest a problem or network you’d like to make smaller.</span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
 
