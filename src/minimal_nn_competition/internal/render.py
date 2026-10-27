@@ -7,17 +7,17 @@ from itertools import groupby
 
 from minimal_nn_competition.internal import rank_internal_results, scope_rank
 from minimal_nn_competition.leaderboard import format_measured, short_commit
+from minimal_nn_competition.leaderboard.theme import (
+    AUXILIARY_TABLE_CSS,
+    SITE_BASE_CSS,
+    SITE_THEME_CSS,
+)
 
 _SCOPE_TITLES = {"snake-simple-8x8": "SNAKE SIMPLE 8X8"}
 
-_STYLE = """
-:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
-body { margin: 0 auto; max-width: 72rem; padding: 2rem; line-height: 1.5; }
-table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
-th, td { border-bottom: 1px solid #8884; padding: 0.5rem; text-align: left; }
-th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
-.muted { opacity: 0.65; }
-.failed { opacity: 0.65; }
+_STYLE = SITE_THEME_CSS + SITE_BASE_CSS + AUXILIARY_TABLE_CSS + """
+body { margin: 0 auto; max-width: 72rem; padding: 2rem; }
+.failed { opacity: 0.72; }
 """
 
 

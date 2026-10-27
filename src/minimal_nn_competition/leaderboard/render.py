@@ -17,6 +17,7 @@ from minimal_nn_competition.benchmarks.registry import (
     SNAKE_BENCHMARKS,
 )
 from minimal_nn_competition.leaderboard import rank_results
+from minimal_nn_competition.leaderboard.theme import SITE_BASE_CSS, SITE_THEME_CSS
 
 _GROUP_SPECS = (
     {
@@ -61,63 +62,7 @@ _VERSION_LABELS = {
     "pendulum": "Discrete torque",
     "lunarlander": "Lunar touchdown",
 }
-_STYLE = """
-:root {
-  color-scheme: light dark;
-  --bg: #f4f6f4;
-  --surface: #fbfcfa;
-  --ink: #17231f;
-  --muted: #63706b;
-  --rule: #d9e0db;
-  --rule-strong: #aebbb5;
-  --hover: #edf2ef;
-  --pass: #1f6b43;
-  --fail: #8a3434;
-  --pass-tint: #e6f1ea;
-  --fail-tint: #f8e9e7;
-  --focus: #2f5f57;
-  --accent-snake: #256b66;
-  --accent-image-compression: #8a5b16;
-  --accent-chess: #3f5f86;
-  --accent-control: #6f42c1;
-  --display: ui-serif, Georgia, "Times New Roman", serif;
-  --body: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1513;
-    --surface: #131d1a;
-    --ink: #e7efeb;
-    --muted: #9aaba4;
-    --rule: #273631;
-    --rule-strong: #40534c;
-    --hover: #182622;
-    --pass: #74cf9b;
-    --fail: #f09b91;
-    --pass-tint: #15251d;
-    --fail-tint: #2b1e1c;
-    --focus: #8bcacb;
-    --accent-snake: #7fcac1;
-    --accent-image-compression: #e0b76b;
-    --accent-chess: #9bb9df;
-    --accent-control: #b392f0;
-  }
-}
-*, *::before, *::after { box-sizing: border-box; }
-[hidden] { display: none !important; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--body);
-  font-size: 16px;
-  line-height: 1.55;
-}
-a { color: inherit; text-underline-offset: 3px; }
-a:hover { text-decoration-thickness: 2px; }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+_STYLE = SITE_THEME_CSS + SITE_BASE_CSS + """
 [data-accent="snake"] { --accent: var(--accent-snake); }
 [data-accent="image-compression"] { --accent: var(--accent-image-compression); }
 [data-accent="chess"] { --accent: var(--accent-chess); }
@@ -469,6 +414,7 @@ _GAME_SCRIPT = """
 const FRAMES = __FRAMES__;
 const SIZE = __SIZE__;
 const BLOCKED = __BLOCKED__;
+const themeColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 const status = document.getElementById("status");
@@ -481,17 +427,19 @@ function draw() {
   const cell = canvas.width / SIZE;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   BLOCKED.forEach((blockedCell) => {
-    ctx.fillStyle = "#8a9a94";
+    ctx.fillStyle = themeColor("--chart-obstacle");
     ctx.fillRect(blockedCell[0] * cell, blockedCell[1] * cell, cell, cell);
   });
   const food = FRAMES[frame].food;
   if (food) {
-    ctx.fillStyle = "#e5484d";
+    ctx.fillStyle = themeColor("--chart-danger");
     ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);
   }
   const snake = FRAMES[frame].snake;
   snake.forEach((segment, index) => {
-    ctx.fillStyle = index === 0 ? "#1f6b43" : "#57b47a";
+    ctx.fillStyle = index === 0
+      ? themeColor("--chart-snake-head")
+      : themeColor("--chart-snake-body");
     ctx.fillRect(segment[0] * cell, segment[1] * cell, cell, cell);
   });
   status.textContent = "move " + frame + "/" + (FRAMES.length - 1)
@@ -541,6 +489,7 @@ const KIND = "__KIND__";
 const OUTCOME = "__OUTCOME__";
 const TORQUES = [-2.0, -1.0, 0.0, 1.0, 2.0];
 const THRUSTS = ["coast", "main", "left", "right"];
+const themeColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 const status = document.getElementById("status");
@@ -559,13 +508,13 @@ function drawCartpole(state) {
   const rail = canvas.height - 80;
   const toX = (x) => 24 + ((x + 2.4) / 4.8) * (canvas.width - 48);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = "#aebbb5";
+  ctx.strokeStyle = themeColor("--chart-boundary");
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(16, rail);
   ctx.lineTo(canvas.width - 16, rail);
   ctx.stroke();
-  ctx.strokeStyle = "#8a3434";
+  ctx.strokeStyle = themeColor("--fail");
   ctx.setLineDash([4, 3]);
   [toX(-2.4), toX(2.4)].forEach((lineX) => {
     ctx.beginPath();
@@ -575,13 +524,13 @@ function drawCartpole(state) {
   });
   ctx.setLineDash([]);
   const cartX = Math.max(24, Math.min(canvas.width - 24, toX(state[0])));
-  ctx.fillStyle = "#17231f";
+  ctx.fillStyle = themeColor("--chart-cart");
   ctx.fillRect(cartX - 24, rail - 28, 48, 28);
   const pivotX = cartX;
   const pivotY = rail - 28;
   const tipX = pivotX + 200 * Math.sin(state[2]);
   const tipY = pivotY - 200 * Math.cos(state[2]);
-  ctx.strokeStyle = "#8a5b16";
+  ctx.strokeStyle = themeColor("--accent-image-compression");
   ctx.lineWidth = 6;
   ctx.lineCap = "round";
   ctx.beginPath();
@@ -589,11 +538,11 @@ function drawCartpole(state) {
   ctx.lineTo(tipX, tipY);
   ctx.stroke();
   ctx.lineCap = "butt";
-  ctx.fillStyle = "#8a5b16";
+  ctx.fillStyle = themeColor("--accent-image-compression");
   ctx.beginPath();
   ctx.arc(tipX, tipY, 5, 0, 2 * Math.PI);
   ctx.fill();
-  ctx.fillStyle = "#3f5f86";
+  ctx.fillStyle = themeColor("--accent-chess");
   ctx.beginPath();
   ctx.arc(pivotX, pivotY, 5, 0, 2 * Math.PI);
   ctx.fill();
@@ -612,7 +561,7 @@ function drawPendulum(state, action) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const tipX = pivotX + arm * Math.sin(state[0]);
   const tipY = pivotY - arm * Math.cos(state[0]);
-  ctx.strokeStyle = "#e5484d";
+  ctx.strokeStyle = themeColor("--chart-danger");
   ctx.lineWidth = 20;
   ctx.lineCap = "round";
   ctx.beginPath();
@@ -620,14 +569,14 @@ function drawPendulum(state, action) {
   ctx.lineTo(tipX, tipY);
   ctx.stroke();
   ctx.lineCap = "butt";
-  ctx.fillStyle = "#e5484d";
+  ctx.fillStyle = themeColor("--chart-danger");
   ctx.beginPath();
   ctx.arc(pivotX, pivotY, 10, 0, 2 * Math.PI);
   ctx.fill();
   ctx.beginPath();
   ctx.arc(tipX, tipY, 10, 0, 2 * Math.PI);
   ctx.fill();
-  ctx.fillStyle = "#17231f";
+  ctx.fillStyle = themeColor("--chart-cart");
   ctx.beginPath();
   ctx.arc(pivotX, pivotY, 4, 0, 2 * Math.PI);
   ctx.fill();
@@ -638,7 +587,7 @@ function drawPendulum(state, action) {
     const base = -Math.PI / 2;
     const a0 = base;
     const a1 = torque > 0 ? base + span : base - span;
-    ctx.strokeStyle = "#63706b";
+    ctx.strokeStyle = themeColor("--chart-muted");
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.arc(pivotX, pivotY, R, a0, a1, torque < 0);
@@ -652,7 +601,7 @@ function drawPendulum(state, action) {
     const py = ux;
     const bx = ex - ux * 14;
     const by = ey - uy * 14;
-    ctx.fillStyle = "#63706b";
+    ctx.fillStyle = themeColor("--chart-muted");
     ctx.beginPath();
     ctx.moveTo(ex, ey);
     ctx.lineTo(bx + px * 7, by + py * 7);
@@ -673,22 +622,22 @@ function drawLunarlander(state, action) {
   const toX = (x) => 30 + ((x + 1) / 2) * (canvas.width - 60);
   const toY = (y) => ground - y * ((ground - 100) / 1.5);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = "#17231f";
+  ctx.strokeStyle = themeColor("--chart-cart");
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(0, ground);
   ctx.lineTo(canvas.width, ground);
   ctx.stroke();
-  ctx.fillStyle = "#1f6b43";
+  ctx.fillStyle = themeColor("--chart-snake-head");
   ctx.fillRect(toX(-0.25), ground - 6, toX(0.25) - toX(-0.25), 6);
   [toX(-0.25), toX(0.25)].forEach((edge, idx) => {
-    ctx.strokeStyle = "#17231f";
+    ctx.strokeStyle = themeColor("--chart-cart");
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(edge, ground - 6);
     ctx.lineTo(edge, ground - 36);
     ctx.stroke();
-    ctx.fillStyle = "#8a5b16";
+    ctx.fillStyle = themeColor("--accent-image-compression");
     ctx.beginPath();
     if (idx === 0) {
       ctx.moveTo(edge, ground - 36);
@@ -703,18 +652,20 @@ function drawLunarlander(state, action) {
     ctx.fill();
   });
   for (let index = Math.max(0, frame - 24); index < frame; index += 1) {
-    ctx.fillStyle = "rgba(63, 95, 134, 0.45)";
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = themeColor("--accent-chess");
     ctx.beginPath();
     ctx.arc(toX(FRAMES[index].state[0]), toY(FRAMES[index].state[1]), 3, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.globalAlpha = 1;
   }
   const px = toX(state[0]);
   const py = Math.min(toY(state[1]), ground + 4);
   ctx.save();
   ctx.translate(px, py);
   ctx.rotate(Number(state[4]));
-  ctx.fillStyle = "#6f42c1";
-  ctx.strokeStyle = "#17231f";
+  ctx.fillStyle = themeColor("--accent-control");
+  ctx.strokeStyle = themeColor("--chart-cart");
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, -13);
@@ -725,7 +676,7 @@ function drawLunarlander(state, action) {
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = "#8a9a94";
+  ctx.fillStyle = themeColor("--chart-obstacle");
   if (action === 1) {
     ctx.beginPath();
     ctx.arc(0, 16, 4 + (frame % 3), 0, 2 * Math.PI);

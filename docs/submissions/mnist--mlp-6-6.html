@@ -17,30 +17,41 @@
   --accent-image-compression: #8a5b16;
   --accent-chess: #3f5f86;
   --accent-control: #6f42c1;
+  --chart-obstacle: #8a9a94;
+  --chart-danger: #e5484d;
+  --chart-snake-body: #57b47a;
   --display: ui-serif, Georgia, "Times New Roman", serif;
   --body: system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --chart-snake-head: var(--pass);
+  --chart-boundary: var(--rule-strong);
+  --chart-cart: var(--ink);
+  --chart-muted: var(--muted);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1513;
-    --surface: #131d1a;
-    --ink: #e7efeb;
-    --muted: #9aaba4;
-    --rule: #273631;
-    --rule-strong: #40534c;
-    --hover: #182622;
-    --pass: #74cf9b;
-    --fail: #f09b91;
-    --pass-tint: #15251d;
-    --fail-tint: #2b1e1c;
-    --focus: #8bcacb;
-    --accent-snake: #7fcac1;
-    --accent-image-compression: #e0b76b;
-    --accent-chess: #9bb9df;
-    --accent-control: #b392f0;
+  --bg: #0d1513;
+  --surface: #131d1a;
+  --ink: #e7efeb;
+  --muted: #9aaba4;
+  --rule: #273631;
+  --rule-strong: #40534c;
+  --hover: #182622;
+  --pass: #74cf9b;
+  --fail: #f09b91;
+  --pass-tint: #15251d;
+  --fail-tint: #2b1e1c;
+  --focus: #8bcacb;
+  --accent-snake: #7fcac1;
+  --accent-image-compression: #e0b76b;
+  --accent-chess: #9bb9df;
+  --accent-control: #b392f0;
+  --chart-obstacle: #61766d;
+  --chart-danger: #ff827a;
+  --chart-snake-body: #91dfb0;
   }
 }
+
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
@@ -52,9 +63,12 @@ body {
   font-size: 16px;
   line-height: 1.55;
 }
-a { color: inherit; text-underline-offset: 3px; }
+h1, h2, h3 { font-family: var(--display); }
+a { color: var(--accent-snake); text-underline-offset: 3px; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+code { font-family: var(--mono); }
+
 [data-accent="snake"] { --accent: var(--accent-snake); }
 [data-accent="image-compression"] { --accent: var(--accent-image-compression); }
 [data-accent="chess"] { --accent: var(--accent-chess); }
