@@ -7,7 +7,7 @@
   "output_size": 10,
   "hidden_sizes": [
     3,
-    9,
+    6,
     10,
     10,
     10,
@@ -28,5 +28,5 @@
   ],
   "activation": "relu",
   "normalisation": false,
-  "description": "Packed isolated ReLU memories over a fused convex lift; regions fitted to scalar label intervals and jointly optimised to a local packing plateau."
+  "description": "Packed isolated ReLU memories over a compact convex lift; jointly optimised scalar label regions with redundant carried features removed."
 }
