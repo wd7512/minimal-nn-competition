@@ -1,7 +1,7 @@
 {
   "benchmark": "fashion-mnist",
   "name": "mlp-32",
-  "author": "agent",
+  "author": "William Dennis",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,
