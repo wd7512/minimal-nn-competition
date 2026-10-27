@@ -115,7 +115,8 @@
     "parameter_count": 9,
     "passed": true,
     "score": 1.0,
-    "submission": "relu-1"
+    "submission": "relu-1",
+    "submitted_at": "2026-10-25"
   },
   {
     "author": "hermes",
@@ -232,7 +233,8 @@
     "parameter_count": 10,
     "passed": true,
     "score": 1.0,
-    "submission": "linear-lqr"
+    "submission": "linear-lqr",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "mistral medium 3.5 x le vibe",
@@ -349,7 +351,8 @@
     "parameter_count": 10,
     "passed": true,
     "score": 1.0,
-    "submission": "mistral-lqr"
+    "submission": "mistral-lqr",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "example author",
@@ -466,7 +469,8 @@
     "parameter_count": 10,
     "passed": false,
     "score": 0.99,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "jules",
@@ -583,7 +587,8 @@
     "parameter_count": 10,
     "passed": false,
     "score": 0.99,
-    "submission": "linear-pd"
+    "submission": "linear-pd",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "opencode",
@@ -626,7 +631,8 @@
     "parameter_count": 657409,
     "passed": false,
     "score": 0.9998199939727783,
-    "submission": "mlp-512-512"
+    "submission": "mlp-512-512",
+    "submitted_at": "2026-10-25"
   },
   {
     "author": "example author",
@@ -669,7 +675,8 @@
     "parameter_count": 53505,
     "passed": false,
     "score": 0.15401999652385712,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -713,7 +720,8 @@
     "parameter_count": 36875,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-47-13-4"
+    "submission": "mlp-47-13-4",
+    "submitted_at": "2026-10-27"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -756,7 +764,8 @@
     "parameter_count": 36975,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-47-16"
+    "submission": "mlp-47-16",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "example author",
@@ -799,7 +808,8 @@
     "parameter_count": 53505,
     "passed": true,
     "score": 1.0,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -818,7 +828,8 @@
     "parameter_count": 20241,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-23-64"
+    "submission": "mlp-23-64",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -837,7 +848,8 @@
     "parameter_count": 25017,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-31-16"
+    "submission": "mlp-31-16",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "agent",
@@ -855,7 +867,8 @@
     "parameter_count": 25450,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-32"
+    "submission": "mlp-32",
+    "submitted_at": "2026-10-25"
   },
   {
     "author": "hermes",
@@ -873,7 +886,8 @@
     "parameter_count": 27835,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-35"
+    "submission": "mlp-35",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "example author",
@@ -891,7 +905,8 @@
     "parameter_count": 50890,
     "passed": false,
     "score": 0.8961856961250305,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -909,7 +924,8 @@
     "parameter_count": 10345,
     "passed": false,
     "score": 0.8282285928726196,
-    "submission": "mlp-13"
+    "submission": "mlp-13",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -928,7 +944,8 @@
     "parameter_count": 10407,
     "passed": false,
     "score": 0.8222285509109497,
-    "submission": "mlp-13-8"
+    "submission": "mlp-13-8",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "issue-191 pilot",
@@ -946,7 +963,8 @@
     "parameter_count": 50890,
     "passed": false,
     "score": 0.11622857142857143,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-27"
   },
   {
     "author": "chatgpt think harder",
@@ -1270,7 +1288,8 @@
     "parameter_count": 316,
     "passed": false,
     "score": 0.78,
-    "submission": "lunar-distill-12"
+    "submission": "lunar-distill-12",
+    "submitted_at": "2026-10-26"
   },
   {
     "author": "example author",
@@ -1594,7 +1613,8 @@
     "parameter_count": 4996,
     "passed": false,
     "score": 0.74,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "gemini 3.6 flash x Jules",
@@ -1918,7 +1938,8 @@
     "parameter_count": 244,
     "passed": false,
     "score": 0.68,
-    "submission": "mlp-10-10"
+    "submission": "mlp-10-10",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -1937,7 +1958,8 @@
     "parameter_count": 8868,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-10-48"
+    "submission": "mlp-10-48",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "hermes",
@@ -1956,7 +1978,8 @@
     "parameter_count": 11350,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-14-14"
+    "submission": "mlp-14-14",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "example author",
@@ -1974,7 +1997,8 @@
     "parameter_count": 50890,
     "passed": false,
     "score": 0.9895285964012146,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -1995,7 +2019,8 @@
     "parameter_count": 3934,
     "passed": false,
     "score": 0.9171571135520935,
-    "submission": "mlp-4-16-16-16-s1k"
+    "submission": "mlp-4-16-16-16-s1k",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -2014,7 +2039,8 @@
     "parameter_count": 5631,
     "passed": false,
     "score": 0.8737857341766357,
-    "submission": "mlp-7-7"
+    "submission": "mlp-7-7",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -2033,7 +2059,8 @@
     "parameter_count": 4822,
     "passed": false,
     "score": 0.8534285426139832,
-    "submission": "mlp-6-6"
+    "submission": "mlp-6-6",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "opus 5.5 high x claude code",
@@ -2054,7 +2081,8 @@
     "parameter_count": 3934,
     "passed": false,
     "score": 0.8044428825378418,
-    "submission": "mlp-4-16-16-16"
+    "submission": "mlp-4-16-16-16",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "issue-191 pilot",
@@ -2072,7 +2100,8 @@
     "parameter_count": 50890,
     "passed": false,
     "score": 0.1561142857142857,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "chatgpt think harder",
@@ -2191,7 +2220,8 @@
     "parameter_count": 77,
     "passed": true,
     "score": 1.0,
-    "submission": "energy-8"
+    "submission": "energy-8",
+    "submitted_at": "2026-10-26"
   },
   {
     "author": "gemini 3.6 flash x jules",
@@ -2310,7 +2340,8 @@
     "parameter_count": 149,
     "passed": true,
     "score": 1.0,
-    "submission": "mlp-16"
+    "submission": "mlp-16",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "example author",
@@ -2430,7 +2461,8 @@
     "parameter_count": 4741,
     "passed": true,
     "score": 1.0,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -4233,7 +4265,8 @@
     "parameter_count": 145156,
     "passed": false,
     "score": 0.19,
-    "submission": "sl19-512-256"
+    "submission": "sl19-512-256",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -6036,7 +6069,8 @@
     "parameter_count": 145156,
     "passed": false,
     "score": 0.16,
-    "submission": "sl16-512-256"
+    "submission": "sl16-512-256",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -7839,7 +7873,8 @@
     "parameter_count": 145156,
     "passed": false,
     "score": 0.09,
-    "submission": "sl9-512-256"
+    "submission": "sl9-512-256",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -9642,7 +9677,8 @@
     "parameter_count": 145156,
     "passed": false,
     "score": 0.07,
-    "submission": "sl7-512-256"
+    "submission": "sl7-512-256",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -11445,7 +11481,8 @@
     "parameter_count": 145156,
     "passed": false,
     "score": 0.0,
-    "submission": "ppo-512-256"
+    "submission": "ppo-512-256",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "hermes",
@@ -13247,7 +13284,8 @@
     "parameter_count": 14852,
     "passed": false,
     "score": 0.0,
-    "submission": "ppo-512"
+    "submission": "ppo-512",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "hermes",
@@ -15049,7 +15087,8 @@
     "parameter_count": 14852,
     "passed": false,
     "score": 0.0,
-    "submission": "obs-fb"
+    "submission": "obs-fb",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "example author",
@@ -16852,7 +16891,8 @@
     "parameter_count": 6020,
     "passed": false,
     "score": 0.0,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "chatgpt think harder",
@@ -17379,7 +17419,8 @@
     "parameter_count": 277,
     "passed": true,
     "score": 1.0,
-    "submission": "cycle-17x7"
+    "submission": "cycle-17x7",
+    "submitted_at": "2026-10-26"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -17906,7 +17947,8 @@
     "parameter_count": 314,
     "passed": true,
     "score": 1.0,
-    "submission": "cycle-18x8"
+    "submission": "cycle-18x8",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse-spark-1.3 x hermes",
@@ -18432,7 +18474,8 @@
     "parameter_count": 356,
     "passed": true,
     "score": 1.0,
-    "submission": "cycle-32"
+    "submission": "cycle-32",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -18958,7 +19001,8 @@
     "parameter_count": 488,
     "passed": true,
     "score": 1.0,
-    "submission": "cycle-44"
+    "submission": "cycle-44",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "hermes",
@@ -19484,7 +19528,8 @@
     "parameter_count": 400,
     "passed": false,
     "score": 0.0,
-    "submission": "serp-36"
+    "submission": "serp-36",
+    "submitted_at": "2026-10-24"
   },
   {
     "author": "example author",
@@ -20011,7 +20056,8 @@
     "parameter_count": 6020,
     "passed": false,
     "score": 0.0,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "opus 5.5 high x claude code",
@@ -20537,7 +20583,8 @@
     "parameter_count": 37,
     "passed": true,
     "score": 1.0,
-    "submission": "hamiltonian-3-h6"
+    "submission": "hamiltonian-3-h6",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -21063,7 +21110,8 @@
     "parameter_count": 92,
     "passed": true,
     "score": 1.0,
-    "submission": "serpentine-8-h6"
+    "submission": "serpentine-8-h6",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -21590,7 +21638,8 @@
     "parameter_count": 160,
     "passed": true,
     "score": 1.0,
-    "submission": "serpentine-6-6-fs14"
+    "submission": "serpentine-6-6-fs14",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "gemini 3.6 flash x jules",
@@ -22117,7 +22166,8 @@
     "parameter_count": 228,
     "passed": true,
     "score": 1.0,
-    "submission": "hamiltonian-8-8-fs14"
+    "submission": "hamiltonian-8-8-fs14",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -22644,7 +22694,8 @@
     "parameter_count": 228,
     "passed": true,
     "score": 1.0,
-    "submission": "serpentine-8-8-fs14"
+    "submission": "serpentine-8-8-fs14",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -23171,7 +23222,8 @@
     "parameter_count": 704,
     "passed": true,
     "score": 1.0,
-    "submission": "hamiltonian-20-16-fs14"
+    "submission": "hamiltonian-20-16-fs14",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "opus 5.5 high x claude code",
@@ -23698,7 +23750,8 @@
     "parameter_count": 708,
     "passed": true,
     "score": 1.0,
-    "submission": "shortcut-16-16-fs22"
+    "submission": "shortcut-16-16-fs22",
+    "submitted_at": "2026-10-23"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -24225,7 +24278,8 @@
     "parameter_count": 1068,
     "passed": true,
     "score": 1.0,
-    "submission": "hamiltonian-24-16"
+    "submission": "hamiltonian-24-16",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "muse spark 1.3 x hermes",
@@ -24752,7 +24806,8 @@
     "parameter_count": 18948,
     "passed": true,
     "score": 1.0,
-    "submission": "table-128-128"
+    "submission": "table-128-128",
+    "submitted_at": "2026-10-22"
   },
   {
     "author": "example author",
@@ -25279,6 +25334,7 @@
     "parameter_count": 6020,
     "passed": false,
     "score": 0.0,
-    "submission": "example"
+    "submission": "example",
+    "submitted_at": "2026-10-22"
   }
 ]

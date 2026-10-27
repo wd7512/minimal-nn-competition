@@ -5,6 +5,7 @@ import json
 import shutil
 import statistics
 from dataclasses import asdict
+from datetime import date
 
 from minimal_nn_competition import __version__
 from minimal_nn_competition.benchmarks.common.control.replay import steps_text
@@ -309,6 +310,7 @@ td.submission a:hover { text-decoration-color: var(--accent); text-decoration-th
 .submission__meta .score { font-weight: 600; color: var(--ink); font-size: 11px; white-space: nowrap; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.num { font-family: var(--mono); font-size: 12px; }
+td.date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
 .std { color: var(--muted); font-weight: 400; font-size: 11px; white-space: nowrap; }
 .sr-only {
@@ -1079,6 +1081,19 @@ def _submission_guide_url(benchmark):
     )
 
 
+def _submission_date_html(value):
+    if not value:
+        return "—"
+    try:
+        submitted = date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return html.escape(str(value))
+    day = submitted.day
+    suffix = "th" if 11 <= day % 100 <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+    label = f"{day}{suffix} {submitted.strftime('%b')} '{submitted.strftime('%y')}"
+    return f'<time datetime="{submitted.isoformat()}">{label}</time>'
+
+
 def _table(results, submission_links=None, benchmark=None):
     rows = []
     benchmark = results[0].benchmark if results else benchmark
@@ -1087,7 +1102,12 @@ def _table(results, submission_links=None, benchmark=None):
         link = (submission_links or {}).get((result.benchmark, result.submission))
         status = "pass" if result.passed else "fail"
         row_class = "is-pass" if result.passed else "is-fail"
-        cells = f'<td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link, status, html.escape(_score_text(result)))}</td><td class="num">{result.parameter_count:,}</td>'
+        cells = (
+            f'<td class="rank">{rank}</td>'
+            f'<td class="submission">{_submission_cell(result, link, status, html.escape(_score_text(result)))}</td>'
+            f'<td class="date">{_submission_date_html(result.submitted_at)}</td>'
+            f'<td class="num">{result.parameter_count:,}</td>'
+        )
         if fourth is not None:
             cells += f'<td class="num">{_fourth_html(result)}</td>'
         rows.append(f'<tr class="{row_class}">{cells}</tr>')
@@ -1104,14 +1124,14 @@ def _table(results, submission_links=None, benchmark=None):
         initially_hidden = " hidden" if results else ""
         empty_row = (
             f'<tr class="empty-row" data-empty-row{initially_hidden}>'
-            f'<td colspan="{3 + int(fourth is not None)}">'
+            f'<td colspan="{4 + int(fourth is not None)}">'
             '<span data-empty-message>Nobody’s found a passing solution for this one yet — '
             'maybe you can?</span> '
             f'<a href="{html.escape(_submission_guide_url(benchmark))}">How to submit</a>'
             "</td></tr>"
         )
         rows.append(empty_row)
-    return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Name</th><th scope="col" class="num">Parameters</th>{fourth_header}</tr></thead><tbody>{"".join(rows)}</tbody></table>"""
+    return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Name</th><th scope="col" class="date">Submitted</th><th scope="col" class="num">Parameters</th>{fourth_header}</tr></thead><tbody>{"".join(rows)}</tbody></table>"""
 
 
 def _detail_row(label, value):
