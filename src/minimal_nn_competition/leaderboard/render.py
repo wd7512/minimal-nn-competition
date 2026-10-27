@@ -165,36 +165,55 @@ h1 {
 .lead { margin: 20px 0 0; max-width: 54ch; color: var(--ink); font-size: 19px; }
 .links {
   margin: 24px 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px 20px;
-  font: 12px/1.4 var(--mono);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 760px;
 }
-.links .primary-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 16px;
-  border: 2px solid var(--accent-cta-ink);
+.links a {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 13px 16px;
   border-radius: 3px;
+  border: 2px solid var(--rule-strong);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out;
+}
+.links a:hover { text-decoration: none; }
+.links a:active { transform: translate(2px, 2px); }
+.links .primary-action {
+  border-color: var(--accent-cta-ink);
   background: var(--accent-cta);
   box-shadow: 3px 3px 0 var(--accent-cta-ink);
   color: var(--accent-cta-ink);
-  font-weight: 700;
-  text-decoration: none;
-  transition: transform 150ms ease-out, box-shadow 150ms ease-out, background-color 150ms ease-out;
 }
 .links .primary-action:hover {
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0 var(--accent-cta-ink);
   background: var(--accent-cta-hover);
   color: var(--accent-cta-ink);
-  text-decoration: none;
 }
-.links .primary-action:active {
-  transform: translate(3px, 3px);
-  box-shadow: none;
+.links .secondary-action:hover {
+  transform: translate(2px, 2px);
+  border-color: var(--ink);
+  background: var(--hover);
+  color: var(--ink);
+}
+.links .action-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 12px/1.4 var(--mono);
+}
+.links .action-note {
+  display: block;
+  color: var(--muted);
+  font: 14px/1.45 var(--body);
 }
 .featured {
   display: grid;
@@ -365,6 +384,7 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
 }
 @media (max-width: 700px) {
   .shell { padding: 24px 16px 56px; }
+  .links { grid-template-columns: 1fr; }
   .rail nav { grid-template-columns: 1fr; }
   .rail a { border-left: 0; border-bottom: 1px solid var(--rule); padding-left: 0; }
   .rail a + a { border-left: 0; padding-left: 0; }
@@ -1454,7 +1474,7 @@ def render_html(results, submission_links=None):
             '<span>parameters</span></p></div>'
             f"{view_featured}</section>"
         )
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Open challenge · Public leaderboard</p><h1>How small can a model get?</h1><p class="lead">Build a compact network, test it against the benchmarks, and see where it ranks.</p><p class="links"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit your model <span aria-hidden="true">→</span></a></p></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span><span class="action-note">Share a compact model and see how it ranks.</span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span><span class="action-note">Suggest a problem or network you’d like to make smaller.</span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
 
