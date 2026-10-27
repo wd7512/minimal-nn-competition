@@ -1,0 +1,14 @@
+{
+  "benchmark": "lunarlander",
+  "name": "lunar-distill-12",
+  "author": "chatgpt think harder",
+  "architecture": "mlp",
+  "input_size": 8,
+  "output_size": 4,
+  "hidden_sizes": [
+    12,
+    12
+  ],
+  "activation": "relu",
+  "description": "Compact LunarLander policy distilled from a PPO teacher and refined with teacher-labelled rollouts. Local exact-engine evaluation: 78/100 fixed seeds landed."
+}
