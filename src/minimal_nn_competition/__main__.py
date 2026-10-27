@@ -54,6 +54,10 @@ def _download_args(parser):
     parser.add_argument("--force", action="store_true")
 
 
+def _download_output_args(parser):
+    parser.add_argument("--output", type=Path, default=Path("data"))
+
+
 def _parser():
     parser = argparse.ArgumentParser(description="Evaluate minimal neural-network submissions")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -131,12 +135,12 @@ def _parser():
     download_shuffled = add(
         "download-mnist-shuffled", help="Download MNIST and use the frozen shuffled labels"
     )
-    _download_args(download_shuffled)
+    _download_output_args(download_shuffled)
     download_fashion_shuffled = add(
         "download-fashion-mnist-shuffled",
         help="Download Fashion-MNIST and use the frozen shuffled labels",
     )
-    _download_args(download_fashion_shuffled)
+    _download_output_args(download_fashion_shuffled)
     train_mnist = add("train-mnist", help="Train the MNIST example submission")
     _classifier_train_args(train_mnist, "data/mnist.pt", "models/mnist/example")
     train_fashion = add("train-fashion-mnist", help="Train the Fashion-MNIST example submission")
@@ -356,7 +360,7 @@ def main(argv=None):
 
             try:
                 cache_path = download_shuffled_dataset(
-                    args.command.removeprefix("download-"), args.output, force=args.force
+                    args.command.removeprefix("download-"), args.output
                 )
             except (OSError, ValueError, RuntimeError) as exc:
                 return _fail(exc)

@@ -33,14 +33,15 @@ MNIST shuffled and 10% for Fashion-MNIST shuffled.
 ```sh
 uv run mnnc download-mnist-shuffled --output data
 uv run mnnc download-fashion-mnist-shuffled --output data
-uv run mnnc evaluate mnist-shuffled models/mnist-shuffled/example
-uv run mnnc evaluate fashion-mnist-shuffled models/fashion-mnist-shuffled/example
 ```
 
-Evaluation processes the complete dataset in batches of 512. Override the cache
-with `--data-path`; `mnnc collect` accepts `--mnist-shuffled-data-path` and
-`--fashion-mnist-shuffled-data-path`. The normalisation flag works the same way as
-the original image benchmarks.
+No shuffled-label example submission is provided because no passing reference
+exists. Once a submission directory is available, evaluate it with
+`uv run mnnc evaluate mnist-shuffled <submission-directory> --data-path
+data/mnist-shuffled.pt` (and replace the benchmark and cache names for
+Fashion-MNIST). Evaluation processes all 70,000 examples in batches of 512.
+`mnnc collect` accepts `--mnist-shuffled-data-path` and
+`--fashion-mnist-shuffled-data-path`.
 
 ## Reference feasibility
 
@@ -53,6 +54,8 @@ artifacts remain necessary before these tracks can be presented as achievable
 competitions. The information count `70,000 * log2(10) ≈ 232,535` bits is a
 reference calculation, not a proven MLP size lower bound.
 
-The main image leaderboard places true-label and shuffled-label tracks side by side
-under Image classification. Scores on the shuffled tracks describe exact recall of
-the public examples and should not be read as image understanding.
+The main image leaderboard includes a tested comparison table with true-label and
+shuffled-label best scores and parameter counts side by side. It also lists the
+constant baselines and the counting-reference caveat. Scores on shuffled tracks
+describe exact recall of the public examples and should not be read as image
+understanding.

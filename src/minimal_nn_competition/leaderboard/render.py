@@ -981,6 +981,58 @@ def _version_label(benchmark):
     return benchmark.replace("-", " ").title()
 
 
+def _track_summary(results, benchmark):
+    entries = [result for result in results if result.benchmark == benchmark]
+    if not entries:
+        return "No submissions yet"
+    best = max(entries, key=lambda result: (result.score, result.passed, -result.parameter_count))
+    best_text = (
+        f"Best: {html.escape(best.name)} ({html.escape(_score_text(best))}, "
+        f"{best.parameter_count:,} params)"
+    )
+    passing = [result for result in entries if result.passed]
+    if passing:
+        smallest = min(passing, key=lambda result: result.parameter_count)
+        pass_text = f"Smallest pass: {smallest.parameter_count:,} params"
+    else:
+        pass_text = "Smallest pass: none"
+    return f"{best_text}<br>{pass_text}"
+
+
+def _image_comparison_html(results):
+    rows = (
+        ("MNIST", "11.25%", "mnist", "mnist-shuffled"),
+        ("Fashion-MNIST", "10.00%", "fashion-mnist", "fashion-mnist-shuffled"),
+    )
+    body = "".join(
+        f"<tr><td>{html.escape(dataset)}</td><td>70,000</td>"
+        f'<td class="num">{html.escape(baseline)}</td>'
+        f"<td>{_track_summary(results, true_track)}</td>"
+        f"<td>{_track_summary(results, shuffled_track)}</td></tr>"
+        for dataset, baseline, true_track, shuffled_track in rows
+    )
+    return (
+        '<div class="image-comparison"><h2>True-label and shuffled-label comparison</h2>'
+        "<p>Each pair uses the same 70,000 public images and ten output classes. "
+        "True-label scores test digit or clothing classification; shuffled-label scores "
+        "measure exact recall of one fixed public label assignment. Model sizes are "
+        "shown as parameter counts.</p>"
+        '<div class="table-wrap" role="region" tabindex="0" '
+        'aria-label="True-label and shuffled-label image benchmark comparison">'
+        '<table class="results"><caption class="sr-only">Image benchmark comparison</caption>'
+        '<thead><tr><th scope="col">Dataset</th>'
+        '<th scope="col" class="num">Examples</th>'
+        '<th scope="col" class="num">Constant baseline</th>'
+        '<th scope="col">True-label track</th>'
+        '<th scope="col">Shuffled-label track</th></tr></thead>'
+        f"<tbody>{body}</tbody></table></div>"
+        '<p class="muted">For a shuffled track, storing 70,000 independent ten-way '
+        "labels has an information count of 70,000 × log₂(10) ≈ 232,535 bits. This is "
+        "a counting reference under that independence assumption, not a proven lower "
+        "bound on an MLP’s parameter count or checkpoint size.</p></div>"
+    )
+
+
 def _group_specs(results):
     present = {result.benchmark for result in results}
     groups = []
@@ -1283,6 +1335,7 @@ def render_html(results, submission_links=None):
         sections.append(
             f'<section class="group" id="{html.escape(group_id)}" data-group-section data-accent="{html.escape(accent)}" aria-labelledby="{html.escape(group_id)}-title">'
             f'<div class="group__head"><div><p class="eyebrow" id="{html.escape(group_id)}-title"><span class="group__index">{group_number:02d}</span> / {html.escape(label)}</p></div></div>'
+            f"{_image_comparison_html(results) if group_id == 'image-compression' else ''}"
             f"{version_row}{''.join(panels)}</section>"
         )
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""

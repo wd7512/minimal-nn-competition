@@ -65,7 +65,13 @@ def test_download_shuffled_dataset_uses_pinned_labels(tmp_path: Path, monkeypatc
     inputs[:, 2] = indices // 65_536
     source = tmp_path / "mnist.pt"
     torch.save((inputs, torch.zeros(70_000, dtype=torch.int64)), source)
-    monkeypatch.setattr(shuffled_mnist, "download_mnist", lambda destination, force=False: source)
+    calls = []
+
+    def load_verified_source(destination, force=False):
+        calls.append(force)
+        return source
+
+    monkeypatch.setattr(shuffled_mnist, "download_mnist", load_verified_source)
 
     output = shuffled_mnist.download_shuffled_dataset("mnist-shuffled", tmp_path)
     saved_inputs, labels = torch.load(output, weights_only=True)
@@ -75,6 +81,7 @@ def test_download_shuffled_dataset_uses_pinned_labels(tmp_path: Path, monkeypatc
     assert output == tmp_path / "mnist-shuffled.pt"
     assert torch.equal(saved_inputs, inputs)
     assert torch.equal(labels, expected)
+    assert calls == [True]
 
 
 def test_duplicate_images_must_have_consistent_labels() -> None:
@@ -89,7 +96,7 @@ def test_download_shuffled_cli_wires_benchmark(tmp_path: Path, monkeypatch, caps
     monkeypatch.setattr(
         shuffled_mnist,
         "download_shuffled_dataset",
-        lambda name, destination, force=False: expected,
+        lambda name, destination: expected,
     )
     assert main(["download-mnist-shuffled", "--output", str(tmp_path)]) == 0
     assert capsys.readouterr().out.strip() == str(expected)

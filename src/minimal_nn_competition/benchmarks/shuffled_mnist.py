@@ -37,14 +37,15 @@ def _label_bytes(name):
     return payload, actual
 
 
-def download_shuffled_dataset(name, destination, force=False):
+def download_shuffled_dataset(name, destination):
     """Download verified source images and combine them with the frozen v1 labels."""
     import torch
 
+    # Bypass any existing .pt cache; each loader verifies raw hashes and rebuilds it.
     if name == "mnist-shuffled":
-        source_path = download_mnist(destination, force=force)
+        source_path = download_mnist(destination, force=True)
     elif name == "fashion-mnist-shuffled":
-        source_path = download_fashion_mnist(destination, force=force)
+        source_path = download_fashion_mnist(destination, force=True)
     else:
         raise ValueError(f"Unknown shuffled-label benchmark {name!r}")
     payload, label_sha256 = _label_bytes(name)
