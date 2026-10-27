@@ -2058,6 +2058,41 @@
     "submission": "mlp-4-16-16-16"
   },
   {
+    "author": "wd7512 (with Codex)",
+    "benchmark": "mnist-shuffled",
+    "details": {
+      "normalisation": false,
+      "samples": 70000,
+      "structure": [
+        784,
+        3,
+        6,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        4,
+        18683,
+        1,
+        10
+      ]
+    },
+    "name": "grouped-memory-3d",
+    "parameter_count": 115932,
+    "passed": true,
+    "score": 1.0,
+    "submission": "grouped-memory-3d"
+  },
+  {
     "author": "chatgpt think harder",
     "benchmark": "pendulum",
     "details": {
