@@ -105,9 +105,6 @@ _SITE_STYLE = """
 }
 .brand-dots { display: inline-flex; gap: 3px; }
 .brand-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
-.brand-dots span:nth-child(1) { background: var(--accent-snake); }
-.brand-dots span:nth-child(2) { background: var(--accent-image-compression); }
-.brand-dots span:nth-child(3) { background: var(--accent-chess); }
 .rail__label {
   margin: 24px 0 8px;
   font: 700 15px/1.4 var(--mono);
@@ -1318,6 +1315,10 @@ def render_submission_pages(results, replays, output_dir):
 
 def render_html(results, submission_links=None):
     groups = _group_specs(results)
+    brand_dots = "".join(
+        f'<span data-accent="{html.escape(spec["accent"], quote=True)}"></span>'
+        for spec in groups
+    )
     entries = {}
     for result in results:
         entries.setdefault(result.benchmark, []).append(result)
@@ -1419,7 +1420,7 @@ def render_html(results, submission_links=None):
             '<span>parameters</span></p></div>'
             f"{view_featured}</section>"
         )
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Open challenge · Public leaderboard</p><h1>How small can a model get?</h1><p class="lead">Build a compact network, test it against the benchmarks, and see where it ranks.</p><p class="links"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit your model <span aria-hidden="true">→</span></a></p></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Open challenge · Public leaderboard</p><h1>How small can a model get?</h1><p class="lead">Build a compact network, test it against the benchmarks, and see where it ranks.</p><p class="links"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit your model <span aria-hidden="true">→</span></a></p></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
 
