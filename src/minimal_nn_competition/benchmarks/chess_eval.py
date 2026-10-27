@@ -6,13 +6,26 @@ from pathlib import Path
 
 from minimal_nn_competition.model.entry import materialize_submission
 
+__all__ = [
+    "CHESS_EVAL_DATA",
+    "ChessEval10kBenchmark",
+    "ChessEval100kBenchmark",
+    "ChessEvalBenchmark",
+    "INPUT_SIZE",
+    "OUTPUT_SIZE",
+    "TOLERANCE_PAWNS",
+    "encode",
+    "load_tensors",
+]
+
 INPUT_SIZE = 769
 OUTPUT_SIZE = 1
 TOLERANCE_PAWNS = 0.1
 DEFAULT_FOLDS = 20
+_DATA_DIRECTORY = Path(__file__).parent / "data" / "chess_eval"
 CHESS_EVAL_DATA = {
-    "chess-eval-10k": Path(__file__).with_name("positions-10k.jsonl"),
-    "chess-eval-100k": Path(__file__).with_name("positions-100k.jsonl"),
+    "chess-eval-10k": _DATA_DIRECTORY / "positions-10k.jsonl",
+    "chess-eval-100k": _DATA_DIRECTORY / "positions-100k.jsonl",
 }
 
 _PIECES = {piece: index for index, piece in enumerate("PNBRQKpnbrqk")}

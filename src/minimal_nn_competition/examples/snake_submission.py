@@ -71,7 +71,7 @@ def _gae(rewards, values, dones, gamma, lam):
 def _evaluate(policy, device, seeds, benchmark):
     import torch
 
-    from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
+    from minimal_nn_competition.benchmarks.common.snake.environment import SnakeEnvironment
 
     lengths = []
     wins = []
@@ -112,10 +112,9 @@ def train(
     from torch import nn
     from torch.distributions import Categorical
 
-    from minimal_nn_competition.benchmarks.register import create_benchmark
-    from minimal_nn_competition.benchmarks.snake.benchmark import DEFAULT_SEEDS
-    from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
-    from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+    from minimal_nn_competition.benchmarks.common.snake.environment import SnakeEnvironment
+    from minimal_nn_competition.benchmarks.registry import SNAKE_BENCHMARKS, create_benchmark
+    from minimal_nn_competition.benchmarks.snake_simple_8x8 import DEFAULT_SEEDS
 
     if benchmark not in SNAKE_BENCHMARKS:
         raise ValueError(f"Unknown Snake benchmark {benchmark!r}")

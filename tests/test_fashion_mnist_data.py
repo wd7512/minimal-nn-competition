@@ -7,9 +7,9 @@ import pytest
 import torch
 
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.fashion_mnist import data_loader
-from minimal_nn_competition.benchmarks.fashion_mnist.data_loader import FASHION_MNIST_SHA256
-from minimal_nn_competition.benchmarks.idx import FILES
+from minimal_nn_competition.benchmarks import fashion_mnist as data_loader
+from minimal_nn_competition.benchmarks.common.idx import FILES
+from minimal_nn_competition.benchmarks.fashion_mnist import FASHION_MNIST_SHA256
 
 
 def _image_bytes(images: list[list[int]], rows: int, columns: int) -> bytes:

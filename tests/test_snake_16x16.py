@@ -6,10 +6,10 @@ import pytest
 import torch
 
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.register import create_benchmark
-from minimal_nn_competition.benchmarks.snake import benchmark as snake_benchmark
-from minimal_nn_competition.benchmarks.snake.benchmark import SnakeSimple16x16Benchmark
-from minimal_nn_competition.benchmarks.snake.replay import record_game, replay_stem
+from minimal_nn_competition.benchmarks.common.snake import benchmark as snake_benchmark
+from minimal_nn_competition.benchmarks.common.snake.replay import record_game, replay_stem
+from minimal_nn_competition.benchmarks.registry import create_benchmark
+from minimal_nn_competition.benchmarks.snake_simple_16x16 import SnakeSimple16x16Benchmark
 from minimal_nn_competition.leaderboard.render import (
     render_site,
     render_submission_pages,
@@ -305,7 +305,7 @@ def test_16x16_rejects_out_of_range_input_indices(tmp_path: Path) -> None:
 def test_train_16x16_scales_the_default_move_budget(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from minimal_nn_competition.benchmarks.snake import environment as snake_environment
+    from minimal_nn_competition.benchmarks.common.snake import environment as snake_environment
     from minimal_nn_competition.examples import snake_submission
 
     captured = []

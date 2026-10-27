@@ -1,6 +1,16 @@
-"""Download and cache the official Fashion-MNIST dataset without torchvision."""
+"""Fashion-MNIST benchmark: classify the full dataset, ranked by accuracy then size."""
 
-from minimal_nn_competition.benchmarks.idx import download_dataset, download_file
+from minimal_nn_competition.benchmarks.common.idx import download_dataset, download_file
+from minimal_nn_competition.benchmarks.common.image_classification import (
+    ImageClassificationBenchmark,
+)
+
+__all__ = [
+    "FASHION_MNIST_BASE_URL",
+    "FASHION_MNIST_SHA256",
+    "FashionMnistBenchmark",
+    "download_fashion_mnist",
+]
 
 FASHION_MNIST_BASE_URL = (
     "https://github.com/zalandoresearch/fashion-mnist/raw/"
@@ -13,6 +23,11 @@ FASHION_MNIST_SHA256 = {
     "t10k-images-idx3-ubyte.gz": "346e55b948d973a97e58d2351dde16a484bd415d4595297633bb08f03db6a073",
     "t10k-labels-idx1-ubyte.gz": "67da17c76eaffca5446c3361aaab5c3cd6d1c2608764d35dfb1850b086bf8dd5",
 }
+
+
+class FashionMnistBenchmark(ImageClassificationBenchmark):
+    name = "fashion-mnist"
+    display_name = "Fashion-MNIST"
 
 
 def download_fashion_mnist(destination, force=False):

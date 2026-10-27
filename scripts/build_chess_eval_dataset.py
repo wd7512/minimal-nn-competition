@@ -15,7 +15,7 @@ from pathlib import Path
 import duckdb
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "src/minimal_nn_competition/benchmarks/chess_eval"
+OUTPUT = ROOT / "src/minimal_nn_competition/benchmarks/data/chess_eval"
 SOURCE = "https://huggingface.co/datasets/Lichess/chess-position-evaluations"
 FILES = (0, 4, 8, 12, 16)
 URL = f"{SOURCE}/resolve/main/data/data_%04d.parquet"

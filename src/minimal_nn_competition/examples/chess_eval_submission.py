@@ -49,7 +49,7 @@ def train(
     import torch
     from torch import nn
 
-    from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
+    from minimal_nn_competition.benchmarks.chess_eval import (
         CHESS_EVAL_DATA,
         TOLERANCE_PAWNS,
         load_tensors,
@@ -127,7 +127,7 @@ def train(
 
 
 def main(argv=None):
-    from minimal_nn_competition.benchmarks.chess_eval.benchmark import CHESS_EVAL_DATA
+    from minimal_nn_competition.benchmarks.chess_eval import CHESS_EVAL_DATA
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(description=__doc__)

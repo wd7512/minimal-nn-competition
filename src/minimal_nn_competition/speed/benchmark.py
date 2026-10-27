@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.snake.engine import SnakeEngine
+from minimal_nn_competition.benchmarks.common.snake.engine import SnakeEngine
 from minimal_nn_competition.speed.agent import ACTIONS_BY_CELL, AGENT_NAME, BOARD_SIZE, SIZE
 
 HARNESS_VERSION = "snake-simple-8x8-speed-v2"

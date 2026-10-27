@@ -5,7 +5,7 @@ import pytest
 import torch
 
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.snake.replay import (
+from minimal_nn_competition.benchmarks.common.snake.replay import (
     REPLAY_SEED,
     load_replay,
     record_game,
