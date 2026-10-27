@@ -7,8 +7,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
-from minimal_nn_competition.benchmarks.snake.observation import OBSERVATION_SIZE
+from minimal_nn_competition.benchmarks.common.snake.observation import OBSERVATION_SIZE
+from minimal_nn_competition.benchmarks.registry import SNAKE_BENCHMARKS
 from minimal_nn_competition.model.entry import SubmissionConfig
 from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,

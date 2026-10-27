@@ -11,13 +11,16 @@ from minimal_nn_competition.internal import (
     SCOPES,
     InternalResult,
     Scope,
+    check_benchmark_scope_coverage,
     load_internal_results,
     measure_scope,
     rank_internal_results,
     save_internal_results,
     scope_files,
+    scope_for_benchmark,
     scope_rank,
     upsert_internal_result,
+    validate_scope_ownership,
 )
 from minimal_nn_competition.internal.render import (
     render_internal_html,
@@ -181,25 +184,69 @@ def test_unparseable_source_is_rejected() -> None:
 
 
 def test_scope_files_cover_src() -> None:
-    from minimal_nn_competition.internal import _SHARED_IMAGE_FILES
-
     root = Path(__file__).resolve().parent.parent
-    shared = {(root / source).resolve() for source in _SHARED_IMAGE_FILES}
-    covered: dict[Path, set[str]] = {}
-    for scope in SCOPES:
-        for path in scope_files(scope, root):
-            covered.setdefault(path.resolve(), set()).add(scope.name)
-    every = {
-        path.resolve() for path in (root / "src").rglob("*.py") if "__pycache__" not in path.parts
-    }
-    assert set(covered) == every
-    for path, scopes in covered.items():
-        if len(scopes) > 1:
-            if scopes == {"pendulum", "lunarlander"}:
-                assert path.name == "ppo.py"
-            else:
-                assert scopes == {"mnist", "fashion-mnist"}
-                assert path in shared
+    seen = validate_scope_ownership(root)
+    assert len(set(seen.values())) == len(SCOPES)
+
+
+def test_scope_files_reject_empty_scopes(tmp_path: Path) -> None:
+    empty = Scope(name="empty", sources=("does-not-exist",), tests=())
+    with pytest.raises(ValueError, match="matched no Python files"):
+        scope_files(empty, tmp_path)
+
+
+def test_registry_has_scope_coverage() -> None:
+    from minimal_nn_competition.benchmarks.registry import available_benchmarks
+
+    assert available_benchmarks()
+    assert check_benchmark_scope_coverage(available_benchmarks()) == sorted(
+        scope_for_benchmark(name) for name in available_benchmarks()
+    )
+
+
+def test_scope_for_benchmark_groups_chess_tiers() -> None:
+    assert scope_for_benchmark("chess-eval-10k") == "chess-eval"
+    assert scope_for_benchmark("chess-eval-100k") == "chess-eval"
+    assert scope_for_benchmark("mnist") == "mnist"
+
+
+def test_benchmark_scope_coverage_rejects_unknown() -> None:
+    with pytest.raises(ValueError, match="without a token scope"):
+        check_benchmark_scope_coverage(("mnist", "not-a-benchmark"))
+
+
+def test_benchmark_families_partition_registry() -> None:
+    from minimal_nn_competition.benchmarks.registry import (
+        CHESS_BENCHMARKS,
+        IMAGE_BENCHMARKS,
+        RL_BENCHMARKS,
+        SNAKE_BENCHMARKS,
+        available_benchmarks,
+    )
+
+    families = (
+        ("CHESS_BENCHMARKS", CHESS_BENCHMARKS),
+        ("IMAGE_BENCHMARKS", IMAGE_BENCHMARKS),
+        ("RL_BENCHMARKS", RL_BENCHMARKS),
+        ("SNAKE_BENCHMARKS", SNAKE_BENCHMARKS),
+    )
+    grouped = [name for _, names in families for name in names]
+    assert len(grouped) == len(set(grouped))
+    # Exact equality in both directions: no ungrouped IDs, no stale family entries.
+    assert set(grouped) == set(available_benchmarks())
+    for label, names in families:
+        for name in names:
+            assert scope_for_benchmark(name) in {scope.name for scope in SCOPES}, label
+
+
+def test_scope_groups_partition_scopes() -> None:
+    from minimal_nn_competition.internal import scope_groups
+
+    groups = scope_groups()
+    assert [title for title, _ in groups] == ["Core", "Benchmarks"]
+    grouped = [name for _, names in groups for name in names]
+    assert sorted(grouped) == sorted(scope.name for scope in SCOPES)
+    assert len(grouped) == len(set(grouped))
 
 
 def test_scope_tests_cover_suite_exactly_once() -> None:
@@ -217,6 +264,29 @@ def test_scope_tests_cover_suite_exactly_once() -> None:
     collected = {line.strip() for line in completed.stdout.splitlines() if "::" in line}
     mapped = [node for scope in SCOPES for node in expand_scope_tests(scope, collected)]
     assert sorted(mapped) == sorted(collected)
+
+
+def test_scope_nodes_exist_in_collected_suite() -> None:
+    """Name stale scope entries explicitly instead of failing on a list diff."""
+    from minimal_nn_competition.internal import expand_scope_tests
+
+    root = Path(__file__).resolve().parent.parent
+    completed = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert completed.returncode == 0
+    collected = {line.strip() for line in completed.stdout.splitlines() if "::" in line}
+    stale = sorted(
+        node
+        for scope in SCOPES
+        for node in expand_scope_tests(scope, collected)
+        if node not in collected
+    )
+    assert stale == []
 
 
 def _mini_tree(root: Path, failing: bool = False) -> Scope:
@@ -334,11 +404,14 @@ def test_internal_cli(tmp_path: Path) -> None:
     assert {result.scope for result in results} == {
         "cartpole",
         "chess-eval",
+        "common",
         "core",
         "fashion-mnist",
         "lunarlander",
         "mnist",
         "pendulum",
+        "snake-obstacles-8x8",
+        "snake-simple-16x16",
         "snake-simple-8x8",
     }
     assert all(result.status == "pass" for result in results)

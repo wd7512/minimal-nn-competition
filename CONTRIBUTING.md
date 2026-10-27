@@ -71,6 +71,14 @@ uv run dev-tools check
 Individual diagnostics are available with `uv run dev-tools tokens`,
 `uv run dev-tools snake-speed`, and `uv run dev-tools char-encoding`.
 
+### Adding a benchmark
+
+- Add one module under `src/minimal_nn_competition/benchmarks/` (+ example under `examples/`).
+- Register it in `benchmarks/registry.py` (`_factories` + family tuple).
+- Add a token scope in `internal/__init__.py` (`Scope` sources + tests).
+- Cover it in `tests/` (`test_benchmarks.py`, `test_internal.py` scope checks).
+- Update leaderboard groups in `leaderboard/render.py` if it starts a new group.
+
 ## Hidden boards
 
 The site also publishes the Snake Simple 8x8 speed and internal token boards:

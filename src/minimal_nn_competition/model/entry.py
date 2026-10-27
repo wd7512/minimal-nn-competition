@@ -18,7 +18,7 @@ from pydantic import (
     model_validator,
 )
 
-from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import SNAKE_BENCHMARKS
 from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,
     MAX_PARAMETERS,

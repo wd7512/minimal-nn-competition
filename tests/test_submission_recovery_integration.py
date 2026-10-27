@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from minimal_nn_competition.benchmarks.snake.replay import replay_stem
+from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem
 from minimal_nn_competition.runner.entry import BenchmarkResult
 from minimal_nn_competition.submissions import workflow
 from minimal_nn_competition.submissions.github import PullRequest

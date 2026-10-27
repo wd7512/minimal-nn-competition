@@ -1,8 +1,8 @@
 import pytest
 
-from minimal_nn_competition.benchmarks.snake.engine import SnakeEngine
-from minimal_nn_competition.benchmarks.snake.environment import SnakeEnvironment
-from minimal_nn_competition.benchmarks.snake.observation import OBSERVATION_SIZE, observe
+from minimal_nn_competition.benchmarks.common.snake.engine import SnakeEngine
+from minimal_nn_competition.benchmarks.common.snake.environment import SnakeEnvironment
+from minimal_nn_competition.benchmarks.common.snake.observation import OBSERVATION_SIZE, observe
 
 
 def _engine_with_body() -> SnakeEngine:
@@ -165,7 +165,7 @@ def test_observation_matches_literal_reference_on_random_states() -> None:
 
 @pytest.mark.parametrize("size", [3, 4, 5, 8])
 def test_geometry_masks_match_literal_definitions(size: int) -> None:
-    from minimal_nn_competition.benchmarks.snake.engine import geometry
+    from minimal_nn_competition.benchmarks.common.snake.engine import geometry
 
     masks = geometry(size)
     left_mask = 0

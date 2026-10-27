@@ -5,10 +5,13 @@ import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.chess_eval.names import CHESS_BENCHMARKS
-from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
-from minimal_nn_competition.benchmarks.register import available_benchmarks, create_benchmark
-from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import (
+    CHESS_BENCHMARKS,
+    RL_BENCHMARKS,
+    SNAKE_BENCHMARKS,
+    available_benchmarks,
+    create_benchmark,
+)
 from minimal_nn_competition.leaderboard import load_results, rank_results, save_results
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission, SubmissionError
@@ -150,7 +153,7 @@ def _parser():
 
 def _record_replay(replay_dir, name, benchmark, submission):
     if benchmark.name in RL_BENCHMARKS:
-        from minimal_nn_competition.benchmarks.control.replay import (
+        from minimal_nn_competition.benchmarks.common.control.replay import (
             REPLAY_SEED,
             record_game,
             replay_stem,
@@ -164,13 +167,13 @@ def _record_replay(replay_dir, name, benchmark, submission):
             record_game(benchmark.name, loaded.model, seed=REPLAY_SEED, steps=steps),
         )
         return
-    from minimal_nn_competition.benchmarks.snake.benchmark import selected_input_indices
-    from minimal_nn_competition.benchmarks.snake.replay import (
+    from minimal_nn_competition.benchmarks.common.snake.replay import (
         REPLAY_SEED,
         record_game,
         replay_stem,
         save_replay,
     )
+    from minimal_nn_competition.benchmarks.snake_simple_8x8 import selected_input_indices
 
     loaded = benchmark.load_submission(submission)
     save_replay(
@@ -186,7 +189,7 @@ def _record_replay(replay_dir, name, benchmark, submission):
 
 
 def _load_replays(replay_dir):
-    from minimal_nn_competition.benchmarks.snake.replay import load_replay
+    from minimal_nn_competition.benchmarks.common.snake.replay import load_replay
 
     if replay_dir is None or not replay_dir.is_dir():
         return {}
@@ -210,7 +213,7 @@ def main(argv=None):
         _emit("\n".join(available_benchmarks()))
         return 0
     if args.command == "validate-snake-obstacles-8x8":
-        from minimal_nn_competition.benchmarks.snake.layout import validate_seed
+        from minimal_nn_competition.benchmarks.common.snake.layout import validate_seed
 
         failures = 0
         for seed in range(args.seeds):
@@ -319,11 +322,9 @@ def main(argv=None):
         return 0
     if args.command in ("download-mnist", "download-fashion-mnist"):
         if args.command == "download-mnist":
-            from minimal_nn_competition.benchmarks.mnist.data_loader import download_mnist
+            from minimal_nn_competition.benchmarks.mnist import download_mnist
         else:
-            from minimal_nn_competition.benchmarks.fashion_mnist.data_loader import (
-                download_fashion_mnist,
-            )
+            from minimal_nn_competition.benchmarks.fashion_mnist import download_fashion_mnist
 
             download_mnist = download_fashion_mnist
         try:

@@ -14,21 +14,23 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.control.names import RL_BENCHMARKS
-from minimal_nn_competition.benchmarks.register import create_benchmark
-from minimal_nn_competition.benchmarks.snake.benchmark import selected_input_indices
-from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
-from minimal_nn_competition.benchmarks.snake.replay import (
+from minimal_nn_competition.benchmarks.common.snake.replay import (
     REPLAY_SEED as SNAKE_REPLAY_SEED,
 )
-from minimal_nn_competition.benchmarks.snake.replay import (
+from minimal_nn_competition.benchmarks.common.snake.replay import (
     load_replay,
     replay_stem,
     save_replay,
 )
-from minimal_nn_competition.benchmarks.snake.replay import (
+from minimal_nn_competition.benchmarks.common.snake.replay import (
     record_game as record_snake_game,
 )
+from minimal_nn_competition.benchmarks.registry import (
+    RL_BENCHMARKS,
+    SNAKE_BENCHMARKS,
+    create_benchmark,
+)
+from minimal_nn_competition.benchmarks.snake_simple_8x8 import selected_input_indices
 from minimal_nn_competition.leaderboard import load_results
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission
@@ -311,7 +313,7 @@ def _record_submission_replay(root: Path, directory: Path, scored_sha: str) -> P
                 **benchmark.environment_options(SNAKE_REPLAY_SEED),
             )
         else:
-            from minimal_nn_competition.benchmarks.control.replay import record_game
+            from minimal_nn_competition.benchmarks.common.control.replay import record_game
 
             payload = record_game(benchmark_name, loaded.model, steps=benchmark.max_steps)
 

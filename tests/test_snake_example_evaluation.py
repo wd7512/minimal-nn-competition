@@ -5,8 +5,7 @@ import logging
 import pytest
 import torch
 
-from minimal_nn_competition.benchmarks.register import create_benchmark
-from minimal_nn_competition.benchmarks.snake.names import SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import SNAKE_BENCHMARKS, create_benchmark
 from minimal_nn_competition.examples import snake_submission
 
 
@@ -31,7 +30,7 @@ def test_snake_example_evaluate_uses_benchmark_move_cap(
     monkeypatch: pytest.MonkeyPatch, benchmark_name: str
 ) -> None:
     _CapturingEnvironment._captured = []
-    import minimal_nn_competition.benchmarks.snake.environment as snake_environment
+    from minimal_nn_competition.benchmarks.common.snake import environment as snake_environment
 
     monkeypatch.setattr(snake_environment, "SnakeEnvironment", _CapturingEnvironment)
     benchmark = create_benchmark(benchmark_name)
@@ -61,7 +60,7 @@ def test_snake_example_evaluate_handles_full_board_state(
             self.won = True
             self.snake = [(0, 0), (1, 0)]
 
-    import minimal_nn_competition.benchmarks.snake.environment as snake_environment
+    from minimal_nn_competition.benchmarks.common.snake import environment as snake_environment
 
     monkeypatch.setattr(snake_environment, "SnakeEnvironment", _FullBoardEnvironment)
     benchmark = create_benchmark(benchmark_name)
@@ -95,7 +94,7 @@ def test_snake_example_evaluate_applies_per_food_stall_cutoff(
             self._calls += 1
             return (0.0,) * 24, 0.0, False
 
-    import minimal_nn_competition.benchmarks.snake.environment as snake_environment
+    from minimal_nn_competition.benchmarks.common.snake import environment as snake_environment
 
     monkeypatch.setattr(snake_environment, "SnakeEnvironment", _StallingEnvironment)
     benchmark = create_benchmark("snake-obstacles-8x8")
@@ -132,7 +131,7 @@ def test_snake_example_evaluate_resets_stall_counter_after_growth(
                 self.snake.append((1, 0))
             return (0.0,) * 24, 0.0, False
 
-    import minimal_nn_competition.benchmarks.snake.environment as snake_environment
+    from minimal_nn_competition.benchmarks.common.snake import environment as snake_environment
 
     monkeypatch.setattr(snake_environment, "SnakeEnvironment", _GrowingThenStallingEnvironment)
     benchmark = create_benchmark("snake-obstacles-8x8")

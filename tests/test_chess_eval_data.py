@@ -2,7 +2,7 @@ import hashlib
 import json
 from collections import Counter
 
-from minimal_nn_competition.benchmarks.chess_eval.benchmark import CHESS_EVAL_DATA, encode
+from minimal_nn_competition.benchmarks.chess_eval import CHESS_EVAL_DATA, encode
 
 TIERS = (("10k", 10_000), ("100k", 100_000))
 

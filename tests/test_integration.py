@@ -6,13 +6,13 @@ import torch
 
 from minimal_nn_competition import __version__
 from minimal_nn_competition.__main__ import main
-from minimal_nn_competition.benchmarks.chess_eval.benchmark import (
+from minimal_nn_competition.benchmarks.chess_eval import (
     ChessEval10kBenchmark,
     ChessEval100kBenchmark,
 )
-from minimal_nn_competition.benchmarks.fashion_mnist.benchmark import FashionMnistBenchmark
-from minimal_nn_competition.benchmarks.mnist.benchmark import MnistBenchmark
-from minimal_nn_competition.benchmarks.snake.benchmark import SnakeBenchmark
+from minimal_nn_competition.benchmarks.fashion_mnist import FashionMnistBenchmark
+from minimal_nn_competition.benchmarks.mnist import MnistBenchmark
+from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeSimple8x8Benchmark
 from minimal_nn_competition.leaderboard import rank_results
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission
@@ -29,7 +29,7 @@ def test_checked_in_examples_load() -> None:
     assert ChessEval100kBenchmark().load_submission(chess_100k).model is not None
     assert FashionMnistBenchmark().load_submission(fashion_mnist).model is not None
     assert MnistBenchmark().load_submission(mnist).model is not None
-    assert SnakeBenchmark().load_submission(snake).model is not None
+    assert SnakeSimple8x8Benchmark().load_submission(snake).model is not None
 
 
 def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: None) -> None:
