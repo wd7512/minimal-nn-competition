@@ -359,8 +359,36 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
     results = [
         BenchmarkResult("snake-8", "snake-simple-8x8", 1.0, False, 10, {"seed_lengths": [1]}),
         BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {}),
-        BenchmarkResult("mnist", "mnist", 0.5, False, 10, {"normalisation": False}),
-        BenchmarkResult("fashion", "fashion-mnist", 0.5, False, 10, {"normalisation": True}),
+        BenchmarkResult(
+            "mnist", "mnist", 0.5, False, 10, {"normalisation": False}, name="true-mnist"
+        ),
+        BenchmarkResult(
+            "mnist-shuffled",
+            "mnist-shuffled",
+            0.3,
+            False,
+            20,
+            {"normalisation": False},
+            name="shuffled-mnist",
+        ),
+        BenchmarkResult(
+            "fashion",
+            "fashion-mnist",
+            0.5,
+            False,
+            30,
+            {"normalisation": True},
+            name="true-fashion",
+        ),
+        BenchmarkResult(
+            "fashion-shuffled",
+            "fashion-mnist-shuffled",
+            0.1,
+            False,
+            10,
+            {"normalisation": False},
+            name="shuffled-fashion",
+        ),
         BenchmarkResult("chess-10k", "chess-eval-10k", 1.0, True, 10, {"tolerance_pawns": 0.1}),
         BenchmarkResult(
             "chess-100k",
@@ -376,6 +404,12 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
         html.index('id="snake"') < html.index('id="image-compression"') < html.index('id="chess"')
     )
     assert "Image compression" in html
+    assert 'data-version="mnist-shuffled"' in html
+    assert 'data-version="fashion-mnist-shuffled"' in html
+    assert "True-label and shuffled-label comparison" in html
+    assert "true-mnist (50.00%, 10 params)" in html
+    assert "shuffled-mnist (30.00%, 20 params)" in html
+    assert "232,535 bits" in html
     assert 'id="mnist"' not in html
     assert 'data-version="snake-simple-8x8"' in html
     assert 'data-version="snake-simple-16x16"' in html

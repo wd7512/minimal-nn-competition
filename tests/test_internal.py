@@ -407,6 +407,7 @@ def test_internal_cli(tmp_path: Path) -> None:
         "common",
         "core",
         "fashion-mnist",
+        "shuffled-labels",
         "lunarlander",
         "mnist",
         "pendulum",

@@ -37,6 +37,7 @@ _FASHION_SOURCES = (
     f"{_BENCHMARKS}/fashion_mnist.py",
     f"{_EXAMPLES}/fashion_mnist_submission.py",
 )
+_SHUFFLED_MNIST_SOURCES = (f"{_BENCHMARKS}/shuffled_mnist.py",)
 _CHESS_SOURCES = (
     f"{_BENCHMARKS}/chess_eval.py",
     f"{_BENCHMARKS}/data",
@@ -169,6 +170,11 @@ tests/test_integration.py::test_evaluate_fashion_mnist_cli
 tests/test_integration.py::test_evaluate_fashion_mnist_uses_default_data_path
 tests/test_integration.py::test_collect_rejects_partial_fashion_mnist_dataset""".splitlines()
         ),
+    ),
+    Scope(
+        "shuffled-labels",
+        _SHUFFLED_MNIST_SOURCES,
+        ("tests/test_shuffled_mnist.py",),
     ),
     Scope(
         "chess-eval",
@@ -341,6 +347,8 @@ def scope_for_benchmark(name):
     """
     if name in ("chess-eval-10k", "chess-eval-100k"):
         return "chess-eval"
+    if name in ("mnist-shuffled", "fashion-mnist-shuffled"):
+        return "shuffled-labels"
     return name
 
 
