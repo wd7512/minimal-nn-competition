@@ -5,6 +5,7 @@ Find the smallest possible neural network for a problem.
 **[View the leaderboard →](https://wd7512.github.io/minimal-nn-competition/)**
 
 ## Submit a neural network
+Rules: submissions use feed-forward `linear` or `mlp` models and a PyTorch `state_dict` with all tensors stored as `float32`.
 
 1. Fork this repo
 2. Open a pull request against `submission` with exactly
