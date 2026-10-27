@@ -885,7 +885,27 @@ _SITE_SCRIPT = """
     panels.forEach(function (panel) {
       const toggle = panel.querySelector("[data-passed-toggle]");
       if (!toggle) return;
-      const apply = function () { panel.classList.toggle("hide-failed", toggle.checked); };
+      const body = panel.querySelector("tbody");
+      const emptyRow = body && body.querySelector("[data-empty-row]");
+      const submissions = body
+        ? Array.from(body.querySelectorAll("tr.is-pass, tr.is-fail"))
+        : [];
+      const apply = function () {
+        panel.classList.toggle("hide-failed", toggle.checked);
+        if (!emptyRow) return;
+        const hasVisibleResults = submissions.some(function (row) {
+          return !toggle.checked || !row.classList.contains("is-fail");
+        });
+        emptyRow.hidden = hasVisibleResults;
+        if (!hasVisibleResults) {
+          const message = emptyRow.querySelector("[data-empty-message]");
+          if (message) {
+            message.textContent = toggle.checked
+              ? "Nobody’s found a passing solution for this one yet — maybe you can?"
+              : "No submissions yet — want to be the first?";
+          }
+        }
+      };
       toggle.addEventListener("change", apply);
       apply();
     });
@@ -1043,9 +1063,26 @@ def _submission_cell(result, link, status=None, score_html=None):
     return content
 
 
-def _table(results, submission_links=None):
+def _submission_guide_url(benchmark):
+    if benchmark in SNAKE_BENCHMARKS:
+        guide = "how-to-make-a-snake-submission.md"
+    elif benchmark in IMAGE_BENCHMARKS:
+        guide = "how-to-make-an-image-compression-submission.md"
+    elif benchmark in CHESS_BENCHMARKS:
+        guide = "how-to-make-a-chess-submission.md"
+    elif benchmark in RL_BENCHMARKS:
+        guide = "how-to-make-a-control-submission.md"
+    else:
+        return "https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"
+    return (
+        "https://github.com/wd7512/minimal-nn-competition/blob/main/how-to/" + guide
+    )
+
+
+def _table(results, submission_links=None, benchmark=None):
     rows = []
-    fourth = _fourth_header(results[0].benchmark) if results else None
+    benchmark = results[0].benchmark if results else benchmark
+    fourth = _fourth_header(benchmark) if benchmark else None
     for rank, result in enumerate(results, 1):
         link = (submission_links or {}).get((result.benchmark, result.submission))
         status = "pass" if result.passed else "fail"
@@ -1054,15 +1091,26 @@ def _table(results, submission_links=None):
         if fourth is not None:
             cells += f'<td class="num">{_fourth_html(result)}</td>'
         rows.append(f'<tr class="{row_class}">{cells}</tr>')
-    label = _version_label(results[0].benchmark) if results else "Results"
+    label = _version_label(benchmark) if benchmark else "Results"
     fourth_header = (
         f'<th scope="col" class="num">{html.escape(fourth)}</th>' if fourth is not None else ""
     )
     caption = (
-        f"{html.escape(label)} results, ranked by {_ranking_text(results[0].benchmark)}."
-        if results
+        f"{html.escape(label)} results, ranked by {_ranking_text(benchmark)}."
+        if benchmark
         else "Results."
     )
+    if benchmark:
+        initially_hidden = " hidden" if results else ""
+        empty_row = (
+            f'<tr class="empty-row" data-empty-row{initially_hidden}>'
+            f'<td colspan="{3 + int(fourth is not None)}">'
+            '<span data-empty-message>Nobody’s found a passing solution for this one yet — '
+            'maybe you can?</span> '
+            f'<a href="{html.escape(_submission_guide_url(benchmark))}">How to submit</a>'
+            "</td></tr>"
+        )
+        rows.append(empty_row)
     return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Name</th><th scope="col" class="num">Parameters</th>{fourth_header}</tr></thead><tbody>{"".join(rows)}</tbody></table>"""
 
 
@@ -1284,11 +1332,7 @@ def render_html(results, submission_links=None):
             version_entries = entries.get(benchmark, [])
             version_label = _version_label(benchmark)
             active = benchmark == default_benchmark
-            table = (
-                _table(version_entries, submission_links)
-                if version_entries
-                else '<p class="empty-state">No submissions yet.</p>'
-            )
+            table = _table(version_entries, submission_links, benchmark)
             panels.append(
                 f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}">'
                 f'<label class="passed-toggle"><input type="checkbox" data-passed-toggle checked> Pass only</label>'
