@@ -34,6 +34,12 @@ from minimal_nn_competition.benchmarks.snake_simple_8x8 import selected_input_in
 from minimal_nn_competition.leaderboard import load_results
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission
+from minimal_nn_competition.submissions import (
+    MAIN_BRANCH,
+    ORIGIN_MAIN_REF,
+    ORIGIN_SUBMISSION_REF,
+    SUBMISSION_BRANCH,
+)
 from minimal_nn_competition.submissions.github import (
     GitHubError,
     PullRequest,
@@ -142,7 +148,7 @@ def _local_ledger_keys(root: Path) -> set[tuple[str, str]]:
     return {result_key(result) for result in load_results(path)}
 
 
-def _remote_ledger_keys(root: Path, ref: str = "origin/submission") -> set[tuple[str, str]]:
+def _remote_ledger_keys(root: Path, ref: str = ORIGIN_SUBMISSION_REF) -> set[tuple[str, str]]:
     payload = _git(["show", f"{ref}:docs/leaderboard.json"], root)
     return _ledger_keys_from_payload(payload, ref)
 
@@ -153,7 +159,9 @@ def _is_generated_path(path: str) -> bool:
 
 def _unpublished_score_commits(root: Path) -> list[str]:
     """Return local commits that are neither on origin/submission nor already on main."""
-    return _git(["rev-list", "origin/submission..submission", "--not", "origin/main"], root).split()
+    return _git(
+        ["rev-list", "origin/submission..submission", "--not", ORIGIN_MAIN_REF], root
+    ).split()
 
 
 def _publish_local_score_commits(root: Path) -> None:
@@ -182,31 +190,31 @@ def _publish_local_score_commits(root: Path) -> None:
                 f"generated artifacts ({sha}). Reconcile it manually before rerunning."
             )
     try:
-        _git(["push", "origin", "submission"], root)
+        _git(["push", "origin", SUBMISSION_BRANCH], root)
     except WorkflowError as exc:
         raise WorkflowError(
             "local score commits could not be pushed to origin/submission; the result is not "
             "published yet. Fix the push failure and rerun."
         ) from exc
-    _git(["fetch", "origin", "submission"], root)
+    _git(["fetch", "origin", SUBMISSION_BRANCH], root)
     logger.info("Published %d local score commit(s)", len(commits))
 
 
 def _sync_submission(root: Path) -> None:
     """Fetch and reconcile branches without rewriting or force-pushing history."""
-    _git(["fetch", "origin", "main", "submission"], root)
+    _git(["fetch", "origin", MAIN_BRANCH, SUBMISSION_BRANCH], root)
 
-    main_ahead = _is_ancestor("origin/submission", "origin/main", root)
-    submission_ahead = _is_ancestor("origin/main", "origin/submission", root)
+    main_ahead = _is_ancestor(ORIGIN_SUBMISSION_REF, ORIGIN_MAIN_REF, root)
+    submission_ahead = _is_ancestor(ORIGIN_MAIN_REF, ORIGIN_SUBMISSION_REF, root)
     if main_ahead and not submission_ahead:
         # A promotion merged but the final synchronisation of `submission` did not
         # finish. Fast-forward only; never reset away local unpushed work.
-        if _is_ancestor("submission", "origin/main", root):
-            _git(["merge", "--ff-only", "origin/main"], root)
-            _git(["push", "origin", "submission"], root)
-            _git(["fetch", "origin", "submission"], root)
+        if _is_ancestor(SUBMISSION_BRANCH, ORIGIN_MAIN_REF, root):
+            _git(["merge", "--ff-only", ORIGIN_MAIN_REF], root)
+            _git(["push", "origin", SUBMISSION_BRANCH], root)
+            _git(["fetch", "origin", SUBMISSION_BRANCH], root)
             logger.info("Fast-forwarded submission to the promoted main tip")
-        elif _is_ancestor("origin/main", "submission", root):
+        elif _is_ancestor(ORIGIN_MAIN_REF, SUBMISSION_BRANCH, root):
             _publish_local_score_commits(root)
         else:
             raise WorkflowError(
@@ -214,10 +222,10 @@ def _sync_submission(root: Path) -> None:
                 "explicitly; the acceptance workflow will not reset, rebase, or force-push submission."
             )
     elif submission_ahead:
-        if _is_ancestor("origin/submission", "submission", root):
+        if _is_ancestor(ORIGIN_SUBMISSION_REF, SUBMISSION_BRANCH, root):
             _publish_local_score_commits(root)
-        elif _is_ancestor("submission", "origin/submission", root):
-            _git(["merge", "--ff-only", "origin/submission"], root)
+        elif _is_ancestor(SUBMISSION_BRANCH, ORIGIN_SUBMISSION_REF, root):
+            _git(["merge", "--ff-only", ORIGIN_SUBMISSION_REF], root)
         else:
             raise WorkflowError(
                 "local submission and origin/submission have diverged. Reconcile them explicitly; "
@@ -232,7 +240,7 @@ def _sync_submission(root: Path) -> None:
 
 
 def _current_validation_base(root: Path) -> str:
-    return _git(["rev-parse", "origin/submission"], root).strip()
+    return _git(["rev-parse", ORIGIN_SUBMISSION_REF], root).strip()
 
 
 def _merged_parent(pr: PullRequest, root: Path) -> tuple[str, str]:
@@ -256,7 +264,7 @@ def _merged_parent(pr: PullRequest, root: Path) -> tuple[str, str]:
 def _validate_pr(
     pr: PullRequest, root: Path, validation_base: str | None = None
 ) -> tuple[str, Path]:
-    if pr.base_ref != "submission":
+    if pr.base_ref != SUBMISSION_BRANCH:
         raise WorkflowError("PR does not target submission")
     if not pr.merged and not pr.checks_passed:
         raise WorkflowError(f"required GitHub checks have not passed ({pr.checks_summary})")
@@ -271,7 +279,7 @@ def _validate_pr(
     else:
         # A three-dot diff is only safe when the current integration tip is the PR base
         # (or its ancestor). Otherwise unrelated files can leak into the candidate diff.
-        base = validation_base or "origin/submission"
+        base = validation_base or ORIGIN_SUBMISSION_REF
         if not _is_ancestor(base, candidate, root):
             raise WorkflowError(
                 f"PR head is not based on the validation base {base}. Rebase the submission "
@@ -507,8 +515,7 @@ def _publish_result(
         remote_keys = _remote_ledger_keys(root)
         if not remote_keys.issubset(old_keys):
             raise WorkflowError(
-                "refusing leaderboard update: local ledger is missing entries from "
-                "origin/submission"
+                f"refusing leaderboard update: local ledger is missing entries from {ORIGIN_SUBMISSION_REF}"
             )
 
         replay_path = (
@@ -586,10 +593,10 @@ def _publish_result(
                 shutil.rmtree(backup, ignore_errors=True)
 
         try:
-            _git(["push", "origin", "submission"], root)
+            _git(["push", "origin", SUBMISSION_BRANCH], root)
         except WorkflowError as push_error:
-            _git(["fetch", "origin", "submission"], root)
-            remote_tip = _git(["rev-parse", "origin/submission"], root).strip()
+            _git(["fetch", "origin", SUBMISSION_BRANCH], root)
+            remote_tip = _git(["rev-parse", ORIGIN_SUBMISSION_REF], root).strip()
             if remote_tip == base_sha:
                 # The push failed without a competing write (e.g. permission failure).
                 # Keep the local score commit so an explicit recovery run can retry it.
@@ -602,7 +609,7 @@ def _publish_result(
             # Another run advanced the integration branch after our ledger read. This
             # attempt's commit is workflow-generated and is the only commit after base_sha.
             # Drop it, fast-forward to the remote tip, and rebuild the union ledger from there.
-            _git(["reset", "--hard", "origin/submission"], root)
+            _git(["reset", "--hard", ORIGIN_SUBMISSION_REF], root)
             if attempt == 2:
                 raise WorkflowError(
                     "origin/submission kept advancing during publication; the local branch "
@@ -610,7 +617,7 @@ def _publish_result(
                 ) from push_error
             continue
 
-        _git(["fetch", "origin", "submission"], root)
+        _git(["fetch", "origin", SUBMISSION_BRANCH], root)
         pushed_keys = _remote_ledger_keys(root)
         if not old_keys.issubset(pushed_keys):
             raise WorkflowError(
@@ -647,7 +654,7 @@ def _is_merged_now(pr: PullRequest) -> PullRequest:
 
 def _verified_merge(pr: PullRequest, root: Path, expected_sha: str) -> None:
     """Confirm the merged commit is the exact head that was validated."""
-    _git(["fetch", "origin", "submission"], root)
+    _git(["fetch", "origin", SUBMISSION_BRANCH], root)
     merged_pr = get_pull_request(pr.number)
     if not merged_pr.merged or not merged_pr.merge_commit_sha:
         raise WorkflowError(
@@ -662,12 +669,12 @@ def _verified_merge(pr: PullRequest, root: Path, expected_sha: str) -> None:
 
 
 def _verify_promoted(root: Path) -> None:
-    _git(["fetch", "origin", "main", "submission"], root)
-    if not _is_ancestor("origin/submission", "origin/main", root):
+    _git(["fetch", "origin", MAIN_BRANCH, SUBMISSION_BRANCH], root)
+    if not _is_ancestor(ORIGIN_SUBMISSION_REF, ORIGIN_MAIN_REF, root):
         raise WorkflowError(
             "promotion did not reach main: origin/main does not contain origin/submission"
         )
-    main_keys = _remote_ledger_keys(root, "origin/main")
+    main_keys = _remote_ledger_keys(root, ORIGIN_MAIN_REF)
     submission_keys = _remote_ledger_keys(root)
     if not submission_keys.issubset(main_keys):
         missing = sorted(submission_keys - main_keys)
@@ -678,17 +685,17 @@ def _verify_promoted(root: Path) -> None:
 
 def _promote(root: Path) -> None:
     """Idempotently promote submission to main, resuming after partial failures."""
-    _git(["fetch", "origin", "main", "submission"], root)
+    _git(["fetch", "origin", MAIN_BRANCH, SUBMISSION_BRANCH], root)
     if _unpublished_score_commits(root):
         raise WorkflowError(
             "local submission has commit(s) that are not published to origin/submission; "
             "refusing to report promotion success. Resolve the publication failure and rerun."
         )
-    if _is_ancestor("origin/submission", "origin/main", root):
+    if _is_ancestor(ORIGIN_SUBMISSION_REF, ORIGIN_MAIN_REF, root):
         _verify_promoted(root)
         logger.info("All scored artifacts are already promoted to main")
         return
-    if not _is_ancestor("origin/main", "origin/submission", root):
+    if not _is_ancestor(ORIGIN_MAIN_REF, ORIGIN_SUBMISSION_REF, root):
         raise WorkflowError(
             "origin/submission and origin/main have diverged; reconcile them with the normal PR flow"
         )
@@ -704,9 +711,9 @@ def _promote(root: Path) -> None:
     else:
         logger.info("Resuming promotion PR #%d", number)
     merge_promotion(number)
-    _git(["fetch", "origin", "main"], root)
-    _git(["merge", "--ff-only", "origin/main"], root)
-    _git(["push", "origin", "submission"], root)
+    _git(["fetch", "origin", MAIN_BRANCH], root)
+    _git(["merge", "--ff-only", ORIGIN_MAIN_REF], root)
+    _git(["push", "origin", SUBMISSION_BRANCH], root)
     _verify_promoted(root)
     logger.info("Promoted accepted submissions to main")
 
@@ -715,7 +722,7 @@ def _accept_pr(pr: PullRequest, root: Path, data_root: Path) -> str:
     """Validate, score, merge if needed, and publish one submission."""
     if not pr.merged and pr.checks_status == "none":
         pr = _refresh_missing_checks(pr)
-    _git(["fetch", "origin", "submission"], root)
+    _git(["fetch", "origin", SUBMISSION_BRANCH], root)
     if not pr.merged:
         _git(
             ["fetch", "origin", f"pull/{pr.number}/head:refs/remotes/origin/pr/{pr.number}"],
@@ -728,7 +735,7 @@ def _accept_pr(pr: PullRequest, root: Path, data_root: Path) -> str:
         # checked out in another worktree after the remote merge has succeeded.
         merge(pr.number, delete_branch=False, head_sha=scored_sha)
         _verified_merge(pr, root, scored_sha)
-    _git(["pull", "--ff-only", "origin", "submission"], root)
+    _git(["pull", "--ff-only", "origin", SUBMISSION_BRANCH], root)
     _publish_result(root, directory, result, scored_sha=scored_sha, pr_number=pr.number)
     return result.submission
 
@@ -740,7 +747,7 @@ def run(root: Path, pr_number: int | None, data_root: Path) -> int:
 
 def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
     branch = _git(["branch", "--show-current"], root).strip()
-    if branch != "submission":
+    if branch != SUBMISSION_BRANCH:
         raise WorkflowError(f"run from the submission branch, not {branch or 'detached HEAD'}")
     if _git(["status", "--porcelain", "--untracked-files=no"], root).strip():
         raise WorkflowError(
@@ -757,7 +764,7 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
             # Merged PRs are deliberately not returned by `gh pr list --state open`.
             # Allow an explicit rerun to recover a merge whose ledger step failed.
             recovered_pr = get_pull_request(pr_number)
-            if recovered_pr.base_ref != "submission" or not recovered_pr.merged:
+            if recovered_pr.base_ref != SUBMISSION_BRANCH or not recovered_pr.merged:
                 raise WorkflowError(
                     f"open PR {pr_number} targeting submission was not found; it is not a merged PR "
                     "that can be recovered"
