@@ -195,20 +195,17 @@ h1 {
 }
 .links a:hover .action-title { text-decoration-color: var(--accent-snake); }
 .featured {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   margin: 20px 0 8px;
-  padding: 14px 0 16px;
-  border-top: 1px solid var(--rule-strong);
-  border-bottom: 1px solid var(--rule);
 }
-.featured__label { font-size: 11px; }
-.featured__intro { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-.featured__intro h2 { margin: 0; font: 400 1.35rem/1.2 var(--display); }
-.featured__intro h2 a { color: var(--ink); text-decoration-color: var(--rule-strong); text-underline-offset: 4px; }
-.featured__intro h2 a:hover { text-decoration-color: var(--accent-snake); }
-.featured__author { margin: 0; color: var(--muted); font: 12px/1.4 var(--mono); }
+.featured__label { margin: 0 0 8px; font-size: 11px; }
+.featured__table-wrap { border-block: 1px solid var(--rule-strong); }
+table.results.featured__table { min-width: 0; }
+.featured__table tbody tr.featured-row,
+.featured__table tbody tr.featured-row td,
+.featured__table tbody tr.featured-row td:first-child { background: var(--accent-cta); color: var(--accent-cta-ink); }
+.featured__table tbody tr.featured-row:hover td { background: var(--accent-cta-hover); }
+.featured__table tbody tr.featured-row td.submission a { color: var(--accent-cta-ink); }
+.featured__benchmark, .featured__author { font: 12px/1.4 var(--mono); }
 .group { padding: 48px 0 24px; }
 .group + .group { border-top: 1px solid var(--rule); padding-top: 48px; }
 .group:last-child { padding-bottom: 48px; }
@@ -1422,15 +1419,23 @@ def render_html(results, submission_links=None):
         if featured_href:
             featured_name = (
                 f'<a href="{html.escape(featured_href, quote=True)}">'
-                f"{featured_name}</a>"
+                f'<span class="submission__name">{featured_name}</span></a>'
             )
         featured_html = (
-            '<section class="featured" aria-labelledby="featured-title">'
-            '<p class="eyebrow featured__label">Latest model to lead a benchmark</p>'
-            '<div class="featured__intro">'
-            f'<h2 id="featured-title">{featured_name}</h2>'
-            f'<p class="featured__author">by {html.escape(featured.author)}</p>'
-            '</div></section>'
+            '<section class="featured" aria-labelledby="featured-label">'
+            '<p class="eyebrow featured__label" id="featured-label">'
+            'Latest model to lead a benchmark</p>'
+            '<div class="table-wrap featured__table-wrap">'
+            '<table class="results featured__table">'
+            '<caption class="sr-only">Latest model currently ranked first in its benchmark.</caption>'
+            '<thead><tr><th scope="col" class="rank">#</th>'
+            '<th scope="col">Benchmark</th><th scope="col">Model</th>'
+            '<th scope="col">Author</th></tr></thead><tbody>'
+            '<tr class="featured-row"><td class="rank">1</td>'
+            f'<td class="featured__benchmark">{html.escape(_version_label(featured.benchmark))}</td>'
+            f'<td class="submission">{featured_name}</td>'
+            f'<td class="featured__author">{html.escape(featured.author)}</td>'
+            '</tr></tbody></table></div></section>'
         )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
