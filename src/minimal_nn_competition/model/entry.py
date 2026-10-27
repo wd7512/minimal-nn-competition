@@ -200,7 +200,9 @@ def materialize_submission(submission):
     for name, value in state_dict.items():
         if not isinstance(value, torch.Tensor):
             raise SubmissionError(f"State-dict entry {name!r} is not a tensor")
-        if value.is_floating_point() and not torch.isfinite(value).all().item():
+        if value.dtype != torch.float32:
+            raise SubmissionError(f"State-dict entry {name!r} must use float32, got {value.dtype}")
+        if not torch.isfinite(value).all().item():
             raise SubmissionError(f"State-dict entry {name!r} contains non-finite values")
     model = build_model(submission.config)
     try:

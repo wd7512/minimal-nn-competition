@@ -88,7 +88,7 @@ budget.
 
 `model.pt` must be a PyTorch state dict. The evaluator loads it with
 `weights_only=True`; it does not execute arbitrary Python submitted with the
-checkpoint.
+checkpoint. All tensors in the state dict must use `float32`.
 
 - `linear` checkpoints use `weight` and `bias`.
 - `mlp` checkpoints use the keys produced by `torch.nn.Sequential` (`0.weight`,

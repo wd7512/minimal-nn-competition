@@ -60,6 +60,22 @@ def test_mlp_submission_loads(tmp_path: Path) -> None:
     assert loaded.model(torch.zeros((1, 7))).shape == (1, 4)
 
 
+@pytest.mark.parametrize("dtype", [torch.float16, torch.float64, torch.bfloat16])
+def test_non_float32_weights_are_rejected(tmp_path: Path, dtype: torch.dtype) -> None:
+    directory = _write_submission(
+        tmp_path,
+        {
+            "benchmark": "snake-simple-8x8",
+            "architecture": "linear",
+            "input_size": 7,
+            "output_size": 4,
+        },
+        {"weight": torch.zeros((4, 7), dtype=dtype), "bias": torch.zeros(4)},
+    )
+    with pytest.raises(SubmissionError, match="must use float32"):
+        materialize_submission(Submission.from_directory(directory))
+
+
 def test_mlp_shape_mismatch_is_rejected(tmp_path: Path) -> None:
     directory = _write_submission(
         tmp_path,
