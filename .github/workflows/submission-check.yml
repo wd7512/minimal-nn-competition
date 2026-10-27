@@ -15,6 +15,8 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Install validator dependencies
+        run: python3 -m pip install --quiet "pydantic==2.14.1"
       - name: Validate submission files
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
