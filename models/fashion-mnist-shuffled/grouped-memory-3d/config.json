@@ -1,0 +1,32 @@
+{
+  "benchmark": "fashion-mnist-shuffled",
+  "name": "grouped-memory-3d",
+  "author": "wd7512 (with Codex)",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    3,
+    6,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    4,
+    18660,
+    1
+  ],
+  "activation": "relu",
+  "normalisation": false,
+  "description": "Packed isolated ReLU memories over a compact convex lift; jointly optimised scalar label regions with redundant carried features removed."
+}
