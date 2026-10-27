@@ -205,6 +205,7 @@ table.results.featured__table { min-width: 0; }
 .featured__table tbody tr.featured-row td:first-child { background: var(--accent-cta); color: var(--accent-cta-ink); }
 .featured__table tbody tr.featured-row:hover td { background: var(--accent-cta-hover); }
 .featured__table tbody tr.featured-row td.submission a { color: var(--accent-cta-ink); }
+.featured__table .featured__name { font-size: 11px; font-style: italic; }
 .featured__benchmark, .featured__author { font: 12px/1.4 var(--mono); }
 .group { padding: 48px 0 24px; }
 .group + .group { border-top: 1px solid var(--rule); padding-top: 48px; }
@@ -300,6 +301,7 @@ td.submission a {
 }
 td.submission a:hover { text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
 .submission__name { font-weight: 400; font-size: 12px; }
+.empty-row a { font: italic 11px/1.4 var(--mono); }
 .submission__id { font: 10px/1.35 var(--mono); color: var(--muted); }
 .submission__meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
 .submission__meta .score { font-weight: 600; color: var(--ink); font-size: 11px; white-space: nowrap; }
@@ -1415,11 +1417,14 @@ def render_html(results, submission_links=None):
         featured_href = (submission_links or {}).get(
             (featured.benchmark, featured.submission)
         )
-        featured_name = html.escape(featured.name)
+        featured_name = (
+            f'<span class="submission__name featured__name">'
+            f'{html.escape(featured.name)}</span>'
+        )
         if featured_href:
             featured_name = (
                 f'<a href="{html.escape(featured_href, quote=True)}">'
-                f'<span class="submission__name">{featured_name}</span></a>'
+                f"{featured_name}</a>"
             )
         featured_html = (
             '<section class="featured" aria-labelledby="featured-label">'
