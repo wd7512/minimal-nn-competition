@@ -1,7 +1,6 @@
 """Shared visual tokens and common styles for generated leaderboard pages."""
 
 FONT_FAMILIES = {
-    "display": 'ui-serif, Georgia, "Times New Roman", serif',
     "body": 'system-ui, -apple-system, "Segoe UI", sans-serif',
     "mono": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
 }
@@ -59,7 +58,6 @@ SITE_THEME_CSS = f"""
 :root {{
   color-scheme: light dark;
 {_css_declarations(LIGHT_COLORS)}
-  --display: {FONT_FAMILIES['display']};
   --body: {FONT_FAMILIES['body']};
   --mono: {FONT_FAMILIES['mono']};
   --chart-snake-head: var(--pass);
@@ -86,7 +84,7 @@ body {
   font-size: 16px;
   line-height: 1.55;
 }
-h1, h2, h3 { font-family: var(--display); }
+h1, h2, h3 { font-family: var(--body); }
 a { color: var(--accent-snake); text-underline-offset: 3px; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
