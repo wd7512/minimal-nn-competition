@@ -35,11 +35,16 @@ uv run mnnc download-mnist-shuffled --output data
 uv run mnnc download-fashion-mnist-shuffled --output data
 ```
 
-No shuffled-label example submission is provided because no passing reference
-exists. Once a submission directory is available, evaluate it with
-`uv run mnnc evaluate mnist-shuffled <submission-directory> --data-path
-data/mnist-shuffled.pt` (and replace the benchmark and cache names for
-Fashion-MNIST). Evaluation processes all 70,000 examples in batches of 512.
+Evaluate the included examples and reproduce their training with:
+
+```sh
+uv run mnnc evaluate mnist-shuffled models/mnist-shuffled/example --data-path data/mnist-shuffled.pt
+uv run mnnc evaluate fashion-mnist-shuffled models/fashion-mnist-shuffled/example --data-path data/fashion-mnist-shuffled.pt
+uv run python scripts/train_shuffled_reference.py mnist-shuffled --data-path data/mnist-shuffled.pt --output models/mnist-shuffled/retrained
+uv run python scripts/train_shuffled_reference.py fashion-mnist-shuffled --data-path data/fashion-mnist-shuffled.pt --output models/fashion-mnist-shuffled/retrained
+```
+
+Evaluation processes all 70,000 examples in batches of 512.
 `mnnc collect` accepts `--mnist-shuffled-data-path` and
 `--fashion-mnist-shuffled-data-path`.
 
@@ -48,10 +53,13 @@ Fashion-MNIST). Evaluation processes all 70,000 examples in batches of 512.
 The issue 191 pilot trained `[784, 64, 10]` MLPs for 20 epochs. It reached 15.6114%
 on MNIST shuffled and 11.6229% on Fashion-MNIST shuffled, so neither passed the
 100% threshold. Those measurements are a small-model attempt, not a lower bound on
-what fits the 10 million parameter and 100 MiB submission limits. No passing
-reference checkpoint is published here; a near-limit search and verified passing
-artifacts remain necessary before these tracks can be presented as achievable
-competitions. The information count `70,000 * log2(10) ≈ 232,535` bits is a
+what fits the 10 million parameter and 100 MiB submission limits. These pilot
+models are included as examples, not passing references. A larger MNIST MLP
+was independently trained and verified at 100% with 5,824,522 parameters;
+it is not included as a submission. No passing Fashion-MNIST reference has
+been verified. Training outcomes and runtimes may vary with hardware and
+kernels. The information count
+`70,000 * log2(10) ≈ 232,535` bits is a
 reference calculation, not a proven MLP size lower bound.
 
 The main image leaderboard includes a tested comparison table with true-label and

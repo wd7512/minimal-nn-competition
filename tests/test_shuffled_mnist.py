@@ -1,4 +1,5 @@
 import hashlib
+import importlib.util
 from pathlib import Path
 
 import pytest
@@ -128,3 +129,32 @@ def test_shuffled_dataset_rejects_non_finite_model_scores(tmp_path: Path) -> Non
     loaded = LoadedSubmission(config, {}, model)
     with pytest.raises(SubmissionError, match="non-finite"):
         create_benchmark("mnist-shuffled", data_path=data_path, expected_samples=2).evaluate(loaded)
+
+
+def test_example_script_produces_loadable_shuffled_submission(tmp_path: Path, monkeypatch) -> None:
+    from minimal_nn_competition.model.entry import Submission, materialize_submission
+
+    script = Path(__file__).resolve().parents[1] / "scripts" / "train_shuffled_reference.py"
+    spec = importlib.util.spec_from_file_location("train_shuffled_reference", script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    data = tmp_path / "data.pt"
+    torch.save((torch.zeros((2, 784), dtype=torch.uint8), torch.tensor([0, 1])), data)
+    output = tmp_path / "example"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            str(script),
+            "fashion-mnist-shuffled",
+            "--data-path",
+            str(data),
+            "--output",
+            str(output),
+            "--epochs",
+            "1",
+        ],
+    )
+    module.main()
+    loaded = materialize_submission(Submission.from_directory(output))
+    assert loaded.config.benchmark == "fashion-mnist-shuffled"
+    assert loaded.model(torch.zeros((1, 784))).shape == (1, 10)
