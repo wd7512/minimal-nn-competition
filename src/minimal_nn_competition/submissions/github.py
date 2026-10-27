@@ -7,6 +7,8 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 
+from minimal_nn_competition.submissions import DEV_BRANCH, MAIN_BRANCH, SUBMISSION_BRANCH
+
 
 class GitHubError(RuntimeError):
     """Raised for an unavailable or failed GitHub CLI operation."""
@@ -101,7 +103,7 @@ def open_submission_prs() -> list[PullRequest]:
             "pr",
             "list",
             "--base",
-            "submission",
+            SUBMISSION_BRANCH,
             "--state",
             "open",
             "--limit",
@@ -160,7 +162,7 @@ def delete_remote_branch(number: int) -> None:
     if (
         not branch
         or not branch.startswith("submit/")
-        or branch in {"main", "dev", "submission"}
+        or branch in {MAIN_BRANCH, DEV_BRANCH, SUBMISSION_BRANCH}
         or not repo_name
         or not owner_name
     ):
@@ -188,9 +190,9 @@ def find_promotion_pr() -> int | None:
             "pr",
             "list",
             "--base",
-            "main",
+            MAIN_BRANCH,
             "--head",
-            "submission",
+            SUBMISSION_BRANCH,
             "--state",
             "open",
             "--limit",
@@ -209,9 +211,9 @@ def create_promotion_pr() -> int:
             "pr",
             "create",
             "--base",
-            "main",
+            MAIN_BRANCH,
             "--head",
-            "submission",
+            SUBMISSION_BRANCH,
             "--title",
             "Promote submission leaderboard updates",
             "--body",
