@@ -189,7 +189,35 @@ h1 {
   transform: translate(3px, 3px);
   box-shadow: none;
 }
-.links .secondary-link { color: var(--muted); }
+.featured {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 24px;
+  margin: 28px 0 8px;
+  padding: 20px 24px;
+  border: 1px solid var(--rule-strong);
+  border-top: 4px solid var(--accent-cta);
+  background: var(--surface);
+}
+.featured__intro h2 { margin: 4px 0 0; font: 400 1.55rem/1.15 var(--display); }
+.featured__intro h2 a { color: var(--ink); text-decoration-color: var(--accent-cta); text-underline-offset: 4px; }
+.featured__stats { display: flex; gap: 24px; margin: 0; }
+.featured__stat { margin: 0; }
+.featured__stat strong { display: block; font: 700 16px/1.2 var(--mono); white-space: nowrap; }
+.featured__stat span { display: block; margin-top: 4px; color: var(--muted); font: 10px/1.4 var(--mono); }
+.featured__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink);
+  font: 11px/1.4 var(--mono);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.featured__link:hover { border-color: var(--accent-cta-ink); background: var(--accent-cta); color: var(--accent-cta-ink); }
 .group { padding: 48px 0 24px; }
 .group + .group { border-top: 1px solid var(--rule); padding-top: 48px; }
 .group:last-child { padding-bottom: 48px; }
@@ -334,6 +362,8 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .rail a { border-left: 0; border-bottom: 1px solid var(--rule); padding-left: 0; }
   .rail a + a { border-left: 0; padding-left: 0; }
   .group__head { grid-template-columns: 1fr; }
+  .featured { grid-template-columns: 1fr; gap: 16px; padding: 16px; }
+  .featured__stats { gap: 20px; }
   .results th, .results td { padding: 8px 8px; }
   td.submission a { gap: 1px; }
   .group { padding: 36px 0 20px; }
@@ -1351,7 +1381,45 @@ def render_html(results, submission_links=None):
         )
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Open challenge · Public leaderboard</p><h1>How small can a model get?</h1><p class="lead">Build a compact network, test it against the benchmarks, and see where it ranks.</p><p class="links"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit your model <span aria-hidden="true">→</span></a><a class="secondary-link" href="leaderboard.json">Browse raw results</a></p></header>{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
+    featured = min(
+        (
+            result
+            for result in results
+            if result.benchmark == "mnist" and result.passed
+        ),
+        key=lambda result: result.parameter_count,
+        default=None,
+    )
+    featured_html = ""
+    if featured:
+        featured_href = (submission_links or {}).get(
+            (featured.benchmark, featured.submission)
+        )
+        featured_name = html.escape(featured.name)
+        if featured_href:
+            featured_name = (
+                f'<a href="{html.escape(featured_href, quote=True)}">'
+                f"{featured_name}</a>"
+            )
+        view_featured = (
+            f'<a class="featured__link" href="{html.escape(featured_href, quote=True)}">'
+            'View submission <span aria-hidden="true">→</span></a>'
+            if featured_href
+            else ""
+        )
+        featured_html = (
+            '<section class="featured" aria-labelledby="featured-title">'
+            '<div class="featured__intro">'
+            '<p class="eyebrow">Model spotlight · smallest passing on MNIST</p>'
+            f'<h2 id="featured-title">{featured_name}</h2></div>'
+            '<div class="featured__stats" aria-label="MNIST result">'
+            f'<p class="featured__stat"><strong>{html.escape(_score_text(featured))}</strong>'
+            '<span>MNIST score</span></p>'
+            f'<p class="featured__stat"><strong>{featured.parameter_count:,}</strong>'
+            '<span>parameters</span></p></div>'
+            f"{view_featured}</section>"
+        )
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Open challenge · Public leaderboard</p><h1>How small can a model get?</h1><p class="lead">Build a compact network, test it against the benchmarks, and see where it ranks.</p><p class="links"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit your model <span aria-hidden="true">→</span></a></p></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
 
