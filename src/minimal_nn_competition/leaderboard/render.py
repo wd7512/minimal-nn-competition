@@ -201,34 +201,20 @@ h1 {
   font: 14px/1.45 var(--body);
 }
 .featured {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 24px;
-  margin: 28px 0 8px;
-  padding: 20px 24px;
-  border: 1px solid var(--rule-strong);
-  border-top: 4px solid var(--accent-cta);
-  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 20px 0 8px;
+  padding: 14px 0 16px;
+  border-top: 1px solid var(--rule-strong);
+  border-bottom: 1px solid var(--rule);
 }
-.featured__intro h2 { margin: 4px 0 0; font: 400 1.55rem/1.15 var(--display); }
-.featured__intro h2 a { color: var(--ink); text-decoration-color: var(--accent-cta); text-underline-offset: 4px; }
-.featured__stats { display: flex; gap: 24px; margin: 0; }
-.featured__stat { margin: 0; }
-.featured__stat strong { display: block; font: 700 16px/1.2 var(--mono); white-space: nowrap; }
-.featured__stat span { display: block; margin-top: 4px; color: var(--muted); font: 10px/1.4 var(--mono); }
-.featured__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--rule-strong);
-  color: var(--ink);
-  font: 11px/1.4 var(--mono);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.featured__link:hover { border-color: var(--accent-cta-ink); background: var(--accent-cta); color: var(--accent-cta-ink); }
+.featured__label { font-size: 11px; }
+.featured__intro { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.featured__intro h2 { margin: 0; font: 400 1.35rem/1.2 var(--display); }
+.featured__intro h2 a { color: var(--ink); text-decoration-color: var(--rule-strong); text-underline-offset: 4px; }
+.featured__intro h2 a:hover { text-decoration-color: var(--accent-snake); }
+.featured__author { margin: 0; color: var(--muted); font: 12px/1.4 var(--mono); }
 .group { padding: 48px 0 24px; }
 .group + .group { border-top: 1px solid var(--rule); padding-top: 48px; }
 .group:last-child { padding-bottom: 48px; }
@@ -375,8 +361,6 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .rail a { border-left: 0; border-bottom: 1px solid var(--rule); padding-left: 0; }
   .rail a + a { border-left: 0; padding-left: 0; }
   .group__head { grid-template-columns: 1fr; }
-  .featured { grid-template-columns: 1fr; gap: 16px; padding: 16px; }
-  .featured__stats { gap: 20px; }
   .results th, .results td { padding: 8px 8px; }
   td.submission a { gap: 1px; }
   .group { padding: 36px 0 20px; }
@@ -1423,13 +1407,16 @@ def render_html(results, submission_links=None):
         )
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
-    featured = min(
-        (
-            result
-            for result in results
-            if result.benchmark == "mnist" and result.passed
+    benchmark_leaders = {}
+    for result in rank_results(results):
+        benchmark_leaders.setdefault(result.benchmark, result)
+    featured = max(
+        benchmark_leaders.values(),
+        key=lambda result: (
+            result.submitted_at or "",
+            result.benchmark,
+            result.submission,
         ),
-        key=lambda result: result.parameter_count,
         default=None,
     )
     featured_html = ""
@@ -1443,23 +1430,13 @@ def render_html(results, submission_links=None):
                 f'<a href="{html.escape(featured_href, quote=True)}">'
                 f"{featured_name}</a>"
             )
-        view_featured = (
-            f'<a class="featured__link" href="{html.escape(featured_href, quote=True)}">'
-            'View submission <span aria-hidden="true">→</span></a>'
-            if featured_href
-            else ""
-        )
         featured_html = (
             '<section class="featured" aria-labelledby="featured-title">'
+            '<p class="eyebrow featured__label">Latest model to lead a benchmark</p>'
             '<div class="featured__intro">'
-            '<p class="eyebrow">Model spotlight · smallest passing on MNIST</p>'
-            f'<h2 id="featured-title">{featured_name}</h2></div>'
-            '<div class="featured__stats" aria-label="MNIST result">'
-            f'<p class="featured__stat"><strong>{html.escape(_score_text(featured))}</strong>'
-            '<span>MNIST score</span></p>'
-            f'<p class="featured__stat"><strong>{featured.parameter_count:,}</strong>'
-            '<span>parameters</span></p></div>'
-            f"{view_featured}</section>"
+            f'<h2 id="featured-title">{featured_name}</h2>'
+            f'<p class="featured__author">by {html.escape(featured.author)}</p>'
+            '</div></section>'
         )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span><span class="action-note">Share a compact model and see how it ranks.</span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span><span class="action-note">Suggest a problem or network you’d like to make smaller.</span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
