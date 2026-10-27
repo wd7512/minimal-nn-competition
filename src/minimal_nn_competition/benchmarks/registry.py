@@ -8,7 +8,7 @@ The two chess tiers share one implementation module.
 """
 
 CHESS_BENCHMARKS = ("chess-eval-10k", "chess-eval-100k")
-IMAGE_BENCHMARKS = ("mnist", "fashion-mnist")
+IMAGE_BENCHMARKS = ("mnist", "fashion-mnist", "mnist-shuffled", "fashion-mnist-shuffled")
 SNAKE_BENCHMARKS = ("snake-simple-8x8", "snake-simple-16x16", "snake-obstacles-8x8")
 RL_BENCHMARKS = ("cartpole", "pendulum", "lunarlander")
 
@@ -23,6 +23,10 @@ def _factories():
     from minimal_nn_competition.benchmarks.lunarlander import LunarLanderBenchmark
     from minimal_nn_competition.benchmarks.mnist import MnistBenchmark
     from minimal_nn_competition.benchmarks.pendulum import PendulumBenchmark
+    from minimal_nn_competition.benchmarks.shuffled_mnist import (
+        FashionMnistShuffledBenchmark,
+        MnistShuffledBenchmark,
+    )
     from minimal_nn_competition.benchmarks.snake_obstacles_8x8 import SnakeObstacles8x8Benchmark
     from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeSimple8x8Benchmark
     from minimal_nn_competition.benchmarks.snake_simple_16x16 import SnakeSimple16x16Benchmark
@@ -32,8 +36,10 @@ def _factories():
         "chess-eval-10k": ChessEval10kBenchmark,
         "chess-eval-100k": ChessEval100kBenchmark,
         "fashion-mnist": FashionMnistBenchmark,
+        "fashion-mnist-shuffled": FashionMnistShuffledBenchmark,
         "lunarlander": LunarLanderBenchmark,
         "mnist": MnistBenchmark,
+        "mnist-shuffled": MnistShuffledBenchmark,
         "pendulum": PendulumBenchmark,
         "snake-simple-8x8": SnakeSimple8x8Benchmark,
         "snake-simple-16x16": SnakeSimple16x16Benchmark,

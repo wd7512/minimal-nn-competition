@@ -25,6 +25,7 @@ evidence_directories = ["evidence", "captures"]
 
 [dependency-groups]
 dev = [
+    "numpy>=2.5.4",
     "pytest==9.1.1",
     "pytest-xdist==3.8.0",
     "ruff==0.17.1",

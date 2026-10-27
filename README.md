@@ -12,6 +12,6 @@ Find the smallest possible neural network for a problem.
 
 Submission Guides: [Snake](how-to/how-to-make-a-snake-submission.md), [Image compression](how-to/how-to-make-an-image-compression-submission.md), [Chess](how-to/how-to-make-a-chess-submission.md), [Control](how-to/how-to-make-a-control-submission.md)
 
-## Submit/Propose a new benchmark 
+## Submit/Propose a new benchmark
 
-Create an issue with our [benchmark template](https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md). 
+Create an issue with our [benchmark template](https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md).
