@@ -143,7 +143,7 @@ _SITE_STYLE = """
 }
 h1 {
   margin: 16px 0 0;
-  font: 400 clamp(2.8rem, 5vw, 4.8rem)/.96 var(--body);
+  font: 400 clamp(2.8rem, 5vw, 4.8rem)/.96 var(--display);
   letter-spacing: -.04em;
   max-width: 13ch;
 }
@@ -325,7 +325,7 @@ _DETAIL_STYLE = """
 .detail-group { color: var(--accent); }
 .detail-title {
   margin: 14px 0 0;
-  font: 400 clamp(2.2rem, 4.4vw, 3.8rem)/1 var(--body);
+  font: 400 clamp(2.2rem, 4.4vw, 3.8rem)/1 var(--display);
   letter-spacing: -.03em;
   max-width: 18ch;
 }
