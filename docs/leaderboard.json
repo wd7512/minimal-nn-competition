@@ -931,6 +931,24 @@
     "submission": "mlp-13-8"
   },
   {
+    "author": "issue-191 pilot",
+    "benchmark": "fashion-mnist-shuffled",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
+        64,
+        10
+      ]
+    },
+    "name": "pilot-64x20",
+    "parameter_count": 50890,
+    "passed": false,
+    "score": 0.11622857142857143,
+    "submission": "example"
+  },
+  {
     "author": "chatgpt think harder",
     "benchmark": "lunarlander",
     "details": {
@@ -2037,6 +2055,24 @@
     "passed": false,
     "score": 0.8044428825378418,
     "submission": "mlp-4-16-16-16"
+  },
+  {
+    "author": "issue-191 pilot",
+    "benchmark": "mnist-shuffled",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
+        64,
+        10
+      ]
+    },
+    "name": "pilot-64x20",
+    "parameter_count": 50890,
+    "passed": false,
+    "score": 0.1561142857142857,
+    "submission": "example"
   },
   {
     "author": "chatgpt think harder",
