@@ -52,6 +52,8 @@ _VERSION_LABELS = {
     "snake-obstacles-8x8": "Obstacles 8×8",
     "mnist": "MNIST",
     "fashion-mnist": "Fashion-MNIST",
+    "mnist-shuffled": "MNIST shuffled labels",
+    "fashion-mnist-shuffled": "Fashion-MNIST shuffled labels",
     "chess-eval-10k": "Stockfish 10k",
     "chess-eval-100k": "Stockfish 100k",
     "cartpole": "CartPole",

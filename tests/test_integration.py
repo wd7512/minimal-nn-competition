@@ -360,7 +360,18 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
         BenchmarkResult("snake-8", "snake-simple-8x8", 1.0, False, 10, {"seed_lengths": [1]}),
         BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {}),
         BenchmarkResult("mnist", "mnist", 0.5, False, 10, {"normalisation": False}),
+        BenchmarkResult(
+            "mnist-shuffled", "mnist-shuffled", 0.3, False, 10, {"normalisation": False}
+        ),
         BenchmarkResult("fashion", "fashion-mnist", 0.5, False, 10, {"normalisation": True}),
+        BenchmarkResult(
+            "fashion-shuffled",
+            "fashion-mnist-shuffled",
+            0.1,
+            False,
+            10,
+            {"normalisation": False},
+        ),
         BenchmarkResult("chess-10k", "chess-eval-10k", 1.0, True, 10, {"tolerance_pawns": 0.1}),
         BenchmarkResult(
             "chess-100k",
@@ -376,6 +387,8 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
         html.index('id="snake"') < html.index('id="image-compression"') < html.index('id="chess"')
     )
     assert "Image compression" in html
+    assert 'data-version="mnist-shuffled"' in html
+    assert 'data-version="fashion-mnist-shuffled"' in html
     assert 'id="mnist"' not in html
     assert 'data-version="snake-simple-8x8"' in html
     assert 'data-version="snake-simple-16x16"' in html

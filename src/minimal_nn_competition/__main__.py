@@ -98,6 +98,16 @@ def _parser():
         type=Path,
         default=Path("data/fashion-mnist.pt"),
     )
+    collect.add_argument(
+        "--mnist-shuffled-data-path",
+        type=Path,
+        default=Path("data/mnist-shuffled.pt"),
+    )
+    collect.add_argument(
+        "--fashion-mnist-shuffled-data-path",
+        type=Path,
+        default=Path("data/fashion-mnist-shuffled.pt"),
+    )
     submissions = add("validate-submissions", help="Validate and promote open submission PRs")
     target = submissions.add_mutually_exclusive_group(required=True)
     target.add_argument(
@@ -118,6 +128,15 @@ def _parser():
         "download-fashion-mnist", help="Download the official Fashion-MNIST dataset"
     )
     _download_args(download_fashion)
+    download_shuffled = add(
+        "download-mnist-shuffled", help="Download MNIST and use the frozen shuffled labels"
+    )
+    _download_args(download_shuffled)
+    download_fashion_shuffled = add(
+        "download-fashion-mnist-shuffled",
+        help="Download Fashion-MNIST and use the frozen shuffled labels",
+    )
+    _download_args(download_fashion_shuffled)
     train_mnist = add("train-mnist", help="Train the MNIST example submission")
     _classifier_train_args(train_mnist, "data/mnist.pt", "models/mnist/example")
     train_fashion = add("train-fashion-mnist", help="Train the Fashion-MNIST example submission")
@@ -308,6 +327,10 @@ def main(argv=None):
                     kwargs["data_path"] = args.data_path
                 elif submission.config.benchmark == "fashion-mnist":
                     kwargs["data_path"] = args.fashion_mnist_data_path
+                elif submission.config.benchmark == "mnist-shuffled":
+                    kwargs["data_path"] = args.mnist_shuffled_data_path
+                elif submission.config.benchmark == "fashion-mnist-shuffled":
+                    kwargs["data_path"] = args.fashion_mnist_shuffled_data_path
                 benchmark = create_benchmark(submission.config.benchmark, **kwargs)
                 results.append(evaluate_submission(submission, benchmark))
                 if args.replay_dir is not None and submission.config.benchmark in (
@@ -320,7 +343,25 @@ def main(argv=None):
         save_results(args.output, results)
         _emit(args.output)
         return 0
-    if args.command in ("download-mnist", "download-fashion-mnist"):
+    if args.command in (
+        "download-mnist",
+        "download-fashion-mnist",
+        "download-mnist-shuffled",
+        "download-fashion-mnist-shuffled",
+    ):
+        if args.command.endswith("-shuffled"):
+            from minimal_nn_competition.benchmarks.shuffled_mnist import (
+                download_shuffled_dataset,
+            )
+
+            try:
+                cache_path = download_shuffled_dataset(
+                    args.command.removeprefix("download-"), args.output, force=args.force
+                )
+            except (OSError, ValueError, RuntimeError) as exc:
+                return _fail(exc)
+            _emit(cache_path)
+            return 0
         if args.command == "download-mnist":
             from minimal_nn_competition.benchmarks.mnist import download_mnist
         else:
@@ -435,11 +476,11 @@ def main(argv=None):
     if args.data_path is not None and args.benchmark not in (
         "mnist",
         "fashion-mnist",
+        "mnist-shuffled",
+        "fashion-mnist-shuffled",
         *CHESS_BENCHMARKS,
     ):
-        logger.error(
-            "--data-path is only supported for the mnist, fashion-mnist, and chess evaluation benchmarks"
-        )
+        logger.error("--data-path is only supported for image and chess evaluation benchmarks")
         return 2
     kwargs = {}
     if args.data_path is not None:
@@ -448,6 +489,10 @@ def main(argv=None):
         kwargs["data_path"] = Path("data/mnist.pt")
     elif args.benchmark == "fashion-mnist":
         kwargs["data_path"] = Path("data/fashion-mnist.pt")
+    elif args.benchmark == "mnist-shuffled":
+        kwargs["data_path"] = Path("data/mnist-shuffled.pt")
+    elif args.benchmark == "fashion-mnist-shuffled":
+        kwargs["data_path"] = Path("data/fashion-mnist-shuffled.pt")
     try:
         benchmark = create_benchmark(args.benchmark, **kwargs)
         result = evaluate_submission(Submission.from_directory(args.submission_dir), benchmark)
