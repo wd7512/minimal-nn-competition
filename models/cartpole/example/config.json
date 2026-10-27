@@ -1,7 +1,7 @@
 {
   "benchmark": "cartpole",
   "name": "example",
-  "author": "example author",
+  "author": "William Dennis",
   "architecture": "linear",
   "input_size": 4,
   "output_size": 2,

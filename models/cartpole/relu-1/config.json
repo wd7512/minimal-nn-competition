@@ -1,7 +1,7 @@
 {
   "benchmark": "cartpole",
   "name": "relu-1",
-  "author": "wd7512",
+  "author": "William Dennis",
   "architecture": "mlp",
   "input_size": 4,
   "output_size": 2,

@@ -1,7 +1,7 @@
 {
   "benchmark": "mnist",
   "name": "mlp-4-16-16-16-s1k",
-  "author": "muse-spark-1.3 x hermes",
+  "author": "William Dennis",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,
