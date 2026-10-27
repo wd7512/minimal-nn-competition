@@ -103,12 +103,12 @@ _SITE_STYLE = """
   text-transform: uppercase;
   color: var(--ink);
 }
-.brand-dots { display: inline-flex; gap: 3px; }
+.brand-dots { display: inline-flex; gap: 4px; }
 .brand-dots span {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: conic-gradient(var(--accent) var(--pass-percent), var(--rule) 0);
+  background: conic-gradient(var(--accent) var(--pass-percent), var(--rule-strong) 0);
 }
 .rail__label {
   margin: 24px 0 8px;
@@ -120,7 +120,7 @@ _SITE_STYLE = """
 .rail nav { display: grid; border-top: 1px solid var(--rule); }
 .rail a {
   display: grid;
-  grid-template-columns: 6px 22px minmax(0, 1fr);
+  grid-template-columns: 12px 22px minmax(0, 1fr);
   gap: 2px 8px;
   align-items: center;
   padding: 12px 0;
@@ -129,10 +129,10 @@ _SITE_STYLE = """
   text-decoration: none;
 }
 .rail__dot {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: conic-gradient(var(--accent) var(--pass-percent), var(--rule) 0);
+  background: conic-gradient(var(--accent) var(--pass-percent), var(--rule-strong) 0);
 }
 .rail__index { font: 10px/1.4 var(--mono); color: var(--muted); }
 .rail a strong { font-weight: 600; }
@@ -377,7 +377,7 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .shell { grid-template-columns: 1fr; gap: 32px; padding: 32px 24px 64px; }
   .rail { position: static; }
   .rail nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .rail a { grid-template-columns: 6px 20px minmax(0, 1fr); border-bottom: 0; padding: 10px 12px 10px 0; }
+  .rail a { grid-template-columns: 12px 20px minmax(0, 1fr); border-bottom: 0; padding: 10px 12px 10px 0; }
   .rail a + a { border-left: 1px solid var(--rule); padding-left: 12px; }
   .rail a small { grid-column: 3; }
   .rail__note { display: block; margin-top: 12px; }
@@ -1389,9 +1389,10 @@ def render_html(results, submission_links=None):
         pass_percent = _pass_percent(group_passed, group_count)
         rail_links.append(
             f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}">'
-            f'<span class="rail__dot" style="--pass-percent:{pass_percent}" aria-hidden="true"></span>'
+            f'<span class="rail__dot" style="--pass-percent:{pass_percent}" role="img" '
+            f'aria-label="{group_passed} of {group_count} submissions passing"></span>'
             f'<span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong>'
-            f'<small>{group_passed} / {group_count} passing</small></a>'
+            f'<small>{group_count} {_plural(group_count, "submission")} total</small></a>'
         )
         version_buttons = []
         for benchmark in versions:
