@@ -62,9 +62,12 @@ def download_shuffled_dataset(name, destination):
 
 def validate_label_consistency(inputs, labels):
     """Reject duplicate pixel vectors assigned different fixed labels."""
+    import torch
+
     seen = {}
     for image, label in zip(inputs, labels, strict=True):
-        raw = image.contiguous().numpy().tobytes()
+        # Convert the uint8 pixel tensor directly; numpy is a dev-only dependency.
+        raw = bytes(image.contiguous().view(torch.uint8).tolist())
         key = hashlib.sha256(raw).digest()
         prior = seen.get(key)
         if prior is not None:

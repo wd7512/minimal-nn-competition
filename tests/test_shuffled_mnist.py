@@ -84,7 +84,11 @@ def test_download_shuffled_dataset_uses_pinned_labels(tmp_path: Path, monkeypatc
     assert calls == [True]
 
 
-def test_duplicate_images_must_have_consistent_labels() -> None:
+def test_duplicate_images_must_have_consistent_labels(monkeypatch) -> None:
+    def numpy_unavailable(*args, **kwargs):
+        raise RuntimeError("Numpy is not available")
+
+    monkeypatch.setattr(torch.Tensor, "numpy", numpy_unavailable)
     images = torch.tensor([[1, 2], [1, 2], [2, 1]], dtype=torch.uint8)
     shuffled_mnist.validate_label_consistency(images, torch.tensor([3, 3, 4]))
     with pytest.raises(ValueError, match="conflicting shuffled labels"):
