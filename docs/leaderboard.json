@@ -931,6 +931,42 @@
     "submission": "mlp-13-8"
   },
   {
+    "author": "wd7512 (with Codex)",
+    "benchmark": "fashion-mnist-shuffled",
+    "details": {
+      "normalisation": false,
+      "samples": 70000,
+      "structure": [
+        784,
+        3,
+        6,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        4,
+        18660,
+        1,
+        10
+      ]
+    },
+    "name": "grouped-memory-3d",
+    "parameter_count": 115904,
+    "passed": true,
+    "score": 1.0,
+    "submission": "grouped-memory-3d"
+  },
+  {
     "author": "William Dennis",
     "benchmark": "lunarlander",
     "details": {
