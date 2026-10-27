@@ -1,7 +1,7 @@
 {
   "benchmark": "snake-simple-8x8",
   "name": "hamiltonian-3-h6",
-  "author": "opus 5.5 high x claude code",
+  "author": "William Bailkoski",
   "architecture": "mlp",
   "input_size": 6,
   "output_size": 4,

@@ -1,7 +1,7 @@
 {
   "benchmark": "fashion-mnist-shuffled",
   "name": "pilot-64x20",
-  "author": "issue-191 pilot",
+  "author": "William Dennis",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,

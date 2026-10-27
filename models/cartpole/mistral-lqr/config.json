@@ -1,7 +1,7 @@
 {
   "benchmark": "cartpole",
   "name": "mistral-lqr",
-  "author": "mistral medium 3.5 x le vibe",
+  "author": "Vibe",
   "architecture": "linear",
   "input_size": 4,
   "output_size": 2,
