@@ -1911,6 +1911,25 @@
       "structure": [
         784,
         10,
+        31,
+        10
+      ]
+    },
+    "name": "mlp-10-31",
+    "parameter_count": 8511,
+    "passed": true,
+    "score": 1.0,
+    "submission": "mlp-10-31"
+  },
+  {
+    "author": "muse-spark-1.3 x hermes",
+    "benchmark": "mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
+        10,
         48,
         10
       ]
