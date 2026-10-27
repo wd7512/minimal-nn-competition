@@ -127,6 +127,7 @@ tests/test_core.py::test_snake_can_move_into_vacating_tail
 tests/test_observation.py
 tests/test_control_replay.py
 tests/test_snake_replay.py
+tests/test_snake_example_evaluation.py
 tests/test_training.py""".splitlines()
         ),
     ),

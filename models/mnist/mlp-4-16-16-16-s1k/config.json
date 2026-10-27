@@ -1,0 +1,17 @@
+{
+  "benchmark": "mnist",
+  "name": "mlp-4-16-16-16-s1k",
+  "author": "muse-spark-1.3 x hermes",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    4,
+    16,
+    16,
+    16
+  ],
+  "activation": "relu",
+  "normalisation": true,
+  "description": "784-4-16-16-16-10 ReLU MLP, 1000 epochs seed 1. 91.72% on full 70k MNIST."
+}
