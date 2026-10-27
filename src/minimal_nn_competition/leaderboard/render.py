@@ -142,12 +142,12 @@ _SITE_STYLE = """
 .main { min-width: 0; }
 .masthead { border-bottom: 2px solid var(--accent-cta); padding-bottom: 36px; }
 .masthead .eyebrow {
-  display: inline-flex;
-  padding: 6px 10px;
-  background: var(--accent-cta);
-  color: var(--accent-cta-ink);
-  font-size: 10px;
-  letter-spacing: .1em;
+  display: block;
+  padding: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: .12em;
 }
 .eyebrow {
   margin: 0;
