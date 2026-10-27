@@ -1,0 +1,11 @@
+{
+  "benchmark": "fashion-mnist-shuffled",
+  "name": "pilot-64x20",
+  "author": "issue-191 pilot",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [64],
+  "activation": "relu",
+  "normalisation": true
+}

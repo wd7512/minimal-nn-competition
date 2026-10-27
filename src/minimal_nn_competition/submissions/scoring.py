@@ -24,6 +24,10 @@ def score_submission(root: Path, directory: Path, data_root: Path):
         )
 
         kwargs["data_path"] = download_fashion_mnist(data_root)
+    elif submission.config.benchmark in ("mnist-shuffled", "fashion-mnist-shuffled"):
+        from minimal_nn_competition.benchmarks.shuffled_mnist import download_shuffled_dataset
+
+        kwargs["data_path"] = download_shuffled_dataset(submission.config.benchmark, data_root)
     benchmark = create_benchmark(submission.config.benchmark, **kwargs)
     return evaluate_submission(submission, benchmark)
 
