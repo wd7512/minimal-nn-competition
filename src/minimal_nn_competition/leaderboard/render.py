@@ -104,7 +104,12 @@ _SITE_STYLE = """
   color: var(--ink);
 }
 .brand-dots { display: inline-flex; gap: 3px; }
-.brand-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.brand-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--pass-percent), var(--rule) 0);
+}
 .rail__label {
   margin: 24px 0 8px;
   font: 700 15px/1.4 var(--mono);
@@ -123,7 +128,12 @@ _SITE_STYLE = """
   color: var(--ink);
   text-decoration: none;
 }
-.rail__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.rail__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--pass-percent), var(--rule) 0);
+}
 .rail__index { font: 10px/1.4 var(--mono); color: var(--muted); }
 .rail a strong { font-weight: 600; }
 .rail a:hover strong { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
@@ -1055,6 +1065,10 @@ def _group_info(benchmark):
     return _version_label(benchmark), "default"
 
 
+def _pass_percent(passed, total):
+    return f"{100 * passed / total:.1f}%" if total else "0%"
+
+
 def _submission_cell(result, link, status=None, score_html=None):
     name = html.escape(result.name)
     submission = html.escape(result.submission)
@@ -1315,13 +1329,29 @@ def render_submission_pages(results, replays, output_dir):
 
 def render_html(results, submission_links=None):
     groups = _group_specs(results)
-    brand_dots = "".join(
-        f'<span data-accent="{html.escape(spec["accent"], quote=True)}"></span>'
-        for spec in groups
-    )
     entries = {}
     for result in results:
         entries.setdefault(result.benchmark, []).append(result)
+    group_stats = {}
+    for spec in groups:
+        group_entries = [
+            result
+            for benchmark in spec["benchmarks"]
+            for result in entries.get(benchmark, ())
+        ]
+        group_stats[spec["id"]] = (
+            len(group_entries),
+            sum(1 for result in group_entries if result.passed),
+        )
+    group_pass_percent = {
+        group_id: _pass_percent(group_passed, group_total)
+        for group_id, (group_total, group_passed) in group_stats.items()
+    }
+    brand_dots = "".join(
+        f'<span data-accent="{html.escape(spec["accent"], quote=True)}" '
+        f'style="--pass-percent:{group_pass_percent[spec["id"]]}"></span>'
+        for spec in groups
+    )
     total = len(results)
     passed = sum(1 for result in results if result.passed)
     rail_links = []
@@ -1335,9 +1365,13 @@ def render_html(results, submission_links=None):
         label = spec["label"]
         default_benchmark = versions[0]
         default_label = _version_label(default_benchmark)
-        group_count = sum(len(entries.get(benchmark, ())) for benchmark in versions)
+        group_count, group_passed = group_stats[group_id]
+        pass_percent = _pass_percent(group_passed, group_count)
         rail_links.append(
-            f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong><small>{group_count} {_plural(group_count, "submission")} total</small></a>'
+            f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}">'
+            f'<span class="rail__dot" style="--pass-percent:{pass_percent}" aria-hidden="true"></span>'
+            f'<span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong>'
+            f'<small>{group_passed} / {group_count} passing</small></a>'
         )
         version_buttons = []
         for benchmark in versions:
