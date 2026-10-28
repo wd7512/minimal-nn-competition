@@ -1,7 +1,7 @@
 {
   "benchmark": "mnist-shuffled",
   "name": "pilot-64x20",
-  "author": "William Dennis",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,

@@ -1,7 +1,7 @@
 {
   "benchmark": "fashion-mnist",
   "name": "mlp-13-8",
-  "author": "William Dennis",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,

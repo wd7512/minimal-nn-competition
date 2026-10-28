@@ -1,7 +1,7 @@
 {
   "benchmark": "snake-simple-16x16",
   "name": "cycle-32",
-  "author": "William Dennis",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 6,
   "output_size": 4,
