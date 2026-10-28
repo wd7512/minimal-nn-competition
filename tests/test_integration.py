@@ -37,7 +37,7 @@ def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: 
     out = capsys.readouterr().out
     assert '"benchmark": "snake-simple-8x8"' in out
     assert '"name": "example"' in out
-    assert '"author": "example author"' in out
+    assert '"author": "William Dennis"' in out
 
 
 def test_evaluate_chess_eval_cli(capsys: pytest.CaptureFixture[str]) -> None:
@@ -45,7 +45,7 @@ def test_evaluate_chess_eval_cli(capsys: pytest.CaptureFixture[str]) -> None:
     out = capsys.readouterr().out
     assert '"benchmark": "chess-eval-10k"' in out
     assert '"name": "chess-mlp-64"' in out
-    assert '"author": "example author"' in out
+    assert '"author": "William Dennis"' in out
     assert '"passed": true' in out
 
 
@@ -406,10 +406,14 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
     assert "Image compression" in html
     assert 'data-version="mnist-shuffled"' in html
     assert 'data-version="fashion-mnist-shuffled"' in html
-    assert "True-label and shuffled-label comparison" in html
-    assert "true-mnist (50.00%, 10 params)" in html
-    assert "shuffled-mnist (30.00%, 20 params)" in html
-    assert "232,535 bits" in html
+    image_start = html.index('id="image-compression"')
+    image_end = html.index("</section>", image_start)
+    image_html = html[image_start:image_end]
+    assert "image-comparison" not in image_html
+    assert "True-label and shuffled-label comparison" not in image_html
+    assert "232,535 bits" not in image_html
+    for name in ("true-mnist", "shuffled-mnist", "true-fashion", "shuffled-fashion"):
+        assert name in image_html
     assert 'id="mnist"' not in html
     assert 'data-version="snake-simple-8x8"' in html
     assert 'data-version="snake-simple-16x16"' in html

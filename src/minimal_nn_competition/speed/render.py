@@ -12,9 +12,14 @@ from minimal_nn_competition.leaderboard.theme import (
 )
 from minimal_nn_competition.speed.leaderboard import rank_speed_results
 
-_STYLE = SITE_THEME_CSS + SITE_BASE_CSS + AUXILIARY_TABLE_CSS + """
+_STYLE = (
+    SITE_THEME_CSS
+    + SITE_BASE_CSS
+    + AUXILIARY_TABLE_CSS
+    + """
 body { margin: 0 auto; max-width: 72rem; padding: 2rem; }
 """
+)
 
 
 def _table(results):

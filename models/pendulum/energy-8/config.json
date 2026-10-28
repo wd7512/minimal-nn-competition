@@ -1,7 +1,7 @@
 {
   "benchmark": "pendulum",
   "name": "energy-8",
-  "author": "chatgpt think harder",
+  "author": "William Dennis",
   "architecture": "mlp",
   "input_size": 3,
   "output_size": 5,

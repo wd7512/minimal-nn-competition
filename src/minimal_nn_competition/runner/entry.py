@@ -44,7 +44,7 @@ def evaluate_submission(submission, benchmark):
 
 
 def _submission_date(submission):
-    """Return the date the submission config was first committed, if available."""
+    """Return the date this submission's config was added, if available."""
     config_path = submission.checkpoint.parent / "config.json"
     try:
         result = subprocess.run(
@@ -53,7 +53,6 @@ def _submission_date(submission):
                 "-C",
                 str(config_path.parent),
                 "log",
-                "--follow",
                 "--diff-filter=A",
                 "-1",
                 "--format=%cs",

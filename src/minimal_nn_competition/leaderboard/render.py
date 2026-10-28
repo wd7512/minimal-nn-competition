@@ -18,6 +18,7 @@ from minimal_nn_competition.benchmarks.registry import (
 )
 from minimal_nn_competition.leaderboard import rank_results
 from minimal_nn_competition.leaderboard.theme import SITE_BASE_CSS, SITE_THEME_CSS
+from minimal_nn_competition.runner.entry import BenchmarkResult
 
 _GROUP_SPECS = (
     {
@@ -62,7 +63,10 @@ _VERSION_LABELS = {
     "pendulum": "Discrete torque",
     "lunarlander": "Lunar touchdown",
 }
-_STYLE = SITE_THEME_CSS + SITE_BASE_CSS + """
+_STYLE = (
+    SITE_THEME_CSS
+    + SITE_BASE_CSS
+    + """
 [data-accent="snake"] { --accent: var(--accent-snake); }
 [data-accent="image-compression"] { --accent: var(--accent-image-compression); }
 [data-accent="chess"] { --accent: var(--accent-chess); }
@@ -81,6 +85,7 @@ _STYLE = SITE_THEME_CSS + SITE_BASE_CSS + """
 .status--pass { color: var(--pass); }
 .status--fail { color: var(--fail); }
 """
+)
 
 _SITE_STYLE = """
 .shell {
@@ -357,7 +362,6 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .results th, .results td { padding: 8px 8px; }
   td.submission a { gap: 1px; }
   .group { padding: 36px 0 20px; }
-  .table-wrap { overflow-x: visible; }
   table.results { min-width: 0; }
   td.num, th.num { white-space: normal; }
   .std { display: inline; white-space: nowrap; }
@@ -1085,9 +1089,7 @@ def _submission_guide_url(benchmark):
         guide = "how-to-make-a-control-submission.md"
     else:
         return "https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"
-    return (
-        "https://github.com/wd7512/minimal-nn-competition/blob/main/how-to/" + guide
-    )
+    return "https://github.com/wd7512/minimal-nn-competition/blob/main/how-to/" + guide
 
 
 def _submission_date_html(value):
@@ -1134,8 +1136,8 @@ def _table(results, submission_links=None, benchmark=None):
         empty_row = (
             f'<tr class="empty-row" data-empty-row{initially_hidden}>'
             f'<td colspan="{4 + int(fourth is not None)}">'
-            '<span data-empty-message>Nobody’s found a passing solution for this one yet — '
-            'maybe you can?</span> '
+            "<span data-empty-message>Nobody’s found a passing solution for this one yet — "
+            "maybe you can?</span> "
             f'<a href="{html.escape(_submission_guide_url(benchmark))}">How to submit</a>'
             "</td></tr>"
         )
@@ -1318,9 +1320,7 @@ def render_html(results, submission_links=None):
     group_stats = {}
     for spec in groups:
         group_entries = [
-            result
-            for benchmark in spec["benchmarks"]
-            for result in entries.get(benchmark, ())
+            result for benchmark in spec["benchmarks"] for result in entries.get(benchmark, ())
         ]
         group_stats[spec["id"]] = (
             len(group_entries),
@@ -1355,7 +1355,7 @@ def render_html(results, submission_links=None):
             f'<span class="rail__dot" style="--pass-percent:{pass_percent}" role="img" '
             f'aria-label="{group_passed} of {group_count} submissions passing"></span>'
             f'<span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong>'
-            f'<small>{group_count} {_plural(group_count, "submission")} total</small></a>'
+            f"<small>{group_count} {_plural(group_count, 'submission')} total</small></a>"
         )
         version_buttons = []
         for benchmark in versions:
@@ -1400,7 +1400,7 @@ def render_html(results, submission_links=None):
         )
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
-    benchmark_leaders = {}
+    benchmark_leaders: dict[str, BenchmarkResult] = {}
     for result in rank_results(results):
         benchmark_leaders.setdefault(result.benchmark, result)
     featured = max(
@@ -1414,22 +1414,18 @@ def render_html(results, submission_links=None):
     )
     featured_html = ""
     if featured:
-        featured_href = (submission_links or {}).get(
-            (featured.benchmark, featured.submission)
-        )
+        featured_href = (submission_links or {}).get((featured.benchmark, featured.submission))
         featured_name = (
-            f'<span class="submission__name featured__name">'
-            f'{html.escape(featured.name)}</span>'
+            f'<span class="submission__name featured__name">{html.escape(featured.name)}</span>'
         )
         if featured_href:
             featured_name = (
-                f'<a href="{html.escape(featured_href, quote=True)}">'
-                f"{featured_name}</a>"
+                f'<a href="{html.escape(featured_href, quote=True)}">{featured_name}</a>'
             )
         featured_html = (
             '<section class="featured" aria-labelledby="featured-label">'
             '<p class="eyebrow featured__label" id="featured-label">'
-            'Latest model to lead a benchmark</p>'
+            "Latest model to lead a benchmark</p>"
             '<div class="table-wrap featured__table-wrap">'
             '<table class="results featured__table">'
             '<caption class="sr-only">Latest model currently ranked first in its benchmark.</caption>'
@@ -1440,7 +1436,7 @@ def render_html(results, submission_links=None):
             f'<td class="featured__benchmark">{html.escape(_version_label(featured.benchmark))}</td>'
             f'<td class="submission">{featured_name}</td>'
             f'<td class="featured__author">{html.escape(featured.author)}</td>'
-            '</tr></tbody></table></div></section>'
+            "</tr></tbody></table></div></section>"
         )
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """

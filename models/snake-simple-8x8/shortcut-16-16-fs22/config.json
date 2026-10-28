@@ -1,7 +1,7 @@
 {
   "benchmark": "snake-simple-8x8",
   "name": "shortcut-16-16-fs22",
-  "author": "opus 5.5 high x claude code",
+  "author": "William Bailkoski",
   "architecture": "mlp",
   "input_size": 22,
   "output_size": 4,

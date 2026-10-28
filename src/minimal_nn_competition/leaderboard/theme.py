@@ -65,9 +65,9 @@ SITE_THEME_CSS = f"""
 :root {{
   color-scheme: light dark;
 {_css_declarations(LIGHT_COLORS)}
-  --display: {FONT_FAMILIES['display']};
-  --body: {FONT_FAMILIES['body']};
-  --mono: {FONT_FAMILIES['mono']};
+  --display: {FONT_FAMILIES["display"]};
+  --body: {FONT_FAMILIES["body"]};
+  --mono: {FONT_FAMILIES["mono"]};
   --chart-snake-head: var(--pass);
   --chart-boundary: var(--rule-strong);
   --chart-cart: var(--ink);

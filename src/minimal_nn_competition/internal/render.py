@@ -15,10 +15,15 @@ from minimal_nn_competition.leaderboard.theme import (
 
 _SCOPE_TITLES = {"snake-simple-8x8": "SNAKE SIMPLE 8X8"}
 
-_STYLE = SITE_THEME_CSS + SITE_BASE_CSS + AUXILIARY_TABLE_CSS + """
+_STYLE = (
+    SITE_THEME_CSS
+    + SITE_BASE_CSS
+    + AUXILIARY_TABLE_CSS
+    + """
 body { margin: 0 auto; max-width: 72rem; padding: 2rem; }
 .failed { opacity: 0.72; }
 """
+)
 
 
 def _table(results):

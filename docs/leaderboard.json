@@ -1,6 +1,6 @@
 [
   {
-    "author": "wd7512",
+    "author": "William Dennis",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -119,7 +119,7 @@
     "submitted_at": "2026-10-25"
   },
   {
-    "author": "hermes",
+    "author": "William Dennis",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -237,7 +237,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "mistral medium 3.5 x le vibe",
+    "author": "Vibe",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -355,7 +355,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -473,7 +473,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "jules",
+    "author": "Jules bot",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -591,7 +591,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "opencode",
+    "author": "William Dennis",
     "benchmark": "chess-eval-100k",
     "details": {
       "fold_scores": [
@@ -635,7 +635,7 @@
     "submitted_at": "2026-10-25"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "chess-eval-100k",
     "details": {
       "fold_scores": [
@@ -676,10 +676,10 @@
     "passed": false,
     "score": 0.15401999652385712,
     "submission": "example",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-24"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "chess-eval-10k",
     "details": {
       "fold_scores": [
@@ -724,7 +724,7 @@
     "submitted_at": "2026-10-27"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "chess-eval-10k",
     "details": {
       "fold_scores": [
@@ -765,10 +765,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "mlp-47-16",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-24"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "chess-eval-10k",
     "details": {
       "fold_scores": [
@@ -809,10 +809,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "example",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-24"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -829,10 +829,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "mlp-23-64",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-27"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -849,10 +849,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "mlp-31-16",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-27"
   },
   {
-    "author": "agent",
+    "author": "William Dennis",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -871,7 +871,7 @@
     "submitted_at": "2026-10-25"
   },
   {
-    "author": "hermes",
+    "author": "William Dennis",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -887,10 +887,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "mlp-35",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-24"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": false,
@@ -906,10 +906,10 @@
     "passed": false,
     "score": 0.8961856961250305,
     "submission": "example",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -928,7 +928,7 @@
     "submitted_at": "2026-10-23"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -948,7 +948,44 @@
     "submitted_at": "2026-10-23"
   },
   {
-    "author": "issue-191 pilot",
+    "author": "wd7512 (with Codex)",
+    "benchmark": "fashion-mnist-shuffled",
+    "details": {
+      "normalisation": false,
+      "samples": 70000,
+      "structure": [
+        784,
+        3,
+        6,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        4,
+        18660,
+        1,
+        10
+      ]
+    },
+    "name": "grouped-memory-3d",
+    "parameter_count": 115904,
+    "passed": true,
+    "score": 1.0,
+    "submission": "grouped-memory-3d",
+    "submitted_at": "2026-10-27"
+  },
+  {
+    "author": "William Dennis",
     "benchmark": "fashion-mnist-shuffled",
     "details": {
       "normalisation": true,
@@ -967,7 +1004,7 @@
     "submitted_at": "2026-10-27"
   },
   {
-    "author": "chatgpt think harder",
+    "author": "William Dennis",
     "benchmark": "lunarlander",
     "details": {
       "mean_return": 2.780126271425504,
@@ -1292,7 +1329,7 @@
     "submitted_at": "2026-10-26"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "lunarlander",
     "details": {
       "mean_return": 2.1240204107822187,
@@ -1614,10 +1651,10 @@
     "passed": false,
     "score": 0.74,
     "submission": "example",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-24"
   },
   {
-    "author": "gemini 3.6 flash x Jules",
+    "author": "Jules bot",
     "benchmark": "lunarlander",
     "details": {
       "mean_return": 0.9359967537613607,
@@ -1942,7 +1979,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1959,10 +1996,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "mlp-10-31",
-    "submitted_at": null
+    "submitted_at": "2026-10-27"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1979,10 +2016,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "mlp-10-48",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "hermes",
+    "author": "William Dennis",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1999,10 +2036,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "mlp-14-14",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-24"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "mnist",
     "details": {
       "normalisation": false,
@@ -2021,7 +2058,7 @@
     "submitted_at": "2026-10-22"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -2040,10 +2077,10 @@
     "passed": false,
     "score": 0.9171571135520935,
     "submission": "mlp-4-16-16-16-s1k",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -2063,7 +2100,7 @@
     "submitted_at": "2026-10-22"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -2080,10 +2117,10 @@
     "passed": false,
     "score": 0.8534285426139832,
     "submission": "mlp-6-6",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "opus 5.5 high x claude code",
+    "author": "William Bailkoski",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -2105,7 +2142,43 @@
     "submitted_at": "2026-10-23"
   },
   {
-    "author": "issue-191 pilot",
+    "author": "wd7512 (with Codex)",
+    "benchmark": "mnist-shuffled",
+    "details": {
+      "normalisation": false,
+      "samples": 70000,
+      "structure": [
+        784,
+        3,
+        6,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        4,
+        18683,
+        1,
+        10
+      ]
+    },
+    "name": "grouped-memory-3d",
+    "parameter_count": 115932,
+    "passed": true,
+    "score": 1.0,
+    "submission": "grouped-memory-3d",
+    "submitted_at": "2026-10-27"
+  },
+  {
+    "author": "William Dennis",
     "benchmark": "mnist-shuffled",
     "details": {
       "normalisation": true,
@@ -2121,10 +2194,10 @@
     "passed": false,
     "score": 0.1561142857142857,
     "submission": "example",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-27"
   },
   {
-    "author": "chatgpt think harder",
+    "author": "William Dennis",
     "benchmark": "pendulum",
     "details": {
       "mean_return": -133.5030826185843,
@@ -2244,7 +2317,7 @@
     "submitted_at": "2026-10-26"
   },
   {
-    "author": "gemini 3.6 flash x jules",
+    "author": "Jules bot",
     "benchmark": "pendulum",
     "details": {
       "mean_return": -136.16880305674457,
@@ -2361,10 +2434,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "mlp-16",
-    "submitted_at": "2026-10-24"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "pendulum",
     "details": {
       "mean_return": -131.33294052574004,
@@ -2485,7 +2558,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -4286,10 +4359,10 @@
     "passed": false,
     "score": 0.19,
     "submission": "sl19-512-256",
-    "submitted_at": "2026-10-24"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -6090,10 +6163,10 @@
     "passed": false,
     "score": 0.16,
     "submission": "sl16-512-256",
-    "submitted_at": "2026-10-24"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -7894,10 +7967,10 @@
     "passed": false,
     "score": 0.09,
     "submission": "sl9-512-256",
-    "submitted_at": "2026-10-24"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -9698,10 +9771,10 @@
     "passed": false,
     "score": 0.07,
     "submission": "sl7-512-256",
-    "submitted_at": "2026-10-24"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -11505,7 +11578,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "hermes",
+    "author": "William Dennis",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -13308,7 +13381,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "hermes",
+    "author": "William Dennis",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -15111,7 +15184,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -16912,10 +16985,10 @@
     "passed": false,
     "score": 0.0,
     "submission": "example",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "chatgpt think harder",
+    "author": "William Dennis",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -17443,7 +17516,7 @@
     "submitted_at": "2026-10-26"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -17968,10 +18041,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "cycle-18x8",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "muse-spark-1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -18495,10 +18568,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "cycle-32",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-25"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -19022,10 +19095,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "cycle-44",
-    "submitted_at": "2026-10-23"
+    "submitted_at": "2026-10-24"
   },
   {
-    "author": "hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -19552,7 +19625,7 @@
     "submitted_at": "2026-10-24"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -20077,10 +20150,10 @@
     "passed": false,
     "score": 0.0,
     "submission": "example",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "opus 5.5 high x claude code",
+    "author": "William Bailkoski",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -20607,7 +20680,7 @@
     "submitted_at": "2026-10-23"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -21134,7 +21207,7 @@
     "submitted_at": "2026-10-23"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -21662,7 +21735,7 @@
     "submitted_at": "2026-10-23"
   },
   {
-    "author": "gemini 3.6 flash x jules",
+    "author": "William Dennis",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -22187,10 +22260,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "hamiltonian-8-8-fs14",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -22715,10 +22788,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "serpentine-8-8-fs14",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -23243,10 +23316,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "hamiltonian-20-16-fs14",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "opus 5.5 high x claude code",
+    "author": "William Bailkoski",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -23774,7 +23847,7 @@
     "submitted_at": "2026-10-23"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -24299,10 +24372,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "hamiltonian-24-16",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "muse spark 1.3 x hermes",
+    "author": "William Dennis",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -24827,10 +24900,10 @@
     "passed": true,
     "score": 1.0,
     "submission": "table-128-128",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   },
   {
-    "author": "example author",
+    "author": "William Dennis",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -25355,6 +25428,6 @@
     "passed": false,
     "score": 0.0,
     "submission": "example",
-    "submitted_at": "2026-10-22"
+    "submitted_at": "2026-10-23"
   }
 ]
