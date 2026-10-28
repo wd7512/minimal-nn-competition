@@ -44,7 +44,7 @@ def test_evaluate_chess_eval_cli(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["evaluate", "chess-eval-10k", "models/chess-eval-10k/example"]) == 0
     out = capsys.readouterr().out
     assert '"benchmark": "chess-eval-10k"' in out
-    assert '"name": "chess-mlp-64"' in out
+    assert '"name": "example"' in out
     assert '"author": "William Dennis"' in out
     assert '"passed": true' in out
 

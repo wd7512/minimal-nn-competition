@@ -68,9 +68,9 @@ sets.
 
 ### Legacy checkpoints
 
-Existing 769-input checkpoints still receive the original board/side features.
-New training uses 773 inputs. Evaluation details identify `board-v1` or
-`castling-v2`; historical checkpoints and scores are retained.
+External 769-input checkpoints still receive the original board/side features.
+New training and checked-in examples use 773 inputs. Evaluation details identify
+`board-v1` or `castling-v2`.
 
 The old encoding has 14 incompatible input groups in the 100k dataset, limiting
 accuracy to at most 99.986%. Castling flags distinguish these groups without
@@ -106,9 +106,17 @@ uv run mnnc evaluate chess-eval-10k models/chess-eval-10k/example
 uv run mnnc evaluate chess-eval-100k models/chess-eval-100k/example
 ```
 
-The checked-in 10k example is a `769-64-64-1` ReLU MLP with 53,505 parameters.
-It scores `1.0` and passes. The checked-in 100k example reuses those weights as
-a transfer baseline; it fails the larger tier, which is expected.
+Both checked-in examples use 773 inputs and pass every position:
+
+| Tier | ReLU MLP | Parameters | Correct |
+| --- | --- | ---: | ---: |
+| 10k | `773-47-13-4-1` | 37,063 | 10,000/10,000 |
+| 100k | `773-530-530-1` | 692,181 | 100,000/100,000 |
+
+These adapt the previously trained `mlp-47-13-4` and `mlp-512-512` weights.
+The 100k model adds 18 isolated ReLU residuals for its remaining errors using
+all 773 features, including castling rights. Inference uses the standard MLP;
+this is recall of the fixed public set. Earlier chess entries have been removed.
 
 ## 7. Dataset
 
@@ -137,7 +145,7 @@ fit every position within 0.1 pawns.
 
 ## Train the examples
 
-The checked-in 10k example can be trained locally:
+To train a fresh 10k model locally:
 
 ```bash
 uv run mnnc train-chess-eval-10k

@@ -64,3 +64,22 @@ def test_castling_encoding_removes_incompatible_dataset_collisions() -> None:
             assert sum(max(scores) - min(scores) > 20 for scores in legacy.values()) == 14
             assert unavoidable_errors(legacy) == 14
         assert unavoidable_errors(current) == 0
+
+
+def test_checked_in_chess_examples_pass() -> None:
+    from pathlib import Path
+
+    from minimal_nn_competition.benchmarks.registry import create_benchmark
+    from minimal_nn_competition.model.entry import Submission
+    from minimal_nn_competition.runner.entry import evaluate_submission
+
+    for tier, count in TIERS:
+        name = f"chess-eval-{tier}"
+        directories = sorted(Path(f"models/{name}").iterdir())
+        assert [path.name for path in directories] == ["example"]
+        submission = Submission.from_directory(directories[0])
+        assert submission.config.input_size == 773
+        result = evaluate_submission(submission, create_benchmark(name))
+        assert result.passed and result.score == 1.0
+        assert result.details["samples"] == count
+        assert result.details["encoding"] == "castling-v2"
