@@ -1,7 +1,7 @@
 {
   "benchmark": "snake-simple-8x8",
   "name": "example",
-  "author": "William Dennis",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 24,
   "output_size": 4,

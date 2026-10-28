@@ -1,7 +1,7 @@
 {
   "benchmark": "lunarlander",
   "name": "lunar-distill-12",
-  "author": "William Dennis",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 8,
   "output_size": 4,
