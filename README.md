@@ -11,6 +11,14 @@ Rules: submissions use feed-forward `linear` or `mlp` models and a PyTorch `stat
 2. Open a pull request against `submission` with exactly
 `models/<benchmark>/<name>/config.json` and `model.pt`.
 
+Check your folder locally before submitting:
+
+```bash
+uv run mnnc validate-submission models/<benchmark>/<name>
+```
+
+See [validation and local leaderboard updates](how-to/how-to-validate-a-submission.md).
+
 Submission Guides: [Snake](how-to/how-to-make-a-snake-submission.md), [Image compression](how-to/how-to-make-an-image-compression-submission.md), [Chess](how-to/how-to-make-a-chess-submission.md), [Control](how-to/how-to-make-a-control-submission.md)
 
 ## Submit/Propose a new benchmark

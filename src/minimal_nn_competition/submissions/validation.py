@@ -172,11 +172,3 @@ def validate_diff(diff_text: str, root: Path) -> list[str]:
             f"({model_path.stat().st_size} bytes; maximum is {MAX_CHECKPOINT_BYTES})"
         )
     return errors
-
-
-def submission_directory(diff_text: str) -> Path:
-    paths = [line.split("\t")[-1] for line in diff_text.splitlines() if "\t" in line]
-    directories = {Path(path).parent for path in paths if SUBMISSION_PATH.match(path)}
-    if len(directories) != 1:
-        raise ValueError("diff does not identify one submission directory")
-    return directories.pop()
