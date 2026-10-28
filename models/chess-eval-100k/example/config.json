@@ -1,7 +1,7 @@
 {
   "benchmark": "chess-eval-100k",
   "name": "example",
-  "author": "William Dennis",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 773,
   "output_size": 1,

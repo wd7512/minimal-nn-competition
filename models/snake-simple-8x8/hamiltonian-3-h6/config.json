@@ -1,7 +1,7 @@
 {
   "benchmark": "snake-simple-8x8",
   "name": "hamiltonian-3-h6",
-  "author": "William Bailkoski",
+  "author": "will-bailkoski",
   "architecture": "mlp",
   "input_size": 6,
   "output_size": 4,

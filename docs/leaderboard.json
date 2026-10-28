@@ -1,6 +1,6 @@
 [
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -118,7 +118,7 @@
     "submission": "relu-1"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -352,7 +352,7 @@
     "submission": "mistral-lqr"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -586,7 +586,7 @@
     "submission": "linear-pd"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "chess-eval-100k",
     "details": {
       "encoding": "castling-v2",
@@ -630,7 +630,7 @@
     "submission": "example"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "chess-eval-10k",
     "details": {
       "encoding": "castling-v2",
@@ -675,7 +675,7 @@
     "submission": "example"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -694,7 +694,7 @@
     "submission": "mlp-23-64"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -713,7 +713,7 @@
     "submission": "mlp-31-16"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -731,7 +731,7 @@
     "submission": "mlp-32"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -749,7 +749,7 @@
     "submission": "mlp-35"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": false,
@@ -767,7 +767,7 @@
     "submission": "example"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -785,7 +785,7 @@
     "submission": "mlp-13"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "fashion-mnist",
     "details": {
       "normalisation": true,
@@ -804,7 +804,7 @@
     "submission": "mlp-13-8"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "lunarlander",
     "details": {
       "mean_return": 2.780126271425504,
@@ -1128,7 +1128,7 @@
     "submission": "lunar-distill-12"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "lunarlander",
     "details": {
       "mean_return": 2.1240204107822187,
@@ -1776,7 +1776,7 @@
     "submission": "mlp-10-10"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1795,7 +1795,7 @@
     "submission": "mlp-10-48"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1814,7 +1814,7 @@
     "submission": "mlp-14-14"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "mnist",
     "details": {
       "normalisation": false,
@@ -1832,7 +1832,7 @@
     "submission": "example"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1853,7 +1853,7 @@
     "submission": "mlp-4-16-16-16-s1k"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1872,7 +1872,7 @@
     "submission": "mlp-7-7"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1891,7 +1891,7 @@
     "submission": "mlp-6-6"
   },
   {
-    "author": "William Bailkoski",
+    "author": "will-bailkoski",
     "benchmark": "mnist",
     "details": {
       "normalisation": true,
@@ -1912,7 +1912,7 @@
     "submission": "mlp-4-16-16-16"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "pendulum",
     "details": {
       "mean_return": -133.5030826185843,
@@ -2150,7 +2150,7 @@
     "submission": "mlp-16"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "pendulum",
     "details": {
       "mean_return": -131.33294052574004,
@@ -2270,7 +2270,7 @@
     "submission": "example"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -4073,7 +4073,7 @@
     "submission": "sl19-512-256"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -5876,7 +5876,7 @@
     "submission": "sl16-512-256"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -7679,7 +7679,7 @@
     "submission": "sl9-512-256"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -9482,7 +9482,7 @@
     "submission": "sl7-512-256"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -11285,7 +11285,7 @@
     "submission": "ppo-512-256"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -13087,7 +13087,7 @@
     "submission": "ppo-512"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -14889,7 +14889,7 @@
     "submission": "obs-fb"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-obstacles-8x8",
     "details": {
       "seed_blocked": [
@@ -16692,7 +16692,7 @@
     "submission": "example"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -17219,7 +17219,7 @@
     "submission": "cycle-17x7"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -17746,7 +17746,7 @@
     "submission": "cycle-18x8"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -18272,7 +18272,7 @@
     "submission": "cycle-32"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -18798,7 +18798,7 @@
     "submission": "cycle-44"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -19324,7 +19324,7 @@
     "submission": "serp-36"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-16x16",
     "details": {
       "seed_blocked": [
@@ -19851,7 +19851,7 @@
     "submission": "example"
   },
   {
-    "author": "William Bailkoski",
+    "author": "will-bailkoski",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -20377,7 +20377,7 @@
     "submission": "hamiltonian-3-h6"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -20903,7 +20903,7 @@
     "submission": "serpentine-8-h6"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -21430,7 +21430,7 @@
     "submission": "serpentine-6-6-fs14"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -21957,7 +21957,7 @@
     "submission": "hamiltonian-8-8-fs14"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -22484,7 +22484,7 @@
     "submission": "serpentine-8-8-fs14"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -23011,7 +23011,7 @@
     "submission": "hamiltonian-20-16-fs14"
   },
   {
-    "author": "William Bailkoski",
+    "author": "will-bailkoski",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -23538,7 +23538,7 @@
     "submission": "shortcut-16-16-fs22"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -24065,7 +24065,7 @@
     "submission": "hamiltonian-24-16"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
@@ -24592,7 +24592,7 @@
     "submission": "table-128-128"
   },
   {
-    "author": "William Dennis",
+    "author": "wd7512",
     "benchmark": "snake-simple-8x8",
     "details": {
       "seed_blocked": [
