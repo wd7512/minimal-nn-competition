@@ -32,7 +32,7 @@ the submission slug shown on the leaderboard.
   "name": "example",
   "author": "example author",
   "architecture": "mlp",
-  "input_size": 769,
+  "input_size": 773,
   "output_size": 1,
   "hidden_sizes": [64, 64],
   "activation": "relu",
@@ -45,24 +45,39 @@ the submission slug shown on the leaderboard.
 - `name` and `author` are required and shown on the leaderboard.
 - `description` is optional and is not shown on the site.
 - `architecture` is `linear` or `mlp`.
-- `input_size` must be `769` and `output_size` must be `1`.
+- New submissions should use `input_size: 773` and `output_size` must be `1`.
 - `normalisation` is not used by this benchmark.
 - `linear` submissions must omit `hidden_sizes`; `mlp` submissions declare
   `hidden_sizes` and `activation`.
 
 ## 3. Encode the position
 
-The input is 769 values. Both tiers use the same encoding:
+The current encoding (`castling-v2`) has 773 values. Both tiers use the same encoding:
 
 - 12 piece planes of 64 squares each, in this order:
   `white P`, `white N`, `white B`, `white R`, `white Q`, `white K`,
   `black P`, `black N`, `black B`, `black R`, `black Q`, `black K`.
   Each square is `1.0` when that piece is present and `0.0` otherwise.
-- One final value: `+1.0` when White is to move, `-1.0` when Black is to move.
+- Value 768: `+1.0` when White is to move, `-1.0` when Black is to move.
+- Four final flags at indices 769–772: castling rights `K`, `Q`, `k`, `q`,
+  respectively (`1.0` if present in FEN, `0.0` otherwise).
 
-Squares follow FEN order: `a8=0`, `h8=7`, `a1=56`, `h1=63`. Castling rights and
-en passant are not inputs; positions with an en-passant capture are excluded
-from the evaluation sets.
+Squares follow FEN order: `a8=0`, `h8=7`, `a1=56`, `h1=63`. En passant is not
+an input; positions with an en-passant capture are excluded from the evaluation
+sets.
+
+### Legacy checkpoints
+
+The evaluator still accepts 769-input checkpoints (`board-v1`), using exactly
+the original board and side-to-move features. Existing checkpoints and recorded
+scores are retained; they are not converted or claimed to use castling rights.
+New training uses 773 inputs. Evaluation details record the encoding name.
+
+The legacy encoding makes 100k perfect recall impossible: 14 groups share the
+same legacy input but have incompatible targets at the ±0.1 pawn tolerance,
+so its accuracy is at most 99.986%. Appending castling rights separates all
+these groups without changing any frozen position or target. This removes the
+identified contradiction; it does not guarantee that a trained model will pass.
 
 ## 4. Output and scoring
 
@@ -131,7 +146,7 @@ The checked-in 10k example can be trained locally:
 uv run mnnc train-chess-eval-10k
 ```
 
-The default run trains a `769-64-64-1` ReLU MLP with MSE, Adam, cosine learning
+The default run trains a `773-64-64-1` ReLU MLP with MSE, Adam, cosine learning
 rate decay, and deterministic shuffling. It stops once every position is within
 0.1 pawns.
 
