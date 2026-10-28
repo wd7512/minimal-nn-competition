@@ -193,7 +193,9 @@ def main():
             "draw_threshold_cp": DRAW_CP,
             "tolerance_pawns": 0.1,
             "input": {
-                "size": 769,
+                "size": 773,
+                "encoding": "castling-v2",
+                "castling_rights": ["K", "Q", "k", "q"],
                 "planes": [
                     "white P",
                     "white N",

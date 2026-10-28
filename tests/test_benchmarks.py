@@ -488,7 +488,7 @@ def _write_chess_data(tmp_path: Path, rows: list[tuple[str, int]]) -> Path:
 def _chess_submission(
     tmp_path: Path,
     *,
-    input_size: int = 769,
+    input_size: int = 773,
     output_size: int = 1,
     benchmark: str = "chess-eval-10k",
 ) -> Submission:
@@ -515,7 +515,7 @@ def test_chess_eval_registers_by_name() -> None:
 
 def test_chess_eval_encodes_fen() -> None:
     inputs = encode(START)
-    assert len(inputs) == 769
+    assert len(inputs) == 773
     assert inputs[48] == 1.0
     assert inputs[5 * 64 + 60] == 1.0
     assert inputs[10 * 64 + 3] == 1.0
@@ -527,7 +527,7 @@ def test_chess_eval_encodes_fen() -> None:
 def test_chess_eval_load_tensors(tmp_path: Path) -> None:
     data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 60)])
     inputs, targets = load_tensors(data)
-    assert inputs.shape == (2, 769)
+    assert inputs.shape == (2, 773)
     assert targets.tolist() == pytest.approx([0.0, 0.6])
 
 
@@ -551,7 +551,7 @@ def test_chess_eval_evaluate_dummy_fails(tmp_path: Path) -> None:
 
 def test_chess_eval_rejects_wrong_shape(tmp_path: Path) -> None:
     wrong_input = _chess_submission(tmp_path, input_size=768)
-    with pytest.raises(ValueError, match="input_size 769"):
+    with pytest.raises(ValueError, match="input_size 773"):
         ChessEval10kBenchmark().load_submission(wrong_input)
     second = tmp_path / "second"
     second.mkdir()
@@ -575,3 +575,49 @@ def test_chess_eval_requires_data_file(tmp_path: Path) -> None:
     loaded = materialize_submission(_chess_submission(tmp_path))
     with pytest.raises(FileNotFoundError, match="Chess evaluation data is unavailable"):
         ChessEval10kBenchmark(data_path=tmp_path / "missing.jsonl").evaluate(loaded)
+
+
+def test_chess_eval_encodes_each_castling_right() -> None:
+    for rights in ["-", "K", "Q", "k", "q", "KQkq", "Kq"]:
+        fen = START.replace("KQkq", rights)
+        assert encode(fen)[:769] == encode(START)[:769]
+        assert encode(fen)[769:] == [float(right in rights) for right in "KQkq"]
+
+
+def test_chess_eval_castling_collision_is_solvable_only_with_new_inputs(tmp_path: Path) -> None:
+    for benchmark in [ChessEval10kBenchmark, ChessEval100kBenchmark]:
+        for input_size in [769, 773]:
+            directory = tmp_path / f"{benchmark.name}-{input_size}"
+            directory.mkdir()
+            # Actual 100k rows 18817 and 50155 differ only in Black's kingside right.
+            no_rights = "4k2r/1p3ppp/p3n3/3Np1q1/P3P3/2PQ4/5PPP/5RK1 w - -"
+            kingside = no_rights.replace("w - -", "w k -")
+            assert encode(no_rights)[:769] == encode(kingside)[:769]
+            assert 450 - 178 > 2 * 10  # Allowed target intervals are disjoint.
+            data = _write_chess_data(directory, [(no_rights, 450), (kingside, 178)])
+            submission = _chess_submission(
+                directory, input_size=input_size, benchmark=benchmark.name
+            )
+            state = {"weight": torch.zeros((1, input_size)), "bias": torch.tensor([4.5])}
+            if input_size == 773:
+                state["weight"][0, 771] = -2.72
+            torch.save(state, submission.checkpoint)
+            loaded = benchmark(data_path=data).load_submission(submission)
+            score, passed, details = benchmark(data_path=data).evaluate(loaded)
+            assert score == (1.0 if input_size == 773 else 0.5)
+            assert passed == (input_size == 773)
+            assert details["encoding"] == ("castling-v2" if input_size == 773 else "board-v1")
+
+
+def test_chess_eval_legacy_checkpoint_keeps_original_predictions(tmp_path: Path) -> None:
+    data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 60)])
+    loaded = ChessEval10kBenchmark().load_submission(_chess_submission(tmp_path, input_size=769))
+    loaded.model.weight.data[0, 768] = 0.25
+    inputs, targets = load_tensors(data)
+    with torch.no_grad():
+        predictions = loaded.model(inputs[:, :769]).squeeze(1)
+    expected = (predictions - targets).abs() <= 0.1
+    score, passed, details = ChessEval10kBenchmark(data_path=data).evaluate(loaded)
+    assert score == expected.float().mean().item()
+    assert passed == expected.all().item()
+    assert details["mae"] == (predictions - targets).abs().mean().item()
