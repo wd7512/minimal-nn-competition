@@ -116,6 +116,7 @@ tests/test_submission_check.py""".splitlines()
                 "tests/test_local_submission.py",
                 "tests/test_submission_artifacts.py",
             ]
+            + ["tests/test_submission_dates.py", "tests/test_featured_cards.py"]
             + ["tests/test_shuffled_label_pilot.py"]
             + ["tests/test_how_to.py"]
         ),
