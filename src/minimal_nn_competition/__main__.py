@@ -112,12 +112,15 @@ def _parser():
         type=Path,
         default=Path("data/fashion-mnist-shuffled.pt"),
     )
-    submissions = add("validate-submissions", help="Validate and promote open submission PRs")
+    submissions = add(
+        "validate-submissions",
+        help="Score merged submission PRs, publish results, and promote the leaderboard",
+    )
     target = submissions.add_mutually_exclusive_group(required=True)
     target.add_argument(
-        "--all", action="store_true", help="Process every open PR targeting submission"
+        "--all", action="store_true", help="Process merged PRs targeting submission"
     )
-    target.add_argument("--pr", type=int, help="Process one open submission PR")
+    target.add_argument("--pr", type=int, help="Process or recover one merged submission PR")
     submissions.add_argument("--data-root", type=Path, default=Path("data"))
     collect.add_argument("--output", type=Path, default=Path("docs/leaderboard.json"))
     collect.add_argument(

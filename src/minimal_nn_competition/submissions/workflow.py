@@ -44,14 +44,11 @@ from minimal_nn_competition.submissions.github import (
     GitHubError,
     PullRequest,
     check_authentication,
-    comment,
     create_promotion_pr,
-    delete_remote_branch,
     find_promotion_pr,
     get_pull_request,
-    merge,
     merge_promotion,
-    open_submission_prs,
+    merged_submission_prs,
 )
 from minimal_nn_competition.submissions.scoring import (
     result_key,
@@ -67,6 +64,14 @@ _RECOVERY_ERRORS = (GitHubError, OSError, RuntimeError, ValueError)
 _SITE_FILES = ("leaderboard.json", "index.html", ".nojekyll")
 _SITE_DIRS = ("submissions", "games")
 _GENERATED_PATHS = tuple(f"docs/{name}" for name in _SITE_FILES + _SITE_DIRS)
+_GIT_CREDENTIAL_KEY = "http.https://github.com/.extraheader"
+_CREDENTIAL_ENV = (
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+    "GH_ENTERPRISE_TOKEN",
+    "ACTIONS_RUNTIME_TOKEN",
+    "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+)
 
 
 class WorkflowError(RuntimeError):
@@ -98,6 +103,44 @@ def _git(args: list[str], cwd: Path) -> str:
         ).stdout
     except subprocess.CalledProcessError as exc:
         raise WorkflowError(f"git {' '.join(args)} failed: {(exc.stderr or '').strip()}") from exc
+
+
+@contextmanager
+def _without_credentials(root: Path):
+    """Keep repository credentials out of submission model processes."""
+    saved_env = {key: os.environ.pop(key) for key in _CREDENTIAL_ENV if key in os.environ}
+    values = []
+    cleared = False
+    try:
+        config = subprocess.run(
+            ["git", "config", "--local", "--get-all", _GIT_CREDENTIAL_KEY],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        values = config.stdout.splitlines() if config.returncode == 0 else []
+        if values:
+            subprocess.run(
+                ["git", "config", "--local", "--unset-all", _GIT_CREDENTIAL_KEY],
+                cwd=root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            cleared = True
+        yield
+    finally:
+        if cleared:
+            for value in values:
+                subprocess.run(
+                    ["git", "config", "--local", "--add", _GIT_CREDENTIAL_KEY, value],
+                    cwd=root,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+        os.environ.update(saved_env)
 
 
 @contextmanager
@@ -295,13 +338,16 @@ def _validate_pr(
 
 
 def _score_candidate(candidate: str, pr_number: int, directory: Path, root: Path, data_root: Path):
-    with _worktree(root, candidate, name=f"mnnc-pr-{pr_number}-") as worktree:
+    with (
+        _without_credentials(root),
+        _worktree(root, candidate, name=f"mnnc-pr-{pr_number}-") as worktree,
+    ):
         return score_submission_process(worktree, directory, data_root, timeout=600)
 
 
 def _record_submission_replay(root: Path, directory: Path, scored_sha: str) -> Path | None:
     """Write the replay from the exact commit that was scored and published."""
-    with _worktree(root, scored_sha, name="mnnc-replay-") as worktree:
+    with _without_credentials(root), _worktree(root, scored_sha, name="mnnc-replay-") as worktree:
         submission = Submission.from_directory(worktree / directory)
         benchmark_name = submission.config.benchmark
         if benchmark_name not in SNAKE_BENCHMARKS + RL_BENCHMARKS:
@@ -719,22 +765,26 @@ def _promote(root: Path) -> None:
 
 
 def _accept_pr(pr: PullRequest, root: Path, data_root: Path) -> str:
-    """Validate, score, merge if needed, and publish one submission."""
-    if not pr.merged and pr.checks_status == "none":
-        pr = _refresh_missing_checks(pr)
+    """Validate and publish one already-merged submission."""
+    if not pr.merged:
+        raise WorkflowError(f"PR #{pr.number} is not merged into submission")
     _git(["fetch", "origin", SUBMISSION_BRANCH], root)
-    if not pr.merged:
-        _git(
-            ["fetch", "origin", f"pull/{pr.number}/head:refs/remotes/origin/pr/{pr.number}"],
-            root,
-        )
     scored_sha, directory = _validate_pr(pr, root, _current_validation_base(root))
+    with _worktree(root, scored_sha, name=f"mnnc-pr-{pr.number}-") as worktree:
+        submission = Submission.from_directory(worktree / directory)
+        key = (submission.config.benchmark, submission.config.name)
+    if key in _remote_ledger_keys(root):
+        results = load_results(root / "docs" / "leaderboard.json")
+        existing = next((item for item in results if result_key(item) == key), None)
+        if existing is None:
+            raise WorkflowError("remote leaderboard entry is missing from the checked-out ledger")
+        logger.info(
+            "PR #%d already has a leaderboard entry; repairing artifacts without rescoring",
+            pr.number,
+        )
+        _publish_result(root, directory, existing, scored_sha=scored_sha, pr_number=pr.number)
+        return submission.config.name
     result = _score_candidate(scored_sha, pr.number, directory, root, root / data_root)
-    if not pr.merged:
-        # Do not use `--delete-branch`: gh may fail deleting a local branch that is
-        # checked out in another worktree after the remote merge has succeeded.
-        merge(pr.number, delete_branch=False, head_sha=scored_sha)
-        _verified_merge(pr, root, scored_sha)
     _git(["pull", "--ff-only", "origin", SUBMISSION_BRANCH], root)
     _publish_result(root, directory, result, scored_sha=scored_sha, pr_number=pr.number)
     return result.submission
@@ -757,21 +807,17 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
 
     check_authentication()
     _sync_submission(root)
-    prs = open_submission_prs()
+    prs = merged_submission_prs()
     if pr_number is not None:
         prs = [pr for pr in prs if pr.number == pr_number]
         if not prs:
-            # Merged PRs are deliberately not returned by `gh pr list --state open`.
-            # Allow an explicit rerun to recover a merge whose ledger step failed.
+            # Include older merged PRs that fall outside GitHub's recent-list limit.
             recovered_pr = get_pull_request(pr_number)
             if recovered_pr.base_ref != SUBMISSION_BRANCH or not recovered_pr.merged:
-                raise WorkflowError(
-                    f"open PR {pr_number} targeting submission was not found; it is not a merged PR "
-                    "that can be recovered"
-                )
+                raise WorkflowError(f"PR #{pr_number} is not a merged PR targeting submission")
             prs = [recovered_pr]
     if not prs:
-        logger.info("No open submission PRs found")
+        logger.info("No merged submission PRs found")
 
     accepted = 0
     skipped = 0
@@ -779,45 +825,25 @@ def _run(root: Path, pr_number: int | None, data_root: Path) -> int:
         try:
             submission = _accept_pr(listed_pr, root, data_root)
         except _RECOVERY_ERRORS as exc:
-            current_pr = _is_merged_now(listed_pr)
-            if not current_pr.merged:
-                skipped += 1
-                message = f"Automated submission validation failed:\n\n{exc}"
-                logger.error("PR #%d skipped: %s", listed_pr.number, exc)
-                comment(listed_pr.number, message)
-                continue
-            # A merged PR is never reported as an unaccepted submission. Retry from
-            # scratch against the immutable merge commit; an explicit `--pr N` rerun
-            # can resume if this fails.
-            try:
-                submission = _accept_pr(current_pr, root, data_root)
-            except _RECOVERY_ERRORS as recovery_error:
-                skipped += 1
-                logger.error(
-                    "PR #%d is already merged but scoring/ledger recovery still failed: %s. "
-                    "Rerun `mnnc validate-submissions --pr %d` after fixing the cause.",
-                    listed_pr.number,
-                    recovery_error,
-                    listed_pr.number,
-                )
-                continue
-            logger.warning("Recovered post-merge acceptance for PR #%d", listed_pr.number)
-        accepted += 1
-        logger.info("Accepted PR #%d (%s)", listed_pr.number, submission)
-        try:
-            delete_remote_branch(listed_pr.number)
-        except _RECOVERY_ERRORS as cleanup_error:
-            # Branch cleanup is housekeeping, not part of accepting/scoring a model.
-            logger.warning(
-                "Could not clean remote head branch for PR #%d: %s",
+            skipped += 1
+            logger.error(
+                "PR #%d scoring or publication failed: %s. Rerun "
+                "`mnnc validate-submissions --pr %d` after fixing the cause.",
                 listed_pr.number,
-                cleanup_error,
+                exc,
+                listed_pr.number,
             )
+            continue
+        accepted += 1
+        logger.info("Processed PR #%d (%s)", listed_pr.number, submission)
 
     logger.info(
-        "Validation summary: %d processed, %d accepted, %d skipped", len(prs), accepted, skipped
+        "Submission processing summary: %d merged PR(s), %d processed, %d skipped",
+        len(prs),
+        accepted,
+        skipped,
     )
     # Promotion is an independent, idempotent stage: it also resumes a promotion
     # whose merge or final synchronisation failed on an earlier run.
     _promote(root)
-    return 0
+    return 1 if skipped else 0

@@ -151,13 +151,38 @@ def test_non_game_submission_does_not_record_replay(monkeypatch, tmp_path: Path)
     assert workflow._record_submission_replay(tmp_path, Path("models/mnist/test"), "a" * 40) is None
 
 
-def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -> None:
-    pr = PullRequest(7, "test", "a" * 40, "submission", "submit/test", True, checks_status="passed")
+def test_merged_submission_is_scored_without_merging_pr(monkeypatch, tmp_path: Path) -> None:
+    pr = PullRequest(
+        7,
+        "test",
+        "a" * 40,
+        "submission",
+        "submit/test",
+        True,
+        merged=True,
+        merge_commit_sha="b" * 40,
+    )
     result = _result("test", "mnist")
-    calls: list[tuple[str, int | None]] = []
+    calls: list[str] = []
     monkeypatch.setattr(workflow, "_sync_submission", lambda root: None)
     monkeypatch.setattr(workflow, "check_authentication", lambda: None)
-    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [pr])
+    monkeypatch.setattr(workflow, "merged_submission_prs", lambda: [pr])
+    monkeypatch.setattr(workflow, "_without_credentials", lambda root: nullcontext())
+    monkeypatch.setattr(workflow, "_worktree", lambda root, sha, name: nullcontext(tmp_path))
+    monkeypatch.setattr(
+        workflow,
+        "_remote_ledger_keys",
+        lambda root, ref=workflow.ORIGIN_SUBMISSION_REF: set(),
+    )
+    monkeypatch.setattr(
+        workflow,
+        "Submission",
+        SimpleNamespace(
+            from_directory=lambda path: SimpleNamespace(
+                config=SimpleNamespace(benchmark="mnist", name="test")
+            )
+        ),
+    )
     monkeypatch.setattr(
         workflow, "_validate_pr", lambda pr, root, base: ("a" * 40, Path("models/mnist/test"))
     )
@@ -167,22 +192,9 @@ def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -
     monkeypatch.setattr(
         workflow,
         "_publish_result",
-        lambda root, directory, scored, **kwargs: calls.append(("publish", None)),
+        lambda root, directory, scored, **kwargs: calls.append("publish"),
     )
-    monkeypatch.setattr(workflow, "_verify_promoted", lambda root: None)
-    monkeypatch.setattr(workflow, "_is_ancestor", lambda ancestor, descendant, root: True)
-    monkeypatch.setattr(
-        workflow, "merge", lambda number, delete_branch, **kwargs: calls.append(("merge", number))
-    )
-    monkeypatch.setattr(workflow, "_verified_merge", lambda pr, root, expected: pr)
-    monkeypatch.setattr(
-        workflow,
-        "delete_remote_branch",
-        lambda number: (_ for _ in ()).throw(RuntimeError("cleanup unavailable")),
-    )
-    monkeypatch.setattr(workflow, "_is_merged_now", lambda pr: pr)
-    comments: list[tuple[int, str]] = []
-    monkeypatch.setattr(workflow, "comment", lambda number, body: comments.append((number, body)))
+    monkeypatch.setattr(workflow, "_promote", lambda root: None)
 
     def fake_git(args: list[str], cwd: Path) -> str:
         if args == ["branch", "--show-current"]:
@@ -196,8 +208,55 @@ def test_cleanup_failure_does_not_fail_acceptance(monkeypatch, tmp_path: Path) -
     monkeypatch.setattr(workflow, "_git", fake_git)
 
     assert workflow.run(tmp_path, None, Path("data")) == 0
-    assert calls == [("merge", 7), ("publish", None)]
-    assert comments == []
+    assert calls == ["publish"]
+
+
+def test_scored_submission_repairs_artifacts_without_rescoring(monkeypatch, tmp_path: Path) -> None:
+    pr = PullRequest(
+        9,
+        "test",
+        "a" * 40,
+        "submission",
+        "submit/test",
+        True,
+        merged=True,
+        merge_commit_sha="b" * 40,
+    )
+    result = _result("test", "mnist")
+    published: list[str] = []
+    monkeypatch.setattr(workflow, "_git", lambda args, cwd: "")
+    monkeypatch.setattr(
+        workflow, "_validate_pr", lambda pr, root, base: ("a" * 40, Path("models/mnist/test"))
+    )
+    monkeypatch.setattr(workflow, "_worktree", lambda root, sha, name: nullcontext(tmp_path))
+    monkeypatch.setattr(
+        workflow,
+        "Submission",
+        SimpleNamespace(
+            from_directory=lambda path: SimpleNamespace(
+                config=SimpleNamespace(benchmark="mnist", name="test")
+            )
+        ),
+    )
+    monkeypatch.setattr(
+        workflow,
+        "_remote_ledger_keys",
+        lambda root, ref=workflow.ORIGIN_SUBMISSION_REF: {("mnist", "test")},
+    )
+    monkeypatch.setattr(workflow, "load_results", lambda path: [result])
+    monkeypatch.setattr(
+        workflow,
+        "_score_candidate",
+        lambda *args: pytest.fail("already-scored submissions must not be scored again"),
+    )
+    monkeypatch.setattr(
+        workflow,
+        "_publish_result",
+        lambda *args, **kwargs: published.append("repaired"),
+    )
+
+    assert workflow._accept_pr(pr, tmp_path, Path("data")) == "test"
+    assert published == ["repaired"]
 
 
 def test_publish_rebuilds_ledger_after_concurrent_push(monkeypatch, tmp_path: Path) -> None:
@@ -278,8 +337,9 @@ def test_remote_cleanup_leaves_non_submit_branches_alone(monkeypatch) -> None:
     assert calls[0][:3] == ["pr", "view", "9"]
 
 
-def test_recovery_revalidates_the_merged_commit(monkeypatch, tmp_path: Path, caplog) -> None:
-    pr = PullRequest(8, "test", "a" * 40, "submission", "submit/test", True, checks_status="passed")
+def test_failed_merged_scoring_fails_the_run_for_recovery(
+    monkeypatch, tmp_path: Path, caplog
+) -> None:
     merged = PullRequest(
         8,
         "test",
@@ -290,37 +350,18 @@ def test_recovery_revalidates_the_merged_commit(monkeypatch, tmp_path: Path, cap
         merged=True,
         merge_commit_sha="c" * 40,
     )
-    result = _result("test", "mnist")
     published: list[str] = []
-    comments: list[str] = []
     validations: list[bool] = []
     monkeypatch.setattr(workflow, "_sync_submission", lambda root: None)
     monkeypatch.setattr(workflow, "check_authentication", lambda: None)
-    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [pr])
+    monkeypatch.setattr(workflow, "merged_submission_prs", lambda: [merged])
 
     def validate(pr, root, base):
         validations.append(pr.merged)
-        if pr.merged:
-            raise workflow.WorkflowError("merged commit could not be validated")
-        return "a" * 40, Path("models/mnist/test")
+        raise workflow.WorkflowError("merged commit could not be validated")
 
     monkeypatch.setattr(workflow, "_validate_pr", validate)
-    monkeypatch.setattr(
-        workflow, "_score_candidate", lambda candidate, number, directory, root, data: result
-    )
-    monkeypatch.setattr(workflow, "merge", lambda number, delete_branch, **kwargs: None)
-    monkeypatch.setattr(
-        workflow,
-        "_verified_merge",
-        lambda pr, root, expected: (_ for _ in ()).throw(
-            workflow.WorkflowError("merge metadata unavailable")
-        ),
-    )
-    monkeypatch.setattr(workflow, "_is_merged_now", lambda pr: merged)
-    monkeypatch.setattr(
-        workflow, "_publish_result", lambda root, directory, scored, **kwargs: published.append("x")
-    )
-    monkeypatch.setattr(workflow, "comment", lambda number, body: comments.append(body))
+    monkeypatch.setattr(workflow, "_publish_result", lambda *args, **kwargs: published.append("x"))
     monkeypatch.setattr(workflow, "_promote", lambda root: None)
 
     def fake_git(args: list[str], cwd: Path) -> str:
@@ -333,9 +374,8 @@ def test_recovery_revalidates_the_merged_commit(monkeypatch, tmp_path: Path, cap
     monkeypatch.setattr(workflow, "_git", fake_git)
 
     with caplog.at_level(logging.ERROR):
-        assert workflow.run(tmp_path, None, Path("data")) == 0
+        assert workflow.run(tmp_path, None, Path("data")) == 1
 
-    assert validations == [False, True]
+    assert validations == [True]
     assert published == []
-    assert comments == []
-    assert "recovery still failed" in caplog.text
+    assert "scoring or publication failed" in caplog.text

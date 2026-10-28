@@ -482,38 +482,11 @@ def test_load_replays_ignores_unrelated_files(tmp_path: Path) -> None:
     assert set(replays) == {stem}
 
 
-def test_stale_pr_is_rejected_when_remote_advances(tmp_path: Path, monkeypatch) -> None:
-    remote, work = _repo(tmp_path)
-    _git(work, "checkout", "-b", "submit/stale")
-    (work / "stale.txt").write_text("stale\n")
-    _git(work, "add", "stale.txt")
-    _git(work, "commit", "-m", "stale submission")
-    head = _rev(work, "HEAD")
-    _git(work, "push", "origin", "submit/stale")
-    _git(work, "push", "origin", f"{head}:refs/pull/1/head")
-    _git(work, "checkout", "submission")
-    pr = PullRequest(1, "stale", head, "submission", "submit/stale", True, checks_status="passed")
-    comments: list[str] = []
+def test_accept_pr_rejects_unmerged_pr(tmp_path: Path) -> None:
+    pr = PullRequest(1, "open", "a" * 40, "submission", "submit/open", True)
 
-    def advance_then_list() -> list[PullRequest]:
-        other = _clone(remote, tmp_path / "other")
-        _git(other, "checkout", "submission")
-        (other / "docs" / "leaderboard.json").write_text(
-            '[{"benchmark": "mnist", "submission": "other"}]\n'
-        )
-        _git(other, "commit", "-am", "advance")
-        _git(other, "push", "origin", "submission")
-        return [pr]
-
-    monkeypatch.setattr(workflow, "check_authentication", lambda: None)
-    monkeypatch.setattr(workflow, "open_submission_prs", advance_then_list)
-    monkeypatch.setattr(workflow, "_is_merged_now", lambda pr: pr)
-    monkeypatch.setattr(workflow, "comment", lambda number, message: comments.append(message))
-    monkeypatch.setattr(workflow, "_promote", lambda root: None)
-
-    assert workflow._run(work, None, Path("data")) == 0
-    assert comments
-    assert "not based on the validation base" in comments[0]
+    with pytest.raises(workflow.WorkflowError, match="not merged"):
+        workflow._accept_pr(pr, tmp_path, Path("data"))
 
 
 def test_replay_uses_the_scored_checkpoint(tmp_path: Path, monkeypatch) -> None:
@@ -653,7 +626,7 @@ def test_rerun_publishes_local_score_commit(tmp_path: Path, monkeypatch) -> None
 
     other = _clone(remote, tmp_path / "other")
     monkeypatch.setattr(workflow, "check_authentication", lambda: None)
-    monkeypatch.setattr(workflow, "open_submission_prs", lambda: [])
+    monkeypatch.setattr(workflow, "merged_submission_prs", lambda: [])
     monkeypatch.setattr(workflow, "find_promotion_pr", lambda: None)
     monkeypatch.setattr(workflow, "create_promotion_pr", lambda: 11)
 

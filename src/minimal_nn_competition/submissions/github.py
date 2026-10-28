@@ -115,6 +115,25 @@ def open_submission_prs() -> list[PullRequest]:
     return sorted((_pull_request(item) for item in json.loads(raw)), key=lambda pr: pr.number)
 
 
+def merged_submission_prs() -> list[PullRequest]:
+    """Return recent merged PRs targeting submission for idempotent processing."""
+    raw = _gh(
+        [
+            "pr",
+            "list",
+            "--base",
+            SUBMISSION_BRANCH,
+            "--state",
+            "merged",
+            "--limit",
+            "1000",
+            "--json",
+            "number,title,headRefName,headRefOid,baseRefName,statusCheckRollup,state,mergedAt,mergeCommit",
+        ]
+    )
+    return sorted((_pull_request(item) for item in json.loads(raw)), key=lambda pr: pr.number)
+
+
 def get_pull_request(number: int) -> PullRequest:
     """Read a PR even if already merged, enabling recovery of post-merge failures."""
     raw = _gh(

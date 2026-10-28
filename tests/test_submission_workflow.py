@@ -87,6 +87,30 @@ def test_open_submission_prs_rejects_failed_check(monkeypatch) -> None:
     assert github.open_submission_prs()[0].checks_summary == "failed checks: validate"
 
 
+def test_merged_submission_prs_lists_merged_prs(monkeypatch) -> None:
+    calls: list[list[str]] = []
+    payload = [
+        {
+            "number": 4,
+            "title": "merged",
+            "headRefName": "submit/model",
+            "headRefOid": "a" * 40,
+            "baseRefName": "submission",
+            "state": "MERGED",
+            "mergedAt": "2026-10-27T12:00:00Z",
+            "mergeCommit": {"oid": "b" * 40},
+        }
+    ]
+    monkeypatch.setattr(github, "_gh", lambda args: calls.append(args) or json.dumps(payload))
+
+    prs = github.merged_submission_prs()
+
+    assert prs[0].number == 4
+    assert prs[0].merged is True
+    assert prs[0].merge_commit_sha == "b" * 40
+    assert calls[0][calls[0].index("--state") + 1] == "merged"
+
+
 def test_score_candidate_accepts_partial_result(monkeypatch, tmp_path: Path) -> None:
     result = type("Result", (), {"passed": False, "score": 0.5})()
     monkeypatch.setattr(

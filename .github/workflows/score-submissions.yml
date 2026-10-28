@@ -1,0 +1,51 @@
+name: Score submissions
+
+on:
+  push:
+    branches: [submission]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Optional merged PR number to recover
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: score-submissions
+  cancel-in-progress: false
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: submission
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+          python-version: "3.12"
+      - name: Install dependencies
+        run: uv sync --frozen --no-dev
+      - name: Prepare submission branch
+        run: git switch -C submission --track origin/submission
+      - name: Score and publish merged submissions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr }}
+        run: |
+          if [ -n "$PR_NUMBER" ]; then
+            if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+              echo "PR number must be an integer" >&2
+              exit 2
+            fi
+            uv run --no-sync mnnc validate-submissions --pr "$PR_NUMBER"
+          else
+            uv run --no-sync mnnc validate-submissions --all
+          fi
