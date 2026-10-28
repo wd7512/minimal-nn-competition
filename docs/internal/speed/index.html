@@ -1,8 +1,93 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Snake Simple 8x8 Environment Speed</title><style>
-:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
-body { margin: 0 auto; max-width: 72rem; padding: 2rem; line-height: 1.5; }
+:root {
+  color-scheme: light dark;
+  --bg: #f6f8f4;
+  --surface: #ffffff;
+  --ink: #18231d;
+  --muted: #5c6a60;
+  --rule: #dce5da;
+  --rule-strong: #aab8a9;
+  --hover: #f1f6e8;
+  --pass: #23683f;
+  --fail: #963f3b;
+  --pass-tint: #e7f3e9;
+  --fail-tint: #faedeb;
+  --focus: #355f3a;
+  --accent-snake: #276b63;
+  --accent-image-compression: #8b5a0b;
+  --accent-chess: #345d91;
+  --accent-control: #7041ad;
+  --accent-cta: #c3d0db;
+  --accent-cta-hover: #b0c1ce;
+  --accent-cta-ink: #1b2a36;
+  --chart-obstacle: #818c84;
+  --chart-danger: #dc4843;
+  --chart-snake-body: #4fae67;
+  --display: ui-serif, Georgia, "Times New Roman", serif;
+  --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --chart-snake-head: var(--pass);
+  --chart-boundary: var(--rule-strong);
+  --chart-cart: var(--ink);
+  --chart-muted: var(--muted);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+  --bg: #101512;
+  --surface: #161f18;
+  --ink: #edf3ea;
+  --muted: #a4b2a2;
+  --rule: #28362b;
+  --rule-strong: #465745;
+  --hover: #1c2a1c;
+  --pass: #7bd49a;
+  --fail: #f0988e;
+  --pass-tint: #17261c;
+  --fail-tint: #2a201e;
+  --focus: #a6db72;
+  --accent-snake: #84d2bd;
+  --accent-image-compression: #e9bd5c;
+  --accent-chess: #a2c1eb;
+  --accent-control: #c3a1f5;
+  --accent-cta: #879bad;
+  --accent-cta-hover: #9aaaba;
+  --accent-cta-ink: #14212b;
+  --chart-obstacle: #61766d;
+  --chart-danger: #ff827a;
+  --chart-snake-body: #91dfb0;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+}
+h1, h2, h3 { font-family: var(--display); }
+a { color: var(--accent-snake); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+code { font-family: var(--mono); }
+
 table { border-collapse: collapse; width: 100%; margin-bottom: 2rem; }
-th, td { border-bottom: 1px solid #8884; padding: 0.5rem; text-align: left; }
-th { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
-.muted { opacity: 0.65; }
+th, td {
+  border-bottom: 1px solid var(--rule);
+  padding: 0.5rem;
+  text-align: left;
+}
+th {
+  color: var(--muted);
+  font: 700 10px/1.4 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.muted, .failed { color: var(--muted); }
+
+body { margin: 0 auto; max-width: 72rem; padding: 2rem; }
 </style></head><body><header><h1>Snake Simple 8x8 Environment Speed</h1><p>You found the hidden board. A fixed Hamiltonian-cycle agent plays the same Snake Simple 8x8 environment, always filling the board. Each commit is measured with ten one-second runs; the ± value is the population standard deviation. Higher is better.</p><p class="muted">A tick is one SnakeEngine.step() call (game engine only, excluding observation encoding). Older snake-simple-8x8-speed-v1 entries include the 7-feature observation encoding, so compare within a harness version.</p><p><a href="../../">Main leaderboard</a> · <a href="../">Internal tokens</a> · <a href="leaderboard.json">Raw speed JSON</a></p></header><table><thead><tr><th>#</th><th>Commit</th><th>Ticks/s</th><th>Harness</th><th>Measured</th><th>CPU</th></tr></thead><tbody><tr><td>1</td><td><code title="dc0d0c7a389e14bd9f584573b0a04e821695ccff">dc0d0c7</code></td><td>2,690,525 ± 27,557</td><td>snake-simple-8x8-speed-v2</td><td>2026-10-22 21:15:49 UTC</td><td>Apple M5 Pro</td></tr><tr><td>2</td><td><code title="717b407618f47eff2a0496b18c44c0511a8d395b">717b407</code></td><td>1,536,357 ± 17,533</td><td>snake-simple-8x8-speed-v1</td><td>2026-10-22 20:37:44 UTC</td><td>Apple M5 Pro</td></tr></tbody></table></body></html>

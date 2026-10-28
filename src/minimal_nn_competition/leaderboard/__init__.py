@@ -85,6 +85,7 @@ def load_results(path):
                 details=dict(item["details"]),
                 name=str(item.get("name", item.get("submission", "unknown"))),
                 author=str(item.get("author", "unknown")),
+                submitted_at=item.get("submitted_at"),
             )
         )
     return results
