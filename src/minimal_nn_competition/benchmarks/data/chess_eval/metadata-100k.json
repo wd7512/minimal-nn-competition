@@ -15,6 +15,13 @@
     "min_knodes": 500000
   },
   "input": {
+    "castling_rights": [
+      "K",
+      "Q",
+      "k",
+      "q"
+    ],
+    "encoding": "castling-v2",
     "planes": [
       "white P",
       "white N",
@@ -30,7 +37,7 @@
       "black K"
     ],
     "side_to_move": "white=1, black=-1",
-    "size": 769,
+    "size": 773,
     "squares": "FEN order: a8=0, h8=7, a1=56, h1=63"
   },
   "license": "CC0-1.0",

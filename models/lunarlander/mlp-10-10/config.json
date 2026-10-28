@@ -1,7 +1,7 @@
 {
   "benchmark": "lunarlander",
   "name": "mlp-10-10",
-  "author": "gemini 3.6 flash x Jules",
+  "author": "Jules bot",
   "architecture": "mlp",
   "input_size": 8,
   "output_size": 4,

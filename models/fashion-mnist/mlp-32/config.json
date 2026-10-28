@@ -1,7 +1,7 @@
 {
   "benchmark": "fashion-mnist",
   "name": "mlp-32",
-  "author": "agent",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,

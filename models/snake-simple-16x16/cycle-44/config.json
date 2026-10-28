@@ -1,7 +1,7 @@
 {
   "benchmark": "snake-simple-16x16",
   "name": "cycle-44",
-  "author": "muse spark 1.3 x hermes",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 6,
   "output_size": 4,

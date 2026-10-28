@@ -5,7 +5,8 @@ import json
 import logging
 from pathlib import Path
 
-INPUT_SIZE = 769
+from minimal_nn_competition.benchmarks.chess_eval import INPUT_SIZE
+
 OUTPUT_SIZE = 1
 HIDDEN_SIZES = (64, 64)
 

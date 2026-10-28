@@ -1,7 +1,7 @@
 {
   "benchmark": "snake-obstacles-8x8",
   "name": "obs-fb",
-  "author": "hermes",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 24,
   "output_size": 4,

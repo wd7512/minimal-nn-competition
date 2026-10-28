@@ -1,7 +1,7 @@
 {
   "benchmark": "lunarlander",
   "name": "example",
-  "author": "example author",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 8,
   "output_size": 4,

@@ -1,7 +1,7 @@
 {
   "benchmark": "mnist",
   "name": "mlp-7-7",
-  "author": "muse spark 1.3 x hermes",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,
