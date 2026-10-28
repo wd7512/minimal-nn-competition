@@ -1,97 +1,42 @@
-# How to validate submissions
+# How to validate a submission
 
-Submission PRs target `submission`. The acceptance command processes them in
-PR-number order, validates one PR, scores it, updates the leaderboard and game
-replays, and pushes the result before continuing.
-
-Authenticate once with GitHub CLI:
+Point the command at the folder containing `config.json` and `model.pt`:
 
 ```bash
-gh auth login
+uv run mnnc validate-submission models/mnist/my-model
 ```
 
-Process every open submission PR:
+The parent folder identifies the benchmark in `models/<benchmark>/<name>` and
+must agree with the `benchmark` in `config.json`. A folder directly under a known
+benchmark folder (for example `/tmp/mnist/my-model`) follows the same rule.
+For another location such as `./my-model`, the benchmark comes from the config.
+The filenames must be exactly `config.json` and `model.pt`.
+
+Validation checks the config and checkpoint, runs the benchmark in a child
+process with a ten-minute timeout, and logs a JSON report including the score,
+parameter count, and benchmark pass/fail. Exit codes are 0 for a passing result,
+1 for a completed benchmark below its pass threshold, and 2 for invalid input
+or an evaluation/update error. Checkpoints are loaded with `weights_only=True`;
+submission Python code is never executed.
+
+The default command does not change the leaderboard, HTML, or replays and needs
+no GitHub authentication or particular branch. Image datasets may be downloaded
+and cached in `data/`; use `--data-root <path>` to choose another cache location.
+
+Maintainers can additionally update the local site:
 
 ```bash
-uv run mnnc validate-submissions --all
+uv run mnnc validate-submission models/mnist/my-model --update
 ```
 
-Process one open PR, or recover a PR that was already merged but whose scoring
-or publication step failed:
+This updates `docs/leaderboard.json`, game replays where applicable, and generated
+HTML. Other leaderboard entries are preserved; rerunning replaces the same
+`(benchmark, folder name)` entry, even when the config's display name differs.
+Completed benchmark results, including below-threshold scores, can be recorded;
+invalid inputs and scoring errors do not update the site. Artifacts are prepared
+in a temporary directory before installation, with rollback on install failure.
 
-```bash
-uv run mnnc validate-submissions --pr <number>
-```
-
-Submission branches must be based on the latest `origin/submission`, not on
-`main` or `dev`:
-
-```bash
-git fetch origin
-git switch -c submit/<name> origin/submission
-```
-
-For each open PR, the workflow refreshes the current integration tip immediately
-before validating that PR, so a branch based on an older tip is rejected even if
-another run advanced `origin/submission` during this run. It checks the PR's
-validation status, verifies that the tip is an ancestor of the submitted head,
-and allows a short bounded retry when GitHub has not reported any checks yet.
-Pending or failed checks are not accepted. It then validates that the diff
-changes only `models/<benchmark>/<name>/config.json` and `model.pt`, and scores
-the candidate in a temporary worktree.
-
-A passing PR is merged without branch cleanup in the critical path. The merge is
-pinned to the validated head commit, and the workflow verifies that the merge
-commit's second parent matches it before publishing. The workflow then
-synchronizes from `origin/submission`, upserts the leaderboard entry by
-`(benchmark, submission)`, records a deterministic replay for Snake, CartPole,
-Pendulum, or LunarLander from the same commit that was scored (in a temporary
-worktree, never from the live submission checkout), renders the site, commits
-and pushes the artifacts, and reads the remote leaderboard back to verify that
-both the new entry and the previously recorded entries remain present. If
-another workflow run advances
-`submission` during publication, the generated score commit is rebuilt from the
-newer remote ledger, with a bounded retry. An unrelated or ambiguous branch
-divergence fails closed rather than being force-pushed.
-
-If a PR has merged but local scoring, rendering, publishing, or verification
-fails, the workflow does not label the submission as rejected or post a
-validation-failure comment on the merged PR. It attempts recovery immediately.
-If that still fails, fix the reported cause and rerun the command with that PR
-number; the merged PR is re-scored and its result/replay are upserted
-idempotently. Recovery validates and scores the merge commit's second parent, so
-later updates to the PR head cannot change the assessed model. A score is never
-published unless the merge commit contains the exact commit that was validated
-and scored. Recovery requires the PR to have been merged with a merge commit
-(the workflow's merge strategy); PRs merged with squash or rebase must be
-reconciled manually rather than scored from a partial diff. Local
-branch/worktree cleanup is never allowed to undo acceptance; remote cleanup is
-best-effort and limited to short-lived `submit/*` branches; protected branches
-and fork branches are left alone.
-
-Publishing stages only the generated artifacts (`docs/leaderboard.json`,
-`docs/index.html`, `docs/submissions`, and replay JSON under `docs/games`), so
-unrelated files in `docs/` are never committed. Replay recording and site
-rendering are best-effort: a presentation failure is logged and the score is
-still published, and a later rerun repairs the missing artifacts. Rendered
-output is staged inside `docs/` and swapped into place; if an installation step
-fails, the previous site tree is restored before the score-only fallback runs.
-A score commit left behind by a failed push is verified and published on the
-next run; any other unpublished local commit stops the run with a recovery
-error instead of being reported as promoted.
-
-Promotion is an independent, idempotent stage that runs on every invocation,
-including when there are no open PRs. It resumes an existing open promotion PR
-instead of creating a duplicate, verifies that `origin/main` contains
-`origin/submission` and every ledger entry, and fast-forwards `submission` after
-a promotion merge. If a previous run merged the promotion but failed to
-synchronise `submission`, the next run fast-forwards it to the promoted `main`
-tip. The workflow never merges `main` into `submission`, and if the branches
-have genuinely diverged it stops with a remediation message instead of
-attempting a reset, rebase, or force-push automatically.
-
-The command holds an exclusive lock for the checkout, so two runs cannot mutate
-the same working tree. It requires a clean tracked worktree and a working
-`gh auth login` session. Use the locked environment and deterministic benchmark
-inputs. Do not run submission code directly; checkpoints are loaded by the
-evaluator with `weights_only=True`.
+`--update` does not commit, push, merge PRs, or promote branches. After reviewing
+local changes on `submission`, commit and push the generated artifacts, promote
+`submission` to `main` through the usual PR flow, and fast-forward `submission`
+to `main`. Pages deploys on pushes to `main`.
