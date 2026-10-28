@@ -167,7 +167,7 @@ h1 {
   letter-spacing: -.04em;
   max-width: 14ch;
 }
-.lead { margin: 20px 0 0; max-width: 54ch; color: var(--ink); font-size: 19px; }
+.lead { margin: 20px 0 0; color: var(--ink); font-size: 18px; }
 .links {
   margin: 24px 0 0;
   display: grid;
@@ -199,19 +199,43 @@ h1 {
   text-decoration-thickness: 1px;
 }
 .links a:hover .action-title { text-decoration-color: var(--accent-snake); }
-.featured {
-  margin: 20px 0 8px;
+.featured-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0 8px;
 }
-.featured__label { margin: 0 0 8px; font-size: 11px; }
-.featured__table-wrap { border-block: 1px solid var(--rule-strong); }
-table.results.featured__table { min-width: 0; }
-.featured__table tbody tr.featured-row,
-.featured__table tbody tr.featured-row td,
-.featured__table tbody tr.featured-row td:first-child { background: var(--accent-cta); color: var(--accent-cta-ink); }
-.featured__table tbody tr.featured-row:hover td { background: var(--accent-cta-hover); }
-.featured__table tbody tr.featured-row td.submission a { color: var(--accent-cta-ink); }
-.featured__table .featured__name { font-size: 11px; font-style: italic; }
-.featured__benchmark, .featured__author { font: 12px/1.4 var(--mono); }
+.featured-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 17px 18px 15px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-top: 2px solid var(--accent);
+  border-radius: 5px;
+  text-decoration: none;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+a.featured-card:hover { border-color: var(--accent); }
+.card-label {
+  font: 700 10px/1.4 var(--mono);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.featured-card strong { font: 400 21px/1.15 var(--display); letter-spacing: -.02em; }
+.card-benchmark { font: 12px/1.4 var(--body); color: var(--muted); margin-top: 6px; }
+.card-detail { font: 11px/1.4 var(--mono); margin-top: 14px; }
+.card-date { color: var(--muted); font-size: 10px; }
+.challenge-menu summary { color: var(--accent); cursor: pointer; list-style: none; }
+.challenge-menu summary::-webkit-details-marker { display: none; }
+.challenge-links { list-style: none; margin: 12px 0 0; padding: 0; }
+.challenge-links li + li { margin-top: 8px; }
+.challenge-links a { color: var(--accent); }
 .group { padding: 48px 0 24px; }
 .group + .group { border-top: 1px solid var(--rule); padding-top: 48px; }
 .group:last-child { padding-bottom: 48px; }
@@ -350,6 +374,10 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .rail a + a { border-left: 1px solid var(--rule); padding-left: 12px; }
   .rail a small { grid-column: 3; }
   .rail__note { display: block; margin-top: 12px; }
+}
+@media (max-width: 800px) {
+  .featured-cards { grid-template-columns: 1fr; }
+  .lead { max-width: 54ch; }
 }
 @media (max-width: 700px) {
   .shell { padding: 24px 16px 56px; }
@@ -924,14 +952,22 @@ _SITE_SCRIPT = """
       return panel.classList.contains("is-active");
     }) || panels[0];
     select(initial.dataset.version);
-    let fromHash = window.location.hash.slice(1);
-    if (fromHash.indexOf("panel-") === 0) fromHash = fromHash.slice(6);
-    if (versions.indexOf(fromHash) !== -1) {
+    function selectFromHash() {
+      let fromHash = window.location.hash.slice(1);
+      if (fromHash.indexOf("panel-") === 0) fromHash = fromHash.slice(6);
+      if (versions.indexOf(fromHash) === -1) return;
       select(fromHash);
-      if (!document.getElementById(window.location.hash.slice(1))) {
-        try { group.scrollIntoView(); } catch (e) {}
-      }
+      const target = document.getElementById(window.location.hash.slice(1)) || group;
+      try { target.scrollIntoView(); } catch (e) {}
     }
+    window.addEventListener("hashchange", selectFromHash);
+    document.querySelectorAll('a[href^="#panel-"]').forEach(function (link) {
+      const id = link.getAttribute("href").slice(7);
+      if (versions.indexOf(id) !== -1) {
+        link.addEventListener("click", function () { select(id); });
+      }
+    });
+    selectFromHash();
   });
 })();
 """
@@ -1312,6 +1348,84 @@ def render_submission_pages(results, replays, output_dir):
     return links
 
 
+def _leader_card_html(kind, label, result, submission_links):
+    submitted = date.fromisoformat(result.submitted_at)
+    href = (submission_links or {}).get(
+        (result.benchmark, result.submission), f"#panel-{result.benchmark}"
+    )
+    _, accent = _group_info(result.benchmark)
+    return (
+        f'<a class="featured-card" data-featured="{kind}" data-accent="{html.escape(accent)}" '
+        f'href="{html.escape(href, quote=True)}">'
+        f'<span class="card-label">{label}</span>'
+        f"<strong>{html.escape(result.name)}</strong>"
+        f'<span class="card-benchmark">{html.escape(_version_label(result.benchmark))}</span>'
+        f'<span class="card-detail">{result.parameter_count:,} parameters '
+        '<span class="card-date">· Submitted '
+        f'<time datetime="{submitted.isoformat()}">{submitted.day} {submitted.strftime("%b")}</time>'
+        "</span></span></a>"
+    )
+
+
+def _featured_cards_html(results, submission_links, groups):
+    leaders: dict[str, BenchmarkResult] = {}
+    for result in rank_results(results):
+        leaders.setdefault(result.benchmark, result)
+    dated = []
+    for result in leaders.values():
+        if not result.passed or not result.submitted_at:
+            continue
+        try:
+            submitted = date.fromisoformat(result.submitted_at)
+        except (TypeError, ValueError):
+            continue
+        dated.append((submitted, result.benchmark, result.submission, result))
+    cards = []
+    if dated:
+        dated.sort(key=lambda item: item[:3])
+        cards.append(
+            _leader_card_html("newest", "Newest current leader", dated[-1][3], submission_links)
+        )
+        cards.append(
+            _leader_card_html("oldest", "Oldest current leader", dated[0][3], submission_links)
+        )
+    passing = {result.benchmark for result in results if result.passed}
+    challenges = [
+        benchmark
+        for spec in _GROUP_SPECS
+        for benchmark in spec["benchmarks"]
+        if benchmark not in passing
+    ]
+    displayed = {benchmark for spec in groups for benchmark in spec["benchmarks"]}
+    challenge_links = []
+    for benchmark in challenges:
+        href = f"#panel-{benchmark}" if benchmark in displayed else _submission_guide_url(benchmark)
+        challenge_links.append(
+            f'<li><a href="{html.escape(href, quote=True)}">'
+            f"{html.escape(_version_label(benchmark))}</a></li>"
+        )
+    message = (
+        "Awaiting a passing solution" if challenges else "Every benchmark has a passing solution"
+    )
+    menu = (
+        '<details class="challenge-menu card-detail"><summary>Find your next challenge →</summary>'
+        f'<ul class="challenge-links">{"".join(challenge_links)}</ul></details>'
+        if challenges
+        else ""
+    )
+    cards.append(
+        '<article class="featured-card" data-featured="challenges" data-accent="chess">'
+        '<span class="card-label">Open challenges</span>'
+        f"<strong>{len(challenges)} {_plural(len(challenges), 'benchmark')}</strong>"
+        f'<span class="card-benchmark">{message}</span>{menu}</article>'
+    )
+    return (
+        '<section class="featured-cards" aria-label="Competition highlights">'
+        + "".join(cards)
+        + "</section>"
+    )
+
+
 def render_html(results, submission_links=None):
     groups = _group_specs(results)
     entries = {}
@@ -1400,44 +1514,7 @@ def render_html(results, submission_links=None):
         )
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
-    benchmark_leaders: dict[str, BenchmarkResult] = {}
-    for result in rank_results(results):
-        benchmark_leaders.setdefault(result.benchmark, result)
-    featured = max(
-        benchmark_leaders.values(),
-        key=lambda result: (
-            result.submitted_at or "",
-            result.benchmark,
-            result.submission,
-        ),
-        default=None,
-    )
-    featured_html = ""
-    if featured:
-        featured_href = (submission_links or {}).get((featured.benchmark, featured.submission))
-        featured_name = (
-            f'<span class="submission__name featured__name">{html.escape(featured.name)}</span>'
-        )
-        if featured_href:
-            featured_name = (
-                f'<a href="{html.escape(featured_href, quote=True)}">{featured_name}</a>'
-            )
-        featured_html = (
-            '<section class="featured" aria-labelledby="featured-label">'
-            '<p class="eyebrow featured__label" id="featured-label">'
-            "Latest model to lead a benchmark</p>"
-            '<div class="table-wrap featured__table-wrap">'
-            '<table class="results featured__table">'
-            '<caption class="sr-only">Latest model currently ranked first in its benchmark.</caption>'
-            '<thead><tr><th scope="col" class="rank">#</th>'
-            '<th scope="col">Benchmark</th><th scope="col">Model</th>'
-            '<th scope="col">Author</th></tr></thead><tbody>'
-            '<tr class="featured-row"><td class="rank">1</td>'
-            f'<td class="featured__benchmark">{html.escape(_version_label(featured.benchmark))}</td>'
-            f'<td class="submission">{featured_name}</td>'
-            f'<td class="featured__author">{html.escape(featured.author)}</td>'
-            "</tr></tbody></table></div></section>"
-        )
+    featured_html = _featured_cards_html(results, submission_links, groups)
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
