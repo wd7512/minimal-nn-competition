@@ -1,14 +1,17 @@
 {
   "benchmark": "chess-eval-10k",
-  "name": "chess-mlp-64",
+  "name": "example",
   "author": "wd7512",
   "architecture": "mlp",
-  "input_size": 769,
+  "input_size": 773,
   "output_size": 1,
   "hidden_sizes": [
-    64,
-    64
+    47,
+    13,
+    4
   ],
   "activation": "relu",
-  "description": "Trained on the fixed Lichess Stockfish evaluation dataset."
+  "normalisation": false,
+  "description": "Castling-v2 adaptation of mlp-47-13-4, with 0 isolated ReLU residuals fitted to the fixed public dataset. Standard MLP inference; fixed-set recall.",
+  "input_indices": null
 }
