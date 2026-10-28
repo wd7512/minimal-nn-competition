@@ -1,7 +1,7 @@
 {
   "benchmark": "mnist",
   "name": "mlp-4-16-16-16",
-  "author": "William Bailkoski",
+  "author": "will-bailkoski",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,

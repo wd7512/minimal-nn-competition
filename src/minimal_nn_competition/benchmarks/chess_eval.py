@@ -18,7 +18,7 @@ __all__ = [
     "load_tensors",
 ]
 
-INPUT_SIZE = 769
+INPUT_SIZE = 773
 OUTPUT_SIZE = 1
 TOLERANCE_PAWNS = 0.1
 DEFAULT_FOLDS = 20
@@ -32,10 +32,11 @@ _PIECES = {piece: index for index, piece in enumerate("PNBRQKpnbrqk")}
 
 
 def encode(fen):
-    """Encode a FEN as 12 piece planes plus the side to move.
+    """Encode a FEN as piece planes, side to move, and KQkq castling flags.
 
-    Squares follow FEN order: a8=0, h8=7, a1=56, h1=63. The final value is
-    +1 for White to move and -1 for Black.
+    Squares follow FEN order: a8=0, h8=7, a1=56, h1=63.
+    Value 768 is +1 for White to move and -1 for Black.
+    Values 769:773 indicate K, Q, k, q castling rights as zero/one flags.
     """
     parts = fen.split()
     inputs = [0.0] * (12 * 64)
@@ -49,6 +50,7 @@ def encode(fen):
         inputs[_PIECES[symbol] * 64 + square] = 1.0
         square += 1
     inputs.append(1.0 if parts[1] == "w" else -1.0)
+    inputs.extend(float(right in parts[2]) for right in "KQkq")
     return inputs
 
 
@@ -101,8 +103,8 @@ class ChessEvalBenchmark:
     def load_submission(self, submission):
         if submission.config.benchmark != self.name:
             raise ValueError("Submission benchmark does not match Chess evaluation")
-        if submission.config.input_size != INPUT_SIZE:
-            raise ValueError(f"Chess evaluation submissions must declare input_size {INPUT_SIZE}")
+        if submission.config.input_size not in (769, INPUT_SIZE):
+            raise ValueError(f"Chess evaluation requires input_size {INPUT_SIZE} or legacy 769")
         if submission.config.output_size != OUTPUT_SIZE:
             raise ValueError(f"Chess evaluation submissions must declare output_size {OUTPUT_SIZE}")
         return materialize_submission(submission)
@@ -112,7 +114,7 @@ class ChessEvalBenchmark:
 
         inputs, targets = load_tensors(self.data_path)
         with torch.no_grad():
-            predictions = submission.model(inputs).squeeze(1)
+            predictions = submission.model(inputs[:, : submission.config.input_size]).squeeze(1)
             errors = (predictions - targets).abs()
             within = errors <= TOLERANCE_PAWNS
         folds = min(self.folds, len(targets))
@@ -122,6 +124,9 @@ class ChessEvalBenchmark:
             bool(within.all().item()),
             {
                 "samples": len(targets),
+                "encoding": "castling-v2"
+                if submission.config.input_size == INPUT_SIZE
+                else "board-v1",
                 "tolerance_pawns": TOLERANCE_PAWNS,
                 "mae": errors.mean().item(),
                 "folds": folds,

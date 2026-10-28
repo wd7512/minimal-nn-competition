@@ -1,7 +1,7 @@
 {
   "benchmark": "fashion-mnist-shuffled",
   "name": "grouped-memory-3d",
-  "author": "wd7512 (with Codex)",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 784,
   "output_size": 10,
