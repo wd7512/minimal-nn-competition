@@ -68,16 +68,13 @@ sets.
 
 ### Legacy checkpoints
 
-The evaluator still accepts 769-input checkpoints (`board-v1`), using exactly
-the original board and side-to-move features. Existing checkpoints and recorded
-scores are retained; they are not converted or claimed to use castling rights.
-New training uses 773 inputs. Evaluation details record the encoding name.
+Existing 769-input checkpoints still receive the original board/side features.
+New training uses 773 inputs. Evaluation details identify `board-v1` or
+`castling-v2`; historical checkpoints and scores are retained.
 
-The legacy encoding makes 100k perfect recall impossible: 14 groups share the
-same legacy input but have incompatible targets at the ±0.1 pawn tolerance,
-so its accuracy is at most 99.986%. Appending castling rights separates all
-these groups without changing any frozen position or target. This removes the
-identified contradiction; it does not guarantee that a trained model will pass.
+The old encoding has 14 incompatible input groups in the 100k dataset, limiting
+accuracy to at most 99.986%. Castling flags distinguish these groups without
+changing positions, labels, or tolerance. Models still need to learn the targets.
 
 ## 4. Output and scoring
 

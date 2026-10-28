@@ -192,10 +192,8 @@ tests/test_benchmarks.py::test_chess_eval_requires_data_file
 tests/test_benchmarks.py::test_chess_eval_encodes_each_castling_right
 tests/test_benchmarks.py::test_chess_eval_castling_collision_is_solvable_only_with_new_inputs
 tests/test_benchmarks.py::test_chess_eval_legacy_checkpoint_keeps_original_predictions
-tests/test_chess_eval_data.py::test_castling_encoding_removes_incompatible_dataset_collisions
 tests/test_integration.py::test_evaluate_chess_eval_cli
-tests/test_chess_eval_data.py::test_chess_eval_dataset_integrity
-tests/test_chess_eval_data.py::test_chess_eval_100k_contains_10k""".splitlines()
+tests/test_chess_eval_data.py""".splitlines()
         ),
     ),
     Scope(

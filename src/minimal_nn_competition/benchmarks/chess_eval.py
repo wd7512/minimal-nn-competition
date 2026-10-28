@@ -12,14 +12,12 @@ __all__ = [
     "ChessEval100kBenchmark",
     "ChessEvalBenchmark",
     "INPUT_SIZE",
-    "LEGACY_INPUT_SIZE",
     "OUTPUT_SIZE",
     "TOLERANCE_PAWNS",
     "encode",
     "load_tensors",
 ]
 
-LEGACY_INPUT_SIZE = 769
 INPUT_SIZE = 773
 OUTPUT_SIZE = 1
 TOLERANCE_PAWNS = 0.1
@@ -52,7 +50,7 @@ def encode(fen):
         inputs[_PIECES[symbol] * 64 + square] = 1.0
         square += 1
     inputs.append(1.0 if parts[1] == "w" else -1.0)
-    inputs.extend(1.0 if right in parts[2] else 0.0 for right in "KQkq")
+    inputs.extend(float(right in parts[2]) for right in "KQkq")
     return inputs
 
 
@@ -105,11 +103,8 @@ class ChessEvalBenchmark:
     def load_submission(self, submission):
         if submission.config.benchmark != self.name:
             raise ValueError("Submission benchmark does not match Chess evaluation")
-        if submission.config.input_size not in (LEGACY_INPUT_SIZE, INPUT_SIZE):
-            raise ValueError(
-                f"Chess evaluation submissions must declare input_size {INPUT_SIZE} "
-                f"(or legacy input_size {LEGACY_INPUT_SIZE})"
-            )
+        if submission.config.input_size not in (769, INPUT_SIZE):
+            raise ValueError(f"Chess evaluation requires input_size {INPUT_SIZE} or legacy 769")
         if submission.config.output_size != OUTPUT_SIZE:
             raise ValueError(f"Chess evaluation submissions must declare output_size {OUTPUT_SIZE}")
         return materialize_submission(submission)
