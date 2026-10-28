@@ -37,7 +37,7 @@ def test_evaluate_snake_cli(capsys: pytest.CaptureFixture[str], fast_snake_cli: 
     out = capsys.readouterr().out
     assert '"benchmark": "snake-simple-8x8"' in out
     assert '"name": "example"' in out
-    assert '"author": "William Dennis"' in out
+    assert '"author": "wd7512"' in out
 
 
 def test_evaluate_chess_eval_cli(capsys: pytest.CaptureFixture[str]) -> None:
@@ -45,7 +45,7 @@ def test_evaluate_chess_eval_cli(capsys: pytest.CaptureFixture[str]) -> None:
     out = capsys.readouterr().out
     assert '"benchmark": "chess-eval-10k"' in out
     assert '"name": "chess-mlp-64"' in out
-    assert '"author": "William Dennis"' in out
+    assert '"author": "wd7512"' in out
     assert '"passed": true' in out
 
 

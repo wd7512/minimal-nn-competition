@@ -1,7 +1,7 @@
 {
   "benchmark": "pendulum",
   "name": "example",
-  "author": "William Dennis",
+  "author": "wd7512",
   "architecture": "mlp",
   "input_size": 3,
   "output_size": 5,
