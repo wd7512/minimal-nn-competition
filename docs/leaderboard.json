@@ -1,6 +1,6 @@
 [
   {
-    "author": "wd7512",
+    "author": "William Dennis",
     "benchmark": "cartpole",
     "details": {
       "seed_steps": [
@@ -802,6 +802,42 @@
     "passed": false,
     "score": 0.8222285509109497,
     "submission": "mlp-13-8"
+  },
+  {
+    "author": "wd7512",
+    "benchmark": "fashion-mnist-shuffled",
+    "details": {
+      "normalisation": false,
+      "samples": 70000,
+      "structure": [
+        784,
+        3,
+        6,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        4,
+        18660,
+        1,
+        10
+      ]
+    },
+    "name": "grouped-memory-3d",
+    "parameter_count": 115904,
+    "passed": true,
+    "score": 1.0,
+    "submission": "grouped-memory-3d"
   },
   {
     "author": "wd7512",
@@ -1784,6 +1820,25 @@
       "structure": [
         784,
         10,
+        31,
+        10
+      ]
+    },
+    "name": "mlp-10-31",
+    "parameter_count": 8511,
+    "passed": true,
+    "score": 1.0,
+    "submission": "mlp-10-31"
+  },
+  {
+    "author": "wd7512",
+    "benchmark": "mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
+        10,
         48,
         10
       ]
@@ -1910,6 +1965,41 @@
     "passed": false,
     "score": 0.8044428825378418,
     "submission": "mlp-4-16-16-16"
+  },
+  {
+    "author": "wd7512",
+    "benchmark": "mnist-shuffled",
+    "details": {
+      "normalisation": false,
+      "samples": 70000,
+      "structure": [
+        784,
+        3,
+        6,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        10,
+        4,
+        18683,
+        1,
+        10
+      ]
+    },
+    "name": "grouped-memory-3d",
+    "parameter_count": 115932,
+    "passed": true,
+    "score": 1.0,
+    "submission": "grouped-memory-3d"
   },
   {
     "author": "wd7512",
