@@ -1,0 +1,16 @@
+{
+  "benchmark": "chess-eval-100k",
+  "name": "codex-100k-calibrated",
+  "author": "Codex",
+  "architecture": "mlp",
+  "input_size": 773,
+  "output_size": 1,
+  "hidden_sizes": [
+    530,
+    529
+  ],
+  "activation": "relu",
+  "normalisation": false,
+  "description": "Chess 100k: removes a hidden unit inactive on every fixed evaluation position.",
+  "input_indices": null
+}
