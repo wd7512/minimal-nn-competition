@@ -1,9 +1,0 @@
-{
-  "benchmark": "cartpole",
-  "name": "mistral-lqr",
-  "author": "Vibe",
-  "architecture": "linear",
-  "input_size": 4,
-  "output_size": 2,
-  "description": "LQR-based linear controller"
-}

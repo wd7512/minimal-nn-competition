@@ -18,7 +18,7 @@ from pydantic import (
     model_validator,
 )
 
-from minimal_nn_competition.benchmarks.registry import SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import CONTROL_SPEC, SNAKE_BENCHMARKS
 from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,
     MAX_PARAMETERS,
@@ -92,6 +92,11 @@ class SubmissionConfig(BaseModel):
             raise ValueError("linear submissions must not declare hidden_sizes")
         if self.benchmark not in SNAKE_BENCHMARKS and self.input_indices is not None:
             raise ValueError("input_indices is only supported for snake benchmarks")
+        task = CONTROL_SPEC["tasks"].get(self.benchmark)
+        if task and (self.input_size, self.output_size) != (task["inputs"], task["outputs"]):
+            raise ValueError(
+                f"{self.benchmark} requires input_size {task['inputs']}, output_size {task['outputs']}"
+            )
         total = parameter_count_from_dimensions(
             self.input_size, self.hidden_sizes, self.output_size
         )

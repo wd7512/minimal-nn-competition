@@ -1,8 +1,0 @@
-{
-  "benchmark": "cartpole",
-  "name": "linear-lqr",
-  "author": "wd7512",
-  "architecture": "linear",
-  "input_size": 4,
-  "output_size": 2
-}

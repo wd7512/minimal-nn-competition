@@ -1,46 +1,63 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>example — Stockfish 100k — Minimal NN Competition</title><style>
 :root {
   color-scheme: light dark;
-  --bg: #f4f6f4;
-  --surface: #fbfcfa;
-  --ink: #17231f;
-  --muted: #63706b;
-  --rule: #d9e0db;
-  --rule-strong: #aebbb5;
-  --hover: #edf2ef;
-  --pass: #1f6b43;
-  --fail: #8a3434;
-  --pass-tint: #e6f1ea;
-  --fail-tint: #f8e9e7;
-  --focus: #2f5f57;
-  --accent-snake: #256b66;
-  --accent-image-compression: #8a5b16;
-  --accent-chess: #3f5f86;
-  --accent-control: #6f42c1;
+  --bg: #f6f8f4;
+  --surface: #ffffff;
+  --ink: #18231d;
+  --muted: #5c6a60;
+  --rule: #dce5da;
+  --rule-strong: #aab8a9;
+  --hover: #f1f6e8;
+  --pass: #23683f;
+  --fail: #963f3b;
+  --pass-tint: #e7f3e9;
+  --fail-tint: #faedeb;
+  --focus: #355f3a;
+  --accent-snake: #276b63;
+  --accent-image-compression: #8b5a0b;
+  --accent-chess: #345d91;
+  --accent-control: #7041ad;
+  --accent-cta: #c3d0db;
+  --accent-cta-hover: #b0c1ce;
+  --accent-cta-ink: #1b2a36;
+  --chart-obstacle: #818c84;
+  --chart-danger: #dc4843;
+  --chart-snake-body: #4fae67;
   --display: ui-serif, Georgia, "Times New Roman", serif;
   --body: system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --chart-snake-head: var(--pass);
+  --chart-boundary: var(--rule-strong);
+  --chart-cart: var(--ink);
+  --chart-muted: var(--muted);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1513;
-    --surface: #131d1a;
-    --ink: #e7efeb;
-    --muted: #9aaba4;
-    --rule: #273631;
-    --rule-strong: #40534c;
-    --hover: #182622;
-    --pass: #74cf9b;
-    --fail: #f09b91;
-    --pass-tint: #15251d;
-    --fail-tint: #2b1e1c;
-    --focus: #8bcacb;
-    --accent-snake: #7fcac1;
-    --accent-image-compression: #e0b76b;
-    --accent-chess: #9bb9df;
-    --accent-control: #b392f0;
+  --bg: #101512;
+  --surface: #161f18;
+  --ink: #edf3ea;
+  --muted: #a4b2a2;
+  --rule: #28362b;
+  --rule-strong: #465745;
+  --hover: #1c2a1c;
+  --pass: #7bd49a;
+  --fail: #f0988e;
+  --pass-tint: #17261c;
+  --fail-tint: #2a201e;
+  --focus: #a6db72;
+  --accent-snake: #84d2bd;
+  --accent-image-compression: #e9bd5c;
+  --accent-chess: #a2c1eb;
+  --accent-control: #c3a1f5;
+  --accent-cta: #879bad;
+  --accent-cta-hover: #9aaaba;
+  --accent-cta-ink: #14212b;
+  --chart-obstacle: #61766d;
+  --chart-danger: #ff827a;
+  --chart-snake-body: #91dfb0;
   }
 }
+
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
@@ -52,9 +69,12 @@ body {
   font-size: 16px;
   line-height: 1.55;
 }
-a { color: inherit; text-underline-offset: 3px; }
+h1, h2, h3 { font-family: var(--display); }
+a { color: var(--accent-snake); text-underline-offset: 3px; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+code { font-family: var(--mono); }
+
 [data-accent="snake"] { --accent: var(--accent-snake); }
 [data-accent="image-compression"] { --accent: var(--accent-image-compression); }
 [data-accent="chess"] { --accent: var(--accent-chess); }

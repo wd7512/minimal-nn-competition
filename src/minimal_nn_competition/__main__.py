@@ -16,6 +16,7 @@ from minimal_nn_competition.leaderboard import load_results, rank_results, save_
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission, SubmissionError
 from minimal_nn_competition.runner.entry import evaluate_submission
+from minimal_nn_competition.submissions.artifacts import _load_replays, _record_replay
 
 DEVICES = ("auto", "mps", "cpu")
 logger = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ def _parser():
         "--replays",
         type=Path,
         default=None,
-        help="Directory of Snake and control replay JSON files recorded by collect",
+        help="Directory of Snake replay JSON and native control MP4 files recorded by collect",
     )
     speed = add("speed", help="Benchmark the local Snake Simple 8x8 environment")
     speed.add_argument("--duration", type=float, default=1.0)
@@ -112,13 +113,12 @@ def _parser():
         type=Path,
         default=Path("data/fashion-mnist-shuffled.pt"),
     )
-    submissions = add("validate-submissions", help="Validate and promote open submission PRs")
-    target = submissions.add_mutually_exclusive_group(required=True)
-    target.add_argument(
-        "--all", action="store_true", help="Process every open PR targeting submission"
-    )
-    target.add_argument("--pr", type=int, help="Process one open submission PR")
+    submissions = add("validate-submission", help="Validate and score a local submission folder")
+    submissions.add_argument("submission_dir", type=Path)
     submissions.add_argument("--data-root", type=Path, default=Path("data"))
+    submissions.add_argument(
+        "--update", action="store_true", help="Update local leaderboard, replays, and HTML"
+    )
     collect.add_argument("--output", type=Path, default=Path("docs/leaderboard.json"))
     collect.add_argument(
         "--replay-dir",
@@ -152,13 +152,12 @@ def _parser():
         train_snake.add_argument("--max-moves", type=int, default=None)
         _train_common(train_snake)
     for benchmark in RL_BENCHMARKS:
-        train_rl = add(f"train-{benchmark}", help=f"Train the {benchmark} example submission")
+        train_rl = add(f"train-{benchmark.removesuffix('-gym-v1')}", help=f"Train {benchmark}")
         train_rl.add_argument("--output", type=Path, default=Path(f"models/{benchmark}/example"))
-        if benchmark != "cartpole":
-            train_rl.add_argument(
-                "--iterations", type=int, default=500 if benchmark == "pendulum" else 1500
-            )
-            train_rl.add_argument("--episodes-per-iteration", type=int, default=8)
+        train_rl.add_argument(
+            "--iterations", type=int, default=500 if benchmark.startswith("pendulum") else 1500
+        )
+        train_rl.add_argument("--episodes-per-iteration", type=int, default=8)
         train_rl.add_argument("--seed", type=int, default=0)
         _train_common(train_rl)
     for benchmark in CHESS_BENCHMARKS:
@@ -174,62 +173,17 @@ def _parser():
     return parser
 
 
-def _record_replay(replay_dir, name, benchmark, submission):
-    if benchmark.name in RL_BENCHMARKS:
-        from minimal_nn_competition.benchmarks.common.control.replay import (
-            REPLAY_SEED,
-            record_game,
-            replay_stem,
-            save_replay,
-        )
-
-        steps = benchmark.max_steps
-        loaded = benchmark.load_submission(submission)
-        save_replay(
-            replay_dir / f"{replay_stem(benchmark.name, name)}.json",
-            record_game(benchmark.name, loaded.model, seed=REPLAY_SEED, steps=steps),
-        )
-        return
-    from minimal_nn_competition.benchmarks.common.snake.replay import (
-        REPLAY_SEED,
-        record_game,
-        replay_stem,
-        save_replay,
-    )
-    from minimal_nn_competition.benchmarks.snake_simple_8x8 import selected_input_indices
-
-    loaded = benchmark.load_submission(submission)
-    save_replay(
-        replay_dir / f"{replay_stem(benchmark.name, name)}.json",
-        record_game(
-            loaded.model,
-            seed=REPLAY_SEED,
-            max_moves=benchmark.max_moves,
-            input_indices=selected_input_indices(submission.config, benchmark.name),
-            **benchmark.environment_options(REPLAY_SEED),
-        ),
-    )
-
-
-def _load_replays(replay_dir):
-    from minimal_nn_competition.benchmarks.common.snake.replay import load_replay
-
-    if replay_dir is None or not replay_dir.is_dir():
-        return {}
-    return {path.stem: load_replay(path) for path in sorted(replay_dir.glob("*.json"))}
-
-
 def main(argv=None):
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
     args = _parser().parse_args(argv)
-    if args.command == "validate-submissions":
-        from minimal_nn_competition.submissions.workflow import run
+    if args.command == "validate-submission":
+        from minimal_nn_competition.submissions.local import run
 
         try:
-            return run(Path.cwd(), None if args.all else args.pr, args.data_root)
+            return run(args.submission_dir, args.data_root, update=args.update)
         except (OSError, RuntimeError, ValueError, TypeError) as exc:
             return _fail(exc)
     if args.command == "list":
@@ -413,47 +367,20 @@ def main(argv=None):
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
-    if args.command in tuple(f"train-{name}" for name in RL_BENCHMARKS):
+    if args.command in ("train-cartpole", "train-pendulum", "train-lunarlander"):
+        from minimal_nn_competition.examples.control_submission import train
+
         try:
-            if args.command == "train-cartpole":
-                from minimal_nn_competition.examples.cartpole_submission import (
-                    train as train_cartpole,
-                )
-
-                train_cartpole(
-                    args.output,
-                    seed=args.seed,
-                    name=args.name,
-                    author=args.author,
-                )
-            elif args.command == "train-pendulum":
-                from minimal_nn_competition.examples.pendulum_submission import (
-                    train as train_pendulum,
-                )
-
-                train_pendulum(
-                    args.output,
-                    iterations=args.iterations,
-                    episodes_per_iteration=args.episodes_per_iteration,
-                    device_name=args.device,
-                    seed=args.seed,
-                    name=args.name,
-                    author=args.author,
-                )
-            else:
-                from minimal_nn_competition.examples.lunarlander_submission import (
-                    train as train_lunarlander,
-                )
-
-                train_lunarlander(
-                    args.output,
-                    iterations=args.iterations,
-                    episodes_per_iteration=args.episodes_per_iteration,
-                    device_name=args.device,
-                    seed=args.seed,
-                    name=args.name,
-                    author=args.author,
-                )
+            train(
+                args.command.removeprefix("train-") + "-gym-v1",
+                args.output,
+                iterations=args.iterations,
+                episodes_per_iteration=args.episodes_per_iteration,
+                device_name=args.device,
+                seed=args.seed,
+                name=args.name,
+                author=args.author,
+            )
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0

@@ -5,9 +5,10 @@ import json
 import shutil
 import statistics
 from dataclasses import asdict
+from datetime import date
+from pathlib import Path
 
 from minimal_nn_competition import __version__
-from minimal_nn_competition.benchmarks.common.control.replay import steps_text
 from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem
 from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
@@ -16,6 +17,8 @@ from minimal_nn_competition.benchmarks.registry import (
     SNAKE_BENCHMARKS,
 )
 from minimal_nn_competition.leaderboard import rank_results
+from minimal_nn_competition.leaderboard.theme import SITE_BASE_CSS, SITE_THEME_CSS
+from minimal_nn_competition.runner.entry import BenchmarkResult
 
 _GROUP_SPECS = (
     {
@@ -52,71 +55,18 @@ _VERSION_LABELS = {
     "snake-obstacles-8x8": "Obstacles 8×8",
     "mnist": "MNIST",
     "fashion-mnist": "Fashion-MNIST",
-    "mnist-shuffled": "MNIST shuffled labels",
-    "fashion-mnist-shuffled": "Fashion-MNIST shuffled labels",
+    "mnist-shuffled": "MNIST Shuffled",
+    "fashion-mnist-shuffled": "Fashion-MNIST shuffled",
     "chess-eval-10k": "Stockfish 10k",
     "chess-eval-100k": "Stockfish 100k",
-    "cartpole": "CartPole",
-    "pendulum": "Discrete torque",
-    "lunarlander": "Lunar touchdown",
+    "cartpole-gym-v1": "CartPole",
+    "pendulum-gym-v1": "Pendulum",
+    "lunarlander-gym-v1": "Lunar Lander",
 }
-_STYLE = """
-:root {
-  color-scheme: light dark;
-  --bg: #f4f6f4;
-  --surface: #fbfcfa;
-  --ink: #17231f;
-  --muted: #63706b;
-  --rule: #d9e0db;
-  --rule-strong: #aebbb5;
-  --hover: #edf2ef;
-  --pass: #1f6b43;
-  --fail: #8a3434;
-  --pass-tint: #e6f1ea;
-  --fail-tint: #f8e9e7;
-  --focus: #2f5f57;
-  --accent-snake: #256b66;
-  --accent-image-compression: #8a5b16;
-  --accent-chess: #3f5f86;
-  --accent-control: #6f42c1;
-  --display: ui-serif, Georgia, "Times New Roman", serif;
-  --body: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1513;
-    --surface: #131d1a;
-    --ink: #e7efeb;
-    --muted: #9aaba4;
-    --rule: #273631;
-    --rule-strong: #40534c;
-    --hover: #182622;
-    --pass: #74cf9b;
-    --fail: #f09b91;
-    --pass-tint: #15251d;
-    --fail-tint: #2b1e1c;
-    --focus: #8bcacb;
-    --accent-snake: #7fcac1;
-    --accent-image-compression: #e0b76b;
-    --accent-chess: #9bb9df;
-    --accent-control: #b392f0;
-  }
-}
-*, *::before, *::after { box-sizing: border-box; }
-[hidden] { display: none !important; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--body);
-  font-size: 16px;
-  line-height: 1.55;
-}
-a { color: inherit; text-underline-offset: 3px; }
-a:hover { text-decoration-thickness: 2px; }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+_STYLE = (
+    SITE_THEME_CSS
+    + SITE_BASE_CSS
+    + """
 [data-accent="snake"] { --accent: var(--accent-snake); }
 [data-accent="image-compression"] { --accent: var(--accent-image-compression); }
 [data-accent="chess"] { --accent: var(--accent-chess); }
@@ -135,6 +85,7 @@ a:hover { text-decoration-thickness: 2px; }
 .status--pass { color: var(--pass); }
 .status--fail { color: var(--fail); }
 """
+)
 
 _SITE_STYLE = """
 .shell {
@@ -157,11 +108,13 @@ _SITE_STYLE = """
   text-transform: uppercase;
   color: var(--ink);
 }
-.brand-dots { display: inline-flex; gap: 3px; }
-.brand-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
-.brand-dots span:nth-child(1) { background: var(--accent-snake); }
-.brand-dots span:nth-child(2) { background: var(--accent-image-compression); }
-.brand-dots span:nth-child(3) { background: var(--accent-chess); }
+.brand-dots { display: inline-flex; gap: 4px; }
+.brand-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--pass-percent), var(--rule-strong) 0);
+}
 .rail__label {
   margin: 24px 0 8px;
   font: 700 15px/1.4 var(--mono);
@@ -172,7 +125,7 @@ _SITE_STYLE = """
 .rail nav { display: grid; border-top: 1px solid var(--rule); }
 .rail a {
   display: grid;
-  grid-template-columns: 6px 22px minmax(0, 1fr);
+  grid-template-columns: 12px 22px minmax(0, 1fr);
   gap: 2px 8px;
   align-items: center;
   padding: 12px 0;
@@ -180,14 +133,27 @@ _SITE_STYLE = """
   color: var(--ink);
   text-decoration: none;
 }
-.rail__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+.rail__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) var(--pass-percent), var(--rule-strong) 0);
+}
 .rail__index { font: 10px/1.4 var(--mono); color: var(--muted); }
 .rail a strong { font-weight: 600; }
 .rail a:hover strong { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
 .rail a small { grid-column: 3; font: 10px/1.4 var(--mono); color: var(--muted); white-space: nowrap; }
 .rail__note { margin: 20px 0 0; font: 11px/1.5 var(--mono); color: var(--muted); }
 .main { min-width: 0; }
-.masthead { border-bottom: 1px solid var(--rule-strong); padding-bottom: 32px; }
+.masthead { border-bottom: 2px solid var(--accent-cta); padding-bottom: 36px; }
+.masthead .eyebrow {
+  display: block;
+  padding: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: .12em;
+}
 .eyebrow {
   margin: 0;
   font: 700 15px/1.4 var(--mono);
@@ -196,20 +162,80 @@ _SITE_STYLE = """
   color: var(--muted);
 }
 h1 {
-  margin: 16px 0 0;
-  font: 400 clamp(2.8rem, 5vw, 4.8rem)/.96 var(--display);
+  margin: 20px 0 0;
+  font: 400 clamp(3rem, 6vw, 5.4rem)/.96 var(--display);
   letter-spacing: -.04em;
-  max-width: 13ch;
+  max-width: 14ch;
 }
-.lead { margin: 20px 0 0; max-width: 58ch; color: var(--muted); font-size: 18px; }
+.lead { margin: 20px 0 0; color: var(--ink); font-size: 18px; }
 .links {
-  margin: 16px 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  font: 11px/1.4 var(--mono);
+  margin: 24px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 760px;
 }
-.links span { color: var(--muted); }
+.links a {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+.links a + a {
+  border-left: 1px solid var(--rule-strong);
+  padding-left: 24px;
+}
+.links .action-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 12px/1.4 var(--mono);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 5px;
+  text-decoration-thickness: 1px;
+}
+.links a:hover .action-title { text-decoration-color: var(--accent-snake); }
+.featured-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0 8px;
+}
+.featured-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  padding: 17px 18px 15px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-top: 2px solid var(--accent);
+  border-radius: 5px;
+  text-decoration: none;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+a.featured-card:hover { border-color: var(--accent); }
+.card-label {
+  font: 700 10px/1.4 var(--mono);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.featured-card strong { font: 400 21px/1.15 var(--display); letter-spacing: -.02em; }
+.card-benchmark { font: 12px/1.4 var(--body); color: var(--muted); margin-top: 6px; }
+.card-detail { font: 11px/1.4 var(--mono); margin-top: 14px; }
+.card-date { color: var(--muted); font-size: 10px; }
+.challenge-menu summary { color: var(--accent); cursor: pointer; list-style: none; }
+.challenge-menu summary::-webkit-details-marker { display: none; }
+.challenge-links { list-style: none; margin: 12px 0 0; padding: 0; }
+.challenge-links li + li { margin-top: 8px; }
+.challenge-links a { color: var(--accent); }
 .group { padding: 48px 0 24px; }
 .group + .group { border-top: 1px solid var(--rule); padding-top: 48px; }
 .group:last-child { padding-bottom: 48px; }
@@ -256,6 +282,12 @@ h1 {
   border-bottom: 1px solid var(--rule-strong);
   -webkit-overflow-scrolling: touch;
 }
+.empty-state {
+  margin: 0;
+  padding: 16px 12px;
+  border-block: 1px solid var(--rule-strong);
+  color: var(--muted);
+}
 table.results { width: 100%; border-collapse: collapse; min-width: 30rem; }
 .results th, .results td {
   padding: 10px 12px;
@@ -297,12 +329,14 @@ td.submission a {
   text-underline-offset: 3px;
 }
 td.submission a:hover { text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
-.submission__name { font-weight: 400; font-size: 13px; }
+.submission__name { font-weight: 400; font-size: 12px; }
+.empty-row a { font: italic 11px/1.4 var(--mono); }
 .submission__id { font: 10px/1.35 var(--mono); color: var(--muted); }
 .submission__meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
 .submission__meta .score { font-weight: 600; color: var(--ink); font-size: 11px; white-space: nowrap; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 td.num { font-family: var(--mono); font-size: 12px; }
+td.date { white-space: nowrap; font: 11px/1.4 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink); }
 .std { color: var(--muted); font-weight: 400; font-size: 11px; white-space: nowrap; }
 .sr-only {
@@ -336,13 +370,19 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .shell { grid-template-columns: 1fr; gap: 32px; padding: 32px 24px 64px; }
   .rail { position: static; }
   .rail nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .rail a { grid-template-columns: 6px 20px minmax(0, 1fr); border-bottom: 0; padding: 10px 12px 10px 0; }
+  .rail a { grid-template-columns: 12px 20px minmax(0, 1fr); border-bottom: 0; padding: 10px 12px 10px 0; }
   .rail a + a { border-left: 1px solid var(--rule); padding-left: 12px; }
   .rail a small { grid-column: 3; }
   .rail__note { display: block; margin-top: 12px; }
 }
+@media (max-width: 800px) {
+  .featured-cards { grid-template-columns: 1fr; }
+  .lead { max-width: 54ch; }
+}
 @media (max-width: 700px) {
   .shell { padding: 24px 16px 56px; }
+  .links { grid-template-columns: 1fr; gap: 4px; }
+  .links a + a { border-left: 0; border-top: 1px solid var(--rule); padding: 14px 0 10px; }
   .rail nav { grid-template-columns: 1fr; }
   .rail a { border-left: 0; border-bottom: 1px solid var(--rule); padding-left: 0; }
   .rail a + a { border-left: 0; padding-left: 0; }
@@ -350,7 +390,6 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
   .results th, .results td { padding: 8px 8px; }
   td.submission a { gap: 1px; }
   .group { padding: 36px 0 20px; }
-  .table-wrap { overflow-x: visible; }
   table.results { min-width: 0; }
   td.num, th.num { white-space: normal; }
   .std { display: inline; white-space: nowrap; }
@@ -461,6 +500,7 @@ _GAME_SCRIPT = """
 const FRAMES = __FRAMES__;
 const SIZE = __SIZE__;
 const BLOCKED = __BLOCKED__;
+const themeColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 const status = document.getElementById("status");
@@ -473,17 +513,19 @@ function draw() {
   const cell = canvas.width / SIZE;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   BLOCKED.forEach((blockedCell) => {
-    ctx.fillStyle = "#8a9a94";
+    ctx.fillStyle = themeColor("--chart-obstacle");
     ctx.fillRect(blockedCell[0] * cell, blockedCell[1] * cell, cell, cell);
   });
   const food = FRAMES[frame].food;
   if (food) {
-    ctx.fillStyle = "#e5484d";
+    ctx.fillStyle = themeColor("--chart-danger");
     ctx.fillRect(food[0] * cell, food[1] * cell, cell, cell);
   }
   const snake = FRAMES[frame].snake;
   snake.forEach((segment, index) => {
-    ctx.fillStyle = index === 0 ? "#1f6b43" : "#57b47a";
+    ctx.fillStyle = index === 0
+      ? themeColor("--chart-snake-head")
+      : themeColor("--chart-snake-body");
     ctx.fillRect(segment[0] * cell, segment[1] * cell, cell, cell);
   });
   status.textContent = "move " + frame + "/" + (FRAMES.length - 1)
@@ -527,324 +569,7 @@ speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
 draw();
 """
 
-_CONTROL_GAME_SCRIPT = """
-const FRAMES = __FRAMES__;
-const KIND = "__KIND__";
-const OUTCOME = "__OUTCOME__";
-const TORQUES = [-2.0, -1.0, 0.0, 1.0, 2.0];
-const THRUSTS = ["coast", "main", "left", "right"];
-const canvas = document.getElementById("board");
-const ctx = canvas.getContext("2d");
-const status = document.getElementById("status");
-const playButton = document.getElementById("play");
-const speed = document.getElementById("speed");
-let frame = 0;
-let playing = false;
-let timer = null;
-function last() {
-  return FRAMES.length - 1;
-}
-function deg(radians) {
-  return (Number(radians) * 180 / Math.PI).toFixed(1);
-}
-function drawCartpole(state) {
-  const rail = canvas.height - 80;
-  const toX = (x) => 24 + ((x + 2.4) / 4.8) * (canvas.width - 48);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = "#aebbb5";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(16, rail);
-  ctx.lineTo(canvas.width - 16, rail);
-  ctx.stroke();
-  ctx.strokeStyle = "#8a3434";
-  ctx.setLineDash([4, 3]);
-  [toX(-2.4), toX(2.4)].forEach((lineX) => {
-    ctx.beginPath();
-    ctx.moveTo(lineX, rail - 110);
-    ctx.lineTo(lineX, rail + 14);
-    ctx.stroke();
-  });
-  ctx.setLineDash([]);
-  const cartX = Math.max(24, Math.min(canvas.width - 24, toX(state[0])));
-  ctx.fillStyle = "#17231f";
-  ctx.fillRect(cartX - 24, rail - 28, 48, 28);
-  const pivotX = cartX;
-  const pivotY = rail - 28;
-  const tipX = pivotX + 200 * Math.sin(state[2]);
-  const tipY = pivotY - 200 * Math.cos(state[2]);
-  ctx.strokeStyle = "#8a5b16";
-  ctx.lineWidth = 6;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(pivotX, pivotY);
-  ctx.lineTo(tipX, tipY);
-  ctx.stroke();
-  ctx.lineCap = "butt";
-  ctx.fillStyle = "#8a5b16";
-  ctx.beginPath();
-  ctx.arc(tipX, tipY, 5, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.fillStyle = "#3f5f86";
-  ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 5, 0, 2 * Math.PI);
-  ctx.fill();
-  let text = "step " + frame + "/" + last()
-    + ", x " + Number(state[0]).toFixed(2)
-    + ", θ " + deg(state[2]) + " degrees";
-  if (frame === last()) {
-    text += " · " + OUTCOME;
-  }
-  status.textContent = text;
-}
-function drawPendulum(state, action) {
-  const pivotX = canvas.width / 2;
-  const pivotY = canvas.height * 0.47;
-  const arm = canvas.height * 0.34;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const tipX = pivotX + arm * Math.sin(state[0]);
-  const tipY = pivotY - arm * Math.cos(state[0]);
-  ctx.strokeStyle = "#e5484d";
-  ctx.lineWidth = 20;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(pivotX, pivotY);
-  ctx.lineTo(tipX, tipY);
-  ctx.stroke();
-  ctx.lineCap = "butt";
-  ctx.fillStyle = "#e5484d";
-  ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 10, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(tipX, tipY, 10, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.fillStyle = "#17231f";
-  ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 4, 0, 2 * Math.PI);
-  ctx.fill();
-  const torque = action === null ? 0 : TORQUES[action];
-  if (action !== null && torque !== 0) {
-    const R = 50;
-    const span = 100 * Math.PI / 180;
-    const base = -Math.PI / 2;
-    const a0 = base;
-    const a1 = torque > 0 ? base + span : base - span;
-    ctx.strokeStyle = "#63706b";
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.arc(pivotX, pivotY, R, a0, a1, torque < 0);
-    ctx.stroke();
-    const ex = pivotX + R * Math.cos(a1);
-    const ey = pivotY + R * Math.sin(a1);
-    const tAng = a1 + (torque > 0 ? Math.PI / 2 : -Math.PI / 2);
-    const ux = Math.cos(tAng);
-    const uy = Math.sin(tAng);
-    const px = -uy;
-    const py = ux;
-    const bx = ex - ux * 14;
-    const by = ey - uy * 14;
-    ctx.fillStyle = "#63706b";
-    ctx.beginPath();
-    ctx.moveTo(ex, ey);
-    ctx.lineTo(bx + px * 7, by + py * 7);
-    ctx.lineTo(bx - px * 7, by - py * 7);
-    ctx.closePath();
-    ctx.fill();
-  }
-  let text = "step " + frame + "/" + last()
-    + ", θ " + deg(state[0]) + " degrees"
-    + ", ω " + Number(state[1]).toFixed(2);
-  if (frame === last()) {
-    text += " · " + OUTCOME;
-  }
-  status.textContent = text;
-}
-function drawLunarlander(state, action) {
-  const ground = canvas.height - 40;
-  const toX = (x) => 30 + ((x + 1) / 2) * (canvas.width - 60);
-  const toY = (y) => ground - y * ((ground - 100) / 1.5);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = "#17231f";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, ground);
-  ctx.lineTo(canvas.width, ground);
-  ctx.stroke();
-  ctx.fillStyle = "#1f6b43";
-  ctx.fillRect(toX(-0.25), ground - 6, toX(0.25) - toX(-0.25), 6);
-  [toX(-0.25), toX(0.25)].forEach((edge, idx) => {
-    ctx.strokeStyle = "#17231f";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(edge, ground - 6);
-    ctx.lineTo(edge, ground - 36);
-    ctx.stroke();
-    ctx.fillStyle = "#8a5b16";
-    ctx.beginPath();
-    if (idx === 0) {
-      ctx.moveTo(edge, ground - 36);
-      ctx.lineTo(edge, ground - 48);
-      ctx.lineTo(edge + 16, ground - 42);
-    } else {
-      ctx.moveTo(edge, ground - 36);
-      ctx.lineTo(edge, ground - 48);
-      ctx.lineTo(edge - 16, ground - 42);
-    }
-    ctx.closePath();
-    ctx.fill();
-  });
-  for (let index = Math.max(0, frame - 24); index < frame; index += 1) {
-    ctx.fillStyle = "rgba(63, 95, 134, 0.45)";
-    ctx.beginPath();
-    ctx.arc(toX(FRAMES[index].state[0]), toY(FRAMES[index].state[1]), 3, 0, 2 * Math.PI);
-    ctx.fill();
-  }
-  const px = toX(state[0]);
-  const py = Math.min(toY(state[1]), ground + 4);
-  ctx.save();
-  ctx.translate(px, py);
-  ctx.rotate(Number(state[4]));
-  ctx.fillStyle = "#6f42c1";
-  ctx.strokeStyle = "#17231f";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, -13);
-  ctx.lineTo(9, -4);
-  ctx.lineTo(9, 10);
-  ctx.lineTo(-9, 10);
-  ctx.lineTo(-9, -4);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#8a9a94";
-  if (action === 1) {
-    ctx.beginPath();
-    ctx.arc(0, 16, 4 + (frame % 3), 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, 24, 3, 0, 2 * Math.PI);
-    ctx.fill();
-  } else if (action === 2) {
-    ctx.beginPath();
-    ctx.arc(-14, 5, 3 + (frame % 2), 0, 2 * Math.PI);
-    ctx.fill();
-  } else if (action === 3) {
-    ctx.beginPath();
-    ctx.arc(14, 5, 3 + (frame % 2), 0, 2 * Math.PI);
-    ctx.fill();
-  }
-  ctx.restore();
-  let text = "step " + frame + "/" + last()
-    + ", x " + Number(state[0]).toFixed(2)
-    + ", y " + Number(state[1]).toFixed(2)
-    + ", thrust " + (action === null ? "—" : THRUSTS[action]);
-  if (frame === last() && OUTCOME) {
-    text += " · " + OUTCOME;
-  }
-  status.textContent = text;
-}
-function draw() {
-  const current = FRAMES[frame];
-  if (KIND === "cartpole") {
-    drawCartpole(current.state);
-  } else if (KIND === "pendulum") {
-    drawPendulum(current.state, current.action);
-  } else {
-    drawLunarlander(current.state, current.action);
-  }
-}
-function step(delta) {
-  frame = Math.min(last(), Math.max(0, frame + delta));
-  draw();
-}
-function stop() {
-  playing = false;
-  playButton.textContent = "Play";
-  if (timer !== null) {
-    clearInterval(timer);
-    timer = null;
-  }
-}
-function play() {
-  if (playing) {
-    stop();
-    return;
-  }
-  if (frame >= last()) {
-    frame = 0;
-  }
-  playing = true;
-  playButton.textContent = "Pause";
-  timer = setInterval(() => {
-    frame += 1;
-    if (frame >= last()) {
-      frame = last();
-      stop();
-    }
-    draw();
-  }, Math.max(1, Math.floor(240 / Number(speed.value))));
-}
-  playButton.addEventListener("click", play);
-  document.getElementById("prev").addEventListener("click", () => { stop(); step(-1); });
-  document.getElementById("next").addEventListener("click", () => { stop(); step(1); });
-  speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
-  draw();
-"""
-
 _REPLAY_BOX = 480
-
-_CONTROL_GAME_LABEL = {
-    "cartpole": "CartPole replay",
-    "pendulum": "Pendulum replay",
-    "lunarlander": "LunarLander replay",
-}
-
-
-def _control_game_section(kind, payload):
-    seed = int(payload.get("seed", 0))
-    steps = int(payload.get("steps", 0))
-    total = float(payload.get("total_reward", 0.0))
-    terminated = bool(payload.get("terminated", False))
-    if kind == "cartpole":
-        outcome = "fell" if terminated else "balanced"
-    elif kind == "pendulum":
-        outcome = f"total return {total:.2f}"
-    elif payload.get("landed"):
-        outcome = "landed"
-    elif terminated:
-        outcome = "crashed"
-    else:
-        outcome = "timed out"
-    width, height = _REPLAY_BOX, _REPLAY_BOX
-    label = _CONTROL_GAME_LABEL[kind]
-    caption = f"Seed {seed} · {steps:,} steps · {outcome}"
-    canvas_label = (
-        f"{label}. Seed {seed}, {steps:,} steps, {outcome}. "
-        "Use Play and Step buttons below; current position is announced in status text."
-    )
-    canvas_fallback = (
-        f"{label}: Seed {seed}, {steps:,} steps, {outcome}. Enable JavaScript to play."
-    )
-    script = (
-        _CONTROL_GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"]))
-        .replace("__KIND__", kind)
-        .replace("__OUTCOME__", outcome)
-    )
-    section = (
-        '<section class="detail-section detail-game" aria-labelledby="replay-title">'
-        '<div class="detail-section-head"><h2 id="replay-title">Replay</h2>'
-        f"<p>{html.escape(caption)}</p></div>"
-        f'<canvas id="board" width="{width}" height="{height}" role="img" '
-        f'aria-label="{html.escape(canvas_label)}" aria-describedby="status">{html.escape(canvas_fallback)}</canvas>'
-        '<div class="controls"><button id="play" type="button">Play</button>'
-        '<button id="prev" type="button">Step back</button>'
-        '<button id="next" type="button">Step forward</button>'
-        f"{_speed_select('4')}</div>"
-        '<noscript><p class="muted">Replay needs JavaScript. Summary above gives seed, steps and outcome.</p></noscript>'
-        '<p id="status" class="muted" aria-live="polite"></p></section>'
-    )
-    return section, script
 
 
 _SITE_SCRIPT = """
@@ -879,7 +604,27 @@ _SITE_SCRIPT = """
     panels.forEach(function (panel) {
       const toggle = panel.querySelector("[data-passed-toggle]");
       if (!toggle) return;
-      const apply = function () { panel.classList.toggle("hide-failed", toggle.checked); };
+      const body = panel.querySelector("tbody");
+      const emptyRow = body && body.querySelector("[data-empty-row]");
+      const submissions = body
+        ? Array.from(body.querySelectorAll("tr.is-pass, tr.is-fail"))
+        : [];
+      const apply = function () {
+        panel.classList.toggle("hide-failed", toggle.checked);
+        if (!emptyRow) return;
+        const hasVisibleResults = submissions.some(function (row) {
+          return !toggle.checked || !row.classList.contains("is-fail");
+        });
+        emptyRow.hidden = hasVisibleResults;
+        if (!hasVisibleResults) {
+          const message = emptyRow.querySelector("[data-empty-message]");
+          if (message) {
+            message.textContent = toggle.checked
+              ? "Nobody’s found a passing solution for this one yet — maybe you can?"
+              : "No submissions yet — want to be the first?";
+          }
+        }
+      };
       toggle.addEventListener("change", apply);
       apply();
     });
@@ -887,21 +632,28 @@ _SITE_SCRIPT = """
       return panel.classList.contains("is-active");
     }) || panels[0];
     select(initial.dataset.version);
-    let fromHash = window.location.hash.slice(1);
-    if (fromHash.indexOf("panel-") === 0) fromHash = fromHash.slice(6);
-    if (versions.indexOf(fromHash) !== -1) {
+    function selectFromHash() {
+      let fromHash = window.location.hash.slice(1);
+      if (fromHash.indexOf("panel-") === 0) fromHash = fromHash.slice(6);
+      if (versions.indexOf(fromHash) === -1) return;
       select(fromHash);
-      if (!document.getElementById(window.location.hash.slice(1))) {
-        try { group.scrollIntoView(); } catch (e) {}
-      }
+      const target = document.getElementById(window.location.hash.slice(1)) || group;
+      try { target.scrollIntoView(); } catch (e) {}
     }
+    window.addEventListener("hashchange", selectFromHash);
+    document.querySelectorAll('a[href^="#panel-"]').forEach(function (link) {
+      const id = link.getAttribute("href").slice(7);
+      if (versions.indexOf(id) !== -1) {
+        link.addEventListener("click", function () { select(id); });
+      }
+    });
+    selectFromHash();
   });
 })();
 """
 
 
 def _score_text(result):
-    # Score is the fraction of seeds or samples that pass for every benchmark.
     percent = result.score * 100
     digits = 4 if not result.passed and percent >= 99.995 else 2
     return f"{percent:.{digits}f}%"
@@ -924,8 +676,9 @@ def _error_text(result):
 
 
 def _reward_text(result):
-    if result.benchmark == "cartpole":
-        return steps_text(result)
+    if result.benchmark == "cartpole-gym-v1":
+        steps = result.details.get("seed_steps")
+        return f"{statistics.fmean(steps):.1f} ± {statistics.pstdev(steps):.1f}" if steps else "-"
     mean_return = result.details.get("mean_return")
     if not isinstance(mean_return, (int, float)):
         return "-"
@@ -981,64 +734,17 @@ def _version_label(benchmark):
     return benchmark.replace("-", " ").title()
 
 
-def _track_summary(results, benchmark):
-    entries = [result for result in results if result.benchmark == benchmark]
-    if not entries:
-        return "No submissions yet"
-    best = max(entries, key=lambda result: (result.score, result.passed, -result.parameter_count))
-    best_text = (
-        f"Best: {html.escape(best.name)} ({html.escape(_score_text(best))}, "
-        f"{best.parameter_count:,} params)"
-    )
-    passing = [result for result in entries if result.passed]
-    if passing:
-        smallest = min(passing, key=lambda result: result.parameter_count)
-        pass_text = f"Smallest pass: {smallest.parameter_count:,} params"
-    else:
-        pass_text = "Smallest pass: none"
-    return f"{best_text}<br>{pass_text}"
-
-
-def _image_comparison_html(results):
-    rows = (
-        ("MNIST", "11.25%", "mnist", "mnist-shuffled"),
-        ("Fashion-MNIST", "10.00%", "fashion-mnist", "fashion-mnist-shuffled"),
-    )
-    body = "".join(
-        f"<tr><td>{html.escape(dataset)}</td><td>70,000</td>"
-        f'<td class="num">{html.escape(baseline)}</td>'
-        f"<td>{_track_summary(results, true_track)}</td>"
-        f"<td>{_track_summary(results, shuffled_track)}</td></tr>"
-        for dataset, baseline, true_track, shuffled_track in rows
-    )
-    return (
-        '<div class="image-comparison"><h2>True-label and shuffled-label comparison</h2>'
-        "<p>Each pair uses the same 70,000 public images and ten output classes. "
-        "True-label scores test digit or clothing classification; shuffled-label scores "
-        "measure exact recall of one fixed public label assignment. Model sizes are "
-        "shown as parameter counts.</p>"
-        '<div class="table-wrap" role="region" tabindex="0" '
-        'aria-label="True-label and shuffled-label image benchmark comparison">'
-        '<table class="results"><caption class="sr-only">Image benchmark comparison</caption>'
-        '<thead><tr><th scope="col">Dataset</th>'
-        '<th scope="col" class="num">Examples</th>'
-        '<th scope="col" class="num">Constant baseline</th>'
-        '<th scope="col">True-label track</th>'
-        '<th scope="col">Shuffled-label track</th></tr></thead>'
-        f"<tbody>{body}</tbody></table></div>"
-        '<p class="muted">For a shuffled track, storing 70,000 independent ten-way '
-        "labels has an information count of 70,000 × log₂(10) ≈ 232,535 bits. This is "
-        "a counting reference under that independence assumption, not a proven lower "
-        "bound on an MLP’s parameter count or checkpoint size.</p></div>"
-    )
-
-
 def _group_specs(results):
     present = {result.benchmark for result in results}
     groups = []
     covered = set()
     for spec in _GROUP_SPECS:
-        versions = tuple(benchmark for benchmark in spec["benchmarks"] if benchmark in present)
+        if spec["id"] == "image-compression" and any(
+            benchmark in present for benchmark in IMAGE_BENCHMARKS
+        ):
+            versions = IMAGE_BENCHMARKS
+        else:
+            versions = tuple(benchmark for benchmark in spec["benchmarks"] if benchmark in present)
         if not versions:
             continue
         groups.append({**spec, "benchmarks": versions})
@@ -1060,6 +766,10 @@ def _group_info(benchmark):
         if benchmark in spec["benchmarks"]:
             return spec["label"], spec["accent"]
     return _version_label(benchmark), "default"
+
+
+def _pass_percent(passed, total):
+    return f"{100 * passed / total:.1f}%" if total else "0%"
 
 
 def _submission_cell(result, link, status=None, score_html=None):
@@ -1084,27 +794,71 @@ def _submission_cell(result, link, status=None, score_html=None):
     return content
 
 
-def _table(results, submission_links=None):
+def _submission_guide_url(benchmark):
+    if benchmark in SNAKE_BENCHMARKS:
+        guide = "how-to-make-a-snake-submission.md"
+    elif benchmark in IMAGE_BENCHMARKS:
+        guide = "how-to-make-an-image-compression-submission.md"
+    elif benchmark in CHESS_BENCHMARKS:
+        guide = "how-to-make-a-chess-submission.md"
+    elif benchmark in RL_BENCHMARKS:
+        guide = "how-to-make-a-control-submission.md"
+    else:
+        return "https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"
+    return "https://github.com/wd7512/minimal-nn-competition/blob/main/how-to/" + guide
+
+
+def _submission_date_html(value):
+    if not value:
+        return "—"
+    try:
+        submitted = date.fromisoformat(value)
+    except (TypeError, ValueError):
+        return html.escape(str(value))
+    day = submitted.day
+    suffix = "th" if 11 <= day % 100 <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+    label = f"{day}{suffix} {submitted.strftime('%b')} '{submitted.strftime('%y')}"
+    return f'<time datetime="{submitted.isoformat()}">{label}</time>'
+
+
+def _table(results, submission_links=None, benchmark=None):
     rows = []
-    fourth = _fourth_header(results[0].benchmark) if results else None
+    benchmark = results[0].benchmark if results else benchmark
+    fourth = _fourth_header(benchmark) if benchmark else None
     for rank, result in enumerate(results, 1):
         link = (submission_links or {}).get((result.benchmark, result.submission))
         status = "pass" if result.passed else "fail"
         row_class = "is-pass" if result.passed else "is-fail"
-        cells = f'<td class="rank">{rank}</td><td class="submission">{_submission_cell(result, link, status, html.escape(_score_text(result)))}</td><td class="num">{result.parameter_count:,}</td>'
+        cells = (
+            f'<td class="rank">{rank}</td>'
+            f'<td class="submission">{_submission_cell(result, link, status, html.escape(_score_text(result)))}</td>'
+            f'<td class="date">{_submission_date_html(result.submitted_at)}</td>'
+            f'<td class="num">{result.parameter_count:,}</td>'
+        )
         if fourth is not None:
             cells += f'<td class="num">{_fourth_html(result)}</td>'
         rows.append(f'<tr class="{row_class}">{cells}</tr>')
-    label = _version_label(results[0].benchmark) if results else "Results"
+    label = _version_label(benchmark) if benchmark else "Results"
     fourth_header = (
         f'<th scope="col" class="num">{html.escape(fourth)}</th>' if fourth is not None else ""
     )
     caption = (
-        f"{html.escape(label)} results, ranked by {_ranking_text(results[0].benchmark)}."
-        if results
+        f"{html.escape(label)} results, ranked by {_ranking_text(benchmark)}."
+        if benchmark
         else "Results."
     )
-    return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Name</th><th scope="col" class="num">Parameters</th>{fourth_header}</tr></thead><tbody>{"".join(rows)}</tbody></table>"""
+    if benchmark:
+        initially_hidden = " hidden" if results else ""
+        empty_row = (
+            f'<tr class="empty-row" data-empty-row{initially_hidden}>'
+            f'<td colspan="{4 + int(fourth is not None)}">'
+            "<span data-empty-message>Nobody’s found a passing solution for this one yet — "
+            "maybe you can?</span> "
+            f'<a href="{html.escape(_submission_guide_url(benchmark))}">How to submit</a>'
+            "</td></tr>"
+        )
+        rows.append(empty_row)
+    return f"""<table class="results"><caption class="sr-only">{caption}</caption><thead><tr><th scope="col" class="rank">#</th><th scope="col">Name</th><th scope="col" class="date">Submitted</th><th scope="col" class="num">Parameters</th>{fourth_header}</tr></thead><tbody>{"".join(rows)}</tbody></table>"""
 
 
 def _detail_row(label, value):
@@ -1168,17 +922,14 @@ def render_submission_html(result, payload, rank, total):
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
     if result.benchmark in RL_BENCHMARKS:
         rows.append(_detail_row("Reward", html.escape(_reward_text(result))))
+        if result.benchmark == "lunarlander-gym-v1" and "seed_success" in result.details:
+            successes = result.details["seed_success"]
+            rows.append(_detail_row("Landings", f"{sum(successes)}/{len(successes)}"))
         games = result.details.get("seed_steps")
         if not isinstance(games, list):
             games = result.details.get("seed_returns")
         if isinstance(games, list):
             rows.append(_detail_row("Seed games", str(len(games))))
-        if result.benchmark == "lunarlander":
-            landed = result.details.get("seed_landed")
-            if isinstance(landed, list):
-                rows.append(
-                    _detail_row("Landings", f"{sum(1 for game in landed if game)}/{len(landed)}")
-                )
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
     if result.benchmark in CHESS_BENCHMARKS:
         error = _error_text(result)
@@ -1223,8 +974,14 @@ def render_submission_html(result, payload, rank, total):
         script_tag = f"<script>{script}</script>"
         grid_class = "detail-grid"
     elif payload is not None and result.benchmark in RL_BENCHMARKS:
-        game_section, control_script = _control_game_section(result.benchmark, payload)
-        script_tag = f"<script>{control_script}</script>"
+        video = html.escape(Path(payload["video"]).name, quote=True)
+        game_section = (
+            '<section class="detail-section detail-game"><h2>Episode · Seed 0</h2>'
+            f'<video controls playsinline preload="metadata" style="width:100%" '
+            f'aria-label="Native Gymnasium seed 0 rollout"><source src="../games/{video}" '
+            f'type="video/mp4"><a href="../games/{video}">Download episode</a></video></section>'
+        )
+        script_tag = ""
         grid_class = "detail-grid"
     else:
         game_section = ""
@@ -1238,7 +995,7 @@ def render_submission_html(result, payload, rank, total):
 def render_submission_pages(results, replays, output_dir):
     """Write one detail page per submission; return benchmark/submission links.
 
-    Replay JSON is written under ``games/`` for Snake and control replays.
+    Snake replay JSON and native control MP4s are written under ``games/``.
     """
     pages_dir = output_dir / "submissions"
     games_dir = output_dir / "games"
@@ -1261,7 +1018,10 @@ def render_submission_pages(results, replays, output_dir):
             )
         seen[stem] = (result.benchmark, result.submission)
         payload = replays.get(stem)
-        if payload is not None and result.benchmark in SNAKE_BENCHMARKS + RL_BENCHMARKS:
+        if payload is not None and result.benchmark in RL_BENCHMARKS:
+            games_dir.mkdir(parents=True, exist_ok=True)
+            (games_dir / f"{stem}.mp4").write_bytes(payload["data"])
+        if payload is not None and result.benchmark in SNAKE_BENCHMARKS:
             games_dir.mkdir(parents=True, exist_ok=True)
             (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
         pages_dir.mkdir(parents=True, exist_ok=True)
@@ -1274,11 +1034,107 @@ def render_submission_pages(results, replays, output_dir):
     return links
 
 
+def _leader_card_html(kind, label, result, submission_links):
+    submitted = date.fromisoformat(result.submitted_at)
+    href = (submission_links or {}).get(
+        (result.benchmark, result.submission), f"#panel-{result.benchmark}"
+    )
+    _, accent = _group_info(result.benchmark)
+    return (
+        f'<a class="featured-card" data-featured="{kind}" data-accent="{html.escape(accent)}" '
+        f'href="{html.escape(href, quote=True)}">'
+        f'<span class="card-label">{label}</span>'
+        f"<strong>{html.escape(result.name)}</strong>"
+        f'<span class="card-benchmark">{html.escape(_version_label(result.benchmark))}</span>'
+        f'<span class="card-detail">{result.parameter_count:,} parameters '
+        '<span class="card-date">· Submitted '
+        f'<time datetime="{submitted.isoformat()}">{submitted.day} {submitted.strftime("%b")}</time>'
+        "</span></span></a>"
+    )
+
+
+def _featured_cards_html(results, submission_links, groups):
+    leaders: dict[str, BenchmarkResult] = {}
+    for result in rank_results(results):
+        leaders.setdefault(result.benchmark, result)
+    dated = []
+    for result in leaders.values():
+        if not result.passed or not result.submitted_at:
+            continue
+        try:
+            submitted = date.fromisoformat(result.submitted_at)
+        except (TypeError, ValueError):
+            continue
+        dated.append((submitted, result.benchmark, result.submission, result))
+    cards = []
+    if dated:
+        dated.sort(key=lambda item: item[:3])
+        cards.append(
+            _leader_card_html("newest", "Newest current leader", dated[-1][3], submission_links)
+        )
+        cards.append(
+            _leader_card_html("oldest", "Oldest current leader", dated[0][3], submission_links)
+        )
+    passing = {result.benchmark for result in results if result.passed}
+    challenges = [
+        benchmark
+        for spec in _GROUP_SPECS
+        for benchmark in spec["benchmarks"]
+        if benchmark not in passing
+    ]
+    displayed = {benchmark for spec in groups for benchmark in spec["benchmarks"]}
+    challenge_links = []
+    for benchmark in challenges:
+        href = f"#panel-{benchmark}" if benchmark in displayed else _submission_guide_url(benchmark)
+        challenge_links.append(
+            f'<li><a href="{html.escape(href, quote=True)}">'
+            f"{html.escape(_version_label(benchmark))}</a></li>"
+        )
+    message = (
+        "Awaiting a passing solution" if challenges else "Every benchmark has a passing solution"
+    )
+    menu = (
+        '<details class="challenge-menu card-detail"><summary>Find your next challenge →</summary>'
+        f'<ul class="challenge-links">{"".join(challenge_links)}</ul></details>'
+        if challenges
+        else ""
+    )
+    cards.append(
+        '<article class="featured-card" data-featured="challenges" data-accent="chess">'
+        '<span class="card-label">Open challenges</span>'
+        f"<strong>{len(challenges)} {_plural(len(challenges), 'benchmark')}</strong>"
+        f'<span class="card-benchmark">{message}</span>{menu}</article>'
+    )
+    return (
+        '<section class="featured-cards" aria-label="Competition highlights">'
+        + "".join(cards)
+        + "</section>"
+    )
+
+
 def render_html(results, submission_links=None):
     groups = _group_specs(results)
     entries = {}
     for result in results:
         entries.setdefault(result.benchmark, []).append(result)
+    group_stats = {}
+    for spec in groups:
+        group_entries = [
+            result for benchmark in spec["benchmarks"] for result in entries.get(benchmark, ())
+        ]
+        group_stats[spec["id"]] = (
+            len(group_entries),
+            sum(1 for result in group_entries if result.passed),
+        )
+    group_pass_percent = {
+        group_id: _pass_percent(group_passed, group_total)
+        for group_id, (group_total, group_passed) in group_stats.items()
+    }
+    brand_dots = "".join(
+        f'<span data-accent="{html.escape(spec["accent"], quote=True)}" '
+        f'style="--pass-percent:{group_pass_percent[spec["id"]]}"></span>'
+        for spec in groups
+    )
     total = len(results)
     passed = sum(1 for result in results if result.passed)
     rail_links = []
@@ -1292,9 +1148,14 @@ def render_html(results, submission_links=None):
         label = spec["label"]
         default_benchmark = versions[0]
         default_label = _version_label(default_benchmark)
-        group_count = sum(len(entries[benchmark]) for benchmark in versions)
+        group_count, group_passed = group_stats[group_id]
+        pass_percent = _pass_percent(group_passed, group_count)
         rail_links.append(
-            f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}"><span class="rail__dot" aria-hidden="true"></span><span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong><small>{group_count} {_plural(group_count, "submission")} total</small></a>'
+            f'<a href="#{html.escape(group_id)}" data-accent="{html.escape(accent)}">'
+            f'<span class="rail__dot" style="--pass-percent:{pass_percent}" role="img" '
+            f'aria-label="{group_passed} of {group_count} submissions passing"></span>'
+            f'<span class="rail__index">{group_number:02d}</span><strong>{html.escape(label)}</strong>'
+            f"<small>{group_count} {_plural(group_count, 'submission')} total</small></a>"
         )
         version_buttons = []
         for benchmark in versions:
@@ -1322,25 +1183,25 @@ def render_html(results, submission_links=None):
         )
         panels = []
         for benchmark in versions:
-            version_entries = entries[benchmark]
+            version_entries = entries.get(benchmark, [])
             version_label = _version_label(benchmark)
             active = benchmark == default_benchmark
-            table = _table(version_entries, submission_links)
+            table = _table(version_entries, submission_links, benchmark)
             panels.append(
                 f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}">'
-                f'<label class="passed-toggle"><input type="checkbox" data-passed-toggle> Pass only</label>'
+                f'<label class="passed-toggle"><input type="checkbox" data-passed-toggle checked> Pass only</label>'
                 f'<div class="table-wrap" role="region" tabindex="0" aria-label="{html.escape(version_label)} results">{table}</div>'
                 f"</div>"
             )
         sections.append(
             f'<section class="group" id="{html.escape(group_id)}" data-group-section data-accent="{html.escape(accent)}" aria-labelledby="{html.escape(group_id)}-title">'
             f'<div class="group__head"><div><p class="eyebrow" id="{html.escape(group_id)}-title"><span class="group__index">{group_number:02d}</span> / {html.escape(label)}</p></div></div>'
-            f"{_image_comparison_html(results) if group_id == 'image-compression' else ''}"
             f"{version_row}{''.join(panels)}</section>"
         )
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true"><span></span><span></span><span></span></span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><p class="links"><a href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md">Submit a model</a><span>·</span><a href="leaderboard.json">Raw leaderboard JSON</a></p></header>{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
+    featured_html = _featured_cards_html(results, submission_links, groups)
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
 

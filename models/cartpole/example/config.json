@@ -1,9 +1,0 @@
-{
-  "benchmark": "cartpole",
-  "name": "example",
-  "author": "wd7512",
-  "architecture": "linear",
-  "input_size": 4,
-  "output_size": 2,
-  "description": "A tuned linear pole-balancing controller."
-}
