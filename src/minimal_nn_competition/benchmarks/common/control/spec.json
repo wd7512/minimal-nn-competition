@@ -153,8 +153,8 @@
         -500,
         500
       ],
-      "threshold": 200,
-      "score": "mean return"
+      "score": "safe landing fraction",
+      "success": "Native termination without hull crash; lander asleep; both leg positions between helipad_x1 and helipad_x2, inclusive; within 1000 policy steps (20 simulated seconds)."
     }
   }
 }

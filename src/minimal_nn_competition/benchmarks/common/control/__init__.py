@@ -54,6 +54,17 @@ def action(name, outputs):
     return np.clip(values, -2, 2) if name == "pendulum-gym-v1" else int(values.argmax())
 
 
+def landed(env, terminated):
+    """Native settled, non-crashing landing with both legs between the pad posts."""
+    base = env.unwrapped
+    return bool(
+        terminated
+        and not base.game_over
+        and not base.lander.awake
+        and all(base.helipad_x1 <= leg.position.x <= base.helipad_x2 for leg in base.legs)
+    )
+
+
 def rollout(env, name, model, seed, video=None):
     """One native episode, optionally encoded from the same scoring transitions."""
     import torch
@@ -79,6 +90,7 @@ def rollout(env, name, model, seed, video=None):
             if terminated or truncated:
                 break
     return dict(
+        landed=name == "lunarlander-gym-v1" and landed(env, terminated),
         reward=total,
         steps=steps,
         terminated=bool(terminated),
@@ -114,16 +126,17 @@ class ControlBenchmark:
             episodes = [rollout(env, self.name, submission.model, seed) for seed in self.seeds]
         rewards = [ep["reward"] for ep in episodes]
         mean = statistics.fmean(rewards)
-        if self.name == "lunarlander-gym-v1":
-            score, passed = mean, mean >= TASKS[self.name]["threshold"]
-        else:
-            successes = [
-                (ep["steps"] == self.max_steps and not ep["terminated"])
+        successes = [
+            bool(
+                ep["landed"]
+                if self.name == "lunarlander-gym-v1"
+                else (ep["steps"] == self.max_steps and not ep["terminated"])
                 if self.name == "cartpole-gym-v1"
                 else ep["reward"] >= TASKS[self.name]["threshold"]
-                for ep in episodes
-            ]
-            score, passed = statistics.fmean(successes), all(successes)
+            )
+            for ep in episodes
+        ]
+        score, passed = statistics.fmean(successes), all(successes)
         manifest = {
             **SPEC,
             "seeds": self.seeds,
@@ -135,6 +148,7 @@ class ControlBenchmark:
             passed,
             dict(
                 mean_return=mean,
+                seed_success=successes,
                 seed_returns=rewards,
                 seed_steps=[ep["steps"] for ep in episodes],
                 seed_terminated=[ep["terminated"] for ep in episodes],

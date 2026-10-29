@@ -4,7 +4,7 @@
     "passed": true,
     "mean_return": 500.0,
     "parameters": 10,
-    "evaluation_sha256": "0b39a27e75c23b9db5c6a9d843726301e8cae6e6e9c53029e4dfb6e7df4d076f",
+    "evaluation_sha256": "c63c576a4e2b74228c282a008d0e45ce2ad63a5bce356a106c874f1c31e9018f",
     "video_bytes": 27424,
     "video": {
       "codec_name": "h264",
@@ -19,11 +19,11 @@
     "seed0_return": 500.0
   },
   "lunarlander-gym-v1": {
-    "score": 279.9511645386872,
-    "passed": true,
+    "score": 0.95,
+    "passed": false,
     "mean_return": 279.9511645386872,
     "parameters": 4996,
-    "evaluation_sha256": "29c1ece32df675c6114b6ed90c96498a7c5097c5cd86898b22d2b8dec6dd6d8d",
+    "evaluation_sha256": "6f9079b84ff7b95cb6538282d9a8d9f9b643a6bb2125b6755b71236c3afcc4cd",
     "video_bytes": 95030,
     "video": {
       "codec_name": "h264",
@@ -42,7 +42,7 @@
     "passed": true,
     "mean_return": -138.00573595299426,
     "parameters": 4481,
-    "evaluation_sha256": "8bfc95fb3c62160cfea6b9a45bde5b35a71d76a0eba6d91428038b9146b0dfaa",
+    "evaluation_sha256": "a7843f22b2b05bb02815eaece93bcc3dc3d70a0bd401eee0eb2403c18592a3db",
     "video_bytes": 19340,
     "video": {
       "codec_name": "h264",
@@ -68,8 +68,8 @@
       "mean_return": -128.1030361752396
     },
     "lunarlander-gym-v1": {
-      "score": 270.67963275346335,
-      "passed": true,
+      "score": 0.92,
+      "passed": false,
       "mean_return": 270.67963275346335
     }
   },
@@ -106,10 +106,10 @@
   },
   "source_footprint": {
     "package_tokens_before": 21471,
-    "package_tokens_after": 19593,
+    "package_tokens_after": 19640,
     "all_first_party_tokens_before": 48762,
-    "all_first_party_tokens_after": 45749,
+    "all_first_party_tokens_after": 45950,
     "source_LOC_before": 11844,
-    "source_LOC_after": 10700
+    "source_LOC_after": 10749
   }
 }

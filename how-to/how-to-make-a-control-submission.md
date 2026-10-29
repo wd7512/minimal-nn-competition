@@ -18,7 +18,7 @@ the example trainer does this automatically. Use 10000–10099 for sanity checks
 |---|---|---|---|---|
 | `cartpole-gym-v1` | 4 → 2 action logits | Uniform [-0.10, 0.10] for all four reset coordinates | 500 | Fraction surviving 500 steps without termination; all 100 must pass |
 | `pendulum-gym-v1` | 3 → **1 continuous torque** | Angle uniform [-π, π], angular speed uniform [-2, 2] | 200 | Fraction with native return ≥ -500; all 100 must pass |
-| `lunarlander-gym-v1` | 8 → 4 action logits | Native terrain/reset, plus independent uniform [-500, 500] extra force per axis before the native reset step | 1000 | **Mean native return**; pass at mean ≥200 over 100 episodes |
+| `lunarlander-gym-v1` | 8 → 4 action logits | Native terrain/reset, plus independent uniform [-500, 500] extra force per axis before the native reset step | 1000 | Safe landing fraction; all 100 must land within the limit |
 
 CartPole reset angles remain below the native ±12 degrees termination boundary. Native
 position, reward and termination rules remain intact. Pendulum keeps native
@@ -38,8 +38,13 @@ extra scaling or submitted Python code is allowed.
 
 Every episode stops on native `terminated or truncated`; the final reward is
 included. CartPole termination on step 500 fails. Pendulum truncates at 200.
-Lander's mean-return criterion is not a binary individual-episode landing test.
-Leaderboard scores retain their own units and never mix with legacy IDs.
+Lander success requires native episode termination without a hull crash, a
+settled (sleeping) lander, and both leg positions between the helipad posts
+(inclusive), within 1000 steps / 20 simulated seconds. A timeout or crash fails,
+even with a high return. It is not necessary for both contact flags to be true:
+native settled/no-crash state determines stability. All three scores are the
+fraction of successful seeds; every seed must succeed to pass overall. Mean
+return is secondary. Legacy scores remain separate.
 
 ## Save the checkpoint
 

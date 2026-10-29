@@ -145,11 +145,8 @@ def test_evaluation_is_deterministic_and_fingerprints_exact_contract(tmp_path, n
         assert first.parameter_count == 4
         assert details["seed_steps"] == [200] * 3
         assert details["seed_truncated"] == [True] * 3
-    if name.startswith("lunarlander"):
-        assert first.score == details["mean_return"]
-        assert first.passed is (first.score >= 200)
-    else:
-        assert 0 <= first.score <= 1
+    assert first.score == sum(details["seed_success"]) / len(details["seed_success"])
+    assert first.passed is all(details["seed_success"])
     changed = evaluate_submission(submission, create_benchmark(name, seeds=(0,)))
     assert changed.details["evaluation_sha256"] != details["evaluation_sha256"]
     wrong = Submission(
@@ -160,21 +157,31 @@ def test_evaluation_is_deterministic_and_fingerprints_exact_contract(tmp_path, n
         benchmark.load_submission(wrong)
 
 
-def test_cartpole_termination_on_last_step_fails_and_lander_uses_mean(tmp_path, monkeypatch):
-    episode = dict(reward=500, steps=500, terminated=True, truncated=True, trajectory_sha256="test")
+def test_cartpole_last_step_failure_and_lander_landing_fraction(tmp_path, monkeypatch):
+    episode = dict(
+        reward=500,
+        steps=500,
+        terminated=True,
+        truncated=True,
+        landed=False,
+        trajectory_sha256="test",
+    )
     monkeypatch.setattr(control, "rollout", lambda *a: episode)
     result = evaluate_submission(
         zero_submission(tmp_path, "cartpole-gym-v1"),
         create_benchmark("cartpole-gym-v1", seeds=(0,)),
     )
     assert result.score == 0 and not result.passed
-    rewards = iter((100, 300))
-    monkeypatch.setattr(control, "rollout", lambda *a: {**episode, "reward": next(rewards)})
+    successes = iter((False, True))
+    monkeypatch.setattr(
+        control, "rollout", lambda *a: {**episode, "reward": 300, "landed": next(successes)}
+    )
     result = evaluate_submission(
         zero_submission(tmp_path, "lunarlander-gym-v1"),
         create_benchmark("lunarlander-gym-v1", seeds=(0, 1)),
     )
-    assert result.score == 200 and result.passed
+    assert result.score == 0.5 and not result.passed
+    assert result.details["mean_return"] == 300
 
 
 @pytest.fixture
@@ -223,11 +230,16 @@ def test_control_train_commands_wire_examples(tmp_path, monkeypatch):
 
 def test_render_control_group(tmp_path):
     result = BenchmarkResult(
-        "zero", "lunarlander-gym-v1", -131.57, False, 36, {"mean_return": -131.57}
+        "zero",
+        "lunarlander-gym-v1",
+        0.95,
+        False,
+        36,
+        {"mean_return": 279.95, "seed_success": [True] * 95 + [False] * 5},
     )
     page = render_site([result], tmp_path).read_text()
     assert 'id="control"' in page and "Lunar Lander" in page
-    assert "-131.57 return" in page and "-13157" not in page
+    assert "95.00%" in page and "279.95" in page
 
 
 @pytest.mark.parametrize("name", ("pendulum-gym-v1", "lunarlander-gym-v1"))
@@ -238,3 +250,29 @@ def test_native_ppo_training_writes_loadable_policy(tmp_path, name):
     submission = Submission.from_directory(tmp_path / name)
     result = evaluate_submission(submission, create_benchmark(name, seeds=(10000,)))
     assert math.isfinite(result.score)
+
+
+def test_lander_landing_requires_safe_settled_position():
+    from types import SimpleNamespace as Object
+
+    base = Object(
+        game_over=False,
+        lander=Object(awake=False),
+        helipad_x1=0,
+        helipad_x2=2,
+        legs=[Object(position=Object(x=0)), Object(position=Object(x=2))],
+    )
+    env = Object(unwrapped=base)
+    assert control.landed(env, True)
+    assert not control.landed(env, False)  # Timeout/hover is not a landing.
+    base.game_over = True
+    assert not control.landed(env, True)  # A crash cannot pass even inside the posts.
+    base.game_over = False
+    base.lander.awake = True
+    assert not control.landed(env, True)
+    base.lander.awake = False
+    for leg, x in ((0, -0.001), (1, 2.001)):
+        previous = base.legs[leg].position.x
+        base.legs[leg].position.x = x
+        assert not control.landed(env, True)
+        base.legs[leg].position.x = previous

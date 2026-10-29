@@ -123,7 +123,8 @@ tests/test_core.py::test_snake_can_move_into_vacating_tail
 tests/test_observation.py
 tests/test_control_replay.py
 tests/test_rl_environments.py::test_continuous_action_validation
-tests/test_rl_environments.py::test_cartpole_termination_on_last_step_fails_and_lander_uses_mean
+tests/test_rl_environments.py::test_lander_landing_requires_safe_settled_position
+tests/test_rl_environments.py::test_cartpole_last_step_failure_and_lander_landing_fraction
 tests/test_snake_replay.py
 tests/test_snake_example_evaluation.py
 tests/test_training.py""".splitlines()

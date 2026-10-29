@@ -654,8 +654,6 @@ _SITE_SCRIPT = """
 
 
 def _score_text(result):
-    if result.benchmark == "lunarlander-gym-v1":
-        return f"{result.score:.2f} return"
     percent = result.score * 100
     digits = 4 if not result.passed and percent >= 99.995 else 2
     return f"{percent:.{digits}f}%"
@@ -924,6 +922,9 @@ def render_submission_html(result, payload, rank, total):
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
     if result.benchmark in RL_BENCHMARKS:
         rows.append(_detail_row("Reward", html.escape(_reward_text(result))))
+        if result.benchmark == "lunarlander-gym-v1" and "seed_success" in result.details:
+            successes = result.details["seed_success"]
+            rows.append(_detail_row("Landings", f"{sum(successes)}/{len(successes)}"))
         games = result.details.get("seed_steps")
         if not isinstance(games, list):
             games = result.details.get("seed_returns")
