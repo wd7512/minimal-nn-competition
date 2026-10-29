@@ -84,6 +84,18 @@
     "tokens": 6920
   },
   {
+    "commit": "27315feeec843eacc922ba1fb4362a9e6b754670",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "x86_64",
+    "measured_at": "2026-10-29T10:29:18+00:00",
+    "python_version": "3.12.14",
+    "rules_version": 2,
+    "scope": "common",
+    "status": "pass",
+    "tokens": 6952
+  },
+  {
     "commit": "7fa5204d58fffe650c9e627ec48fb1b6b99418dd",
     "dirty": false,
     "failure_reason": "",
@@ -214,6 +226,18 @@
     "scope": "core",
     "status": "pass",
     "tokens": 10879
+  },
+  {
+    "commit": "27315feeec843eacc922ba1fb4362a9e6b754670",
+    "dirty": false,
+    "failure_reason": "",
+    "machine": "x86_64",
+    "measured_at": "2026-10-29T10:29:14+00:00",
+    "python_version": "3.12.14",
+    "rules_version": 2,
+    "scope": "core",
+    "status": "pass",
+    "tokens": 10894
   },
   {
     "commit": "51c6d4e349e55247137498dccc11efb44da00d3b",
