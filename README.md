@@ -26,8 +26,7 @@ Submission Guides: [Snake](how-to/how-to-make-a-snake-submission.md), [Image com
 Controls use versioned Gymnasium physics and native recorded videos: `cartpole-gym-v1`,
 `pendulum-gym-v1` (one continuous torque), and `lunarlander-gym-v1` (Box2D).
 See the [evaluation contract and training commands](how-to/how-to-make-a-control-submission.md).
-[Legacy control results](docs/legacy-controls/index.html) remain separate. Install
-FFmpeg with libx264 to record episodes; rendering saved videos needs no encoder.
+Install FFmpeg with libx264 to record episodes; rendering saved videos needs no encoder.
 
 ## Submit/Propose a new benchmark
 

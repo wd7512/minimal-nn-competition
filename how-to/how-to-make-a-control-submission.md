@@ -2,8 +2,7 @@
 
 The current controls use actual Gymnasium physics and native recorded video.
 They are competition variants with wider initial states, not stock Gymnasium
-scores. [Legacy results](../docs/legacy-controls/index.html) remain separate;
-old checkpoints cannot be submitted unchanged.
+scores. Submit checkpoints trained for the contract below.
 
 ## Contract
 
@@ -44,7 +43,7 @@ settled (sleeping) lander, and both leg positions between the helipad posts
 even with a high return. It is not necessary for both contact flags to be true:
 native settled/no-crash state determines stability. All three scores are the
 fraction of successful seeds; every seed must succeed to pass overall. Mean
-return is secondary. Legacy scores remain separate.
+return is secondary.
 
 ## Save the checkpoint
 
