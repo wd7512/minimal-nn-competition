@@ -1,0 +1,17 @@
+{
+  "benchmark": "chess-eval-10k",
+  "name": "codex-10k-calibrated",
+  "author": "Codex",
+  "architecture": "mlp",
+  "input_size": 773,
+  "output_size": 1,
+  "hidden_sizes": [
+    47,
+    13,
+    4
+  ],
+  "activation": "relu",
+  "normalisation": false,
+  "description": "Chess 10k: median-residual bias calibration on the fixed public evaluation set.",
+  "input_indices": null
+}
