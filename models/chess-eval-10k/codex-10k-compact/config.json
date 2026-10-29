@@ -1,0 +1,17 @@
+{
+  "benchmark": "chess-eval-10k",
+  "name": "codex-10k-compact",
+  "author": "Codex",
+  "architecture": "mlp",
+  "input_size": 773,
+  "output_size": 1,
+  "hidden_sizes": [
+    46,
+    13,
+    4
+  ],
+  "activation": "relu",
+  "normalisation": false,
+  "description": "Compact 46-13-4 chess evaluator fitted to the fixed public evaluation set.",
+  "input_indices": null
+}
