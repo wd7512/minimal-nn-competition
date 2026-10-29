@@ -13,6 +13,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR source branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "$BASE_REF" != "main" ]; then
+            exit 0
+          fi
+          if [ "$HEAD_REF" != "dev" ] && [ "$HEAD_REF" != "submission" ]; then
+            echo "::error::PRs into main must come from dev or submission (head: $HEAD_REF)"
+            exit 1
+          fi
+
   test:
     runs-on: ubuntu-latest
     steps:
