@@ -226,7 +226,7 @@ def test_render_control_group(tmp_path):
         "zero", "lunarlander-gym-v1", -131.57, False, 36, {"mean_return": -131.57}
     )
     page = render_site([result], tmp_path).read_text()
-    assert 'id="control"' in page and "Box2D lander" in page
+    assert 'id="control"' in page and "Lunar Lander" in page
     assert "-131.57 return" in page and "-13157" not in page
 
 

@@ -59,9 +59,9 @@ _VERSION_LABELS = {
     "fashion-mnist-shuffled": "Fashion-MNIST shuffled",
     "chess-eval-10k": "Stockfish 10k",
     "chess-eval-100k": "Stockfish 100k",
-    "cartpole-gym-v1": "CartPole · Gym v1",
-    "pendulum-gym-v1": "Continuous torque · Gym v1",
-    "lunarlander-gym-v1": "Box2D lander · Gym v1",
+    "cartpole-gym-v1": "CartPole",
+    "pendulum-gym-v1": "Pendulum",
+    "lunarlander-gym-v1": "Lunar Lander",
 }
 _STYLE = (
     SITE_THEME_CSS
@@ -975,7 +975,7 @@ def render_submission_html(result, payload, rank, total):
     elif payload is not None and result.benchmark in RL_BENCHMARKS:
         video = html.escape(Path(payload["video"]).name, quote=True)
         game_section = (
-            '<section class="detail-section detail-game"><h2>Native Gymnasium episode · Seed 0</h2>'
+            '<section class="detail-section detail-game"><h2>Episode · Seed 0</h2>'
             f'<video controls playsinline preload="metadata" style="width:100%" '
             f'aria-label="Native Gymnasium seed 0 rollout"><source src="../games/{video}" '
             f'type="video/mp4"><a href="../games/{video}">Download episode</a></video></section>'
