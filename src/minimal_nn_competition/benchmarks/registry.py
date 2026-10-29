@@ -7,10 +7,15 @@ factory keys exactly (enforced by test_benchmark_families_partition_registry).
 The two chess tiers share one implementation module.
 """
 
+import json
+from pathlib import Path
+
+CONTROL_SPEC = json.loads((Path(__file__).parent / "common/control/spec.json").read_text())
+
 CHESS_BENCHMARKS = ("chess-eval-10k", "chess-eval-100k")
 IMAGE_BENCHMARKS = ("mnist", "fashion-mnist", "mnist-shuffled", "fashion-mnist-shuffled")
 SNAKE_BENCHMARKS = ("snake-simple-8x8", "snake-simple-16x16", "snake-obstacles-8x8")
-RL_BENCHMARKS = ("cartpole", "pendulum", "lunarlander")
+RL_BENCHMARKS = tuple(CONTROL_SPEC["tasks"])
 
 
 def _factories():
@@ -32,15 +37,15 @@ def _factories():
     from minimal_nn_competition.benchmarks.snake_simple_16x16 import SnakeSimple16x16Benchmark
 
     return {
-        "cartpole": CartPoleBenchmark,
+        "cartpole-gym-v1": CartPoleBenchmark,
         "chess-eval-10k": ChessEval10kBenchmark,
         "chess-eval-100k": ChessEval100kBenchmark,
         "fashion-mnist": FashionMnistBenchmark,
         "fashion-mnist-shuffled": FashionMnistShuffledBenchmark,
-        "lunarlander": LunarLanderBenchmark,
+        "lunarlander-gym-v1": LunarLanderBenchmark,
         "mnist": MnistBenchmark,
         "mnist-shuffled": MnistShuffledBenchmark,
-        "pendulum": PendulumBenchmark,
+        "pendulum-gym-v1": PendulumBenchmark,
         "snake-simple-8x8": SnakeSimple8x8Benchmark,
         "snake-simple-16x16": SnakeSimple16x16Benchmark,
         "snake-obstacles-8x8": SnakeObstacles8x8Benchmark,

@@ -1,0 +1,14 @@
+{
+  "benchmark": "lunarlander-gym-v1",
+  "name": "example",
+  "author": "Gymnasium v1 reference",
+  "architecture": "mlp",
+  "input_size": 8,
+  "output_size": 4,
+  "hidden_sizes": [
+    64,
+    64
+  ],
+  "activation": "relu",
+  "description": "Native Gymnasium reference policy."
+}

@@ -63,8 +63,8 @@ def test_featured_cards_select_current_passing_leaders_and_escape_content() -> N
         _result("older-nonwinner", "mnist", "2026-10-01", parameters=20),
         _result("newer-nonwinner", "mnist", "2026-10-28", parameters=30),
         _result("newest-winner", "fashion-mnist", "2026-10-27", name="New <leader> & co"),
-        _result("failed-model", "pendulum", "2026-10-29", passed=False),
-        _result("undated-winner", "cartpole", None),
+        _result("failed-model", "pendulum-gym-v1", "2026-10-29", passed=False),
+        _result("undated-winner", "cartpole-gym-v1", None),
         _result("invalid-date-winner", "chess-eval-10k", "not-a-date"),
     ]
     explicit_link = "submissions/newest.html?x=1&y=2"
@@ -90,7 +90,7 @@ def test_featured_cards_select_current_passing_leaders_and_escape_content() -> N
 def test_featured_cards_break_date_ties_independently_of_result_order() -> None:
     results = [
         _result("mnist-winner", "mnist", "2026-10-23"),
-        _result("cartpole-winner", "cartpole", "2026-10-23"),
+        _result("cartpole-winner", "cartpole-gym-v1", "2026-10-23"),
     ]
     for ordered in (results, list(reversed(results))):
         cards = _FeaturedCards(render_html(ordered)).cards
@@ -102,8 +102,8 @@ def test_featured_cards_omit_models_without_a_valid_dated_passing_leader() -> No
     results = [
         _result("invalid-winner", "mnist", "2026-10-32"),
         _result("dated-nonwinner", "mnist", "2026-10-22", parameters=20),
-        _result("undated-winner", "cartpole", None),
-        _result("failed-model", "pendulum", "2026-10-23", passed=False),
+        _result("undated-winner", "cartpole-gym-v1", None),
+        _result("failed-model", "pendulum-gym-v1", "2026-10-23", passed=False),
     ]
     assert set(_FeaturedCards(render_html(results)).cards) == {"challenges"}
     assert set(_FeaturedCards(render_html([])).cards) == {"challenges"}
@@ -112,7 +112,7 @@ def test_featured_cards_omit_models_without_a_valid_dated_passing_leader() -> No
 def test_open_challenges_include_absent_benchmarks_with_working_destinations() -> None:
     results = [
         _result("mnist-winner", "mnist", None),
-        _result("cartpole-winner", "cartpole", "invalid"),
+        _result("cartpole-winner", "cartpole-gym-v1", "invalid"),
         _result("snake-attempt", "snake-simple-8x8", "2026-10-22", passed=False),
         _result("custom-winner", "custom-benchmark", "2026-10-22"),
     ]

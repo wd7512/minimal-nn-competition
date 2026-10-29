@@ -20,8 +20,8 @@ def _folder(path: Path, benchmark="mnist") -> Path:
                 "name": "Display name",
                 "author": "tester",
                 "architecture": "linear",
-                "input_size": 784,
-                "output_size": 10,
+                "input_size": 4 if benchmark == "cartpole-gym-v1" else 784,
+                "output_size": 2 if benchmark == "cartpole-gym-v1" else 10,
             }
         )
     )
@@ -46,7 +46,7 @@ def test_local_report_does_not_write_site(tmp_path, monkeypatch, caplog):
 
 @pytest.mark.parametrize("parent", ["models/mnist", "mnist"])
 def test_path_benchmark_must_match_config(tmp_path, parent):
-    folder = _folder(tmp_path / parent / "tiny", benchmark="cartpole")
+    folder = _folder(tmp_path / parent / "tiny", benchmark="cartpole-gym-v1")
     with pytest.raises(SubmissionError, match="does not match"):
         local.validate_directory(folder)
 
