@@ -1,0 +1,13 @@
+{
+  "benchmark": "cartpole-gym-v1",
+  "name": "relu-threshold-9",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 4,
+  "output_size": 2,
+  "hidden_sizes": [
+    1
+  ],
+  "activation": "relu",
+  "description": "Decision-equivalent single-ReLU threshold factorization of the linear reference."
+}
