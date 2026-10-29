@@ -94,14 +94,9 @@ the PR is promoted through dev to main.
 
 ## Compatibility and source reduction
 
-[Legacy control results](../docs/legacy-controls/index.html) retain their own
-leaderboard, frozen historical replay pages and assets. Old checkpoints moved
-to `legacy/models/`, outside current collection. Old unversioned IDs are no
-longer registered. Existing results are never relabelled as Gymnasium scores.
-Retired source is available at commit `e6342a2`, rather than maintained as a
-parallel simulator. The earlier zero-output pilot artifacts remain historical
-under `docs/investigations/gymnasium-229/`; the experiment script and its duplicate
-implementation/tests were retired after migration.
+The Gymnasium benchmarks replace the previous controls completely. Old simulators,
+checkpoints, results, replay pages and investigation artifacts are removed.
+Only the current Gymnasium models, results and native videos are published.
 
 Removed/replaced maintained source:
 
