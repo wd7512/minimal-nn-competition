@@ -1,0 +1,115 @@
+{
+  "cartpole-gym-v1": {
+    "score": 1.0,
+    "passed": true,
+    "mean_return": 500.0,
+    "parameters": 10,
+    "evaluation_sha256": "0b39a27e75c23b9db5c6a9d843726301e8cae6e6e9c53029e4dfb6e7df4d076f",
+    "video_bytes": 27424,
+    "video": {
+      "codec_name": "h264",
+      "width": 600,
+      "height": 400,
+      "pix_fmt": "yuv420p",
+      "r_frame_rate": "50/1",
+      "nb_frames": "501"
+    },
+    "seconds_100_seeds": 0.4724830089999159,
+    "seed0_steps": 500,
+    "seed0_return": 500.0
+  },
+  "lunarlander-gym-v1": {
+    "score": 279.9511645386872,
+    "passed": true,
+    "mean_return": 279.9511645386872,
+    "parameters": 4996,
+    "evaluation_sha256": "29c1ece32df675c6114b6ed90c96498a7c5097c5cd86898b22d2b8dec6dd6d8d",
+    "video_bytes": 95030,
+    "video": {
+      "codec_name": "h264",
+      "width": 600,
+      "height": 400,
+      "pix_fmt": "yuv420p",
+      "r_frame_rate": "50/1",
+      "nb_frames": "1001"
+    },
+    "seconds_100_seeds": 0.8125952850000431,
+    "seed0_steps": 1000,
+    "seed0_return": 219.2710199062613
+  },
+  "pendulum-gym-v1": {
+    "score": 1.0,
+    "passed": true,
+    "mean_return": -138.00573595299426,
+    "parameters": 4481,
+    "evaluation_sha256": "8bfc95fb3c62160cfea6b9a45bde5b35a71d76a0eba6d91428038b9146b0dfaa",
+    "video_bytes": 19340,
+    "video": {
+      "codec_name": "h264",
+      "width": 500,
+      "height": 500,
+      "pix_fmt": "yuv420p",
+      "r_frame_rate": "30/1",
+      "nb_frames": "201"
+    },
+    "seconds_100_seeds": 0.4602081390000876,
+    "seed0_steps": 200,
+    "seed0_return": -128.27274010707632
+  },
+  "held_out_10000_10099": {
+    "cartpole-gym-v1": {
+      "score": 1.0,
+      "passed": true,
+      "mean_return": 500.0
+    },
+    "pendulum-gym-v1": {
+      "score": 1.0,
+      "passed": true,
+      "mean_return": -128.1030361752396
+    },
+    "lunarlander-gym-v1": {
+      "score": 270.67963275346335,
+      "passed": true,
+      "mean_return": 270.67963275346335
+    }
+  },
+  "browser_playback": {
+    "browser": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+    "status": "passed",
+    "text": "all three native MP4s loaded, played and sought",
+    "videos": [
+      {
+        "source": "docs/games/cartpole-gym-v1--example.mp4",
+        "status": "passed",
+        "width": 600,
+        "height": 400,
+        "duration": 10.02,
+        "error": null
+      },
+      {
+        "source": "docs/games/pendulum-gym-v1--example.mp4",
+        "status": "passed",
+        "width": 500,
+        "height": 500,
+        "duration": 6.7,
+        "error": null
+      },
+      {
+        "source": "docs/games/lunarlander-gym-v1--example.mp4",
+        "status": "passed",
+        "width": 600,
+        "height": 400,
+        "duration": 20.02,
+        "error": null
+      }
+    ]
+  },
+  "source_footprint": {
+    "package_tokens_before": 21471,
+    "package_tokens_after": 19593,
+    "all_first_party_tokens_before": 48762,
+    "all_first_party_tokens_after": 45749,
+    "source_LOC_before": 11844,
+    "source_LOC_after": 10700
+  }
+}

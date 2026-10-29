@@ -81,19 +81,18 @@ def _preserve_unrendered_files(source: Path, target: Path) -> None:
 
 def _record_replay(replay_dir, name, benchmark, submission):
     if benchmark.name in RL_BENCHMARKS:
-        from minimal_nn_competition.benchmarks.common.control.replay import (
-            REPLAY_SEED,
-            record_game,
-            replay_stem,
-            save_replay,
-        )
+        from minimal_nn_competition.benchmarks.common.control import environment, rollout
+        from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem
 
-        steps = benchmark.max_steps
         loaded = benchmark.load_submission(submission)
-        save_replay(
-            replay_dir / f"{replay_stem(benchmark.name, name)}.json",
-            record_game(benchmark.name, loaded.model, seed=REPLAY_SEED, steps=steps),
-        )
+        with environment(benchmark.name, render=True, max_steps=benchmark.max_steps) as env:
+            rollout(
+                env,
+                benchmark.name,
+                loaded.model,
+                0,
+                replay_dir / f"{replay_stem(benchmark.name, name)}.mp4",
+            )
         return
     from minimal_nn_competition.benchmarks.common.snake.replay import (
         REPLAY_SEED,
@@ -121,4 +120,10 @@ def _load_replays(replay_dir):
 
     if replay_dir is None or not replay_dir.is_dir():
         return {}
-    return {path.stem: load_replay(path) for path in sorted(replay_dir.glob("*.json"))}
+    return {
+        **{path.stem: load_replay(path) for path in sorted(replay_dir.glob("*.json"))},
+        **{
+            path.stem: {"video": path.name, "data": path.read_bytes()}
+            for path in sorted(replay_dir.glob("*.mp4"))
+        },
+    }

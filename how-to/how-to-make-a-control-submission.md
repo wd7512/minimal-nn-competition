@@ -1,165 +1,100 @@
-# How to make a Control submission
+# Make a control submission
 
-The Control group contains three fixed-seed tasks: CartPole, Pendulum, and
-LunarLander. Each submission is a feed-forward policy that observes the
-environment and picks a discrete action. No data files are needed.
+The current controls use actual Gymnasium physics and native recorded video.
+They are competition variants with wider initial states, not stock Gymnasium
+scores. [Legacy results](../docs/legacy-controls/index.html) remain separate;
+old checkpoints cannot be submitted unchanged.
 
-## 1. Create the submission
+## Contract
 
-Open a pull request against the `submission` branch with exactly two files:
+Evaluation uses exactly seeds **0–99**, CPU float32 inference and the pinned
+Gymnasium 1.2.3 / Box2D 2.3.10 / NumPy 2.5.4 / pygame 2.6.1 stack on Python 3.12.
+The [versioned manifest](../src/minimal_nn_competition/benchmarks/common/control/spec.json)
+is authoritative. Results include its evaluation fingerprint, seed returns,
+steps, termination/truncation flags and trajectory hashes. Train on seeds ≥100;
+the example trainer does this automatically. Use 10000–10099 for sanity checks.
 
-```text
-models/<benchmark>/<name>/config.json
-models/<benchmark>/<name>/model.pt
-```
+| Benchmark ID | Inputs → outputs | Wider initial conditions | Horizon | Score / pass |
+|---|---|---|---|---|
+| `cartpole-gym-v1` | 4 → 2 action logits | Uniform [-0.10, 0.10] for all four reset coordinates | 500 | Fraction surviving 500 steps without termination; all 100 must pass |
+| `pendulum-gym-v1` | 3 → **1 continuous torque** | Angle uniform [-π, π], angular speed uniform [-2, 2] | 200 | Fraction with native return ≥ -500; all 100 must pass |
+| `lunarlander-gym-v1` | 8 → 4 action logits | Native terrain/reset, plus independent uniform [-500, 500] extra force per axis before the native reset step | 1000 | **Mean native return**; pass at mean ≥200 over 100 episodes |
 
-Use `cartpole`, `pendulum`, or `lunarlander` as the benchmark directory. The
-submission directory name is the slug shown on the leaderboard.
+CartPole reset angles remain below the native ±12 degrees termination boundary. Native
+position, reward and termination rules remain intact. Pendulum keeps native
+observations `(cos θ, sin θ, θ̇)` and a continuous `Box([-2], [2])` action. Lander
+keeps native Box2D terrain, contacts, leg joints, normalized observations,
+engines, rewards and termination. Its initial force is the sum of the native
+U(-1000,1000) and extra U(-500,500), a convolution supported on [-1500,1500].
+The small subclass relies on the pinned native reset calling `step(0)` before
+returning its observation and initializing shaping; it never overwrites a
+returned state or changes subsequent physics.
 
-## 2. Write `config.json`
+Discrete outputs use first argmax. Lander action IDs are **0 idle, 1 left engine,
+2 main engine, 3 right engine**. Pendulum emits a float32 tensor `(batch, 1)`;
+for each observation, supply one finite torque, clipped directly to [-2, 2].
+NaN, infinity and wrong output shapes are rejected. No discrete torque wrapper,
+extra scaling or submitted Python code is allowed.
 
-CartPole:
+Every episode stops on native `terminated or truncated`; the final reward is
+included. CartPole termination on step 500 fails. Pendulum truncates at 200.
+Lander's mean-return criterion is not a binary individual-episode landing test.
+Leaderboard scores retain their own units and never mix with legacy IDs.
+
+## Save the checkpoint
+
+Submit only `models/<benchmark-id>/<name>/config.json` and `model.pt`, targeting
+the `submission` branch. Example minimal Pendulum metadata:
 
 ```json
 {
-  "benchmark": "cartpole",
-  "name": "example",
-  "author": "example author",
+  "benchmark": "pendulum-gym-v1",
+  "name": "my-policy",
+  "author": "your-name",
   "architecture": "linear",
-  "input_size": 4,
-  "output_size": 2
-}
-```
-
-Pendulum:
-
-```json
-{
-  "benchmark": "pendulum",
-  "name": "example",
-  "author": "example author",
-  "architecture": "mlp",
   "input_size": 3,
-  "output_size": 5,
-  "hidden_sizes": [64, 64],
-  "activation": "relu"
+  "output_size": 1
 }
 ```
 
-LunarLander:
+Use the dimensions in the table for other tasks. Linear state dicts contain
+`weight` and `bias`; the minimal Pendulum shapes are `(1, 3)` and `(1,)` (four
+parameters). MLPs declare `hidden_sizes` and `activation` (`relu` or `identity`)
+and use Sequential keys (`0.weight`, `0.bias`, `2.weight`, …). Store every tensor
+as float32. Checkpoints are loaded on CPU with `weights_only=True` and strict
+key, tensor, shape and size validation.
 
-```json
-{
-  "benchmark": "lunarlander",
-  "name": "example",
-  "author": "example author",
-  "architecture": "mlp",
-  "input_size": 8,
-  "output_size": 4,
-  "hidden_sizes": [64, 64],
-  "activation": "relu"
-}
-```
+## Train, score and record native video
 
-- `name` and `author` are required and shown on the leaderboard.
-- `linear` submissions must omit `hidden_sizes`; `mlp` submissions declare
-  `hidden_sizes` and `activation`.
-- The evaluator calls the model once per step and takes the largest output
-  (argmax) as the action.
+Install FFmpeg with libx264 (`sudo apt-get install ffmpeg` on Ubuntu), then:
 
-## 3. Observations and actions
-
-CartPole observes `(x, x_dot, theta, theta_dot)` and chooses `0` (push left) or
-`1` (push right). It runs for 500 steps per seed; the episode also ends early if
-the cart leaves the track or the pole falls past 40 degrees. Each of the 100
-fixed seeds deterministically initializes the cart position uniformly in
-`[-1.5, 1.5]`, the pole angle uniformly in `[-25 degrees, 25 degrees]`, the cart velocity
-uniformly in `[-0.02, 0.02]`, and the pole angular velocity uniformly in
-`[-0.02, 0.02]`.
-
-Pendulum observes `(cos(theta), sin(theta), theta_dot)` and chooses one of five
-torques: `-2`, `-1`, `0`, `1`, or `2`. It runs for 200 steps per seed. Each
-seed initializes `theta` uniformly in `[-π, π]` and `theta_dot` uniformly in
-`[-2.0, 2.0]`.
-
-LunarLander observes
-`(x, y, vx, vy, angle, angular_velocity, left_contact, right_contact)` and
-chooses `0` (coast), `1` (main engine), `2` (left thruster), or `3` (right
-thruster). It runs for at most 300 steps per seed. A seed ends when the craft
-touches the ground or leaves the play area. Initial states use uniform ranges
-of `x ∈ [-0.4, 0.4]`, `y ∈ [1.0, 1.3]`, `vx, vy ∈ [-0.1, 0.1]`, `angle ∈
-[-0.2, 0.2]`, and `angular_velocity ∈ [-0.03, 0.03]`.
-
-## 4. Save `model.pt`
-
-`model.pt` must be a PyTorch state dict. The evaluator loads it with
-`weights_only=True`; it does not execute arbitrary Python submitted with the
-checkpoint. All tensors in the state dict must use `float32`.
-
-- `linear` checkpoints use `weight` and `bias`.
-- `mlp` checkpoints use the keys produced by `torch.nn.Sequential` (`0.weight`,
-  `0.bias`, `2.weight`, ...), with ReLU layers between linear layers.
-
-## 5. Scoring
-
-Every benchmark evaluates 100 fixed seeds (`0`–`99`). The score is the fraction
-of seeds that pass, so a passing submission scores `1.0`. The `Reward` column
-shows the mean episode return (for CartPole, the mean balanced steps with
-their standard deviation).
-
-- **CartPole**: a seed passes when the pole stays balanced for all 500 steps.
-  The checked-in example's mean reward is about 500 steps.
-- **Pendulum**: a seed passes when its 200-step episode return clears `-500`.
-  A uniform random policy averages about `-1199`; the checked-in example about
-  `-140`.
-- **LunarLander**: a seed passes when the craft lands within 300 steps. A
-  uniform random policy averages about `-11`; the checked-in example about
-  `8.2`.
-
-Results rank passing submissions first, then by descending score (fraction of
-seeds passed) and ascending parameter count.
-
-## 6. Evaluate locally
-
-```bash
+```sh
 uv sync --dev --locked
-uv run mnnc evaluate cartpole models/cartpole/example
-uv run mnnc evaluate pendulum models/pendulum/example
-uv run mnnc evaluate lunarlander models/lunarlander/example
-```
-
-## Train the examples
-
-The checked-in examples are generated by the train entry points:
-
-```bash
 uv run mnnc train-cartpole
-uv run mnnc train-pendulum
-uv run mnnc train-lunarlander
+uv run mnnc train-pendulum --iterations 500 --device cpu
+uv run mnnc train-lunarlander --iterations 500 --device cpu
+uv run mnnc evaluate pendulum-gym-v1 models/pendulum-gym-v1/example
+uv run mnnc validate-submission models/pendulum-gym-v1/example --update
 ```
 
-CartPole uses a tuned linear controller. Pendulum and LunarLander use the same
-small PPO trainer as the Snake example. Training uses Apple MPS automatically
-when available.
+CartPole writes a small fixed linear policy; the other examples train native PPO
+with shared code. Pendulum uses a Gaussian torque policy during training and its
+mean during deterministic evaluation; exploration parameters are not part of the
+submission. Training randomness is separate from the fixed evaluation starts.
+Reference results are measured after training; success is never assumed.
 
-## 7. Open the pull request
+To evaluate every current model and record one seed-0 episode for each control:
 
-Fork this repository on GitHub first. Clone your fork, then add the upstream
-remote once:
-
-```bash
-git remote add upstream https://github.com/wd7512/minimal-nn-competition.git
-git fetch upstream
-git switch -c submit/<name> upstream/submission
+```sh
+uv run mnnc collect --models models --output docs/leaderboard.json --replay-dir docs/games
+uv run mnnc render docs/leaderboard.json docs --replays docs/games
 ```
 
-`origin` stays your fork; push the branch there:
+Other benchmark families need their documented datasets. Control recording uses
+the same rollout as scoring, streams actual `rgb_array` frames to H.264 MP4,
+native 50/30/50 fps, CRF 28, yuv420p and faststart, with no audio. The static site
+uses normal browser video controls; there is no browser physics simulator.
+Only seed 0 is recorded by default; all 100 seeds still count for scoring.
+On headless Linux, set `SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy` if necessary.
 
-```bash
-git push -u origin submit/<name>
-```
-
-Open a pull request targeting the upstream `submission` branch. Keep
-`config.json` and `model.pt` as the only changed files. See
-[How to validate a submission](how-to-validate-a-submission.md) for the
-review flow.
+See [local validation and PR instructions](how-to-validate-a-submission.md).
