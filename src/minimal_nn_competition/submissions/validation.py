@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from minimal_nn_competition.benchmarks.common.snake.observation import OBSERVATION_SIZE
-from minimal_nn_competition.benchmarks.registry import SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import CONTROL_SPEC, SNAKE_BENCHMARKS
 from minimal_nn_competition.model.entry import SubmissionConfig
 from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,
@@ -86,6 +86,11 @@ def validate_config(config: Any, directory: Path) -> list[str]:
     output_size = config.get("output_size")
     if type(output_size) is not int or output_size <= 0:
         errors.append(f"{config_path}: output_size must be a positive integer")
+    task = CONTROL_SPEC["tasks"].get(benchmark)
+    if task and (input_size, output_size) != (task["inputs"], task["outputs"]):
+        errors.append(
+            f"{config_path}: expected input_size {task['inputs']}, output_size {task['outputs']}"
+        )
     hidden_sizes = config.get("hidden_sizes", [])
     if not isinstance(hidden_sizes, list) or any(
         type(size) is not int or size <= 0 for size in hidden_sizes

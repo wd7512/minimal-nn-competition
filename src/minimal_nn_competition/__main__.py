@@ -81,7 +81,7 @@ def _parser():
         "--replays",
         type=Path,
         default=None,
-        help="Directory of Snake and control replay JSON files recorded by collect",
+        help="Directory of Snake replay JSON and native control MP4 files recorded by collect",
     )
     speed = add("speed", help="Benchmark the local Snake Simple 8x8 environment")
     speed.add_argument("--duration", type=float, default=1.0)
@@ -152,13 +152,12 @@ def _parser():
         train_snake.add_argument("--max-moves", type=int, default=None)
         _train_common(train_snake)
     for benchmark in RL_BENCHMARKS:
-        train_rl = add(f"train-{benchmark}", help=f"Train the {benchmark} example submission")
+        train_rl = add(f"train-{benchmark.removesuffix('-gym-v1')}", help=f"Train {benchmark}")
         train_rl.add_argument("--output", type=Path, default=Path(f"models/{benchmark}/example"))
-        if benchmark != "cartpole":
-            train_rl.add_argument(
-                "--iterations", type=int, default=500 if benchmark == "pendulum" else 1500
-            )
-            train_rl.add_argument("--episodes-per-iteration", type=int, default=8)
+        train_rl.add_argument(
+            "--iterations", type=int, default=500 if benchmark.startswith("pendulum") else 1500
+        )
+        train_rl.add_argument("--episodes-per-iteration", type=int, default=8)
         train_rl.add_argument("--seed", type=int, default=0)
         _train_common(train_rl)
     for benchmark in CHESS_BENCHMARKS:
@@ -368,47 +367,20 @@ def main(argv=None):
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0
-    if args.command in tuple(f"train-{name}" for name in RL_BENCHMARKS):
+    if args.command in ("train-cartpole", "train-pendulum", "train-lunarlander"):
+        from minimal_nn_competition.examples.control_submission import train
+
         try:
-            if args.command == "train-cartpole":
-                from minimal_nn_competition.examples.cartpole_submission import (
-                    train as train_cartpole,
-                )
-
-                train_cartpole(
-                    args.output,
-                    seed=args.seed,
-                    name=args.name,
-                    author=args.author,
-                )
-            elif args.command == "train-pendulum":
-                from minimal_nn_competition.examples.pendulum_submission import (
-                    train as train_pendulum,
-                )
-
-                train_pendulum(
-                    args.output,
-                    iterations=args.iterations,
-                    episodes_per_iteration=args.episodes_per_iteration,
-                    device_name=args.device,
-                    seed=args.seed,
-                    name=args.name,
-                    author=args.author,
-                )
-            else:
-                from minimal_nn_competition.examples.lunarlander_submission import (
-                    train as train_lunarlander,
-                )
-
-                train_lunarlander(
-                    args.output,
-                    iterations=args.iterations,
-                    episodes_per_iteration=args.episodes_per_iteration,
-                    device_name=args.device,
-                    seed=args.seed,
-                    name=args.name,
-                    author=args.author,
-                )
+            train(
+                args.command.removeprefix("train-") + "-gym-v1",
+                args.output,
+                iterations=args.iterations,
+                episodes_per_iteration=args.episodes_per_iteration,
+                device_name=args.device,
+                seed=args.seed,
+                name=args.name,
+                author=args.author,
+            )
         except (OSError, RuntimeError, ValueError) as exc:
             return _fail(exc)
         return 0

@@ -27,6 +27,7 @@ _COMMON_SOURCES = (
     f"{_BENCHMARKS}/common",
     f"{_EXAMPLES}/classifier_submission.py",
     f"{_EXAMPLES}/ppo.py",
+    f"{_EXAMPLES}/control_submission.py",
     f"{_EXAMPLES}/snake_submission.py",
 )
 _MNIST_SOURCES = (
@@ -43,18 +44,9 @@ _CHESS_SOURCES = (
     f"{_BENCHMARKS}/data",
     f"{_EXAMPLES}/chess_eval_submission.py",
 )
-_CARTPOLE_SOURCES = (
-    f"{_BENCHMARKS}/cartpole.py",
-    f"{_EXAMPLES}/cartpole_submission.py",
-)
-_PENDULUM_SOURCES = (
-    f"{_BENCHMARKS}/pendulum.py",
-    f"{_EXAMPLES}/pendulum_submission.py",
-)
-_LUNARLANDER_SOURCES = (
-    f"{_BENCHMARKS}/lunarlander.py",
-    f"{_EXAMPLES}/lunarlander_submission.py",
-)
+_CARTPOLE_SOURCES = (f"{_BENCHMARKS}/cartpole.py",)
+_PENDULUM_SOURCES = (f"{_BENCHMARKS}/pendulum.py",)
+_LUNARLANDER_SOURCES = (f"{_BENCHMARKS}/lunarlander.py",)
 _SNAKE_8X8_SOURCES = (f"{_BENCHMARKS}/snake_simple_8x8.py",)
 _SNAKE_16X16_SOURCES = (f"{_BENCHMARKS}/snake_simple_16x16.py",)
 _SNAKE_OBSTACLES_SOURCES = (f"{_BENCHMARKS}/snake_obstacles_8x8.py",)
@@ -130,6 +122,9 @@ tests/test_core.py::test_snake_is_deterministic
 tests/test_core.py::test_snake_can_move_into_vacating_tail
 tests/test_observation.py
 tests/test_control_replay.py
+tests/test_rl_environments.py::test_continuous_action_validation
+tests/test_rl_environments.py::test_lander_landing_requires_safe_settled_position
+tests/test_rl_environments.py::test_cartpole_last_step_failure_and_lander_landing_fraction
 tests/test_snake_replay.py
 tests/test_snake_example_evaluation.py
 tests/test_training.py""".splitlines()
@@ -202,37 +197,30 @@ tests/test_chess_eval_data.py""".splitlines()
     Scope(
         "cartpole",
         _CARTPOLE_SOURCES,
-        tuple(
-            """tests/test_rl_environments.py::test_cartpole_engine_is_deterministic
-tests/test_rl_environments.py::test_cartpole_reset_bounds
-tests/test_rl_environments.py::test_cartpole_seeds_vary_position_and_angle
-tests/test_rl_environments.py::test_cartpole_rejects_wrong_config
-tests/test_rl_environments.py::test_cartpole_calibration
-tests/test_rl_environments.py::test_control_score_is_pass_fraction[cartpole-4-2]""".splitlines()
+        (
+            "tests/test_rl_environments.py::test_reset_bounds_and_repeatable_seed_variation[cartpole-gym-v1]",
+            "tests/test_rl_environments.py::test_native_transitions_rewards_and_termination[cartpole-gym-v1]",
+            "tests/test_rl_environments.py::test_evaluation_is_deterministic_and_fingerprints_exact_contract[cartpole-gym-v1]",
         ),
     ),
     Scope(
         "pendulum",
         _PENDULUM_SOURCES,
-        tuple(
-            """tests/test_rl_environments.py::test_pendulum_engine_is_deterministic
-tests/test_rl_environments.py::test_pendulum_reset_bounds
-tests/test_rl_environments.py::test_pendulum_seeds_vary_initial_state
-tests/test_rl_environments.py::test_pendulum_rejects_wrong_config
-tests/test_rl_environments.py::test_pendulum_calibration
-tests/test_rl_environments.py::test_control_score_is_pass_fraction[pendulum-3-5]""".splitlines()
+        (
+            "tests/test_rl_environments.py::test_reset_bounds_and_repeatable_seed_variation[pendulum-gym-v1]",
+            "tests/test_rl_environments.py::test_native_transitions_rewards_and_termination[pendulum-gym-v1]",
+            "tests/test_rl_environments.py::test_evaluation_is_deterministic_and_fingerprints_exact_contract[pendulum-gym-v1]",
+            "tests/test_rl_environments.py::test_native_ppo_training_writes_loadable_policy[pendulum-gym-v1]",
         ),
     ),
     Scope(
         "lunarlander",
         _LUNARLANDER_SOURCES,
-        tuple(
-            """tests/test_rl_environments.py::test_lunarlander_engine_is_deterministic
-tests/test_rl_environments.py::test_lunarlander_reset_bounds
-tests/test_rl_environments.py::test_lunarlander_seeds_vary_initial_state
-tests/test_rl_environments.py::test_lunarlander_rejects_wrong_config
-tests/test_rl_environments.py::test_lunarlander_calibration
-tests/test_rl_environments.py::test_control_score_is_pass_fraction[lunarlander-8-4]""".splitlines()
+        (
+            "tests/test_rl_environments.py::test_reset_bounds_and_repeatable_seed_variation[lunarlander-gym-v1]",
+            "tests/test_rl_environments.py::test_native_transitions_rewards_and_termination[lunarlander-gym-v1]",
+            "tests/test_rl_environments.py::test_evaluation_is_deterministic_and_fingerprints_exact_contract[lunarlander-gym-v1]",
+            "tests/test_rl_environments.py::test_native_ppo_training_writes_loadable_policy[lunarlander-gym-v1]",
         ),
     ),
     Scope(
@@ -355,7 +343,7 @@ def scope_for_benchmark(name):
         return "chess-eval"
     if name in ("mnist-shuffled", "fashion-mnist-shuffled"):
         return "shuffled-labels"
-    return name
+    return name.removesuffix("-gym-v1")
 
 
 def check_benchmark_scope_coverage(benchmarks):

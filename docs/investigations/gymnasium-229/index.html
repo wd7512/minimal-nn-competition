@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gymnasium control pilot · issue 229</title>
+<style>
+body { font: 18px/1.5 system-ui; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+video { display: block; width: 100%; max-width: 600px; background: #eee; }
+a { color: #165ac6; }
+</style>
+<h1>Gymnasium control pilot</h1>
+<p>Investigation only. These are actual Gymnasium RGB frames from seed 0 with
+wider deterministic starts. A fixed zero-weight linear policy emits zero logits
+(idle for discrete actions) or zero continuous torque. These short failure
+examples demonstrate rendering and reproducibility, not submission quality.
+Existing benchmark results have not changed.</p>
+<h2>CartPole-v1</h2>
+<p>All four reset coordinates sampled uniformly from [-0.10, 0.10].</p>
+<video controls playsinline preload="metadata" aria-label="Native CartPole seed 0 episode">
+<source src="cartpole.mp4" type="video/mp4">
+<a href="cartpole.mp4">Download CartPole video</a>
+</video>
+<h2>Pendulum-v1</h2>
+<p>Angle uniform over [-π, π]; angular speed uniform over [-2, 2]. Native continuous torque.</p>
+<video controls playsinline preload="metadata" aria-label="Native Pendulum seed 0 episode">
+<source src="pendulum.mp4" type="video/mp4">
+<a href="pendulum.mp4">Download Pendulum video</a>
+</video>
+<h2>LunarLander-v3 with wider starts</h2>
+<p>Native Box2D reset plus independent extra force U(-500, 500) on each axis,
+before the reset physics step. Standard terrain, legs, engines and renderer.</p>
+<video controls playsinline preload="metadata" aria-label="Native LunarLander seed 0 episode">
+<source src="lunarlander.mp4" type="video/mp4">
+<a href="lunarlander.mp4">Download LunarLander video</a>
+</video>
+<p><a href="results.json">Full 100-seed measurements and trajectory hashes</a> ·
+<a href="https://github.com/wd7512/minimal-nn-competition/issues/229">Issue and design constraints</a></p>
+</html>

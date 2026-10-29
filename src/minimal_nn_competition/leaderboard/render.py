@@ -6,9 +6,9 @@ import shutil
 import statistics
 from dataclasses import asdict
 from datetime import date
+from pathlib import Path
 
 from minimal_nn_competition import __version__
-from minimal_nn_competition.benchmarks.common.control.replay import steps_text
 from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem
 from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
@@ -59,9 +59,9 @@ _VERSION_LABELS = {
     "fashion-mnist-shuffled": "Fashion-MNIST shuffled",
     "chess-eval-10k": "Stockfish 10k",
     "chess-eval-100k": "Stockfish 100k",
-    "cartpole": "CartPole",
-    "pendulum": "Discrete torque",
-    "lunarlander": "Lunar touchdown",
+    "cartpole-gym-v1": "CartPole",
+    "pendulum-gym-v1": "Pendulum",
+    "lunarlander-gym-v1": "Lunar Lander",
 }
 _STYLE = (
     SITE_THEME_CSS
@@ -569,327 +569,7 @@ speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
 draw();
 """
 
-_CONTROL_GAME_SCRIPT = """
-const FRAMES = __FRAMES__;
-const KIND = "__KIND__";
-const OUTCOME = "__OUTCOME__";
-const TORQUES = [-2.0, -1.0, 0.0, 1.0, 2.0];
-const THRUSTS = ["coast", "main", "left", "right"];
-const themeColor = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-const canvas = document.getElementById("board");
-const ctx = canvas.getContext("2d");
-const status = document.getElementById("status");
-const playButton = document.getElementById("play");
-const speed = document.getElementById("speed");
-let frame = 0;
-let playing = false;
-let timer = null;
-function last() {
-  return FRAMES.length - 1;
-}
-function deg(radians) {
-  return (Number(radians) * 180 / Math.PI).toFixed(1);
-}
-function drawCartpole(state) {
-  const rail = canvas.height - 80;
-  const toX = (x) => 24 + ((x + 2.4) / 4.8) * (canvas.width - 48);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = themeColor("--chart-boundary");
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(16, rail);
-  ctx.lineTo(canvas.width - 16, rail);
-  ctx.stroke();
-  ctx.strokeStyle = themeColor("--fail");
-  ctx.setLineDash([4, 3]);
-  [toX(-2.4), toX(2.4)].forEach((lineX) => {
-    ctx.beginPath();
-    ctx.moveTo(lineX, rail - 110);
-    ctx.lineTo(lineX, rail + 14);
-    ctx.stroke();
-  });
-  ctx.setLineDash([]);
-  const cartX = Math.max(24, Math.min(canvas.width - 24, toX(state[0])));
-  ctx.fillStyle = themeColor("--chart-cart");
-  ctx.fillRect(cartX - 24, rail - 28, 48, 28);
-  const pivotX = cartX;
-  const pivotY = rail - 28;
-  const tipX = pivotX + 200 * Math.sin(state[2]);
-  const tipY = pivotY - 200 * Math.cos(state[2]);
-  ctx.strokeStyle = themeColor("--accent-image-compression");
-  ctx.lineWidth = 6;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(pivotX, pivotY);
-  ctx.lineTo(tipX, tipY);
-  ctx.stroke();
-  ctx.lineCap = "butt";
-  ctx.fillStyle = themeColor("--accent-image-compression");
-  ctx.beginPath();
-  ctx.arc(tipX, tipY, 5, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.fillStyle = themeColor("--accent-chess");
-  ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 5, 0, 2 * Math.PI);
-  ctx.fill();
-  let text = "step " + frame + "/" + last()
-    + ", x " + Number(state[0]).toFixed(2)
-    + ", θ " + deg(state[2]) + " degrees";
-  if (frame === last()) {
-    text += " · " + OUTCOME;
-  }
-  status.textContent = text;
-}
-function drawPendulum(state, action) {
-  const pivotX = canvas.width / 2;
-  const pivotY = canvas.height * 0.47;
-  const arm = canvas.height * 0.34;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const tipX = pivotX + arm * Math.sin(state[0]);
-  const tipY = pivotY - arm * Math.cos(state[0]);
-  ctx.strokeStyle = themeColor("--chart-danger");
-  ctx.lineWidth = 20;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(pivotX, pivotY);
-  ctx.lineTo(tipX, tipY);
-  ctx.stroke();
-  ctx.lineCap = "butt";
-  ctx.fillStyle = themeColor("--chart-danger");
-  ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 10, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(tipX, tipY, 10, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.fillStyle = themeColor("--chart-cart");
-  ctx.beginPath();
-  ctx.arc(pivotX, pivotY, 4, 0, 2 * Math.PI);
-  ctx.fill();
-  const torque = action === null ? 0 : TORQUES[action];
-  if (action !== null && torque !== 0) {
-    const R = 50;
-    const span = 100 * Math.PI / 180;
-    const base = -Math.PI / 2;
-    const a0 = base;
-    const a1 = torque > 0 ? base + span : base - span;
-    ctx.strokeStyle = themeColor("--chart-muted");
-    ctx.lineWidth = 6;
-    ctx.beginPath();
-    ctx.arc(pivotX, pivotY, R, a0, a1, torque < 0);
-    ctx.stroke();
-    const ex = pivotX + R * Math.cos(a1);
-    const ey = pivotY + R * Math.sin(a1);
-    const tAng = a1 + (torque > 0 ? Math.PI / 2 : -Math.PI / 2);
-    const ux = Math.cos(tAng);
-    const uy = Math.sin(tAng);
-    const px = -uy;
-    const py = ux;
-    const bx = ex - ux * 14;
-    const by = ey - uy * 14;
-    ctx.fillStyle = themeColor("--chart-muted");
-    ctx.beginPath();
-    ctx.moveTo(ex, ey);
-    ctx.lineTo(bx + px * 7, by + py * 7);
-    ctx.lineTo(bx - px * 7, by - py * 7);
-    ctx.closePath();
-    ctx.fill();
-  }
-  let text = "step " + frame + "/" + last()
-    + ", θ " + deg(state[0]) + " degrees"
-    + ", ω " + Number(state[1]).toFixed(2);
-  if (frame === last()) {
-    text += " · " + OUTCOME;
-  }
-  status.textContent = text;
-}
-function drawLunarlander(state, action) {
-  const ground = canvas.height - 40;
-  const toX = (x) => 30 + ((x + 1) / 2) * (canvas.width - 60);
-  const toY = (y) => ground - y * ((ground - 100) / 1.5);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = themeColor("--chart-cart");
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, ground);
-  ctx.lineTo(canvas.width, ground);
-  ctx.stroke();
-  ctx.fillStyle = themeColor("--chart-snake-head");
-  ctx.fillRect(toX(-0.25), ground - 6, toX(0.25) - toX(-0.25), 6);
-  [toX(-0.25), toX(0.25)].forEach((edge, idx) => {
-    ctx.strokeStyle = themeColor("--chart-cart");
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(edge, ground - 6);
-    ctx.lineTo(edge, ground - 36);
-    ctx.stroke();
-    ctx.fillStyle = themeColor("--accent-image-compression");
-    ctx.beginPath();
-    if (idx === 0) {
-      ctx.moveTo(edge, ground - 36);
-      ctx.lineTo(edge, ground - 48);
-      ctx.lineTo(edge + 16, ground - 42);
-    } else {
-      ctx.moveTo(edge, ground - 36);
-      ctx.lineTo(edge, ground - 48);
-      ctx.lineTo(edge - 16, ground - 42);
-    }
-    ctx.closePath();
-    ctx.fill();
-  });
-  for (let index = Math.max(0, frame - 24); index < frame; index += 1) {
-    ctx.globalAlpha = 0.45;
-    ctx.fillStyle = themeColor("--accent-chess");
-    ctx.beginPath();
-    ctx.arc(toX(FRAMES[index].state[0]), toY(FRAMES[index].state[1]), 3, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  }
-  const px = toX(state[0]);
-  const py = Math.min(toY(state[1]), ground + 4);
-  ctx.save();
-  ctx.translate(px, py);
-  ctx.rotate(Number(state[4]));
-  ctx.fillStyle = themeColor("--accent-control");
-  ctx.strokeStyle = themeColor("--chart-cart");
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, -13);
-  ctx.lineTo(9, -4);
-  ctx.lineTo(9, 10);
-  ctx.lineTo(-9, 10);
-  ctx.lineTo(-9, -4);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = themeColor("--chart-obstacle");
-  if (action === 1) {
-    ctx.beginPath();
-    ctx.arc(0, 16, 4 + (frame % 3), 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(0, 24, 3, 0, 2 * Math.PI);
-    ctx.fill();
-  } else if (action === 2) {
-    ctx.beginPath();
-    ctx.arc(-14, 5, 3 + (frame % 2), 0, 2 * Math.PI);
-    ctx.fill();
-  } else if (action === 3) {
-    ctx.beginPath();
-    ctx.arc(14, 5, 3 + (frame % 2), 0, 2 * Math.PI);
-    ctx.fill();
-  }
-  ctx.restore();
-  let text = "step " + frame + "/" + last()
-    + ", x " + Number(state[0]).toFixed(2)
-    + ", y " + Number(state[1]).toFixed(2)
-    + ", thrust " + (action === null ? "—" : THRUSTS[action]);
-  if (frame === last() && OUTCOME) {
-    text += " · " + OUTCOME;
-  }
-  status.textContent = text;
-}
-function draw() {
-  const current = FRAMES[frame];
-  if (KIND === "cartpole") {
-    drawCartpole(current.state);
-  } else if (KIND === "pendulum") {
-    drawPendulum(current.state, current.action);
-  } else {
-    drawLunarlander(current.state, current.action);
-  }
-}
-function step(delta) {
-  frame = Math.min(last(), Math.max(0, frame + delta));
-  draw();
-}
-function stop() {
-  playing = false;
-  playButton.textContent = "Play";
-  if (timer !== null) {
-    clearInterval(timer);
-    timer = null;
-  }
-}
-function play() {
-  if (playing) {
-    stop();
-    return;
-  }
-  if (frame >= last()) {
-    frame = 0;
-  }
-  playing = true;
-  playButton.textContent = "Pause";
-  timer = setInterval(() => {
-    frame += 1;
-    if (frame >= last()) {
-      frame = last();
-      stop();
-    }
-    draw();
-  }, Math.max(1, Math.floor(240 / Number(speed.value))));
-}
-  playButton.addEventListener("click", play);
-  document.getElementById("prev").addEventListener("click", () => { stop(); step(-1); });
-  document.getElementById("next").addEventListener("click", () => { stop(); step(1); });
-  speed.addEventListener("change", () => { if (playing) { stop(); play(); } });
-  draw();
-"""
-
 _REPLAY_BOX = 480
-
-_CONTROL_GAME_LABEL = {
-    "cartpole": "CartPole replay",
-    "pendulum": "Pendulum replay",
-    "lunarlander": "LunarLander replay",
-}
-
-
-def _control_game_section(kind, payload):
-    seed = int(payload.get("seed", 0))
-    steps = int(payload.get("steps", 0))
-    total = float(payload.get("total_reward", 0.0))
-    terminated = bool(payload.get("terminated", False))
-    if kind == "cartpole":
-        outcome = "fell" if terminated else "balanced"
-    elif kind == "pendulum":
-        outcome = f"total return {total:.2f}"
-    elif payload.get("landed"):
-        outcome = "landed"
-    elif terminated:
-        outcome = "crashed"
-    else:
-        outcome = "timed out"
-    width, height = _REPLAY_BOX, _REPLAY_BOX
-    label = _CONTROL_GAME_LABEL[kind]
-    caption = f"Seed {seed} · {steps:,} steps · {outcome}"
-    canvas_label = (
-        f"{label}. Seed {seed}, {steps:,} steps, {outcome}. "
-        "Use Play and Step buttons below; current position is announced in status text."
-    )
-    canvas_fallback = (
-        f"{label}: Seed {seed}, {steps:,} steps, {outcome}. Enable JavaScript to play."
-    )
-    script = (
-        _CONTROL_GAME_SCRIPT.replace("__FRAMES__", json.dumps(payload["frames"]))
-        .replace("__KIND__", kind)
-        .replace("__OUTCOME__", outcome)
-    )
-    section = (
-        '<section class="detail-section detail-game" aria-labelledby="replay-title">'
-        '<div class="detail-section-head"><h2 id="replay-title">Replay</h2>'
-        f"<p>{html.escape(caption)}</p></div>"
-        f'<canvas id="board" width="{width}" height="{height}" role="img" '
-        f'aria-label="{html.escape(canvas_label)}" aria-describedby="status">{html.escape(canvas_fallback)}</canvas>'
-        '<div class="controls"><button id="play" type="button">Play</button>'
-        '<button id="prev" type="button">Step back</button>'
-        '<button id="next" type="button">Step forward</button>'
-        f"{_speed_select('4')}</div>"
-        '<noscript><p class="muted">Replay needs JavaScript. Summary above gives seed, steps and outcome.</p></noscript>'
-        '<p id="status" class="muted" aria-live="polite"></p></section>'
-    )
-    return section, script
 
 
 _SITE_SCRIPT = """
@@ -974,7 +654,6 @@ _SITE_SCRIPT = """
 
 
 def _score_text(result):
-    # Score is the fraction of seeds or samples that pass for every benchmark.
     percent = result.score * 100
     digits = 4 if not result.passed and percent >= 99.995 else 2
     return f"{percent:.{digits}f}%"
@@ -997,8 +676,9 @@ def _error_text(result):
 
 
 def _reward_text(result):
-    if result.benchmark == "cartpole":
-        return steps_text(result)
+    if result.benchmark == "cartpole-gym-v1":
+        steps = result.details.get("seed_steps")
+        return f"{statistics.fmean(steps):.1f} ± {statistics.pstdev(steps):.1f}" if steps else "-"
     mean_return = result.details.get("mean_return")
     if not isinstance(mean_return, (int, float)):
         return "-"
@@ -1242,17 +922,14 @@ def render_submission_html(result, payload, rank, total):
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
     if result.benchmark in RL_BENCHMARKS:
         rows.append(_detail_row("Reward", html.escape(_reward_text(result))))
+        if result.benchmark == "lunarlander-gym-v1" and "seed_success" in result.details:
+            successes = result.details["seed_success"]
+            rows.append(_detail_row("Landings", f"{sum(successes)}/{len(successes)}"))
         games = result.details.get("seed_steps")
         if not isinstance(games, list):
             games = result.details.get("seed_returns")
         if isinstance(games, list):
             rows.append(_detail_row("Seed games", str(len(games))))
-        if result.benchmark == "lunarlander":
-            landed = result.details.get("seed_landed")
-            if isinstance(landed, list):
-                rows.append(
-                    _detail_row("Landings", f"{sum(1 for game in landed if game)}/{len(landed)}")
-                )
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
     if result.benchmark in CHESS_BENCHMARKS:
         error = _error_text(result)
@@ -1297,8 +974,14 @@ def render_submission_html(result, payload, rank, total):
         script_tag = f"<script>{script}</script>"
         grid_class = "detail-grid"
     elif payload is not None and result.benchmark in RL_BENCHMARKS:
-        game_section, control_script = _control_game_section(result.benchmark, payload)
-        script_tag = f"<script>{control_script}</script>"
+        video = html.escape(Path(payload["video"]).name, quote=True)
+        game_section = (
+            '<section class="detail-section detail-game"><h2>Episode · Seed 0</h2>'
+            f'<video controls playsinline preload="metadata" style="width:100%" '
+            f'aria-label="Native Gymnasium seed 0 rollout"><source src="../games/{video}" '
+            f'type="video/mp4"><a href="../games/{video}">Download episode</a></video></section>'
+        )
+        script_tag = ""
         grid_class = "detail-grid"
     else:
         game_section = ""
@@ -1306,13 +989,13 @@ def render_submission_html(result, payload, rank, total):
         grid_class = "detail-grid detail-grid--single"
 
     eyebrow_html = f'<span class="detail-group">{html.escape(group_label)}</span> · {html.escape(version_label)}'
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)} — {html.escape(version_label)} — Minimal NN Competition</title><style>{_STYLE}{_DETAIL_STYLE}</style></head><body data-accent="{html.escape(accent)}"><div class="detail-shell"><header class="detail-head"><p class="eyebrow">{eyebrow_html}</p><h1 class="detail-title">{html.escape(title)}</h1><p class="detail-subtitle">Submission details</p><p class="detail-links"><a href="../">← Back to leaderboard</a><span>·</span><a href="../leaderboard.json">Raw leaderboard JSON</a></p></header><div class="{grid_class}">{game_section}<aside class="detail-panel" aria-labelledby="details-title"><h2 class="detail-kicker" id="details-title">Submission</h2><dl class="detail-meta">{meta}</dl></aside></div><footer class="detail-footer"><a href="../">Back to leaderboard</a><span>Minimal NN Competition · <a href="../internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard">speed board</a></span></footer></div>{script_tag}</body></html>"""
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)} — {html.escape(version_label)} — Minimal NN Competition</title><style>{_STYLE}{_DETAIL_STYLE}</style></head><body data-accent="{html.escape(accent)}"><div class="detail-shell"><header class="detail-head"><p class="eyebrow">{eyebrow_html}</p><h1 class="detail-title">{html.escape(title)}</h1><p class="detail-subtitle">Submission details</p><p class="detail-links"><a href="../">← Back to leaderboard</a><span>·</span><a href="../leaderboard.json">Raw leaderboard JSON</a> · <a href="../legacy-controls/">Legacy controls</a></p></header><div class="{grid_class}">{game_section}<aside class="detail-panel" aria-labelledby="details-title"><h2 class="detail-kicker" id="details-title">Submission</h2><dl class="detail-meta">{meta}</dl></aside></div><footer class="detail-footer"><a href="../">Back to leaderboard</a><span>Minimal NN Competition · <a href="../internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard">speed board</a></span></footer></div>{script_tag}</body></html>"""
 
 
 def render_submission_pages(results, replays, output_dir):
     """Write one detail page per submission; return benchmark/submission links.
 
-    Replay JSON is written under ``games/`` for Snake and control replays.
+    Snake replay JSON and native control MP4s are written under ``games/``.
     """
     pages_dir = output_dir / "submissions"
     games_dir = output_dir / "games"
@@ -1335,7 +1018,10 @@ def render_submission_pages(results, replays, output_dir):
             )
         seen[stem] = (result.benchmark, result.submission)
         payload = replays.get(stem)
-        if payload is not None and result.benchmark in SNAKE_BENCHMARKS + RL_BENCHMARKS:
+        if payload is not None and result.benchmark in RL_BENCHMARKS:
+            games_dir.mkdir(parents=True, exist_ok=True)
+            (games_dir / f"{stem}.mp4").write_bytes(payload["data"])
+        if payload is not None and result.benchmark in SNAKE_BENCHMARKS:
             games_dir.mkdir(parents=True, exist_ok=True)
             (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
         pages_dir.mkdir(parents=True, exist_ok=True)
@@ -1515,7 +1201,7 @@ def render_html(results, submission_links=None):
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
     featured_html = _featured_cards_html(results, submission_links, groups)
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p><a href="legacy-controls/">Legacy control results</a></p><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
 
