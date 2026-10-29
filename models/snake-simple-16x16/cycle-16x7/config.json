@@ -1,0 +1,22 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "cycle-16x7",
+  "author": "Codex",
+  "architecture": "mlp",
+  "input_size": 6,
+  "output_size": 4,
+  "hidden_sizes": [
+    16,
+    7
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "A 16x7 policy distilled to match the 277-parameter cycle leader on every board position, with 263 parameters."
+}
