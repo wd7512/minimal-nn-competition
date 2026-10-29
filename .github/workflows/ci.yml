@@ -58,8 +58,6 @@ jobs:
           uv run --no-sync mnnc render docs/leaderboard.json /tmp/minimal-nn-docs --replays docs/games
           uv run --no-sync mnnc render-speed docs/internal/speed/leaderboard.json /tmp/minimal-nn-docs/internal
           uv run --no-sync mnnc render-internal docs/internal/leaderboard.json /tmp/minimal-nn-docs
-          # Hand-authored investigation pages/media are not leaderboard outputs.
-          cp -r docs/investigations docs/legacy-controls /tmp/minimal-nn-docs/
           if diff -ru --brief docs /tmp/minimal-nn-docs; then
             exit 0
           fi

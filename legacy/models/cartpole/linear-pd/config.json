@@ -1,9 +1,0 @@
-{
-  "benchmark": "cartpole",
-  "name": "linear-pd",
-  "author": "Jules bot",
-  "architecture": "linear",
-  "input_size": 4,
-  "output_size": 2,
-  "description": "A tuned linear PD controller balancing CartPole for all 100 seeds."
-}
