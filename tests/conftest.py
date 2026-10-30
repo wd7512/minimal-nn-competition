@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import subprocess
 from typing import Any
 
 import pytest
@@ -25,3 +27,26 @@ def fast_snake_cli(monkeypatch: pytest.MonkeyPatch) -> None:
         return create_benchmark(name, **kwargs)
 
     monkeypatch.setattr(cli, "create_benchmark", fast_create)
+
+
+@pytest.fixture
+def commit_submission_date():
+    """Commit test submissions so collection reads a stable first-added date."""
+
+    def commit(root):
+        root = str(root)
+        subprocess.run(["git", "-C", root, "init", "--quiet"], check=True)
+        subprocess.run(["git", "-C", root, "config", "user.name", "Test"], check=True)
+        subprocess.run(["git", "-C", root, "config", "user.email", "test@example.com"], check=True)
+        subprocess.run(["git", "-C", root, "add", "-A"], check=True)
+        subprocess.run(
+            ["git", "-C", root, "commit", "--quiet", "-m", "Add test submissions"],
+            check=True,
+            env={
+                **os.environ,
+                "GIT_AUTHOR_DATE": "2026-10-30T00:00:00+00:00",
+                "GIT_COMMITTER_DATE": "2026-10-30T00:00:00+00:00",
+            },
+        )
+
+    return commit

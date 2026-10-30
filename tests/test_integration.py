@@ -1,4 +1,6 @@
 import json
+import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -159,9 +161,10 @@ def test_render_shows_name_and_author(tmp_path: Path) -> None:
             8.0,
             False,
             20,
-            {},
+            {"structure": [24, 4]},
             name="Cool Net",
             author="tester",
+            submitted_at="2026-10-30",
         ),
     ]
     html = render_site(results, tmp_path).read_text()
@@ -183,10 +186,20 @@ def test_render_shows_structure_row(tmp_path: Path) -> None:
             True,
             3070,
             {"normalisation": True, "structure": [784, 14, 14, 10]},
+            name="mlp-14-14",
             author="tester",
+            submitted_at="2026-10-30",
         ),
         BenchmarkResult(
-            "plain", "mnist", 0.5, False, 10, {"normalisation": False}, author="tester"
+            "plain",
+            "mnist",
+            0.5,
+            False,
+            10,
+            {"normalisation": False},
+            name="plain",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
     ]
     render_site(results, tmp_path)
@@ -206,9 +219,20 @@ def test_render_site(tmp_path: Path) -> None:
             False,
             10,
             {"samples": 2, "normalisation": True},
+            name="fashion-example",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
         BenchmarkResult(
-            "mnist-example", "mnist", 0.5, False, 10, {"samples": 2, "normalisation": False}
+            "mnist-example",
+            "mnist",
+            0.5,
+            False,
+            10,
+            {"samples": 2, "normalisation": False},
+            name="mnist-example",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
         BenchmarkResult(
             "snake-example",
@@ -217,6 +241,9 @@ def test_render_site(tmp_path: Path) -> None:
             False,
             20,
             {"seed_lengths": [1], "seed_moves": [10, 20]},
+            name="snake-example",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
     ]
     index = render_site(results, tmp_path)
@@ -262,6 +289,9 @@ def test_render_near_perfect_failure_is_not_shown_as_100(tmp_path: Path) -> None
         False,
         10,
         {"samples": 70_000, "normalisation": False},
+        name="mnist-near",
+        author="tester",
+        submitted_at="2026-10-30",
     )
     html = render_site([near_miss], tmp_path / "near").read_text()
     assert "100.00%" not in html
@@ -274,6 +304,9 @@ def test_render_near_perfect_failure_is_not_shown_as_100(tmp_path: Path) -> None
         True,
         10,
         {"samples": 70_000, "normalisation": False},
+        name="mnist-perfect",
+        author="tester",
+        submitted_at="2026-10-30",
     )
     html = render_site([perfect], tmp_path / "perfect").read_text()
     assert "100.00%" in html
@@ -282,7 +315,15 @@ def test_render_near_perfect_failure_is_not_shown_as_100(tmp_path: Path) -> None
 def test_render_mnist_has_no_game_length_column(tmp_path: Path) -> None:
     results = [
         BenchmarkResult(
-            "mnist-example", "mnist", 0.5, False, 10, {"samples": 2, "normalisation": False}
+            "mnist-example",
+            "mnist",
+            0.5,
+            False,
+            10,
+            {"samples": 2, "normalisation": False},
+            name="mnist-example",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
         BenchmarkResult(
             "fashion-example",
@@ -291,6 +332,9 @@ def test_render_mnist_has_no_game_length_column(tmp_path: Path) -> None:
             False,
             10,
             {"samples": 2, "normalisation": True},
+            name="fashion-example",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
     ]
     html = render_site(results, tmp_path).read_text()
@@ -311,6 +355,7 @@ def test_render_chess_eval(tmp_path: Path) -> None:
             {"tolerance_pawns": 0.1, "mae": 0.0046, "samples": 10_000},
             name="chess-mlp-64",
             author="tester",
+            submitted_at="2026-10-30",
         )
     ]
     html = render_site(results, tmp_path).read_text()
@@ -346,21 +391,70 @@ def test_rank_chess_eval_breaks_score_ties_by_mean_error() -> None:
 
 def test_render_snake_caption_explains_failed_game_tiebreak(tmp_path: Path) -> None:
     results = [
-        BenchmarkResult("obstacle-a", "snake-obstacles-8x8", 5.1, False, 50, {"seed_moves": [30]}),
-        BenchmarkResult("obstacle-b", "snake-obstacles-8x8", 5.1, False, 200, {"seed_moves": [90]}),
+        BenchmarkResult(
+            "obstacle-a",
+            "snake-obstacles-8x8",
+            5.1,
+            False,
+            50,
+            {"seed_moves": [30]},
+            name="obstacle-a",
+            author="tester",
+            submitted_at="2026-10-30",
+        ),
+        BenchmarkResult(
+            "obstacle-b",
+            "snake-obstacles-8x8",
+            5.1,
+            False,
+            200,
+            {"seed_moves": [90]},
+            name="obstacle-b",
+            author="tester",
+            submitted_at="2026-10-30",
+        ),
     ]
     html = render_site(results, tmp_path).read_text()
-    assert "failed submissions rank by longest game first" in html
+    assert "failed submissions rank by score, then longest game first" in html
+    assert "submission date (older first), then name" in html
     # Longest game ranks first despite having more parameters.
     assert html.index("obstacle-b") < html.index("obstacle-a")
 
 
 def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
     results = [
-        BenchmarkResult("snake-8", "snake-simple-8x8", 1.0, False, 10, {"seed_lengths": [1]}),
-        BenchmarkResult("snake-16", "snake-simple-16x16", 0.5, False, 10, {}),
         BenchmarkResult(
-            "mnist", "mnist", 0.5, False, 10, {"normalisation": False}, name="true-mnist"
+            "snake-8",
+            "snake-simple-8x8",
+            1.0,
+            False,
+            10,
+            {"seed_lengths": [1]},
+            name="snake-8",
+            author="tester",
+            submitted_at="2026-10-30",
+        ),
+        BenchmarkResult(
+            "snake-16",
+            "snake-simple-16x16",
+            0.5,
+            False,
+            10,
+            {"seed_lengths": [1]},
+            name="snake-16",
+            author="tester",
+            submitted_at="2026-10-30",
+        ),
+        BenchmarkResult(
+            "mnist",
+            "mnist",
+            0.5,
+            False,
+            10,
+            {"normalisation": False},
+            name="true-mnist",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
         BenchmarkResult(
             "mnist-shuffled",
@@ -370,6 +464,8 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
             20,
             {"normalisation": False},
             name="shuffled-mnist",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
         BenchmarkResult(
             "fashion",
@@ -379,6 +475,8 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
             30,
             {"normalisation": True},
             name="true-fashion",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
         BenchmarkResult(
             "fashion-shuffled",
@@ -388,8 +486,20 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
             10,
             {"normalisation": False},
             name="shuffled-fashion",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
-        BenchmarkResult("chess-10k", "chess-eval-10k", 1.0, True, 10, {"tolerance_pawns": 0.1}),
+        BenchmarkResult(
+            "chess-10k",
+            "chess-eval-10k",
+            1.0,
+            True,
+            10,
+            {"tolerance_pawns": 0.1},
+            name="chess-10k",
+            author="tester",
+            submitted_at="2026-10-30",
+        ),
         BenchmarkResult(
             "chess-100k",
             "chess-eval-100k",
@@ -397,6 +507,9 @@ def test_render_groups_versions_and_defaults(tmp_path: Path) -> None:
             False,
             10,
             {"tolerance_pawns": 0.1, "samples": 100_000},
+            name="chess-100k",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
     ]
     html = render_site(results, tmp_path).read_text()
@@ -443,7 +556,15 @@ def test_render_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         results_path,
         [
             BenchmarkResult(
-                "snake-example", "snake-simple-8x8", 1.0, False, 20, {"seed_lengths": [1]}
+                "snake-example",
+                "snake-simple-8x8",
+                1.0,
+                False,
+                20,
+                {"seed_lengths": [1]},
+                name="snake-example",
+                author="tester",
+                submitted_at="2026-10-30",
             )
         ],
     )
@@ -462,6 +583,28 @@ def test_collect_cli(
     shutil.copytree(
         Path("models/snake-simple-8x8/example"), models / "snake-simple-8x8" / "example"
     )
+    subprocess.run(["git", "init", str(tmp_path)], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(tmp_path), "config", "user.name", "Test"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(tmp_path), "config", "user.email", "test@example.com"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(["git", "-C", str(tmp_path), "add", "models"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(tmp_path), "commit", "-m", "Add test model"],
+        check=True,
+        capture_output=True,
+        env={
+            **os.environ,
+            "GIT_AUTHOR_DATE": "2026-10-30T00:00:00+00:00",
+            "GIT_COMMITTER_DATE": "2026-10-30T00:00:00+00:00",
+        },
+    )
     output = tmp_path / "leaderboard.json"
     assert main(["collect", "--models", str(models), "--output", str(output)]) == 0
     results = json.loads(output.read_text())
@@ -474,12 +617,14 @@ def test_collect_fashion_mnist_cli(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
+    commit_submission_date,
 ) -> None:
     import shutil
 
     monkeypatch.setattr(FashionMnistBenchmark, "expected_samples", 2)
     models = tmp_path / "models"
     shutil.copytree(Path("models/fashion-mnist/example"), models / "fashion-mnist" / "example")
+    commit_submission_date(tmp_path)
     data_path = tmp_path / "fashion-mnist.pt"
     inputs = torch.zeros((2, 784), dtype=torch.uint8)
     torch.save((inputs, torch.tensor([0, 1])), data_path)
@@ -508,12 +653,14 @@ def test_collect_mnist_cli(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
+    commit_submission_date,
 ) -> None:
     import shutil
 
     monkeypatch.setattr(MnistBenchmark, "expected_samples", 2)
     models = tmp_path / "models"
     shutil.copytree(Path("models/mnist/example"), models / "mnist" / "example")
+    commit_submission_date(tmp_path)
     data_path = tmp_path / "mnist.pt"
     inputs = torch.zeros((2, 784), dtype=torch.uint8)
     torch.save((inputs, torch.tensor([0, 1])), data_path)
