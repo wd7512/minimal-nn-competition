@@ -3,9 +3,10 @@
 import json
 import statistics
 from dataclasses import asdict
+from datetime import date
 
 from minimal_nn_competition.benchmarks.registry import CHESS_BENCHMARKS, SNAKE_BENCHMARKS
-from minimal_nn_competition.runner.entry import BenchmarkResult
+from minimal_nn_competition.runner.entry import BenchmarkResult, validate_result
 
 
 def short_commit(commit):
@@ -38,6 +39,14 @@ def _mean_error(result):
     return mae if isinstance(mae, (int, float)) else 0.0
 
 
+def _submission_date(result):
+    """Older submissions rank first; invalid dates are rejected at IO boundaries."""
+    try:
+        return date.fromisoformat(result.submitted_at)
+    except (AttributeError, TypeError, ValueError):
+        return date.max
+
+
 def rank_results(results):
     """Rank by passing status, score, parameter count, Snake game length, then Chess mean error.
 
@@ -56,6 +65,8 @@ def rank_results(results):
             _longest_game_first(result) if snake_failed else result.parameter_count,
             result.parameter_count if snake_failed else _game_length(result),
             _mean_error(result),
+            _submission_date(result),
+            result.name.casefold() if isinstance(result.name, str) else "",
             result.submission,
         )
 
@@ -63,6 +74,9 @@ def rank_results(results):
 
 
 def save_results(path, results):
+    results = list(results)
+    for index, result in enumerate(results, 1):
+        validate_result(result, context=f"leaderboard result {index}")
     payload = [asdict(result) for result in rank_results(results)]
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
@@ -72,20 +86,36 @@ def load_results(path):
     if not isinstance(raw, list):
         raise ValueError("Leaderboard must contain a JSON list")
     results = []
-    for item in raw:
+    required_fields = {
+        "submission",
+        "benchmark",
+        "score",
+        "passed",
+        "parameter_count",
+        "details",
+        "name",
+        "author",
+        "submitted_at",
+    }
+    for index, item in enumerate(raw, 1):
         if not isinstance(item, dict):
-            raise ValueError("Leaderboard entries must be JSON objects")
-        results.append(
-            BenchmarkResult(
-                submission=str(item.get("submission", "unknown")),
-                benchmark=str(item["benchmark"]),
-                score=float(item["score"]),
-                passed=bool(item["passed"]),
-                parameter_count=int(item["parameter_count"]),
-                details=dict(item["details"]),
-                name=str(item.get("name", item.get("submission", "unknown"))),
-                author=str(item.get("author", "unknown")),
-                submitted_at=item.get("submitted_at"),
+            raise ValueError(f"Leaderboard entry {index} must be a JSON object")
+        missing = sorted(required_fields - item.keys())
+        if missing:
+            raise ValueError(
+                f"Leaderboard entry {index} is missing required fields: {', '.join(missing)}"
             )
+        result = BenchmarkResult(
+            submission=item["submission"],
+            benchmark=item["benchmark"],
+            score=item["score"],
+            passed=item["passed"],
+            parameter_count=item["parameter_count"],
+            details=item["details"],
+            name=item["name"],
+            author=item["author"],
+            submitted_at=item["submitted_at"],
         )
+        validate_result(result, context=f"leaderboard entry {index}")
+        results.append(result)
     return results
