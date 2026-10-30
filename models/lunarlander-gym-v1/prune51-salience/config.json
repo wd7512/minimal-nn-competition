@@ -1,0 +1,16 @@
+{
+  "benchmark": "lunarlander-gym-v1",
+  "name": "prune51-salience",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 8,
+  "output_size": 4,
+  "hidden_sizes": [
+    51,
+    51
+  ],
+  "activation": "relu",
+  "normalisation": false,
+  "description": "Structured salience pruning of the validated 64x64 policy to 51x51.",
+  "input_indices": null
+}

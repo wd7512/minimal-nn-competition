@@ -197,10 +197,11 @@ def test_control_evaluate_cli(capsys, fast_control_cli):
         assert f'"benchmark": "{name}"' in capsys.readouterr().out
 
 
-def test_control_collect_cli(tmp_path, fast_control_cli):
+def test_control_collect_cli(tmp_path, fast_control_cli, commit_submission_date):
     models = tmp_path / "models"
     for name in RL_BENCHMARKS:
         zero_submission(models, name)
+    commit_submission_date(tmp_path)
     output = tmp_path / "leaderboard.json"
     assert cli.main(["collect", "--models", str(models), "--output", str(output)]) == 0
     assert {r["benchmark"] for r in json.loads(output.read_text())} == set(RL_BENCHMARKS)
@@ -236,10 +237,18 @@ def test_render_control_group(tmp_path):
         False,
         36,
         {"mean_return": 279.95, "seed_success": [True] * 95 + [False] * 5},
+        name="zero",
+        author="tester",
+        submitted_at="2026-10-30",
     )
     page = render_site([result], tmp_path).read_text()
     assert 'id="control"' in page and "Lunar Lander" in page
-    assert "95.00%" in page and "279.95" in page
+    assert "95.00%" in page
+    assert "Reward" not in page
+    assert "279.95" not in page
+    detail = (tmp_path / "submissions" / "lunarlander-gym-v1--zero.html").read_text()
+    assert "Reward" not in detail
+    assert "279.95" not in detail
 
 
 @pytest.mark.parametrize("name", ("pendulum-gym-v1", "lunarlander-gym-v1"))

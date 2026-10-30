@@ -18,7 +18,7 @@ from minimal_nn_competition.benchmarks.registry import (
 )
 from minimal_nn_competition.leaderboard import rank_results
 from minimal_nn_competition.leaderboard.theme import SITE_BASE_CSS, SITE_THEME_CSS
-from minimal_nn_competition.runner.entry import BenchmarkResult
+from minimal_nn_competition.runner.entry import BenchmarkResult, validate_result
 
 _GROUP_SPECS = (
     {
@@ -675,23 +675,11 @@ def _error_text(result):
     return f"{mae:.4f}"
 
 
-def _reward_text(result):
-    if result.benchmark == "cartpole-gym-v1":
-        steps = result.details.get("seed_steps")
-        return f"{statistics.fmean(steps):.1f} ± {statistics.pstdev(steps):.1f}" if steps else "-"
-    mean_return = result.details.get("mean_return")
-    if not isinstance(mean_return, (int, float)):
-        return "-"
-    return f"{mean_return:.2f}"
-
-
 def _fourth_text(result):
     if result.benchmark in SNAKE_BENCHMARKS:
         return _game_length_text(result)
     if result.benchmark in CHESS_BENCHMARKS:
         return _error_text(result)
-    if result.benchmark in RL_BENCHMARKS:
-        return _reward_text(result)
     return "-"
 
 
@@ -708,8 +696,6 @@ def _fourth_header(benchmark):
         return "Game length"
     if benchmark in CHESS_BENCHMARKS:
         return "Error"
-    if benchmark in RL_BENCHMARKS:
-        return "Reward"
     return None
 
 
@@ -720,12 +706,20 @@ def _plural(count, singular):
 def _ranking_text(benchmark):
     if benchmark in SNAKE_BENCHMARKS:
         return (
-            "pass status, score, parameter count, then game length; "
-            "failed submissions rank by longest game first"
+            "pass status, score, parameter count, then shorter game length; "
+            "failed submissions rank by score, then longest game first, "
+            "then parameter count; "
+            "final ties use submission date (older first), then name"
         )
     if benchmark in CHESS_BENCHMARKS:
-        return "pass status, score, parameter count, then mean error"
-    return "pass status, score, then parameter count"
+        return (
+            "pass status, score, parameter count, then lower mean error; "
+            "final ties use submission date (older first), then name"
+        )
+    return (
+        "pass status, score, then parameter count; "
+        "final ties use submission date (older first), then name"
+    )
 
 
 def _version_label(benchmark):
@@ -898,6 +892,7 @@ def render_submission_html(result, payload, rank, total):
     rows.extend(
         [
             _detail_row("Author", html.escape(result.author)),
+            _detail_row("Submitted", _submission_date_html(result.submitted_at)),
             _detail_row("Rank", f"#{rank} of {total}"),
             _detail_row(
                 "Score", f'<span class="detail-score">{html.escape(_score_text(result))}</span>'
@@ -921,7 +916,6 @@ def render_submission_html(result, payload, rank, total):
             rows.append(_detail_row("Seed games", str(len(seed_lengths))))
         rows.append(_detail_row("Replay", html.escape(_replay_text(payload))))
     if result.benchmark in RL_BENCHMARKS:
-        rows.append(_detail_row("Reward", html.escape(_reward_text(result))))
         if result.benchmark == "lunarlander-gym-v1" and "seed_success" in result.details:
             successes = result.details["seed_success"]
             rows.append(_detail_row("Landings", f"{sum(successes)}/{len(successes)}"))
@@ -1201,11 +1195,14 @@ def render_html(results, submission_links=None):
     rail_note = f"{total} {_plural(total, 'submission')} total · {passed} pass" if groups else ""
     content = "".join(sections) or "<p>No results have been recorded yet.</p>"
     featured_html = _featured_cards_html(results, submission_links, groups)
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Minimal NN Competition</title><script>document.documentElement.classList.add("js");</script><style>{_STYLE}{_SITE_STYLE}</style></head><body><div class="shell"><aside class="rail"><p class="brand-mark"><span class="brand-dots" aria-hidden="true">{brand_dots}</span>Minimal NN Competition</p><p class="rail__label">Benchmark groups</p><nav aria-label="Benchmark groups">{"".join(rail_links)}</nav><p class="rail__note">{rail_note}</p></aside><main class="main"><header class="masthead"><p class="eyebrow">Public leaderboard</p><h1>Minimal NN Competition</h1><p class="lead">Finding the lower bound on network size over a range of problems.</p><nav class="links" aria-label="Get involved"><a class="primary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/how-to/how-to-make-a-submission.md"><span class="action-title">Submit your model <span aria-hidden="true">→</span></span></a><a class="secondary-action" href="https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md"><span class="action-title">Propose a benchmark <span aria-hidden="true">→</span></span></a></nav></header>{featured_html}{content}<footer class="footer"><p>Minimal NN Competition · static results</p><a class="version" href="internal/speed/" title="Hidden Snake Simple 8x8 environment speed leaderboard" aria-label="Hidden Snake Simple 8x8 environment speed leaderboard">v{html.escape(__version__)}</a></footer></main></div><script>{_SITE_SCRIPT}</script></body></html>
 """
 
 
 def render_site(results, output_dir, replays=None):
+    results = list(results)
+    for index, result in enumerate(results, 1):
+        validate_result(result, context=f"submission {index}")
     ranked = rank_results(results)
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "leaderboard.json").write_text(

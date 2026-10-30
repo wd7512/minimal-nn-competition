@@ -1,0 +1,22 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "cycle-16x6",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 6,
+  "output_size": 4,
+  "hidden_sizes": [
+    16,
+    6
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "A distilled Hamiltonian-cycle policy with 242 parameters, 35 fewer than the 277-parameter baseline."
+}

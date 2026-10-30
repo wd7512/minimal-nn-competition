@@ -1,0 +1,14 @@
+{
+  "benchmark": "pendulum-gym-v1",
+  "name": "distill-8",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 3,
+  "output_size": 1,
+  "hidden_sizes": [
+    8,
+    8
+  ],
+  "activation": "relu",
+  "description": "Student distilled from the local native Gymnasium reference policy."
+}

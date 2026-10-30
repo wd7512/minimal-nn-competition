@@ -77,7 +77,14 @@ tests/test_core.py::test_config_rejects_linear_hidden_sizes
 tests/test_core.py::test_registry_and_leaderboard_ranking
 tests/test_core.py::test_rank_snake_failed_ties_favour_longest_game
 tests/test_core.py::test_rank_snake_keeps_score_over_parameters
+tests/test_core.py::test_rank_uses_older_submission_date_before_alphabetical_name
 tests/test_core.py::test_leaderboard_round_trip
+tests/test_core.py::test_save_results_rejects_missing_or_invalid_submission_date
+tests/test_core.py::test_save_results_rejects_unpopulated_fields[changes0-name must be a non-empty string]
+tests/test_core.py::test_save_results_rejects_unpopulated_fields[changes1-author must be a non-empty string]
+tests/test_core.py::test_save_results_rejects_unpopulated_fields[changes2-details must not be empty]
+tests/test_core.py::test_save_results_rejects_unpopulated_fields[changes3-score must be a finite number]
+tests/test_core.py::test_load_results_rejects_missing_fields
 tests/test_core.py::test_leaderboard_cli
 tests/test_rl_environments.py::test_registry_includes_control_benchmarks
 tests/test_rl_environments.py::test_control_evaluate_cli
