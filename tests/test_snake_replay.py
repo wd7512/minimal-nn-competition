@@ -117,6 +117,9 @@ def _results() -> list[BenchmarkResult]:
             False,
             20,
             {"seed_moves": [10, 20]},
+            name="example",
+            author="tester",
+            submitted_at="2026-10-30",
         ),
     ]
 
@@ -221,7 +224,10 @@ def test_collect_reports_replay_dir_errors(
 
 
 def test_collect_and_render_replay_cli(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], fast_snake_cli: None
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    fast_snake_cli: None,
+    commit_submission_date,
 ) -> None:
     import shutil
 
@@ -229,6 +235,7 @@ def test_collect_and_render_replay_cli(
     shutil.copytree(
         Path("models/snake-simple-8x8/example"), models / "snake-simple-8x8" / "example"
     )
+    commit_submission_date(tmp_path)
     output = tmp_path / "leaderboard.json"
     replays = tmp_path / "replays"
     assert (
@@ -254,7 +261,7 @@ def test_collect_and_render_replay_cli(
 
 
 def test_collect_records_replay_for_selected_input_indices(
-    tmp_path: Path, fast_snake_cli: None
+    tmp_path: Path, fast_snake_cli: None, commit_submission_date
 ) -> None:
     directory = tmp_path / "models" / "snake-simple-8x8" / "selected"
     directory.mkdir(parents=True)
@@ -272,6 +279,7 @@ def test_collect_records_replay_for_selected_input_indices(
         )
     )
     torch.save({"weight": torch.zeros((4, 2)), "bias": torch.zeros(4)}, directory / "model.pt")
+    commit_submission_date(tmp_path)
     replays = tmp_path / "replays"
     assert (
         main(
