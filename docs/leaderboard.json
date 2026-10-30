@@ -1585,6 +1585,51 @@
     "submitted_at": "2026-10-29"
   },
   {
+    "author": "Codex",
+    "benchmark": "chess-eval-100k",
+    "details": {
+      "encoding": "castling-v2",
+      "fold_scores": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "folds": 20,
+      "mae": 0.0018243095837533474,
+      "samples": 100000,
+      "structure": [
+        773,
+        530,
+        246,
+        1
+      ],
+      "tolerance_pawns": 0.1
+    },
+    "name": "codex-100k-active-prune",
+    "parameter_count": 541093,
+    "passed": true,
+    "score": 1.0,
+    "submission": "codex-100k-active-prune",
+    "submitted_at": "2026-10-30"
+  },
+  {
     "author": "wd7512",
     "benchmark": "chess-eval-100k",
     "details": {
