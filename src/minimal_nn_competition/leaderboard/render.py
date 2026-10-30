@@ -898,6 +898,7 @@ def render_submission_html(result, payload, rank, total):
     rows.extend(
         [
             _detail_row("Author", html.escape(result.author)),
+            _detail_row("Submitted", _submission_date_html(result.submitted_at)),
             _detail_row("Rank", f"#{rank} of {total}"),
             _detail_row(
                 "Score", f'<span class="detail-score">{html.escape(_score_text(result))}</span>'
