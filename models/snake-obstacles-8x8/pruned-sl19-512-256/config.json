@@ -1,0 +1,14 @@
+{
+  "benchmark": "snake-obstacles-8x8",
+  "name": "pruned-sl19-512-256",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 24,
+  "output_size": 4,
+  "hidden_sizes": [
+    496,
+    198
+  ],
+  "activation": "relu",
+  "description": "Structured pruning of sl19-512-256; preserves its 19/100 score with fewer parameters."
+}
