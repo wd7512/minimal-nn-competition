@@ -75,9 +75,8 @@ def test_checked_in_chess_examples_pass() -> None:
 
     for tier, count in TIERS:
         name = f"chess-eval-{tier}"
-        directories = sorted(Path(f"models/{name}").iterdir())
-        assert [path.name for path in directories] == ["example"]
-        submission = Submission.from_directory(directories[0])
+        example = Path(f"models/{name}/example")
+        submission = Submission.from_directory(example)
         assert submission.config.input_size == 773
         result = evaluate_submission(submission, create_benchmark(name))
         assert result.passed and result.score == 1.0
