@@ -30,7 +30,17 @@ def _folder(path: Path, benchmark="mnist") -> Path:
 
 
 def _result(name="tiny", benchmark="mnist"):
-    return BenchmarkResult(name, benchmark, 0.99, True, 7850, {}, name="Display name")
+    return BenchmarkResult(
+        name,
+        benchmark,
+        0.99,
+        True,
+        7850,
+        {"structure": [784, 10]},
+        name="Display name",
+        author="tester",
+        submitted_at="2026-10-30",
+    )
 
 
 def test_local_report_does_not_write_site(tmp_path, monkeypatch, caplog):

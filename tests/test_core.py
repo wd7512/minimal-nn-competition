@@ -1,3 +1,5 @@
+import json
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import pytest
@@ -165,15 +167,146 @@ def test_rank_snake_keeps_score_over_parameters() -> None:
     ]
 
 
+def test_rank_uses_older_submission_date_before_alphabetical_name() -> None:
+    results = [
+        BenchmarkResult(
+            "z-old",
+            "mnist",
+            1.0,
+            True,
+            10,
+            {"samples": 1},
+            name="z-old",
+            author="tester",
+            submitted_at="2026-10-20",
+        ),
+        BenchmarkResult(
+            "a-new",
+            "mnist",
+            1.0,
+            True,
+            10,
+            {"samples": 1},
+            name="a-new",
+            author="tester",
+            submitted_at="2026-10-21",
+        ),
+        BenchmarkResult(
+            "a-old",
+            "mnist",
+            1.0,
+            True,
+            10,
+            {"samples": 1},
+            name="a-old",
+            author="tester",
+            submitted_at="2026-10-20",
+        ),
+    ]
+    assert [result.submission for result in rank_results(results)] == [
+        "a-old",
+        "z-old",
+        "a-new",
+    ]
+
+
 def test_leaderboard_round_trip(tmp_path: Path) -> None:
-    result = BenchmarkResult("example", "snake-simple-8x8", 1, True, 8, {"seed_lengths": [1]})
+    result = BenchmarkResult(
+        "example",
+        "snake-simple-8x8",
+        1,
+        True,
+        8,
+        {"seed_lengths": [1]},
+        name="example",
+        author="tester",
+        submitted_at="2026-10-30",
+    )
     path = tmp_path / "leaderboard.json"
     save_results(path, [result])
     assert load_results(path) == [result]
 
 
+def test_save_results_rejects_missing_or_invalid_submission_date(tmp_path: Path) -> None:
+    result = BenchmarkResult(
+        "example",
+        "mnist",
+        1,
+        True,
+        8,
+        {"samples": 1},
+        name="example",
+        author="tester",
+        submitted_at="not-a-date",
+    )
+    with pytest.raises(ValueError, match="submitted_at must be a valid YYYY-MM-DD date"):
+        save_results(tmp_path / "leaderboard.json", [result])
+
+
+@pytest.mark.parametrize(
+    ("changes", "message"),
+    [
+        ({"name": ""}, "name must be a non-empty string"),
+        ({"author": "unknown"}, "author must be a non-empty string"),
+        ({"details": {}}, "details must not be empty"),
+        ({"score": float("nan")}, "score must be a finite number"),
+    ],
+)
+def test_save_results_rejects_unpopulated_fields(
+    tmp_path: Path, changes: dict, message: str
+) -> None:
+    result = BenchmarkResult(
+        "example",
+        "mnist",
+        1,
+        True,
+        8,
+        {"samples": 1},
+        name="example",
+        author="tester",
+        submitted_at="2026-10-30",
+    )
+    with pytest.raises(ValueError, match=message):
+        save_results(tmp_path / "leaderboard.json", [replace(result, **changes)])
+
+
+def test_load_results_rejects_missing_fields(tmp_path: Path) -> None:
+    result = BenchmarkResult(
+        "example",
+        "mnist",
+        1,
+        True,
+        8,
+        {"samples": 1},
+        name="example",
+        author="tester",
+        submitted_at="2026-10-30",
+    )
+    payload = asdict(result)
+    del payload["author"]
+    path = tmp_path / "leaderboard.json"
+    path.write_text(json.dumps([payload]))
+    with pytest.raises(ValueError, match="missing required fields: author"):
+        load_results(path)
+
+
 def test_leaderboard_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     path = tmp_path / "leaderboard.json"
-    save_results(path, [BenchmarkResult("example", "snake-simple-8x8", 1, True, 8, {})])
+    save_results(
+        path,
+        [
+            BenchmarkResult(
+                "example",
+                "snake-simple-8x8",
+                1,
+                True,
+                8,
+                {"seed_lengths": [1]},
+                name="example",
+                author="tester",
+                submitted_at="2026-10-30",
+            )
+        ],
+    )
     assert main(["leaderboard", str(path)]) == 0
     assert '"benchmark": "snake-simple-8x8"' in capsys.readouterr().out
