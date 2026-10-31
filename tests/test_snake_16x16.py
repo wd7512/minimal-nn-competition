@@ -158,6 +158,9 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
         False,
         20,
         {"seed_moves": [10, 20], "seed_lengths": [128, 128]},
+        name="example",
+        author="tester",
+        submitted_at="2026-10-30",
     )
     payload = record_game(_right_model(), size=16)
     index = render_site([result], tmp_path, {"snake-simple-16x16--example": payload})
@@ -175,7 +178,9 @@ def test_render_16x16_section_percentage_and_replay(tmp_path: Path) -> None:
     assert 'width="480" height="480"' in game_page
 
 
-def test_collect_records_16x16_replay(tmp_path: Path, fast_snake_cli: None) -> None:
+def test_collect_records_16x16_replay(
+    tmp_path: Path, fast_snake_cli: None, commit_submission_date
+) -> None:
     directory = tmp_path / "models" / "snake-simple-16x16" / "tiny"
     directory.mkdir(parents=True)
     (directory / "config.json").write_text(
@@ -191,6 +196,7 @@ def test_collect_records_16x16_replay(tmp_path: Path, fast_snake_cli: None) -> N
         )
     )
     torch.save({"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)}, directory / "model.pt")
+    commit_submission_date(tmp_path)
     replays = tmp_path / "replays"
     assert (
         main(

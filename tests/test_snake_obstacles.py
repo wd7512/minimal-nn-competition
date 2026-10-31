@@ -315,6 +315,9 @@ def test_render_site_shows_the_obstacle_section(tmp_path: Path) -> None:
         False,
         20,
         {"seed_lengths": [31], "seed_target_lengths": [62], "seed_moves": [10]},
+        name="example",
+        author="tester",
+        submitted_at="2026-10-30",
     )
     index = render_site([result], tmp_path, {"snake-obstacles-8x8--example": payload})
     html = index.read_text()
