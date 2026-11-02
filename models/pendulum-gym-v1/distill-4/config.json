@@ -1,0 +1,13 @@
+{
+  "benchmark": "pendulum-gym-v1",
+  "name": "distill-4",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 3,
+  "output_size": 1,
+  "hidden_sizes": [
+    4
+  ],
+  "activation": "relu",
+  "description": "Single-hidden-layer [4] student distilled from the native Gymnasium reference policy via iterative DAgger."
+}
