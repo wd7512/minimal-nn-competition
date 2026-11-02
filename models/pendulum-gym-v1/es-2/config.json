@@ -1,0 +1,13 @@
+{
+  "benchmark": "pendulum-gym-v1",
+  "name": "es-2",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 3,
+  "output_size": 1,
+  "hidden_sizes": [
+    2
+  ],
+  "activation": "relu",
+  "description": "Single-hidden-layer student found by evolution strategy (CMA-ES) directly on native pendulum returns, with training starts drawn from the reset distribution."
+}
