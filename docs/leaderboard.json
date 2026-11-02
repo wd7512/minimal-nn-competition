@@ -1675,6 +1675,50 @@
     "submitted_at": "2026-10-24"
   },
   {
+    "author": "wd7512",
+    "benchmark": "chess-eval-10k",
+    "details": {
+      "encoding": "castling-v2",
+      "fold_scores": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "folds": 20,
+      "mae": 0.009092346765100956,
+      "samples": 10000,
+      "structure": [
+        773,
+        46,
+        1
+      ],
+      "tolerance_pawns": 0.1
+    },
+    "name": "lbfgs-46",
+    "parameter_count": 35651,
+    "passed": true,
+    "score": 1.0,
+    "submission": "lbfgs-46",
+    "submitted_at": "2026-11-02"
+  },
+  {
     "author": "Codex",
     "benchmark": "chess-eval-10k",
     "details": {

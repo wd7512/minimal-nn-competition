@@ -1,0 +1,15 @@
+{
+  "benchmark": "chess-eval-10k",
+  "name": "lbfgs-46",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 773,
+  "output_size": 1,
+  "hidden_sizes": [
+    46
+  ],
+  "activation": "relu",
+  "normalisation": false,
+  "description": "Single 46-unit ReLU evaluator: margin-loss Adam warm start, then full-batch L-BFGS to exact coverage of the fixed 10k set within 0.1 pawns.",
+  "input_indices": null
+}
