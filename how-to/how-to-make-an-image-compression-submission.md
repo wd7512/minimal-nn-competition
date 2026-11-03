@@ -145,4 +145,4 @@ Open a pull request targeting the upstream `submission` branch. Keep
 [How to validate a submission](how-to-validate-a-submission.md) for the
 review flow.
 
-MNIST and Fashion-MNIST submissions of at most 50,000 parameters get a "Try the model" page: draw a digit and the model runs in your browser, beside its first-layer weights.
+Submissions of at most 120,000 parameters to MNIST, Fashion-MNIST and shuffled MNIST get a "Try the model" page: draw an image and the model runs in your browser, beside its first-layer weights.

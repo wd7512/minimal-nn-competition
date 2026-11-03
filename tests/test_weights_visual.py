@@ -80,6 +80,7 @@ def test_exported_weights_match_the_model_and_render_a_widget(tmp_path, benchmar
     render_site([result], tmp_path / "docs", _load_replays(games))
     page = (tmp_path / "docs" / "submissions" / f"{benchmark}--tiny.html").read_text()
     assert 'id="pad"' in page and '"layers"' in page
+    assert ("look like noise" in page) == benchmark.endswith("-shuffled")
 
 
 def test_oversized_models_are_not_exported(tmp_path, monkeypatch):

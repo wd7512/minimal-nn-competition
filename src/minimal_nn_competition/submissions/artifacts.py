@@ -79,7 +79,7 @@ def _preserve_unrendered_files(source: Path, target: Path) -> None:
                 shutil.copy2(path, destination)
 
 
-MAX_WEIGHT_PARAMETERS = 50_000
+MAX_WEIGHT_PARAMETERS = 120_000
 FASHION_LABELS = [
     "T-shirt/top",
     "Trouser",

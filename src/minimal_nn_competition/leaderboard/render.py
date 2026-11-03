@@ -1043,7 +1043,13 @@ def render_submission_html(result, payload, rank, total):
             'border:1px solid var(--rule-strong)"></canvas>'
             '<div class="controls"><button id="clear" type="button">Clear</button></div>'
             '<div id="bars" aria-live="polite"></div>'
-            '<h3>First-layer weights</h3><p class="muted">Blue is positive, red negative; each map is scaled to its own largest weight.</p>'
+            '<h3>First-layer weights</h3><p class="muted">Blue is positive, red negative; each map is scaled to its own largest weight.'
+            + (
+                " Labels are shuffled, so the maps look like noise: the model memorises."
+                if result.benchmark.endswith("-shuffled")
+                else ""
+            )
+            + "</p>"
             '<div id="maps" class="maps"></div></section>'
         )
         script_tag = f"<script>{_MODEL_SCRIPT.replace('__MODEL__', json.dumps(payload))}</script>"
