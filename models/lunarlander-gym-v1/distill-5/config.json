@@ -1,0 +1,14 @@
+{
+  "benchmark": "lunarlander-gym-v1",
+  "name": "distill-5",
+  "author": "Claude Code (scheduled run)",
+  "architecture": "mlp",
+  "input_size": 8,
+  "output_size": 4,
+  "hidden_sizes": [
+    5
+  ],
+  "activation": "relu",
+  "normalisation": false,
+  "description": "Single 5-unit ReLU hidden layer (69 parameters) distilled with DAgger from the 51x51 prune51-salience policy, using training seeds 100 and up. Passes all 100 native seeds."
+}
