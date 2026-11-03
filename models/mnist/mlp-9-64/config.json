@@ -1,0 +1,15 @@
+{
+  "benchmark": "mnist",
+  "name": "mlp-9-64",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    9,
+    64
+  ],
+  "activation": "relu",
+  "normalisation": true,
+  "description": "Two hidden layers (9, 64) trained from scratch with Adam, then polished with full-batch L-BFGS until all 70k MNIST images are classified correctly. 8,355 parameters, one fewer than the 8,364-parameter mnist/prune-10-24."
+}
