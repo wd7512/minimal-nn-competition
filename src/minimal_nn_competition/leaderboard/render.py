@@ -400,13 +400,6 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
 """
 
 _DETAIL_STYLE = """
-#bars { display: grid; gap: 4px; margin-top: 16px; }
-.bar { display: flex; align-items: center; gap: 8px; font: 14px/1 var(--mono); }
-.bar span { width: 1ch; }
-.bar i { display: block; height: 10px; background: var(--muted); }
-.bar--top i { background: var(--accent); }
-.maps { display: grid; grid-template-columns: repeat(auto-fill, 56px); gap: 4px; }
-.maps canvas { width: 56px; height: 56px; image-rendering: pixelated; border: 1px solid var(--rule); }
 .detail-shell { width: 100%; max-width: 1120px; margin: 0 auto; padding: 48px 32px 80px; }
 .detail-head { border-bottom: 1px solid var(--rule-strong); padding-bottom: 24px; }
 .eyebrow {
@@ -502,6 +495,16 @@ button, select { font: inherit; padding: .25rem .75rem; }
   .detail-meta div { grid-template-columns: 1fr; gap: 2px; }
   .detail-footer { flex-direction: column; gap: 8px; }
 }
+"""
+
+_PAD_STYLE = """
+#bars { display: grid; gap: 4px; margin-top: 16px; }
+.bar { display: flex; align-items: center; gap: 8px; font: 14px/1 var(--mono); }
+.bar span { width: 1ch; }
+.bar i { display: block; height: 10px; background: var(--muted); }
+.bar--top i { background: var(--accent); }
+.maps { display: grid; grid-template-columns: repeat(auto-fill, 56px); gap: 4px; }
+.maps canvas { width: 56px; height: 56px; image-rendering: pixelated; border: 1px solid var(--rule); }
 """
 
 _MODEL_SCRIPT = """
@@ -1031,6 +1034,7 @@ def render_submission_html(result, payload, rank, total):
         grid_class = "detail-grid"
     elif payload is not None and result.benchmark in WEIGHT_BENCHMARKS:
         game_section = (
+            f"<style>{_PAD_STYLE}</style>"
             '<section class="detail-section detail-game"><h2>Try the model</h2>'
             '<p class="muted">Draw an image; the model runs in your browser.</p>'
             '<canvas id="pad" width="28" height="28" role="img" aria-label="Drawing pad" '
