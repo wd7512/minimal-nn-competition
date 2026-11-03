@@ -184,3 +184,5 @@ Open a pull request targeting the upstream `submission` branch. Keep
 `config.json` and `model.pt` as the only changed files. See
 [How to validate a submission](how-to-validate-a-submission.md) for the
 review flow.
+
+Chess submissions of at most 700,000 parameters get a "Try the model" page: move or place pieces on a board and the model evaluates the position in your browser.

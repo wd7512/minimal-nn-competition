@@ -104,9 +104,14 @@ self-contained and reuse the atlas tokens.
 
 - The header repeats group and version, the submission name, and a back link.
 - A two-column body shows the replay on the left and metadata on the right;
-  benchmarks without a replay use a single metadata column.
+  benchmarks without a replay or in-browser model use a single metadata column.
 - Snake pages with a replay embed the canvas and controls and write the replay
   JSON to `games/{stem}.json`. Snake pages without a replay say "Not recorded".
+- Image and chess pages for small models get a "Try the model" section: the
+  weights (`WEIGHT_BENCHMARKS`, capped per family) are exported to
+  `games/{stem}.json` and embedded, and a plain-JS forward pass runs in the
+  browser (a drawing pad with weight maps; a movable chess board). Widget CSS
+  stays inside the section so pages without one render unchanged.
 - Metadata always includes submission id, name, author, rank, score, status,
   structure (for example `[784,14,14,10]`), and parameters, plus
   benchmark-specific fields when present: normalisation, reward, game length,

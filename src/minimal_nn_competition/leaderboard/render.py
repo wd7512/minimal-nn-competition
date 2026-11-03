@@ -15,6 +15,7 @@ from minimal_nn_competition.benchmarks.registry import (
     IMAGE_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    WEIGHT_BENCHMARKS,
 )
 from minimal_nn_competition.leaderboard import rank_results
 from minimal_nn_competition.leaderboard.theme import SITE_BASE_CSS, SITE_THEME_CSS
@@ -494,6 +495,102 @@ button, select { font: inherit; padding: .25rem .75rem; }
   .detail-meta div { grid-template-columns: 1fr; gap: 2px; }
   .detail-footer { flex-direction: column; gap: 8px; }
 }
+"""
+
+_PAD_STYLE = """
+#bars { display: grid; gap: 4px; margin-top: 16px; }
+.bar { display: flex; align-items: center; gap: 8px; font: 14px/1 var(--mono); }
+.bar span { width: 1ch; }
+.bar b { font-weight: 400; min-width: 4ch; }
+.bar i { display: block; height: 10px; background: var(--muted); }
+.bar--top i { background: var(--accent); }
+.maps { display: grid; grid-template-columns: repeat(auto-fill, 56px); gap: 4px; }
+.maps canvas { width: 56px; height: 56px; image-rendering: pixelated; border: 1px solid var(--rule); }
+"""
+
+_CHESS_STYLE = """
+.chess { display: grid; grid-template-columns: repeat(8, 48px); width: 384px; margin-bottom: 12px; }
+.sq { width: 48px; height: 48px; padding: 0; border: 0; font-size: 32px; line-height: 1; color: #111; background: #f0d9b5; }
+.sq.dark { background: #b58863; }
+.sq.from { outline: 3px solid var(--accent); outline-offset: -3px; }
+"""
+
+_FORWARD_SCRIPT = """
+const M = __MODEL__;
+const forward = (x) => {
+  let a = x.map((v) => v * M.scale);
+  M.layers.forEach((L, i) => {
+    a = L.b.map((b, j) => L.w[j].reduce((s, w, k) => s + w * a[k], b));
+    if (M.relu && i < M.layers.length - 1) a = a.map((v) => Math.max(0, v));
+  });
+  return a;
+};
+"""
+
+_PAD_SCRIPT = """
+const pad = document.getElementById("pad"), pc = pad.getContext("2d", { willReadFrequently: true });
+const bars = document.getElementById("bars");
+const clear = () => { pc.fillStyle = "#000"; pc.fillRect(0, 0, 28, 28); show(); };
+const show = () => {
+  const px = pc.getImageData(0, 0, 28, 28).data, x = [];
+  for (let i = 0; i < 784; i++) x.push(px[i * 4]);
+  const o = forward(x), m = Math.max(...o), e = o.map((v) => Math.exp(v - m)), t = e.reduce((a, b) => a + b);
+  const top = e.indexOf(Math.max(...e));
+  bars.innerHTML = e.map((v, c) => `<div class="bar${c === top ? " bar--top" : ""}"><span style="min-width:${M.labels ? 11 : 1}ch">${M.labels ? M.labels[c] : c}</span><i style="width:${(100 * v) / t}%"></i><b>${((100 * v) / t).toFixed(0)}%</b></div>`).join("");
+};
+let down = false;
+const paint = (ev) => {
+  const r = pad.getBoundingClientRect();
+  pc.fillStyle = "rgba(255,255,255,.6)";
+  pc.beginPath();
+  pc.arc(((ev.clientX - r.left) * 28) / r.width, ((ev.clientY - r.top) * 28) / r.height, 1.4, 0, 7);
+  pc.fill();
+  show();
+};
+pad.onpointerdown = (ev) => { down = true; pad.setPointerCapture(ev.pointerId); paint(ev); };
+pad.onpointermove = (ev) => down && paint(ev);
+pad.onpointerup = pad.onpointercancel = () => (down = false);
+document.getElementById("clear").onclick = clear;
+const maps = document.getElementById("maps");
+M.layers[0].w.slice(0, 64).forEach((row) => {
+  const c = document.createElement("canvas"); c.width = c.height = 28;
+  const g = c.getContext("2d"), img = g.createImageData(28, 28), top = Math.max(...row.map(Math.abs)) || 1;
+  row.forEach((w, i) => img.data.set(w > 0 ? [37, 99, 235, (255 * w) / top] : [220, 38, 38, (-255 * w) / top], i * 4));
+  g.putImageData(img, 0, 0);
+  maps.append(c);
+});
+clear();
+"""
+
+_CHESS_SCRIPT = """
+const P = "PNBRQKpnbrqk", G = [...P].map((_, i) => String.fromCodePoint(i < 6 ? 0x2659 - i : 0x265F + 6 - i));
+const START = "rnbqkbnr" + "pppppppp" + " ".repeat(32) + "PPPPPPPP" + "RNBQKBNR";
+let board = [...START], sel = null, from = null;
+const $ = (id) => document.getElementById(id);
+const draw = () => {
+  $("chess").innerHTML = board.map((p, i) => `<button class="sq${(i + (i >> 3)) % 2 ? " dark" : ""}${i === from ? " from" : ""}" data-i="${i}" aria-label="${"abcdefgh"[i % 8]}${8 - (i >> 3)} ${p === " " ? "empty" : p}">${p === " " ? "" : G[P.indexOf(p)]}</button>`).join("");
+  const x = new Array(773).fill(0);
+  board.forEach((p, i) => p !== " " && (x[P.indexOf(p) * 64 + i] = 1));
+  x[768] = $("side").value === "w" ? 1 : -1;
+  ["K", "Q", "k", "q"].forEach((c, j) => (x[769 + j] = $("c" + c).checked ? 1 : 0));
+  const v = forward(x.slice(0, M.layers[0].w[0].length))[0];
+  $("eval").textContent = (v > 0 ? "+" : "") + v.toFixed(2) + " pawns";
+};
+$("chess").onclick = (ev) => {
+  const i = +ev.target.dataset.i;
+  if (Number.isNaN(i)) return;
+  if (sel !== null) board[i] = sel;
+  else if (from === null) from = board[i] === " " ? null : i;
+  else { board[i] = board[from]; if (i !== from) board[from] = " "; from = null; }
+  draw();
+};
+$("pal").innerHTML = ["", ..."PNBRQKpnbrqk "].map((p, j) => `<button type="button" data-p="${p}">${j ? (p === " " ? "Erase" : G[P.indexOf(p)]) : "Move"}</button>`).join("");
+$("pal").onclick = (ev) => { if ("p" in ev.target.dataset) { sel = ev.target.dataset.p || null; from = null; draw(); } };
+$("reset").onclick = () => { board = [...START]; from = null; draw(); };
+$("clearb").onclick = () => { board = board.map(() => " "); from = null; draw(); };
+document.querySelectorAll("#side,.castle").forEach((e) => (e.onchange = draw));
+if (M.layers[0].w[0].length < 773) document.querySelectorAll(".castle").forEach((e) => (e.disabled = true));
+draw();
 """
 
 _GAME_SCRIPT = """
@@ -977,6 +1074,52 @@ def render_submission_html(result, payload, rank, total):
         )
         script_tag = ""
         grid_class = "detail-grid"
+    elif payload is not None and result.benchmark in WEIGHT_BENCHMARKS:
+        script = _FORWARD_SCRIPT.replace("__MODEL__", json.dumps(payload))
+        head = '<section class="detail-section detail-game"><h2>Try the model</h2>'
+        style = _CHESS_STYLE if result.benchmark in CHESS_BENCHMARKS else _PAD_STYLE
+        if result.benchmark in CHESS_BENCHMARKS:
+            castle = "".join(
+                f'<label><input type="checkbox" class="castle" id="c{c}" checked> {c}</label>'
+                for c in "KQkq"
+            )
+            game_section = (
+                f"<style>{style}</style>"
+                + head
+                + '<p class="muted">Move or place pieces; the model evaluates the position '
+                "in your browser. Pick a piece to place it, or Move to move pieces. "
+                "Positions are not checked for legality.</p>"
+                '<div id="chess" class="chess"></div><div id="pal" class="controls"></div>'
+                '<div class="controls"><label>To move <select id="side"><option value="w">White'
+                '</option><option value="b">Black</option></select></label>'
+                f"<span>Castling {castle}</span>"
+                '<button id="reset" type="button">Start position</button>'
+                '<button id="clearb" type="button">Clear board</button></div>'
+                '<p>Evaluation: <strong id="eval" aria-live="polite"></strong></p></section>'
+            )
+            script += _CHESS_SCRIPT
+        else:
+            game_section = (
+                f"<style>{style}</style>"
+                + head
+                + '<p class="muted">Draw an image; the model runs in your browser.</p>'
+                '<canvas id="pad" width="28" height="28" role="img" aria-label="Drawing pad" '
+                'style="width:224px;height:224px;image-rendering:pixelated;touch-action:none;'
+                'border:1px solid var(--rule-strong)"></canvas>'
+                '<div class="controls"><button id="clear" type="button">Clear</button></div>'
+                '<div id="bars" aria-live="polite"></div>'
+                '<h3>First-layer weights</h3><p class="muted">Blue is positive, red negative; each map is scaled to its own largest weight.'
+                + (
+                    " Labels are shuffled, so the maps look like noise: the model memorises."
+                    if result.benchmark.endswith("-shuffled")
+                    else ""
+                )
+                + "</p>"
+                '<div id="maps" class="maps"></div></section>'
+            )
+            script += _PAD_SCRIPT
+        script_tag = f"<script>{script}</script>"
+        grid_class = "detail-grid"
     else:
         game_section = ""
         script_tag = ""
@@ -1015,7 +1158,7 @@ def render_submission_pages(results, replays, output_dir):
         if payload is not None and result.benchmark in RL_BENCHMARKS:
             games_dir.mkdir(parents=True, exist_ok=True)
             (games_dir / f"{stem}.mp4").write_bytes(payload["data"])
-        if payload is not None and result.benchmark in SNAKE_BENCHMARKS:
+        if payload is not None and result.benchmark in SNAKE_BENCHMARKS + WEIGHT_BENCHMARKS:
             games_dir.mkdir(parents=True, exist_ok=True)
             (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
         pages_dir.mkdir(parents=True, exist_ok=True)

@@ -3,6 +3,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+import torch
 
 from minimal_nn_competition.__main__ import main
 from minimal_nn_competition.leaderboard import load_results, save_results
@@ -25,7 +26,10 @@ def _folder(path: Path, benchmark="mnist") -> Path:
             }
         )
     )
-    (path / "model.pt").write_bytes(b"checkpoint")
+    if benchmark == "cartpole-gym-v1":
+        (path / "model.pt").write_bytes(b"checkpoint")
+    else:
+        torch.save(torch.nn.Sequential(torch.nn.Linear(784, 10)).state_dict(), path / "model.pt")
     return path
 
 
