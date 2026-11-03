@@ -144,3 +144,5 @@ Open a pull request targeting the upstream `submission` branch. Keep
 `config.json` and `model.pt` as the only changed files. See
 [How to validate a submission](how-to-validate-a-submission.md) for the
 review flow.
+
+MNIST submissions of at most 50,000 parameters get a "Try the model" page: draw a digit and the model runs in your browser, beside its first-layer weights.

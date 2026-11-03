@@ -9,6 +9,7 @@ from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    WEIGHT_BENCHMARKS,
     available_benchmarks,
     create_benchmark,
 )
@@ -292,7 +293,7 @@ def main(argv=None):
                 benchmark = create_benchmark(submission.config.benchmark, **kwargs)
                 results.append(evaluate_submission(submission, benchmark))
                 if args.replay_dir is not None and submission.config.benchmark in (
-                    SNAKE_BENCHMARKS + RL_BENCHMARKS
+                    SNAKE_BENCHMARKS + RL_BENCHMARKS + WEIGHT_BENCHMARKS
                 ):
                     _record_replay(args.replay_dir, config_path.parent.name, benchmark, submission)
             except (OSError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:

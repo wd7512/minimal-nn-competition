@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.registry import RL_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import RL_BENCHMARKS, WEIGHT_BENCHMARKS
 
 logger = logging.getLogger(__name__)
 _SITE_FILES = ("leaderboard.json", "index.html", ".nojekyll")
@@ -79,7 +79,36 @@ def _preserve_unrendered_files(source: Path, target: Path) -> None:
                 shutil.copy2(path, destination)
 
 
+MAX_WEIGHT_PARAMETERS = 50_000
+
+
+def _weights_payload(loaded):
+    """Return the model as plain lists for in-browser inference, or None if too large."""
+    config = loaded.config
+    layers = [m for m in loaded.model if hasattr(m, "weight")]
+    if sum(p.numel() for p in loaded.model.parameters()) > MAX_WEIGHT_PARAMETERS:
+        return None
+    return {
+        "layers": [
+            {
+                "w": layer.weight.round(decimals=3).tolist(),
+                "b": layer.bias.round(decimals=3).tolist(),
+            }
+            for layer in layers
+        ],
+        "relu": config.activation == "relu",
+        "scale": 1 / 255 if config.normalisation else 1,
+    }
+
+
 def _record_replay(replay_dir, name, benchmark, submission):
+    if benchmark.name in WEIGHT_BENCHMARKS:
+        from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem, save_replay
+
+        payload = _weights_payload(benchmark.load_submission(submission))
+        if payload is not None:
+            save_replay(replay_dir / f"{replay_stem(benchmark.name, name)}.json", payload)
+        return
     if benchmark.name in RL_BENCHMARKS:
         from minimal_nn_competition.benchmarks.common.control import environment, rollout
         from minimal_nn_competition.benchmarks.common.snake.replay import replay_stem

@@ -8,6 +8,7 @@ from pathlib import Path
 from minimal_nn_competition.benchmarks.registry import (
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    WEIGHT_BENCHMARKS,
     available_benchmarks,
     create_benchmark,
 )
@@ -56,7 +57,7 @@ def update_artifacts(directory: Path, submission: Submission, result, output: Pa
             staged.mkdir()
         ledger = staged / "leaderboard.json"
         upsert_result(ledger, result)
-        if result.benchmark in SNAKE_BENCHMARKS + RL_BENCHMARKS:
+        if result.benchmark in SNAKE_BENCHMARKS + RL_BENCHMARKS + WEIGHT_BENCHMARKS:
             _record_replay(
                 staged / "games", directory.name, create_benchmark(result.benchmark), submission
             )
