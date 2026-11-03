@@ -43,12 +43,12 @@ def _write_submission(tmp_path: Path) -> Submission:
         "benchmark": "snake-obstacles-8x8",
         "name": "example",
         "author": "tester",
-        "architecture": "linear",
+        "architecture": "mlp",
         "input_size": 24,
         "output_size": 4,
     }
     (directory / "config.json").write_text(json.dumps(config))
-    torch.save({"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)}, directory / "model.pt")
+    torch.save({"0.weight": torch.zeros((4, 24)), "0.bias": torch.zeros(4)}, directory / "model.pt")
     return Submission.from_directory(directory)
 
 

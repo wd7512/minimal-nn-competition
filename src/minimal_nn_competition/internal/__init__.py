@@ -73,7 +73,6 @@ tests/test_core.py::test_config_description_is_optional
 tests/test_core.py::test_config_accepts_input_indices
 tests/test_core.py::test_config_rejects_duplicate_input_indices
 tests/test_core.py::test_config_rejects_missing_identity
-tests/test_core.py::test_config_rejects_linear_hidden_sizes
 tests/test_core.py::test_registry_and_leaderboard_ranking
 tests/test_core.py::test_rank_snake_failed_ties_favour_longest_game
 tests/test_core.py::test_rank_snake_keeps_score_over_parameters

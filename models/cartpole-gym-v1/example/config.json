@@ -2,7 +2,7 @@
   "benchmark": "cartpole-gym-v1",
   "name": "example",
   "author": "Gymnasium v1 reference",
-  "architecture": "linear",
+  "architecture": "mlp",
   "input_size": 4,
   "output_size": 2,
   "hidden_sizes": [],
