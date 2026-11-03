@@ -549,7 +549,7 @@ const paint = (ev) => {
 };
 pad.onpointerdown = (ev) => { down = true; pad.setPointerCapture(ev.pointerId); paint(ev); };
 pad.onpointermove = (ev) => down && paint(ev);
-pad.onpointerup = () => (down = false);
+pad.onpointerup = pad.onpointercancel = () => (down = false);
 document.getElementById("clear").onclick = clear;
 const maps = document.getElementById("maps");
 M.layers[0].w.slice(0, 64).forEach((row) => {
