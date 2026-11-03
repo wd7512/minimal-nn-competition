@@ -142,5 +142,5 @@ def test_open_challenges_include_absent_benchmarks_with_working_destinations() -
 
 def test_each_benchmark_panel_has_show_more_control() -> None:
     page = render_html([_result("a", "mnist", "2026-10-22")])
-    assert 'data-page-size="10"' in page
+    assert 'data-page-size="5"' in page
     assert "data-show-more hidden" in page
