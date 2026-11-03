@@ -138,3 +138,9 @@ def test_open_challenges_include_absent_benchmarks_with_working_destinations() -
     empty_card = _FeaturedCards(render_html([])).cards["challenges"]
     assert len(empty_card.links) == 12
     assert guide_prefix + "how-to-make-an-image-compression-submission.md" in empty_card.links
+
+
+def test_each_benchmark_panel_has_show_more_control() -> None:
+    page = render_html([_result("a", "mnist", "2026-10-22")])
+    assert 'data-page-size="10"' in page
+    assert "data-show-more hidden" in page

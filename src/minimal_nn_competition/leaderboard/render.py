@@ -277,6 +277,17 @@ a.featured-card:hover { border-color: var(--accent); }
 .js .passed-toggle { display: flex; align-items: center; gap: 8px; }
 .passed-toggle input { width: 14px; height: 14px; accent-color: var(--pass); }
 .js .version-panel.hide-failed tbody tr.is-fail { display: none; }
+.show-more { display: none; margin: 12px 0 0; }
+.js .show-more:not([hidden]) { display: block; }
+.show-more button {
+  font: 11px/1.4 var(--mono);
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--rule-strong);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.show-more button:hover { color: var(--ink); }
 .table-wrap {
   overflow-x: auto;
   border-top: 1px solid var(--rule-strong);
@@ -706,8 +717,17 @@ _SITE_SCRIPT = """
       const submissions = body
         ? Array.from(body.querySelectorAll("tr.is-pass, tr.is-fail"))
         : [];
+      const more = panel.querySelector("[data-show-more]");
+      const pageSize = Number(panel.dataset.pageSize);
+      let shown = pageSize;
       const apply = function () {
         panel.classList.toggle("hide-failed", toggle.checked);
+        let seen = 0;
+        submissions.forEach(function (row) {
+          if (toggle.checked && row.classList.contains("is-fail")) return;
+          row.hidden = seen++ >= shown;
+        });
+        if (more) more.hidden = seen <= shown;
         if (!emptyRow) return;
         const hasVisibleResults = submissions.some(function (row) {
           return !toggle.checked || !row.classList.contains("is-fail");
@@ -722,7 +742,13 @@ _SITE_SCRIPT = """
           }
         }
       };
-      toggle.addEventListener("change", apply);
+      toggle.addEventListener("change", function () { shown = pageSize; apply(); });
+      if (more) {
+        more.querySelector("button").addEventListener("click", function () {
+          shown += pageSize;
+          apply();
+        });
+      }
       apply();
     });
     const initial = panels.find(function (panel) {
@@ -910,6 +936,9 @@ def _submission_date_html(value):
     suffix = "th" if 11 <= day % 100 <= 13 else {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
     label = f"{day}{suffix} {submitted.strftime('%b')} '{submitted.strftime('%y')}"
     return f'<time datetime="{submitted.isoformat()}">{label}</time>'
+
+
+_PAGE_SIZE = 10
 
 
 def _table(results, submission_links=None, benchmark=None):
@@ -1325,9 +1354,10 @@ def render_html(results, submission_links=None):
             active = benchmark == default_benchmark
             table = _table(version_entries, submission_links, benchmark)
             panels.append(
-                f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}">'
+                f'<div class="version-panel{" is-active" if active else ""}" id="panel-{html.escape(benchmark)}" data-version="{html.escape(benchmark)}" data-label="{html.escape(version_label)}" data-page-size="{_PAGE_SIZE}">'
                 f'<label class="passed-toggle"><input type="checkbox" data-passed-toggle checked> Pass only</label>'
                 f'<div class="table-wrap" role="region" tabindex="0" aria-label="{html.escape(version_label)} results">{table}</div>'
+                f'<p class="show-more" data-show-more hidden><button type="button">Show more</button></p>'
                 f"</div>"
             )
         sections.append(
