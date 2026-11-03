@@ -91,8 +91,8 @@ def _weights_payload(loaded):
     return {
         "layers": [
             {
-                "w": layer.weight.round(decimals=3).tolist(),
-                "b": layer.bias.round(decimals=3).tolist(),
+                "w": layer.weight.double().round(decimals=3).tolist(),
+                "b": layer.bias.double().round(decimals=3).tolist(),
             }
             for layer in layers
         ],
