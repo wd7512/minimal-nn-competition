@@ -39,11 +39,11 @@ def test_snake_partial_run_does_not_pass(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 24,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 24)), "0.bias": torch.zeros(4)},
     )
     result = SnakeSimple8x8Benchmark(seeds=(0, 1, 2)).evaluate(materialize_submission(submission))
     score, passed, details = result
@@ -79,11 +79,11 @@ def test_snake_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 24,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 24)), "0.bias": torch.zeros(4)},
     )
     score, passed, details = SnakeSimple8x8Benchmark(seeds=(0, 1, 2)).evaluate(
         materialize_submission(submission)
@@ -103,11 +103,11 @@ def test_snake_rejects_wrong_config(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 8,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 8)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 8)), "0.bias": torch.zeros(4)},
     )
     with pytest.raises(ValueError, match="input_size 24"):
         SnakeSimple8x8Benchmark().load_submission(submission)
@@ -118,15 +118,15 @@ def test_snake_selected_input_indices_build_smaller_model(tmp_path: Path) -> Non
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 5,
             "output_size": 4,
             "input_indices": [0, 1, 2, 4, 7],
         },
-        {"weight": torch.zeros((4, 5)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 5)), "0.bias": torch.zeros(4)},
     )
     loaded = SnakeSimple8x8Benchmark().load_submission(submission)
-    assert loaded.model.in_features == 5
+    assert loaded.model[0].in_features == 5
 
 
 def test_snake_selected_inputs_evaluate(tmp_path: Path) -> None:
@@ -134,12 +134,12 @@ def test_snake_selected_inputs_evaluate(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 5,
             "output_size": 4,
             "input_indices": [0, 1, 2, 4, 7],
         },
-        {"weight": torch.zeros((4, 5)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 5)), "0.bias": torch.zeros(4)},
     )
     result = SnakeSimple8x8Benchmark(seeds=(0,)).evaluate(materialize_submission(submission))
     score, passed, details = result
@@ -153,12 +153,12 @@ def test_snake_rejects_out_of_range_input_indices(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 1,
             "output_size": 4,
             "input_indices": [24],
         },
-        {"weight": torch.zeros((4, 1)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 1)), "0.bias": torch.zeros(4)},
     )
     with pytest.raises(ValueError, match="input_indices"):
         SnakeSimple8x8Benchmark().load_submission(submission)
@@ -178,15 +178,15 @@ def test_mnist_evaluation_and_threshold(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 784,
             "output_size": 10,
         },
-        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 784)), "0.bias": torch.zeros(10)},
     )
     loaded = materialize_submission(submission)
-    loaded.state_dict["weight"][0, 0] = 1
-    loaded.state_dict["weight"][1, 1] = 1
+    loaded.state_dict["0.weight"][0, 0] = 1
+    loaded.state_dict["0.weight"][1, 1] = 1
     loaded.model.load_state_dict(loaded.state_dict)
     score, passed, details = MnistBenchmark(data_path=data_path, expected_samples=2).evaluate(
         loaded
@@ -209,16 +209,16 @@ def test_mnist_normalisation_flag(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 784,
             "output_size": 10,
             "normalisation": True,
         },
-        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 784)), "0.bias": torch.zeros(10)},
     )
     loaded = materialize_submission(submission)
-    loaded.state_dict["weight"][0, 0] = 1
-    loaded.state_dict["weight"][1, 1] = 1
+    loaded.state_dict["0.weight"][0, 0] = 1
+    loaded.state_dict["0.weight"][1, 1] = 1
     loaded.model.load_state_dict(loaded.state_dict)
     score, passed, details = MnistBenchmark(data_path=data_path, expected_samples=2).evaluate(
         loaded
@@ -237,15 +237,15 @@ def _loaded_mnist_submission(tmp_path: Path) -> object:
         tmp_path,
         {
             "benchmark": "mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 784,
             "output_size": 10,
         },
-        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 784)), "0.bias": torch.zeros(10)},
     )
     loaded = materialize_submission(submission)
-    loaded.state_dict["weight"][0, 0] = 1
-    loaded.state_dict["weight"][1, 1] = 1
+    loaded.state_dict["0.weight"][0, 0] = 1
+    loaded.state_dict["0.weight"][1, 1] = 1
     loaded.model.load_state_dict(loaded.state_dict)
     return loaded
 
@@ -255,16 +255,16 @@ def _loaded_fashion_mnist_submission(tmp_path: Path, normalisation: bool = False
         tmp_path,
         {
             "benchmark": "fashion-mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 784,
             "output_size": 10,
             "normalisation": normalisation,
         },
-        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 784)), "0.bias": torch.zeros(10)},
     )
     loaded = materialize_submission(submission)
-    loaded.state_dict["weight"][0, 0] = 1
-    loaded.state_dict["weight"][1, 1] = 1
+    loaded.state_dict["0.weight"][0, 0] = 1
+    loaded.state_dict["0.weight"][1, 1] = 1
     loaded.model.load_state_dict(loaded.state_dict)
     return loaded
 
@@ -333,11 +333,11 @@ def test_mnist_requires_data_file(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 784,
             "output_size": 10,
         },
-        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 784)), "0.bias": torch.zeros(10)},
     )
     loaded = materialize_submission(submission)
     with pytest.raises(FileNotFoundError, match="MNIST dataset is unavailable"):
@@ -349,11 +349,11 @@ def test_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 10,
             "output_size": 10,
         },
-        {"weight": torch.zeros((10, 10)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 10)), "0.bias": torch.zeros(10)},
     )
     with pytest.raises(ValueError, match="input_size 784"):
         MnistBenchmark().load_submission(submission)
@@ -366,15 +366,15 @@ def test_fashion_mnist_evaluation_and_threshold(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "fashion-mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 784,
             "output_size": 10,
         },
-        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 784)), "0.bias": torch.zeros(10)},
     )
     loaded = materialize_submission(submission)
-    loaded.state_dict["weight"][0, 0] = 1
-    loaded.state_dict["weight"][1, 1] = 1
+    loaded.state_dict["0.weight"][0, 0] = 1
+    loaded.state_dict["0.weight"][1, 1] = 1
     loaded.model.load_state_dict(loaded.state_dict)
     score, passed, details = FashionMnistBenchmark(
         data_path=data_path, expected_samples=2
@@ -453,11 +453,11 @@ def test_fashion_mnist_requires_data_file(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "fashion-mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 784,
             "output_size": 10,
         },
-        {"weight": torch.zeros((10, 784)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 784)), "0.bias": torch.zeros(10)},
     )
     loaded = materialize_submission(submission)
     with pytest.raises(FileNotFoundError, match="Fashion-MNIST dataset is unavailable"):
@@ -469,11 +469,11 @@ def test_fashion_mnist_rejects_wrong_shape(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "fashion-mnist",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 10,
             "output_size": 10,
         },
-        {"weight": torch.zeros((10, 10)), "bias": torch.zeros(10)},
+        {"0.weight": torch.zeros((10, 10)), "0.bias": torch.zeros(10)},
     )
     with pytest.raises(ValueError, match="Fashion-MNIST submissions"):
         FashionMnistBenchmark().load_submission(submission)
@@ -496,11 +496,11 @@ def _chess_submission(
         tmp_path,
         {
             "benchmark": benchmark,
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": input_size,
             "output_size": output_size,
         },
-        {"weight": torch.zeros((output_size, input_size)), "bias": torch.zeros(output_size)},
+        {"0.weight": torch.zeros((output_size, input_size)), "0.bias": torch.zeros(output_size)},
     )
 
 
@@ -598,9 +598,9 @@ def test_chess_eval_castling_collision_is_solvable_only_with_new_inputs(tmp_path
             submission = _chess_submission(
                 directory, input_size=input_size, benchmark=benchmark.name
             )
-            state = {"weight": torch.zeros((1, input_size)), "bias": torch.tensor([4.5])}
+            state = {"0.weight": torch.zeros((1, input_size)), "0.bias": torch.tensor([4.5])}
             if input_size == 773:
-                state["weight"][0, 771] = -2.72
+                state["0.weight"][0, 771] = -2.72
             torch.save(state, submission.checkpoint)
             loaded = benchmark(data_path=data).load_submission(submission)
             score, passed, details = benchmark(data_path=data).evaluate(loaded)
@@ -612,7 +612,7 @@ def test_chess_eval_castling_collision_is_solvable_only_with_new_inputs(tmp_path
 def test_chess_eval_legacy_checkpoint_keeps_original_predictions(tmp_path: Path) -> None:
     data = _write_chess_data(tmp_path, [(START, 0), (BLACK, 60)])
     loaded = ChessEval10kBenchmark().load_submission(_chess_submission(tmp_path, input_size=769))
-    loaded.model.weight.data[0, 768] = 0.25
+    loaded.model[0].weight.data[0, 768] = 0.25
     inputs, targets = load_tensors(data)
     with torch.no_grad():
         predictions = loaded.model(inputs[:, :769]).squeeze(1)

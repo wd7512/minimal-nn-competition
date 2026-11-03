@@ -58,12 +58,11 @@ Fashion-MNIST:
 
 - `name` and `author` are required and shown on the leaderboard.
 - `description` is optional and is not shown on the site.
-- `architecture` is `linear` or `mlp`.
+- `architecture` is `mlp`.
 - `input_size` must be `784` and `output_size` must be `10`.
 - `normalisation` is optional and defaults to `false`.
 
-`mlp` submissions declare `hidden_sizes` and `activation`. `linear` submissions
-must omit `hidden_sizes`.
+Declare `hidden_sizes` and `activation`; omit `hidden_sizes` for a single layer.
 
 Set `"normalisation": true` to divide pixels by 255 before evaluation. The
 setting must match how the model was trained. The checked-in examples use raw
@@ -75,9 +74,9 @@ setting must match how the model was trained. The checked-in examples use raw
 `weights_only=True`; it does not execute arbitrary Python submitted with the
 checkpoint. All tensors in the state dict must use `float32`.
 
-- `linear` checkpoints use `weight` and `bias`.
-- `mlp` checkpoints use the keys produced by `torch.nn.Sequential` (`0.weight`,
-  `0.bias`, `2.weight`, ...), with ReLU layers between linear layers.
+Checkpoint keys are those of `torch.nn.Sequential` (`0.weight`, `0.bias`,
+`2.weight`, ...), with ReLU layers between linear layers. A single-layer model
+has `hidden_sizes: []` and only `0.weight` and `0.bias`.
 
 ## 4. Evaluate locally
 

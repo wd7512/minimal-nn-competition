@@ -19,7 +19,7 @@ def _folder(path: Path, benchmark="mnist") -> Path:
                 "benchmark": benchmark,
                 "name": "Display name",
                 "author": "tester",
-                "architecture": "linear",
+                "architecture": "mlp",
                 "input_size": 4 if benchmark == "cartpole-gym-v1" else 784,
                 "output_size": 2 if benchmark == "cartpole-gym-v1" else 10,
             }

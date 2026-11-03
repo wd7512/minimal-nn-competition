@@ -21,11 +21,12 @@ def train(
 
     task = TASKS[benchmark]
     if benchmark == "cartpole-gym-v1":
-        policy = torch.nn.Linear(4, 2)
+        layer = torch.nn.Linear(4, 2)
         with torch.no_grad():
-            policy.weight.copy_(torch.tensor([[-0.05, -0.25, -1, -0.5], [0.05, 0.25, 1, 0.5]]))
-            policy.bias.zero_()
-        architecture, hidden = "linear", []
+            layer.weight.copy_(torch.tensor([[-0.05, -0.25, -1, -0.5], [0.05, 0.25, 1, 0.5]]))
+            layer.bias.zero_()
+        policy = torch.nn.Sequential(layer)
+        hidden = []
     else:
         with environment(benchmark) as env:
             policy = train_ppo(
@@ -36,13 +37,13 @@ def train(
                 seed=seed,
                 reset_options=task["reset"],
             )
-        architecture, hidden = "mlp", [64, 64]
+        hidden = [64, 64]
     output_dir.mkdir(parents=True, exist_ok=True)
     config = dict(
         benchmark=benchmark,
         name=name or output_dir.name,
         author=author,
-        architecture=architecture,
+        architecture="mlp",
         input_size=task["inputs"],
         output_size=task["outputs"],
         hidden_sizes=hidden,

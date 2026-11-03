@@ -12,7 +12,7 @@ assignees: ""
 
 ## Fit
 
-Why a plain `linear` or `mlp` model can attempt it:
+Why a plain `mlp` model can attempt it:
 
 ## Scoring
 
@@ -43,7 +43,7 @@ Why a plain `linear` or `mlp` model can attempt it:
 ## Checklist
 
 - [ ] One-sentence task.
-- [ ] Plain `linear` or `mlp` can attempt it.
+- [ ] Plain `mlp` can attempt it.
 - [ ] One score, higher is better.
 - [ ] Fixed pass bar; a trivial model fails.
 - [ ] Size breaks ties.
