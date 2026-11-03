@@ -271,14 +271,14 @@ def test_collect_records_replay_for_selected_input_indices(
                 "benchmark": "snake-simple-8x8",
                 "name": "selected",
                 "author": "tester",
-                "architecture": "linear",
+                "architecture": "mlp",
                 "input_size": 2,
                 "output_size": 4,
                 "input_indices": [0, 1],
             }
         )
     )
-    torch.save({"weight": torch.zeros((4, 2)), "bias": torch.zeros(4)}, directory / "model.pt")
+    torch.save({"0.weight": torch.zeros((4, 2)), "0.bias": torch.zeros(4)}, directory / "model.pt")
     commit_submission_date(tmp_path)
     replays = tmp_path / "replays"
     assert (

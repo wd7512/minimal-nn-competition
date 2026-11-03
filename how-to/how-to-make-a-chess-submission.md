@@ -44,11 +44,10 @@ the submission slug shown on the leaderboard.
   submission directory.
 - `name` and `author` are required and shown on the leaderboard.
 - `description` is optional and is not shown on the site.
-- `architecture` is `linear` or `mlp`.
+- `architecture` is `mlp`.
 - New submissions should use `input_size: 773` and `output_size` must be `1`.
 - `normalisation` is not used by this benchmark.
-- `linear` submissions must omit `hidden_sizes`; `mlp` submissions declare
-  `hidden_sizes` and `activation`.
+- Declare `hidden_sizes` and `activation`; omit `hidden_sizes` for a single layer.
 
 ## 3. Encode the position
 
@@ -92,9 +91,9 @@ count, and ascending mean error.
 `weights_only=True`; it does not execute arbitrary Python submitted with the
 checkpoint. All tensors in the state dict must use `float32`.
 
-- `linear` checkpoints use `weight` and `bias`.
-- `mlp` checkpoints use the keys produced by `torch.nn.Sequential` (`0.weight`,
-  `0.bias`, `2.weight`, ...), with ReLU layers between linear layers.
+Checkpoint keys are those of `torch.nn.Sequential` (`0.weight`, `0.bias`,
+`2.weight`, ...), with ReLU layers between linear layers. A single-layer model
+has `hidden_sizes: []` and only `0.weight` and `0.bias`.
 
 ## 6. Evaluate locally
 

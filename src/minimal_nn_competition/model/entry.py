@@ -25,7 +25,7 @@ from minimal_nn_competition.model.limits import (
     parameter_count_from_dimensions,
 )
 
-ARCHITECTURES = ("linear", "mlp")
+ARCHITECTURES = ("mlp",)
 ACTIVATIONS = ("relu", "identity")
 
 
@@ -88,8 +88,6 @@ class SubmissionConfig(BaseModel):
 
     @model_validator(mode="after")
     def _validate_submission(self):
-        if self.architecture == "linear" and self.hidden_sizes:
-            raise ValueError("linear submissions must not declare hidden_sizes")
         if self.benchmark not in SNAKE_BENCHMARKS and self.input_indices is not None:
             raise ValueError("input_indices is only supported for snake benchmarks")
         task = CONTROL_SPEC["tasks"].get(self.benchmark)
@@ -176,9 +174,6 @@ def build_model(config):
         from torch import nn
     except ImportError as exc:
         raise SubmissionError("PyTorch is required to build submission models") from exc
-
-    if config.architecture == "linear":
-        return nn.Linear(config.input_size, config.output_size)
 
     layers = []
     input_size = config.input_size

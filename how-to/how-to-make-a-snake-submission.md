@@ -35,12 +35,11 @@ leaderboard.
 
 - `name` and `author` are required and shown on the leaderboard.
 - `description` is optional and is not shown on the site.
-- `architecture` is `linear` or `mlp`.
+- `architecture` is `mlp`.
 - `input_size` is `24`, or the length of `input_indices`.
 - `output_size` must be `4`.
 
-`mlp` submissions declare `hidden_sizes` and `activation`. `linear` submissions
-must omit `hidden_sizes`.
+Declare `hidden_sizes` and `activation`; omit `hidden_sizes` for a single layer.
 
 ### Selecting observation features
 
@@ -55,7 +54,7 @@ set it to `true` to use all 24.
   "benchmark": "snake-simple-8x8",
   "name": "example",
   "author": "example author",
-  "architecture": "linear",
+  "architecture": "mlp",
   "input_size": 5,
   "output_size": 4,
   "input_indices": [0, 1, 2, 4, 7]
@@ -90,9 +89,9 @@ budget.
 `weights_only=True`; it does not execute arbitrary Python submitted with the
 checkpoint. All tensors in the state dict must use `float32`.
 
-- `linear` checkpoints use `weight` and `bias`.
-- `mlp` checkpoints use the keys produced by `torch.nn.Sequential` (`0.weight`,
-  `0.bias`, `2.weight`, ...), with ReLU layers between linear layers.
+Checkpoint keys are those of `torch.nn.Sequential` (`0.weight`, `0.bias`,
+`2.weight`, ...), with ReLU layers between linear layers. A single-layer model
+has `hidden_sizes: []` and only `0.weight` and `0.bias`.
 
 ## 5. Scoring
 

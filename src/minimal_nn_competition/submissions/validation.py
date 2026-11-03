@@ -18,7 +18,7 @@ from minimal_nn_competition.model.limits import (
 
 SUBMISSION_PATH = re.compile(r"^models/([^/]+)/([^/]+)/(config\.json|model\.pt)$")
 ALLOWED_STATUSES = {"A", "M", "C"}
-ALLOWED_ARCHITECTURES = {"linear", "mlp"}
+ALLOWED_ARCHITECTURES = {"mlp"}
 ALLOWED_ACTIVATIONS = {"relu", "identity"}
 ALLOWED_CONFIG_KEYS = set(SubmissionConfig.model_fields)
 
@@ -71,7 +71,7 @@ def validate_config(config: Any, directory: Path) -> list[str]:
     if not isinstance(config.get("description", ""), str):
         errors.append(f"{config_path}: description must be a string")
     if config.get("architecture") not in ALLOWED_ARCHITECTURES:
-        errors.append(f"{config_path}: architecture must be linear or mlp")
+        errors.append(f"{config_path}: architecture must be mlp")
     input_size = config.get("input_size")
     if type(input_size) is not int or input_size <= 0:
         errors.append(f"{config_path}: input_size must be a positive integer")
@@ -96,8 +96,6 @@ def validate_config(config: Any, directory: Path) -> list[str]:
         type(size) is not int or size <= 0 for size in hidden_sizes
     ):
         errors.append(f"{config_path}: hidden_sizes must be positive integers")
-    elif config.get("architecture") == "linear" and hidden_sizes:
-        errors.append(f"{config_path}: linear submissions cannot declare hidden_sizes")
     if config.get("activation", "relu") not in ALLOWED_ACTIVATIONS:
         errors.append(f"{config_path}: activation must be relu or identity")
 
@@ -112,7 +110,7 @@ def validate_config(config: Any, directory: Path) -> list[str]:
         and output_size > 0
         and isinstance(hidden_sizes, list)
         and all(type(size) is int and size > 0 for size in hidden_sizes)
-        and config.get("architecture") in {"linear", "mlp"}
+        and config.get("architecture") in ALLOWED_ARCHITECTURES
     ):
         total = parameter_count_from_dimensions(input_size, hidden_sizes, output_size)
         if total > MAX_PARAMETERS:

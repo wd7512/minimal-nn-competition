@@ -1,7 +1,6 @@
 """Shared submission resource limits.
 
-These are competition policy values for ``linear`` and ``mlp`` state-dict
-submissions. They bound the declared and on-disk model size without depending
+These are competition policy values for ``mlp`` state-dict submissions. They bound the declared and on-disk model size without depending
 on PyTorch loading or evaluation. They are distinct: parameter count measures
 the model's computational size, while checkpoint size limits the input file.
 One cannot safely be derived from the other without assumptions about tensor
