@@ -79,7 +79,7 @@ def _preserve_unrendered_files(source: Path, target: Path) -> None:
                 shutil.copy2(path, destination)
 
 
-MAX_WEIGHT_PARAMETERS = 120_000
+MAX_WEIGHT_PARAMETERS = 700_000
 
 
 def _weights_payload(loaded):
