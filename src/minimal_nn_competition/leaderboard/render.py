@@ -501,6 +501,7 @@ _PAD_STYLE = """
 #bars { display: grid; gap: 4px; margin-top: 16px; }
 .bar { display: flex; align-items: center; gap: 8px; font: 14px/1 var(--mono); }
 .bar span { width: 1ch; }
+.bar b { font-weight: 400; min-width: 4ch; }
 .bar i { display: block; height: 10px; background: var(--muted); }
 .bar--top i { background: var(--accent); }
 .maps { display: grid; grid-template-columns: repeat(auto-fill, 56px); gap: 4px; }
@@ -525,7 +526,7 @@ const show = () => {
   for (let i = 0; i < 784; i++) x.push(px[i * 4]);
   const o = forward(x), m = Math.max(...o), e = o.map((v) => Math.exp(v - m)), t = e.reduce((a, b) => a + b);
   const top = e.indexOf(Math.max(...e));
-  bars.innerHTML = e.map((v, c) => `<div class="bar${c === top ? " bar--top" : ""}"><span>${c}</span><i style="width:${(100 * v) / t}%"></i></div>`).join("");
+  bars.innerHTML = e.map((v, c) => `<div class="bar${c === top ? " bar--top" : ""}"><span>${c}</span><i style="width:${(100 * v) / t}%"></i><b>${((100 * v) / t).toFixed(0)}%</b></div>`).join("");
 };
 let down = false;
 const paint = (ev) => {
@@ -1042,7 +1043,7 @@ def render_submission_html(result, payload, rank, total):
             'border:1px solid var(--rule-strong)"></canvas>'
             '<div class="controls"><button id="clear" type="button">Clear</button></div>'
             '<div id="bars" aria-live="polite"></div>'
-            '<h3>First-layer weights</h3><p class="muted">Blue is positive, red negative.</p>'
+            '<h3>First-layer weights</h3><p class="muted">Blue is positive, red negative; each map is scaled to its own largest weight.</p>'
             '<div id="maps" class="maps"></div></section>'
         )
         script_tag = f"<script>{_MODEL_SCRIPT.replace('__MODEL__', json.dumps(payload))}</script>"
