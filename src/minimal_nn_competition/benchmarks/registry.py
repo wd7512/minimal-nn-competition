@@ -17,7 +17,7 @@ IMAGE_BENCHMARKS = ("mnist", "fashion-mnist", "mnist-shuffled", "fashion-mnist-s
 SNAKE_BENCHMARKS = ("snake-simple-8x8", "snake-simple-16x16", "snake-obstacles-8x8")
 RL_BENCHMARKS = tuple(CONTROL_SPEC["tasks"])
 # Benchmarks whose detail page runs the submission's weights in the browser.
-WEIGHT_BENCHMARKS = (*IMAGE_BENCHMARKS, "chess-eval-10k")
+WEIGHT_BENCHMARKS = IMAGE_BENCHMARKS + CHESS_BENCHMARKS
 
 
 def _factories():

@@ -110,3 +110,11 @@ def test_chess_script_encoding_matches_scoring_encoding():
     assert "x[768]" in _CHESS_SCRIPT and "x[769 + j]" in _CHESS_SCRIPT
     assert '["K", "Q", "k", "q"]' in _CHESS_SCRIPT
     assert chess_eval.INPUT_SIZE == 773
+
+
+def test_chess_has_its_own_weight_cap(tmp_path, monkeypatch):
+    monkeypatch.setattr(artifacts, "MAX_WEIGHT_PARAMETERS", 10)
+    submission = _submission(tmp_path, "chess-eval-10k", [8], inputs=773, outputs=1)
+    games = tmp_path / "games"
+    _record_replay(games, "tiny", create_benchmark("chess-eval-10k"), submission)
+    assert (games / "chess-eval-10k--tiny.json").is_file()
