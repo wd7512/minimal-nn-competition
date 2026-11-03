@@ -938,7 +938,7 @@ def _submission_date_html(value):
     return f'<time datetime="{submitted.isoformat()}">{label}</time>'
 
 
-_PAGE_SIZE = 10
+_PAGE_SIZE = 5
 
 
 def _table(results, submission_links=None, benchmark=None):
