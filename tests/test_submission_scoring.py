@@ -7,8 +7,8 @@ def test_score_submission_process_success(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[1]
     from minimal_nn_competition.submissions.scoring import score_submission_process
 
-    result = score_submission_process(root / "models/snake-simple-8x8/example", tmp_path)
-    assert result.passed is not None
+    result = score_submission_process(root / "models/cartpole-gym-v1/example", tmp_path)
+    assert result.passed
 
 
 def test_score_submission_process_timeout(tmp_path: Path) -> None:

@@ -84,7 +84,7 @@ include = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra -n 2"
+addopts = "-ra -n auto"
 
 [build-system]
 requires = ["uv_build==0.13.5"]
