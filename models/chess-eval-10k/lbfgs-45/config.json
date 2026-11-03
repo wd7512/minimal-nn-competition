@@ -1,0 +1,15 @@
+{
+  "benchmark": "chess-eval-10k",
+  "name": "lbfgs-45",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 773,
+  "output_size": 1,
+  "hidden_sizes": [
+    45
+  ],
+  "activation": "relu",
+  "normalisation": false,
+  "description": "Single 45-unit ReLU evaluator: one unit pruned from the lbfgs-46 evaluator, then full-batch L-BFGS polish until every position in the fixed 10k set is within 0.1 pawns.",
+  "input_indices": null
+}
