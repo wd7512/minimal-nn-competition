@@ -1032,8 +1032,8 @@ def render_submission_html(result, payload, rank, total):
     elif payload is not None and result.benchmark in WEIGHT_BENCHMARKS:
         game_section = (
             '<section class="detail-section detail-game"><h2>Try the model</h2>'
-            '<p class="muted">Draw a digit; the model runs in your browser.</p>'
-            '<canvas id="pad" width="28" height="28" role="img" aria-label="Draw a digit" '
+            '<p class="muted">Draw an image; the model runs in your browser.</p>'
+            '<canvas id="pad" width="28" height="28" role="img" aria-label="Drawing pad" '
             'style="width:224px;height:224px;image-rendering:pixelated;touch-action:none;'
             'border:1px solid var(--rule-strong)"></canvas>'
             '<div class="controls"><button id="clear" type="button">Clear</button></div>'
