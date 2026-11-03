@@ -60,6 +60,7 @@ def test_exported_weights_match_the_model_and_render_a_widget(tmp_path, benchmar
     _record_replay(games, "tiny", create_benchmark(benchmark), submission)
     path = games / f"{benchmark}--tiny.json"
     payload = json.loads(path.read_text())
+    assert (len(payload["labels"] or []) == 10) == (benchmark == "fashion-mnist")
     pixels = [float(i % 256) for i in range(784)]
     model = create_benchmark(benchmark).load_submission(submission).model
     expected = model(torch.tensor(pixels)[None] / 255)[0]

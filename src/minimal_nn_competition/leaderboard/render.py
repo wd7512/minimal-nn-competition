@@ -526,7 +526,7 @@ const show = () => {
   for (let i = 0; i < 784; i++) x.push(px[i * 4]);
   const o = forward(x), m = Math.max(...o), e = o.map((v) => Math.exp(v - m)), t = e.reduce((a, b) => a + b);
   const top = e.indexOf(Math.max(...e));
-  bars.innerHTML = e.map((v, c) => `<div class="bar${c === top ? " bar--top" : ""}"><span>${c}</span><i style="width:${(100 * v) / t}%"></i><b>${((100 * v) / t).toFixed(0)}%</b></div>`).join("");
+  bars.innerHTML = e.map((v, c) => `<div class="bar${c === top ? " bar--top" : ""}"><span style="min-width:${M.labels ? 11 : 1}ch">${M.labels ? M.labels[c] : c}</span><i style="width:${(100 * v) / t}%"></i><b>${((100 * v) / t).toFixed(0)}%</b></div>`).join("");
 };
 let down = false;
 const paint = (ev) => {
