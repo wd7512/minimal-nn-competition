@@ -87,16 +87,6 @@ def test_config_rejects_missing_identity(tmp_path: Path) -> None:
         SubmissionConfig.from_file(path)
 
 
-def test_config_rejects_linear_architecture(tmp_path: Path) -> None:
-    path = tmp_path / "config.json"
-    path.write_text(
-        '{"benchmark":"snake-simple-8x8","name":"example","author":"tester",'
-        '"architecture":"linear","input_size":24,"output_size":4}'
-    )
-    with pytest.raises(SubmissionError, match="architecture must be one of mlp"):
-        SubmissionConfig.from_file(path)
-
-
 def test_snake_is_deterministic() -> None:
     first = SnakeEnvironment(seed=4)
     second = SnakeEnvironment(seed=4)

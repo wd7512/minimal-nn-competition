@@ -92,12 +92,12 @@ def test_mlp_shape_mismatch_is_rejected(tmp_path: Path) -> None:
         materialize_submission(Submission.from_directory(directory))
 
 
-def test_unknown_architecture_is_rejected(tmp_path: Path) -> None:
+def test_non_mlp_architecture_is_rejected(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake-simple-8x8","architecture":"cnn","input_size":7,"output_size":4}'
+        '{"benchmark":"snake-simple-8x8","architecture":"linear","input_size":7,"output_size":4}'
     )
-    with pytest.raises(SubmissionError, match="architecture must be one of"):
+    with pytest.raises(SubmissionError, match="literal_error"):
         SubmissionConfig.from_file(path)
 
 

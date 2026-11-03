@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import (
     BaseModel,
@@ -25,7 +25,6 @@ from minimal_nn_competition.model.limits import (
     parameter_count_from_dimensions,
 )
 
-ARCHITECTURES = ("mlp",)
 ACTIVATIONS = ("relu", "identity")
 
 
@@ -41,7 +40,7 @@ class SubmissionConfig(BaseModel):
     benchmark: str = Field(min_length=1)
     name: str = Field(min_length=1)
     author: str = Field(min_length=1)
-    architecture: str
+    architecture: Literal["mlp"]
     input_size: StrictInt = Field(gt=0)
     output_size: StrictInt = Field(gt=0)
     hidden_sizes: tuple[StrictInt, ...] = ()
@@ -49,13 +48,6 @@ class SubmissionConfig(BaseModel):
     normalisation: StrictBool = False
     description: str = ""
     input_indices: tuple[StrictInt, ...] | StrictBool | None = None
-
-    @field_validator("architecture")
-    @classmethod
-    def _validate_architecture(cls, value):
-        if value not in ARCHITECTURES:
-            raise ValueError(f"architecture must be one of {', '.join(ARCHITECTURES)}")
-        return value
 
     @field_validator("hidden_sizes")
     @classmethod
