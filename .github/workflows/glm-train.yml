@@ -1,0 +1,46 @@
+name: GLM chess trainer
+
+on:
+  push:
+    branches: ["train/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - name: Sync dependencies
+        run: uv sync --locked
+      - name: Train smallest passing width
+        run: uv run python scripts/train_glm_chess.py --output models/chess-eval-10k
+      - name: Locate submission
+        run: |
+          dir=$(find models/chess-eval-10k -mindepth 1 -maxdepth 1 -type d -name 'glm-lbfgs-*' | head -n1)
+          if [ -z "$dir" ]; then
+            echo "No passing submission produced" >&2
+            exit 1
+          fi
+          echo "SUBMISSION_DIR=$dir" >> "$GITHUB_ENV"
+      - name: Evaluate with mnnc
+        run: |
+          uv run mnnc evaluate chess-eval-10k "$SUBMISSION_DIR" | tee evaluate.log
+          grep -E "score.*1\.0|1\.0.*score|10,000/10,000|100%" evaluate.log
+      - name: Validate submission
+        run: uv run mnnc validate-submission "$SUBMISSION_DIR"
+      - name: Push submit branch
+        run: |
+          git config user.name "GLM x le vibe"
+          git config user.email "glm@users.noreply.github.com"
+          git fetch origin submission
+          git switch -C submit/glm-chess origin/submission
+          mkdir -p models/chess-eval-10k
+          cp -r "$SUBMISSION_DIR" models/chess-eval-10k/
+          git add models/chess-eval-10k/glm-lbfgs-*
+          git commit -m "Add $(basename "$SUBMISSION_DIR") chess-eval-10k submission"
+          git push origin HEAD:refs/heads/submit/glm-chess
