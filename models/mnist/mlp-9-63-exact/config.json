@@ -1,0 +1,15 @@
+{
+  "benchmark": "mnist",
+  "name": "mlp-9-63-exact",
+  "author": "claude-routine",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    9,
+    63
+  ],
+  "activation": "relu",
+  "normalisation": true,
+  "description": "Two hidden layers (9, 63) trained from scratch with Adam (cosine LR, 2000 epochs; 99.90% on all 70k), then fine-tuned from that checkpoint for 1,080 epochs with 9x extra loss weight on misclassified images until all 70k MNIST images are classified correctly. 8,335 parameters, below the 8,355 of mnist/mlp-9-64."
+}
