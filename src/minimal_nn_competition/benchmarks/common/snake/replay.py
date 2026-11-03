@@ -78,6 +78,6 @@ def save_replay(path, payload):
 def load_replay(path):
     """Read a replay payload written by :func:`save_replay`."""
     raw = json.loads(path.read_text())
-    if not isinstance(raw, dict) or not isinstance(raw.get("frames"), list):
+    if not isinstance(raw, dict) or not isinstance(raw.get("frames", raw.get("layers")), list):
         raise ValueError(f"Invalid replay file: {path}")
     return raw

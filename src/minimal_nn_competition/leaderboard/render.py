@@ -15,6 +15,7 @@ from minimal_nn_competition.benchmarks.registry import (
     IMAGE_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    WEIGHT_BENCHMARKS,
 )
 from minimal_nn_competition.leaderboard import rank_results
 from minimal_nn_competition.leaderboard.theme import SITE_BASE_CSS, SITE_THEME_CSS
@@ -494,6 +495,61 @@ button, select { font: inherit; padding: .25rem .75rem; }
   .detail-meta div { grid-template-columns: 1fr; gap: 2px; }
   .detail-footer { flex-direction: column; gap: 8px; }
 }
+"""
+
+_PAD_STYLE = """
+#bars { display: grid; gap: 4px; margin-top: 16px; }
+.bar { display: flex; align-items: center; gap: 8px; font: 14px/1 var(--mono); }
+.bar span { width: 1ch; }
+.bar b { font-weight: 400; min-width: 4ch; }
+.bar i { display: block; height: 10px; background: var(--muted); }
+.bar--top i { background: var(--accent); }
+.maps { display: grid; grid-template-columns: repeat(auto-fill, 56px); gap: 4px; }
+.maps canvas { width: 56px; height: 56px; image-rendering: pixelated; border: 1px solid var(--rule); }
+"""
+
+_MODEL_SCRIPT = """
+const M = __MODEL__;
+const forward = (x) => {
+  let a = x.map((v) => v * M.scale);
+  M.layers.forEach((L, i) => {
+    a = L.b.map((b, j) => L.w[j].reduce((s, w, k) => s + w * a[k], b));
+    if (M.relu && i < M.layers.length - 1) a = a.map((v) => Math.max(0, v));
+  });
+  return a;
+};
+const pad = document.getElementById("pad"), pc = pad.getContext("2d", { willReadFrequently: true });
+const bars = document.getElementById("bars");
+const clear = () => { pc.fillStyle = "#000"; pc.fillRect(0, 0, 28, 28); show(); };
+const show = () => {
+  const px = pc.getImageData(0, 0, 28, 28).data, x = [];
+  for (let i = 0; i < 784; i++) x.push(px[i * 4]);
+  const o = forward(x), m = Math.max(...o), e = o.map((v) => Math.exp(v - m)), t = e.reduce((a, b) => a + b);
+  const top = e.indexOf(Math.max(...e));
+  bars.innerHTML = e.map((v, c) => `<div class="bar${c === top ? " bar--top" : ""}"><span>${c}</span><i style="width:${(100 * v) / t}%"></i><b>${((100 * v) / t).toFixed(0)}%</b></div>`).join("");
+};
+let down = false;
+const paint = (ev) => {
+  const r = pad.getBoundingClientRect();
+  pc.fillStyle = "rgba(255,255,255,.6)";
+  pc.beginPath();
+  pc.arc(((ev.clientX - r.left) * 28) / r.width, ((ev.clientY - r.top) * 28) / r.height, 1.4, 0, 7);
+  pc.fill();
+  show();
+};
+pad.onpointerdown = (ev) => { down = true; pad.setPointerCapture(ev.pointerId); paint(ev); };
+pad.onpointermove = (ev) => down && paint(ev);
+pad.onpointerup = () => (down = false);
+document.getElementById("clear").onclick = clear;
+const maps = document.getElementById("maps");
+M.layers[0].w.slice(0, 64).forEach((row) => {
+  const c = document.createElement("canvas"); c.width = c.height = 28;
+  const g = c.getContext("2d"), img = g.createImageData(28, 28), top = Math.max(...row.map(Math.abs)) || 1;
+  row.forEach((w, i) => img.data.set(w > 0 ? [37, 99, 235, (255 * w) / top] : [220, 38, 38, (-255 * w) / top], i * 4));
+  g.putImageData(img, 0, 0);
+  maps.append(c);
+});
+clear();
 """
 
 _GAME_SCRIPT = """
@@ -977,6 +1033,21 @@ def render_submission_html(result, payload, rank, total):
         )
         script_tag = ""
         grid_class = "detail-grid"
+    elif payload is not None and result.benchmark in WEIGHT_BENCHMARKS:
+        game_section = (
+            f"<style>{_PAD_STYLE}</style>"
+            '<section class="detail-section detail-game"><h2>Try the model</h2>'
+            '<p class="muted">Draw an image; the model runs in your browser.</p>'
+            '<canvas id="pad" width="28" height="28" role="img" aria-label="Drawing pad" '
+            'style="width:224px;height:224px;image-rendering:pixelated;touch-action:none;'
+            'border:1px solid var(--rule-strong)"></canvas>'
+            '<div class="controls"><button id="clear" type="button">Clear</button></div>'
+            '<div id="bars" aria-live="polite"></div>'
+            '<h3>First-layer weights</h3><p class="muted">Blue is positive, red negative; each map is scaled to its own largest weight.</p>'
+            '<div id="maps" class="maps"></div></section>'
+        )
+        script_tag = f"<script>{_MODEL_SCRIPT.replace('__MODEL__', json.dumps(payload))}</script>"
+        grid_class = "detail-grid"
     else:
         game_section = ""
         script_tag = ""
@@ -1015,7 +1086,7 @@ def render_submission_pages(results, replays, output_dir):
         if payload is not None and result.benchmark in RL_BENCHMARKS:
             games_dir.mkdir(parents=True, exist_ok=True)
             (games_dir / f"{stem}.mp4").write_bytes(payload["data"])
-        if payload is not None and result.benchmark in SNAKE_BENCHMARKS:
+        if payload is not None and result.benchmark in SNAKE_BENCHMARKS + WEIGHT_BENCHMARKS:
             games_dir.mkdir(parents=True, exist_ok=True)
             (games_dir / f"{stem}.json").write_text(json.dumps(payload, sort_keys=True) + "\n")
         pages_dir.mkdir(parents=True, exist_ok=True)
