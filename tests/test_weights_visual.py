@@ -17,10 +17,10 @@ def _submission(tmp_path: Path, benchmark: str, hidden: list[int], *, normalise=
     directory = tmp_path / "models" / benchmark / "tiny"
     directory.mkdir(parents=True)
     sizes = [784, *hidden, 10]
+    torch.manual_seed(0)
     layers = []
     for a, b in pairwise(sizes):
         layers += [torch.nn.Linear(a, b), torch.nn.ReLU()]
-    torch.manual_seed(0)
     model = torch.nn.Sequential(*layers[:-1])
     torch.save(model.state_dict(), directory / "model.pt")
     (directory / "config.json").write_text(
@@ -60,6 +60,7 @@ def test_exported_weights_match_the_model_and_render_a_widget(tmp_path, benchmar
     _record_replay(games, "tiny", create_benchmark(benchmark), submission)
     path = games / f"{benchmark}--tiny.json"
     payload = json.loads(path.read_text())
+    assert (len(payload["labels"] or []) == 10) == (benchmark == "fashion-mnist")
     pixels = [float(i % 256) for i in range(784)]
     model = create_benchmark(benchmark).load_submission(submission).model
     expected = model(torch.tensor(pixels)[None] / 255)[0]
@@ -79,6 +80,7 @@ def test_exported_weights_match_the_model_and_render_a_widget(tmp_path, benchmar
     render_site([result], tmp_path / "docs", _load_replays(games))
     page = (tmp_path / "docs" / "submissions" / f"{benchmark}--tiny.html").read_text()
     assert 'id="pad"' in page and '"layers"' in page
+    assert ("look like noise" in page) == benchmark.endswith("-shuffled")
 
 
 def test_oversized_models_are_not_exported(tmp_path, monkeypatch):
