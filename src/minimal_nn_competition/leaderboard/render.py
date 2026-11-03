@@ -400,17 +400,6 @@ td.score { font-family: var(--mono); font-size: 13px; font-weight: 600; color: v
 """
 
 _DETAIL_STYLE = """
-#bars { display: grid; gap: 4px; margin-top: 16px; }
-.bar { display: flex; align-items: center; gap: 8px; font: 14px/1 var(--mono); }
-.bar span { width: 1ch; }
-.bar i { display: block; height: 10px; background: var(--muted); }
-.bar--top i { background: var(--accent); }
-.chess { display: grid; grid-template-columns: repeat(8, 48px); width: 384px; margin-bottom: 12px; }
-.sq { width: 48px; height: 48px; padding: 0; border: 0; font-size: 32px; line-height: 1; color: #111; background: #f0d9b5; }
-.sq.dark { background: #b58863; }
-.sq.from { outline: 3px solid var(--accent); outline-offset: -3px; }
-.maps { display: grid; grid-template-columns: repeat(auto-fill, 56px); gap: 4px; }
-.maps canvas { width: 56px; height: 56px; image-rendering: pixelated; border: 1px solid var(--rule); }
 .detail-shell { width: 100%; max-width: 1120px; margin: 0 auto; padding: 48px 32px 80px; }
 .detail-head { border-bottom: 1px solid var(--rule-strong); padding-bottom: 24px; }
 .eyebrow {
@@ -508,6 +497,24 @@ button, select { font: inherit; padding: .25rem .75rem; }
 }
 """
 
+_PAD_STYLE = """
+#bars { display: grid; gap: 4px; margin-top: 16px; }
+.bar { display: flex; align-items: center; gap: 8px; font: 14px/1 var(--mono); }
+.bar span { width: 1ch; }
+.bar b { font-weight: 400; min-width: 4ch; }
+.bar i { display: block; height: 10px; background: var(--muted); }
+.bar--top i { background: var(--accent); }
+.maps { display: grid; grid-template-columns: repeat(auto-fill, 56px); gap: 4px; }
+.maps canvas { width: 56px; height: 56px; image-rendering: pixelated; border: 1px solid var(--rule); }
+"""
+
+_CHESS_STYLE = """
+.chess { display: grid; grid-template-columns: repeat(8, 48px); width: 384px; margin-bottom: 12px; }
+.sq { width: 48px; height: 48px; padding: 0; border: 0; font-size: 32px; line-height: 1; color: #111; background: #f0d9b5; }
+.sq.dark { background: #b58863; }
+.sq.from { outline: 3px solid var(--accent); outline-offset: -3px; }
+"""
+
 _FORWARD_SCRIPT = """
 const M = __MODEL__;
 const forward = (x) => {
@@ -529,7 +536,7 @@ const show = () => {
   for (let i = 0; i < 784; i++) x.push(px[i * 4]);
   const o = forward(x), m = Math.max(...o), e = o.map((v) => Math.exp(v - m)), t = e.reduce((a, b) => a + b);
   const top = e.indexOf(Math.max(...e));
-  bars.innerHTML = e.map((v, c) => `<div class="bar${c === top ? " bar--top" : ""}"><span>${c}</span><i style="width:${(100 * v) / t}%"></i></div>`).join("");
+  bars.innerHTML = e.map((v, c) => `<div class="bar${c === top ? " bar--top" : ""}"><span style="min-width:${M.labels ? 11 : 1}ch">${M.labels ? M.labels[c] : c}</span><i style="width:${(100 * v) / t}%"></i><b>${((100 * v) / t).toFixed(0)}%</b></div>`).join("");
 };
 let down = false;
 const paint = (ev) => {
@@ -1069,13 +1076,16 @@ def render_submission_html(result, payload, rank, total):
     elif payload is not None and result.benchmark in WEIGHT_BENCHMARKS:
         script = _FORWARD_SCRIPT.replace("__MODEL__", json.dumps(payload))
         head = '<section class="detail-section detail-game"><h2>Try the model</h2>'
+        style = _CHESS_STYLE if result.benchmark in CHESS_BENCHMARKS else _PAD_STYLE
         if result.benchmark in CHESS_BENCHMARKS:
             castle = "".join(
                 f'<label><input type="checkbox" class="castle" id="c{c}" checked> {c}</label>'
                 for c in "KQkq"
             )
             game_section = (
-                head + '<p class="muted">Move or place pieces; the model evaluates the position '
+                f"<style>{style}</style>"
+                + head
+                + '<p class="muted">Move or place pieces; the model evaluates the position '
                 "in your browser. Pick a piece to place it, or Move to move pieces.</p>"
                 '<div id="chess" class="chess"></div><div id="pal" class="controls"></div>'
                 '<div class="controls"><label>To move <select id="side"><option value="w">White'
@@ -1088,13 +1098,21 @@ def render_submission_html(result, payload, rank, total):
             script += _CHESS_SCRIPT
         else:
             game_section = (
-                head + '<p class="muted">Draw an image; the model runs in your browser.</p>'
+                f"<style>{style}</style>"
+                + head
+                + '<p class="muted">Draw an image; the model runs in your browser.</p>'
                 '<canvas id="pad" width="28" height="28" role="img" aria-label="Drawing pad" '
                 'style="width:224px;height:224px;image-rendering:pixelated;touch-action:none;'
                 'border:1px solid var(--rule-strong)"></canvas>'
                 '<div class="controls"><button id="clear" type="button">Clear</button></div>'
                 '<div id="bars" aria-live="polite"></div>'
-                '<h3>First-layer weights</h3><p class="muted">Blue is positive, red negative.</p>'
+                '<h3>First-layer weights</h3><p class="muted">Blue is positive, red negative; each map is scaled to its own largest weight.'
+                + (
+                    " Labels are shuffled, so the maps look like noise: the model memorises."
+                    if result.benchmark.endswith("-shuffled")
+                    else ""
+                )
+                + "</p>"
                 '<div id="maps" class="maps"></div></section>'
             )
             script += _PAD_SCRIPT
