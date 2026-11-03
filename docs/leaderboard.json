@@ -1702,6 +1702,50 @@
         1.0
       ],
       "folds": 20,
+      "mae": 0.012372912839055061,
+      "samples": 10000,
+      "structure": [
+        773,
+        45,
+        1
+      ],
+      "tolerance_pawns": 0.1
+    },
+    "name": "lbfgs-45",
+    "parameter_count": 34876,
+    "passed": true,
+    "score": 1.0,
+    "submission": "lbfgs-45",
+    "submitted_at": "2026-11-03"
+  },
+  {
+    "author": "wd7512",
+    "benchmark": "chess-eval-10k",
+    "details": {
+      "encoding": "castling-v2",
+      "fold_scores": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "folds": 20,
       "mae": 0.009092346765100956,
       "samples": 10000,
       "structure": [
