@@ -76,6 +76,7 @@ Individual diagnostics are available with `uv run dev-tools tokens`,
 - Add one module under `src/minimal_nn_competition/benchmarks/` (+ example under `examples/`).
 - Register it in `benchmarks/registry.py` (`_factories` + family tuple).
 - Add a token scope in `internal/__init__.py` (`Scope` sources + tests).
+- Optional: add it to `WEIGHT_BENCHMARKS` and a widget in `leaderboard/render.py` for a "Try the model" page.
 - Cover it in `tests/` (`test_benchmarks.py`, `test_internal.py` scope checks).
 - Update leaderboard groups in `leaderboard/render.py` if it starts a new group.
 
