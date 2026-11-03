@@ -23,16 +23,16 @@ def _write_submission(
     return directory
 
 
-def test_linear_submission_loads(tmp_path: Path) -> None:
+def test_mlp_without_hidden_layers_loads(tmp_path: Path) -> None:
     directory = _write_submission(
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 7,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 7)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 7)), "0.bias": torch.zeros(4)},
     )
     loaded = materialize_submission(Submission.from_directory(directory))
     assert loaded.model(torch.zeros((2, 7))).shape == (2, 4)
@@ -66,11 +66,11 @@ def test_non_float32_weights_are_rejected(tmp_path: Path, dtype: torch.dtype) ->
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 7,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 7), dtype=dtype), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 7), dtype=dtype), "0.bias": torch.zeros(4)},
     )
     with pytest.raises(SubmissionError, match="must use float32"):
         materialize_submission(Submission.from_directory(directory))
@@ -92,12 +92,12 @@ def test_mlp_shape_mismatch_is_rejected(tmp_path: Path) -> None:
         materialize_submission(Submission.from_directory(directory))
 
 
-def test_unknown_architecture_is_rejected(tmp_path: Path) -> None:
+def test_non_mlp_architecture_is_rejected(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     path.write_text(
-        '{"benchmark":"snake-simple-8x8","architecture":"cnn","input_size":7,"output_size":4}'
+        '{"benchmark":"snake-simple-8x8","architecture":"linear","input_size":7,"output_size":4}'
     )
-    with pytest.raises(SubmissionError, match="architecture must be one of"):
+    with pytest.raises(SubmissionError, match="literal_error"):
         SubmissionConfig.from_file(path)
 
 
@@ -126,11 +126,11 @@ def test_non_finite_weights_are_rejected(tmp_path: Path, bad_value: float) -> No
         tmp_path,
         {
             "benchmark": "snake-simple-8x8",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 7,
             "output_size": 4,
         },
-        {"weight": torch.full((4, 7), bad_value), "bias": torch.zeros(4)},
+        {"0.weight": torch.full((4, 7), bad_value), "0.bias": torch.zeros(4)},
     )
     with pytest.raises(SubmissionError, match="non-finite"):
         materialize_submission(Submission.from_directory(directory))

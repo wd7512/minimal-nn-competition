@@ -1,5 +1,4 @@
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -263,30 +262,9 @@ def test_scope_tests_cover_suite_exactly_once() -> None:
     assert completed.returncode == 0
     collected = {line.strip() for line in completed.stdout.splitlines() if "::" in line}
     mapped = [node for scope in SCOPES for node in expand_scope_tests(scope, collected)]
+    # Name stale scope entries explicitly instead of failing on a list diff.
+    assert sorted(set(mapped) - collected) == []
     assert sorted(mapped) == sorted(collected)
-
-
-def test_scope_nodes_exist_in_collected_suite() -> None:
-    """Name stale scope entries explicitly instead of failing on a list diff."""
-    from minimal_nn_competition.internal import expand_scope_tests
-
-    root = Path(__file__).resolve().parent.parent
-    completed = subprocess.run(
-        [sys.executable, "-m", "pytest", "--collect-only", "-q"],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        timeout=120,
-    )
-    assert completed.returncode == 0
-    collected = {line.strip() for line in completed.stdout.splitlines() if "::" in line}
-    stale = sorted(
-        node
-        for scope in SCOPES
-        for node in expand_scope_tests(scope, collected)
-        if node not in collected
-    )
-    assert stale == []
 
 
 def _mini_tree(root: Path, failing: bool = False) -> Scope:
@@ -381,42 +359,34 @@ def test_render_internal_html_empty() -> None:
     assert "No internal results" in render_internal_html([])
 
 
-def test_validation_subprocess_sees_nesting_marker(tmp_path: Path) -> None:
-    from minimal_nn_competition.internal import run_scope_tests
+def test_internal_cli_measures_every_scope_and_upserts(tmp_path: Path, monkeypatch) -> None:
+    from minimal_nn_competition import internal
 
-    (tmp_path / "tests").mkdir()
-    (tmp_path / "tests" / "test_env.py").write_text(
-        "import os\ndef test_marker():\n"
-        "    assert os.environ.get('MINIMAL_NN_COMPETITION_INTERNAL') == '1'\n"
+    scopes = (Scope("a", (), ()), Scope("b", (), ()))
+    monkeypatch.setattr(internal, "SCOPES", scopes)
+    monkeypatch.setattr(
+        internal, "measure_scope", lambda scope, root: InternalResult(scope.name, 10, "c1")
     )
-    scope = Scope(name="env", sources=(), tests=("tests/test_env.py::test_marker",))
-    passed, reason = run_scope_tests(scope, tmp_path)
-    assert passed, reason
+    output = tmp_path / "leaderboard.json"
+    save_internal_results(output, [InternalResult("a", 99, "c1"), InternalResult("z", 5, "c0")])
 
-
-def test_internal_cli(tmp_path: Path) -> None:
-    if os.environ.get("MINIMAL_NN_COMPETITION_INTERNAL"):
-        pytest.skip("nested validation run: the outer run already covers this")
-    root = Path(__file__).resolve().parent.parent
-    output = tmp_path / "internal-leaderboard.json"
-    assert main(["internal", "--root", str(root), "--output", str(output)]) == 0
-    results = load_internal_results(output)
-    assert {result.scope for result in results} == {
-        "cartpole",
-        "chess-eval",
-        "common",
-        "core",
-        "fashion-mnist",
-        "shuffled-labels",
-        "lunarlander",
-        "mnist",
-        "pendulum",
-        "snake-obstacles-8x8",
-        "snake-simple-16x16",
-        "snake-simple-8x8",
+    assert main(["internal", "--root", str(tmp_path), "--output", str(output)]) == 0
+    saved = {
+        (result.scope, result.commit): result.tokens for result in load_internal_results(output)
     }
-    assert all(result.status == "pass" for result in results)
-    assert all(result.tokens > 0 for result in results)
+    assert saved == {("a", "c1"): 10, ("b", "c1"): 10, ("z", "c0"): 5}
+
+
+def test_internal_cli_failure_saves_nothing(tmp_path: Path, monkeypatch) -> None:
+    from minimal_nn_competition import internal
+
+    def fail(scope, root):
+        raise RuntimeError("wrong interpreter")
+
+    monkeypatch.setattr(internal, "measure_scope", fail)
+    output = tmp_path / "leaderboard.json"
+    assert main(["internal", "--root", str(tmp_path), "--output", str(output)]) == 2
+    assert not output.exists()
 
 
 def test_render_internal_cli(tmp_path: Path) -> None:

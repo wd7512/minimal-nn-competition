@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import platform
 import subprocess
 import sys
@@ -12,10 +11,6 @@ from datetime import UTC, datetime
 from minimal_nn_competition.internal.scoring import RULES_VERSION, score_files
 
 logger = logging.getLogger(__name__)
-
-# Set in validation subprocesses so tests that invoke `mnnc internal` itself
-# skip instead of recursing (the outer run already covers them).
-_NESTED_ENV_VAR = "MINIMAL_NN_COMPETITION_INTERNAL"
 
 PACKAGE = "src/minimal_nn_competition"
 _BENCHMARKS = f"{PACKAGE}/benchmarks"
@@ -73,7 +68,6 @@ tests/test_core.py::test_config_description_is_optional
 tests/test_core.py::test_config_accepts_input_indices
 tests/test_core.py::test_config_rejects_duplicate_input_indices
 tests/test_core.py::test_config_rejects_missing_identity
-tests/test_core.py::test_config_rejects_linear_hidden_sizes
 tests/test_core.py::test_registry_and_leaderboard_ranking
 tests/test_core.py::test_rank_snake_failed_ties_favour_longest_game
 tests/test_core.py::test_rank_snake_keeps_score_over_parameters
@@ -117,7 +111,7 @@ tests/test_submission_check.py""".splitlines()
             ]
             + ["tests/test_submission_dates.py", "tests/test_featured_cards.py"]
             + ["tests/test_shuffled_label_pilot.py"]
-            + ["tests/test_how_to.py"]
+            + ["tests/test_how_to.py", "tests/test_weights_visual.py"]
         ),
     ),
     Scope(
@@ -375,7 +369,6 @@ def check_interpreter(root):
 
 def run_scope_tests(scope, root, timeout=600):
     """Run a scope's tests; return (passed, failure reason)."""
-    env = {**os.environ, _NESTED_ENV_VAR: "1"}
     try:
         completed = subprocess.run(
             [sys.executable, "-m", "pytest", "-q", *scope.tests],
@@ -383,7 +376,6 @@ def run_scope_tests(scope, root, timeout=600):
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=env,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return False, f"could not run tests: {exc}"

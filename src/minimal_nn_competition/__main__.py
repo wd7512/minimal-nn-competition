@@ -9,6 +9,7 @@ from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    WEIGHT_BENCHMARKS,
     available_benchmarks,
     create_benchmark,
 )
@@ -81,7 +82,7 @@ def _parser():
         "--replays",
         type=Path,
         default=None,
-        help="Directory of Snake replay JSON and native control MP4 files recorded by collect",
+        help="Directory of Snake replay JSON, control MP4 and in-browser weights JSON recorded by collect",
     )
     speed = add("speed", help="Benchmark the local Snake Simple 8x8 environment")
     speed.add_argument("--duration", type=float, default=1.0)
@@ -124,7 +125,7 @@ def _parser():
         "--replay-dir",
         type=Path,
         default=None,
-        help="Record one seed-0 Snake or control game per submission into this directory",
+        help="Record a seed-0 Snake or control game, or the weights for the in-browser page, per submission",
     )
     download = add("download-mnist", help="Download the official MNIST dataset")
     _download_args(download)
@@ -292,7 +293,7 @@ def main(argv=None):
                 benchmark = create_benchmark(submission.config.benchmark, **kwargs)
                 results.append(evaluate_submission(submission, benchmark))
                 if args.replay_dir is not None and submission.config.benchmark in (
-                    SNAKE_BENCHMARKS + RL_BENCHMARKS
+                    SNAKE_BENCHMARKS + RL_BENCHMARKS + WEIGHT_BENCHMARKS
                 ):
                     _record_replay(args.replay_dir, config_path.parent.name, benchmark, submission)
             except (OSError, RuntimeError, SubmissionError, TypeError, ValueError) as exc:

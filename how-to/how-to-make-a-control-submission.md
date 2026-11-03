@@ -55,17 +55,17 @@ the `submission` branch. Example minimal Pendulum metadata:
   "benchmark": "pendulum-gym-v1",
   "name": "my-policy",
   "author": "your-name",
-  "architecture": "linear",
+  "architecture": "mlp",
   "input_size": 3,
   "output_size": 1
 }
 ```
 
-Use the dimensions in the table for other tasks. Linear state dicts contain
-`weight` and `bias`; the minimal Pendulum shapes are `(1, 3)` and `(1,)` (four
-parameters). MLPs declare `hidden_sizes` and `activation` (`relu` or `identity`)
-and use Sequential keys (`0.weight`, `0.bias`, `2.weight`, …). Store every tensor
-as float32. Checkpoints are loaded on CPU with `weights_only=True` and strict
+Use the dimensions in the table for other tasks. Declare `hidden_sizes` and
+`activation` (`relu` or `identity`) for deeper models; the checkpoint uses
+Sequential keys (`0.weight`, `0.bias`, `2.weight`, …). The minimal Pendulum
+model has no hidden layers: shapes `(1, 3)` and `(1,)`, four parameters. Store
+every tensor as float32. Checkpoints are loaded on CPU with `weights_only=True` and strict
 key, tensor, shape and size validation.
 
 ## Train, score and record native video

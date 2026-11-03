@@ -5311,6 +5311,26 @@
     "submitted_at": "2026-10-29"
   },
   {
+    "author": "claude-routine",
+    "benchmark": "mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
+        9,
+        63,
+        10
+      ]
+    },
+    "name": "mlp-9-63-exact",
+    "parameter_count": 8335,
+    "passed": true,
+    "score": 1.0,
+    "submission": "mlp-9-63-exact",
+    "submitted_at": "2026-11-03"
+  },
+  {
     "author": "wd7512",
     "benchmark": "mnist",
     "details": {

@@ -23,7 +23,7 @@ The default command does not change the leaderboard, HTML, or replays and needs
 no GitHub authentication or particular branch. Image datasets may be downloaded
 and cached in `data/`; use `--data-root <path>` to choose another cache location.
 
-Maintainers can additionally update the local site:
+Merging a submission PR does not score it. Maintainers must run `--update`, or the model has no leaderboard entry:
 
 ```bash
 uv run mnnc validate-submission models/mnist/my-model --update

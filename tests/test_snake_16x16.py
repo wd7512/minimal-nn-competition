@@ -86,11 +86,11 @@ def test_16x16_evaluation_uses_256_cell_board(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "snake-simple-16x16",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 24,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 24)), "0.bias": torch.zeros(4)},
     )
     score, passed, details = SnakeSimple16x16Benchmark(seeds=(0, 1)).evaluate(
         materialize_submission(submission)
@@ -127,11 +127,11 @@ def test_16x16_full_board_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         tmp_path,
         {
             "benchmark": "snake-simple-16x16",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 24,
             "output_size": 4,
         },
-        {"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 24)), "0.bias": torch.zeros(4)},
     )
     score, passed, details = SnakeSimple16x16Benchmark(seeds=(0, 1)).evaluate(
         materialize_submission(submission)
@@ -189,13 +189,13 @@ def test_collect_records_16x16_replay(
                 "benchmark": "snake-simple-16x16",
                 "name": "tiny",
                 "author": "tester",
-                "architecture": "linear",
+                "architecture": "mlp",
                 "input_size": 24,
                 "output_size": 4,
             }
         )
     )
-    torch.save({"weight": torch.zeros((4, 24)), "bias": torch.zeros(4)}, directory / "model.pt")
+    torch.save({"0.weight": torch.zeros((4, 24)), "0.bias": torch.zeros(4)}, directory / "model.pt")
     commit_submission_date(tmp_path)
     replays = tmp_path / "replays"
     assert (
@@ -299,12 +299,12 @@ def test_16x16_rejects_out_of_range_input_indices(tmp_path: Path) -> None:
         tmp_path,
         {
             "benchmark": "snake-simple-16x16",
-            "architecture": "linear",
+            "architecture": "mlp",
             "input_size": 1,
             "output_size": 4,
             "input_indices": [24],
         },
-        {"weight": torch.zeros((4, 1)), "bias": torch.zeros(4)},
+        {"0.weight": torch.zeros((4, 1)), "0.bias": torch.zeros(4)},
     )
     with pytest.raises(ValueError, match="input_indices"):
         SnakeSimple16x16Benchmark().load_submission(submission)

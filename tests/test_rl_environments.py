@@ -25,16 +25,16 @@ def zero_submission(root, name):
         benchmark=name,
         name="zero",
         author="tester",
-        architecture="linear",
+        architecture="mlp",
         input_size=task["inputs"],
         output_size=task["outputs"],
     )
     (directory / "config.json").write_text(json.dumps(config))
-    model = torch.nn.Linear(task["inputs"], task["outputs"])
-    with torch.no_grad():
-        model.weight.zero_()
-        model.bias.zero_()
-    torch.save(model.state_dict(), directory / "model.pt")
+    state = {
+        "0.weight": torch.zeros(task["outputs"], task["inputs"]),
+        "0.bias": torch.zeros(task["outputs"]),
+    }
+    torch.save(state, directory / "model.pt")
     return Submission.from_directory(directory)
 
 
