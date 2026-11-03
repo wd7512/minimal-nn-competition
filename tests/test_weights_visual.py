@@ -99,3 +99,14 @@ def test_oversized_models_are_not_exported(tmp_path, monkeypatch):
     games = tmp_path / "games"
     _record_replay(games, "tiny", create_benchmark("mnist"), submission)
     assert not list(games.glob("*"))
+
+
+def test_chess_script_encoding_matches_scoring_encoding():
+    """Pin the JS board encoding to benchmarks.chess_eval.encode (planes, side, castling)."""
+    from minimal_nn_competition.benchmarks import chess_eval
+    from minimal_nn_competition.leaderboard.render import _CHESS_SCRIPT
+
+    assert f'P = "{"".join(chess_eval._PIECES)}"' in _CHESS_SCRIPT
+    assert "x[768]" in _CHESS_SCRIPT and "x[769 + j]" in _CHESS_SCRIPT
+    assert '["K", "Q", "k", "q"]' in _CHESS_SCRIPT
+    assert chess_eval.INPUT_SIZE == 773
