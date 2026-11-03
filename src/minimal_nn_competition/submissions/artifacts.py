@@ -6,7 +6,11 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from minimal_nn_competition.benchmarks.registry import RL_BENCHMARKS, WEIGHT_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import (
+    CHESS_BENCHMARKS,
+    RL_BENCHMARKS,
+    WEIGHT_BENCHMARKS,
+)
 
 logger = logging.getLogger(__name__)
 _SITE_FILES = ("leaderboard.json", "index.html", ".nojekyll")
@@ -79,7 +83,8 @@ def _preserve_unrendered_files(source: Path, target: Path) -> None:
                 shutil.copy2(path, destination)
 
 
-MAX_WEIGHT_PARAMETERS = 700_000
+MAX_WEIGHT_PARAMETERS = 120_000  # image boards
+MAX_CHESS_WEIGHT_PARAMETERS = 700_000
 FASHION_LABELS = [
     "T-shirt/top",
     "Trouser",
@@ -98,7 +103,12 @@ def _weights_payload(loaded):
     """Return the model as plain lists for in-browser inference, or None if too large."""
     config = loaded.config
     layers = [m for m in loaded.model if hasattr(m, "weight")]
-    if sum(p.numel() for p in loaded.model.parameters()) > MAX_WEIGHT_PARAMETERS:
+    limit = (
+        MAX_CHESS_WEIGHT_PARAMETERS
+        if config.benchmark in CHESS_BENCHMARKS
+        else MAX_WEIGHT_PARAMETERS
+    )
+    if sum(p.numel() for p in loaded.model.parameters()) > limit:
         return None
     return {
         "layers": [
