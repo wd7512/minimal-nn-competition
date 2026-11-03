@@ -1,0 +1,14 @@
+{
+  "benchmark": "lunarlander-gym-v1",
+  "name": "distill-16",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 8,
+  "output_size": 4,
+  "hidden_sizes": [
+    16
+  ],
+  "activation": "relu",
+  "description": "Single 16-unit ReLU hidden layer distilled with DAgger from the 51x51 prune51-salience policy.",
+  "normalisation": false
+}
