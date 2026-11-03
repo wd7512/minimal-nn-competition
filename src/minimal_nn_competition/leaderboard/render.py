@@ -568,7 +568,7 @@ const START = "rnbqkbnr" + "pppppppp" + " ".repeat(32) + "PPPPPPPP" + "RNBQKBNR"
 let board = [...START], sel = null, from = null;
 const $ = (id) => document.getElementById(id);
 const draw = () => {
-  $("chess").innerHTML = board.map((p, i) => `<button class="sq${(i + (i >> 3)) % 2 ? " dark" : ""}${i === from ? " from" : ""}" data-i="${i}" aria-label="square ${i}">${p === " " ? "" : G[P.indexOf(p)]}</button>`).join("");
+  $("chess").innerHTML = board.map((p, i) => `<button class="sq${(i + (i >> 3)) % 2 ? " dark" : ""}${i === from ? " from" : ""}" data-i="${i}" aria-label="${"abcdefgh"[i % 8]}${8 - (i >> 3)} ${p === " " ? "empty" : p}">${p === " " ? "" : G[P.indexOf(p)]}</button>`).join("");
   const x = new Array(773).fill(0);
   board.forEach((p, i) => p !== " " && (x[P.indexOf(p) * 64 + i] = 1));
   x[768] = $("side").value === "w" ? 1 : -1;
@@ -589,6 +589,7 @@ $("pal").onclick = (ev) => { if ("p" in ev.target.dataset) { sel = ev.target.dat
 $("reset").onclick = () => { board = [...START]; from = null; draw(); };
 $("clearb").onclick = () => { board = board.map(() => " "); from = null; draw(); };
 document.querySelectorAll("#side,.castle").forEach((e) => (e.onchange = draw));
+if (M.layers[0].w[0].length < 773) document.querySelectorAll(".castle").forEach((e) => (e.disabled = true));
 draw();
 """
 
@@ -1086,7 +1087,8 @@ def render_submission_html(result, payload, rank, total):
                 f"<style>{style}</style>"
                 + head
                 + '<p class="muted">Move or place pieces; the model evaluates the position '
-                "in your browser. Pick a piece to place it, or Move to move pieces.</p>"
+                "in your browser. Pick a piece to place it, or Move to move pieces. "
+                "Positions are not checked for legality.</p>"
                 '<div id="chess" class="chess"></div><div id="pal" class="controls"></div>'
                 '<div class="controls"><label>To move <select id="side"><option value="w">White'
                 '</option><option value="b">Black</option></select></label>'
