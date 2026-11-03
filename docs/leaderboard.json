@@ -3645,6 +3645,26 @@
       "structure": [
         784,
         10,
+        29,
+        10
+      ]
+    },
+    "name": "prune-10-29",
+    "parameter_count": 8469,
+    "passed": true,
+    "score": 1.0,
+    "submission": "prune-10-29",
+    "submitted_at": "2026-11-02"
+  },
+  {
+    "author": "wd7512",
+    "benchmark": "mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
+        10,
         31,
         10
       ]
