@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import platform
 import subprocess
 import sys
@@ -12,10 +11,6 @@ from datetime import UTC, datetime
 from minimal_nn_competition.internal.scoring import RULES_VERSION, score_files
 
 logger = logging.getLogger(__name__)
-
-# Set in validation subprocesses so tests that invoke `mnnc internal` itself
-# skip instead of recursing (the outer run already covers them).
-_NESTED_ENV_VAR = "MINIMAL_NN_COMPETITION_INTERNAL"
 
 PACKAGE = "src/minimal_nn_competition"
 _BENCHMARKS = f"{PACKAGE}/benchmarks"
@@ -374,7 +369,6 @@ def check_interpreter(root):
 
 def run_scope_tests(scope, root, timeout=600):
     """Run a scope's tests; return (passed, failure reason)."""
-    env = {**os.environ, _NESTED_ENV_VAR: "1"}
     try:
         completed = subprocess.run(
             [sys.executable, "-m", "pytest", "-q", *scope.tests],
@@ -382,7 +376,6 @@ def run_scope_tests(scope, root, timeout=600):
             capture_output=True,
             text=True,
             timeout=timeout,
-            env=env,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return False, f"could not run tests: {exc}"

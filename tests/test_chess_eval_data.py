@@ -42,28 +42,27 @@ def test_chess_eval_100k_contains_10k() -> None:
 
 
 def test_castling_encoding_removes_incompatible_dataset_collisions() -> None:
-    for name, _ in TIERS:
-        _, _, rows = _rows(name)
-        legacy = defaultdict(list)
-        current = defaultdict(list)
-        for row in rows:
-            # Compact exact keys; values are -1, 0, or 1, so no information is lost.
-            key = bytes(int(value + 1) for value in encode(row["fen"]))
-            legacy[key[:769]].append(row["cp"])
-            current[key].append(row["cp"])
+    # The 100k tier contains the 10k tier, so its collision counts bound the 10k ones.
+    _, _, rows = _rows("100k")
+    legacy = defaultdict(list)
+    current = defaultdict(list)
+    for row in rows:
+        # Compact exact keys; values are -1, 0, or 1, so no information is lost.
+        key = bytes(int(value + 1) for value in encode(row["fen"]))
+        legacy[key[:769]].append(row["cp"])
+        current[key].append(row["cp"])
 
-        # A single prediction can cover a 20 cp interval at the ±10 cp tolerance.
-        def unavoidable_errors(groups):
-            return sum(
-                len(scores) - max(sum(low <= cp <= low + 20 for cp in scores) for low in scores)
-                for scores in groups.values()
-            )
+    # A single prediction can cover a 20 cp interval at the ±10 cp tolerance.
+    def unavoidable_errors(groups):
+        return sum(
+            len(scores) - max(sum(low <= cp <= low + 20 for cp in scores) for low in scores)
+            for scores in groups.values()
+        )
 
-        if name == "100k":
-            assert len(legacy) == 99_968
-            assert sum(max(scores) - min(scores) > 20 for scores in legacy.values()) == 14
-            assert unavoidable_errors(legacy) == 14
-        assert unavoidable_errors(current) == 0
+    assert len(legacy) == 99_968
+    assert sum(max(scores) - min(scores) > 20 for scores in legacy.values()) == 14
+    assert unavoidable_errors(legacy) == 14
+    assert unavoidable_errors(current) == 0
 
 
 def test_checked_in_chess_examples_pass() -> None:
