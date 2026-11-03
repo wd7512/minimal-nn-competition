@@ -359,6 +359,36 @@ def test_render_internal_html_empty() -> None:
     assert "No internal results" in render_internal_html([])
 
 
+def test_internal_cli_measures_every_scope_and_upserts(tmp_path: Path, monkeypatch) -> None:
+    from minimal_nn_competition import internal
+
+    scopes = (Scope("a", (), ()), Scope("b", (), ()))
+    monkeypatch.setattr(internal, "SCOPES", scopes)
+    monkeypatch.setattr(
+        internal, "measure_scope", lambda scope, root: InternalResult(scope.name, 10, "c1")
+    )
+    output = tmp_path / "leaderboard.json"
+    save_internal_results(output, [InternalResult("a", 99, "c1"), InternalResult("z", 5, "c0")])
+
+    assert main(["internal", "--root", str(tmp_path), "--output", str(output)]) == 0
+    saved = {
+        (result.scope, result.commit): result.tokens for result in load_internal_results(output)
+    }
+    assert saved == {("a", "c1"): 10, ("b", "c1"): 10, ("z", "c0"): 5}
+
+
+def test_internal_cli_failure_saves_nothing(tmp_path: Path, monkeypatch) -> None:
+    from minimal_nn_competition import internal
+
+    def fail(scope, root):
+        raise RuntimeError("wrong interpreter")
+
+    monkeypatch.setattr(internal, "measure_scope", fail)
+    output = tmp_path / "leaderboard.json"
+    assert main(["internal", "--root", str(tmp_path), "--output", str(output)]) == 2
+    assert not output.exists()
+
+
 def test_render_internal_cli(tmp_path: Path) -> None:
 
     path = tmp_path / "internal-leaderboard.json"
