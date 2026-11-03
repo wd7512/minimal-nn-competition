@@ -4525,6 +4525,26 @@
       "samples": 70000,
       "structure": [
         784,
+        9,
+        64,
+        10
+      ]
+    },
+    "name": "mlp-9-64",
+    "parameter_count": 8355,
+    "passed": true,
+    "score": 1.0,
+    "submission": "mlp-9-64",
+    "submitted_at": "2026-11-03"
+  },
+  {
+    "author": "wd7512",
+    "benchmark": "mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
         10,
         24,
         10
