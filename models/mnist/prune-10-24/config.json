@@ -1,0 +1,16 @@
+{
+  "benchmark": "mnist",
+  "name": "prune-10-24",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [
+    10,
+    24
+  ],
+  "activation": "relu",
+  "normalisation": true,
+  "description": "Six hidden units pruned from a 10-31 network that memorises all 70k MNIST images, then polished with full-batch L-BFGS until every image is classified correctly.",
+  "input_indices": null
+}
