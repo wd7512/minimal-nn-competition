@@ -17,10 +17,10 @@ def _submission(tmp_path: Path, benchmark: str, hidden: list[int], *, normalise=
     directory = tmp_path / "models" / benchmark / "tiny"
     directory.mkdir(parents=True)
     sizes = [784, *hidden, 10]
+    torch.manual_seed(0)
     layers = []
     for a, b in pairwise(sizes):
         layers += [torch.nn.Linear(a, b), torch.nn.ReLU()]
-    torch.manual_seed(0)
     model = torch.nn.Sequential(*layers[:-1])
     torch.save(model.state_dict(), directory / "model.pt")
     (directory / "config.json").write_text(
