@@ -5,7 +5,11 @@ from pathlib import Path
 import pytest
 import torch
 
-from minimal_nn_competition.benchmarks.registry import WEIGHT_BENCHMARKS, create_benchmark
+from minimal_nn_competition.benchmarks.registry import (
+    CHESS_BENCHMARKS,
+    WEIGHT_BENCHMARKS,
+    create_benchmark,
+)
 from minimal_nn_competition.leaderboard.render import render_site
 from minimal_nn_competition.model.entry import Submission
 from minimal_nn_competition.runner.entry import BenchmarkResult
@@ -13,10 +17,12 @@ from minimal_nn_competition.submissions import artifacts
 from minimal_nn_competition.submissions.artifacts import _load_replays, _record_replay
 
 
-def _submission(tmp_path: Path, benchmark: str, hidden: list[int], *, normalise=True) -> Submission:
+def _submission(
+    tmp_path: Path, benchmark: str, hidden: list[int], *, normalise=True, inputs=784, outputs=10
+) -> Submission:
     directory = tmp_path / "models" / benchmark / "tiny"
     directory.mkdir(parents=True)
-    sizes = [784, *hidden, 10]
+    sizes = [inputs, *hidden, outputs]
     layers = []
     for a, b in pairwise(sizes):
         layers += [torch.nn.Linear(a, b), torch.nn.ReLU()]
@@ -30,8 +36,8 @@ def _submission(tmp_path: Path, benchmark: str, hidden: list[int], *, normalise=
                 "name": "tiny",
                 "author": "me",
                 "architecture": "mlp",
-                "input_size": 784,
-                "output_size": 10,
+                "input_size": inputs,
+                "output_size": outputs,
                 "hidden_sizes": hidden,
                 "normalisation": normalise,
             }
@@ -55,14 +61,18 @@ def _forward(payload: dict, pixels: list[float]) -> list[float]:
 
 @pytest.mark.parametrize("benchmark", WEIGHT_BENCHMARKS)
 def test_exported_weights_match_the_model_and_render_a_widget(tmp_path, benchmark):
-    submission = _submission(tmp_path, benchmark, [8, 6])
+    chess = benchmark in CHESS_BENCHMARKS
+    size, widget = (773, 'id="chess"') if chess else (784, 'id="pad"')
+    submission = _submission(
+        tmp_path, benchmark, [8, 6], normalise=not chess, inputs=size, outputs=1 if chess else 10
+    )
     games = tmp_path / "docs" / "games"
     _record_replay(games, "tiny", create_benchmark(benchmark), submission)
     path = games / f"{benchmark}--tiny.json"
     payload = json.loads(path.read_text())
-    pixels = [float(i % 256) for i in range(784)]
+    pixels = [float(i % 2) if chess else float(i % 256) for i in range(size)]
     model = create_benchmark(benchmark).load_submission(submission).model
-    expected = model(torch.tensor(pixels)[None] / 255)[0]
+    expected = model(torch.tensor(pixels)[None] / (1 if chess else 255))[0]
     assert _forward(payload, pixels) == pytest.approx(expected.tolist(), abs=0.05)
 
     result = BenchmarkResult(
@@ -78,7 +88,7 @@ def test_exported_weights_match_the_model_and_render_a_widget(tmp_path, benchmar
     )
     render_site([result], tmp_path / "docs", _load_replays(games))
     page = (tmp_path / "docs" / "submissions" / f"{benchmark}--tiny.html").read_text()
-    assert 'id="pad"' in page and '"layers"' in page
+    assert widget in page and '"layers"' in page
 
 
 def test_oversized_models_are_not_exported(tmp_path, monkeypatch):
