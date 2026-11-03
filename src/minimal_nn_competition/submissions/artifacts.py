@@ -80,6 +80,18 @@ def _preserve_unrendered_files(source: Path, target: Path) -> None:
 
 
 MAX_WEIGHT_PARAMETERS = 120_000
+FASHION_LABELS = [
+    "T-shirt/top",
+    "Trouser",
+    "Pullover",
+    "Dress",
+    "Coat",
+    "Sandal",
+    "Shirt",
+    "Sneaker",
+    "Bag",
+    "Ankle-boot",
+]
 
 
 def _weights_payload(loaded):
@@ -98,6 +110,7 @@ def _weights_payload(loaded):
         ],
         "relu": config.activation == "relu",
         "scale": 1 / 255 if config.normalisation else 1,
+        "labels": FASHION_LABELS if config.benchmark == "fashion-mnist" else None,
     }
 
 
