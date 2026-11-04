@@ -157,7 +157,7 @@ def main():
         sys.exit(1)
 
     def _copy(m):
-        return {k: (v.clone() if torch.is_tensor(v) else list(v))
+        return {k: (v.detach().clone() if torch.is_tensor(v) else list(v))
                 for k, v in m.items()}
 
     def drop_input(m, j):
