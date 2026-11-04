@@ -1,0 +1,111 @@
+[11:16:47] === Vibe CI start ===
+[11:16:47] smoke=1 name=glm-cycle-smoke target=submit/glm-cycle-smoke
+[11:16:47] runner: Linux runnervm48cm3 7.0.0-1017-azure #17~24.04.1-Ubuntu SMP PREEMPT Thu Sep 24 18:46:57 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+[11:16:47] pwd=/home/runner/work/minimal-nn-competition/minimal-nn-competition
+[11:16:47] git head: 8adc87c1e60b76437e054e30ddcab42c8e2cb05f branch checkout ref
+[11:16:47] step 1/6: uv sync
+Using CPython 3.12.3 interpreter at: /usr/bin/python3.12
+Creating virtual environment at: .venv
+Resolved 53 packages in 0.90ms
+   Building minimal-nn-competition @ file:///home/runner/work/minimal-nn-competition/minimal-nn-competition
+Downloading pydantic-core (2.1MiB)
+Downloading networkx (2.0MiB)
+Downloading sympy (6.0MiB)
+Downloading pygments (1.2MiB)
+Downloading pygame (13.3MiB)
+Downloading ty (13.9MiB)
+Downloading numpy (16.0MiB)
+Downloading ruff (9.9MiB)
+Downloading box2d (3.5MiB)
+Downloading torch (187.2MiB)
+ Downloaded pydantic-core
+ Downloaded pygments
+ Downloaded networkx
+ Downloaded box2d
+ Downloaded ruff
+      Built minimal-nn-competition @ file:///home/runner/work/minimal-nn-competition/minimal-nn-competition
+ Downloaded sympy
+ Downloaded ty
+ Downloaded pygame
+ Downloaded numpy
+ Downloaded torch
+Prepared 30 packages in 1.99s
+Installed 30 packages in 136ms
+ + annotated-types==0.8.0
+ + box2d==2.3.10
+ + cloudpickle==3.1.2
+ + execnet==2.1.2
+ + farama-notifications==0.0.6
+ + filelock==4.2.4
+ + fsspec==2026.9.0
+ + gymnasium==1.2.3
+ + iniconfig==2.3.0
+ + jinja2==3.1.6
+ + markupsafe==3.0.4
+ + minimal-nn-competition==0.0.3 (from file:///home/runner/work/minimal-nn-competition/minimal-nn-competition)
+ + mpmath==1.3.0
+ + networkx==3.7
+ + numpy==2.5.4
+ + packaging==26.2
+ + pluggy==1.6.0
+ + pydantic==2.14.1
+ + pydantic-core==2.50.1
+ + pygame==2.6.1
+ + pygments==2.20.0
+ + pytest==9.1.1
+ + pytest-xdist==3.8.0
+ + ruff==0.17.1
+ + setuptools==84.2.1
+ + sympy==1.14.0
+ + torch==2.14.1+cpu
+ + ty==0.0.90
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+[11:16:49] step 2/6: build submission (builder/vibe/build.py)
+1 candidate architectures (smoke=True)
+smoke params=692 hidden=(32, 16) matched=156/256
+NO EXACT MODEL FOUND
+[11:16:58] FAILED at step: build.py
+[11:16:58] last 40 log lines:
+   Downloaded numpy
+   Downloaded torch
+  Prepared 30 packages in 1.99s
+  Installed 30 packages in 136ms
+   + annotated-types==0.8.0
+   + box2d==2.3.10
+   + cloudpickle==3.1.2
+   + execnet==2.1.2
+   + farama-notifications==0.0.6
+   + filelock==4.2.4
+   + fsspec==2026.9.0
+   + gymnasium==1.2.3
+   + iniconfig==2.3.0
+   + jinja2==3.1.6
+   + markupsafe==3.0.4
+   + minimal-nn-competition==0.0.3 (from file:///home/runner/work/minimal-nn-competition/minimal-nn-competition)
+   + mpmath==1.3.0
+   + networkx==3.7
+   + numpy==2.5.4
+   + packaging==26.2
+   + pluggy==1.6.0
+   + pydantic==2.14.1
+   + pydantic-core==2.50.1
+   + pygame==2.6.1
+   + pygments==2.20.0
+   + pytest==9.1.1
+   + pytest-xdist==3.8.0
+   + ruff==0.17.1
+   + setuptools==84.2.1
+   + sympy==1.14.0
+   + torch==2.14.1+cpu
+   + ty==0.0.90
+   + typing-extensions==4.16.0
+   + typing-inspection==0.4.4
+  [11:16:49] step 2/6: build submission (builder/vibe/build.py)
+  1 candidate architectures (smoke=True)
+  smoke params=692 hidden=(32, 16) matched=156/256
+  NO EXACT MODEL FOUND
+  [11:16:58] FAILED at step: build.py
+  [11:16:58] last 40 log lines:
+[11:16:58] END (failure)
+[11:16:58] publishing run log via gh api
