@@ -198,40 +198,88 @@ def main():
     # (validator expects output_size 4), so skip output pruning.
 
     step = 0
+
+    def try_op(m, kind, j, rounds=6, tag=""):
+        """Try removing one unit; returns reduced model or None."""
+        size, rem = drop[kind]
+        if kind == "input" and len(m["idx"]) <= 1:
+            return None
+        if size(m) <= j:
+            return None
+        cand = rem(m, j)
+        out = finetune(cand, rounds=rounds)
+        if out is not None:
+            _, exact, mm = evaluate(out)
+            if exact and mm >= MARGIN:
+                return out
+        return None
+
+    def current_ops(m):
+        ops = []
+        for j in range(len(m["idx"])):
+            ops.append(("input", j))
+        for j in range(m["W1"].shape[0]):
+            ops.append(("l1", j))
+        for j in range(m["W2"].shape[0]):
+            ops.append(("l2", j))
+        return ops
+
     improved = True
     while improved and time.time() < DEADLINE:
         improved = False
-        # one pruning round: try every removable unit, keep every success
-        order = []
-        for j in range(len(model["idx"])):
-            order.append(("input", j))
-        for j in range(model["W1"].shape[0]):
-            order.append(("l1", j))
-        for j in range(model["W2"].shape[0]):
-            order.append(("l2", j))
-        for kind, j in order:
+        # phase 1: greedy single removals
+        for kind, j in current_ops(model):
             if time.time() > DEADLINE:
                 break
-            size, rem = drop[kind]
-            if kind == "input" and len(model["idx"]) <= 1:
-                continue
-            if size(model) <= j:
-                continue
-            cand = rem(model, j)
+            out = try_op(model, kind, j)
             step += 1
-            out = finetune(cand)
-            ok = False
             if out is not None:
-                matched, exact, mm = evaluate(out)
-                ok = exact and mm >= MARGIN
-            if ok:
                 model = out
                 improved = True
                 log(f"[{time.time()-t0:6.1f}s] pruned {kind}[{j}] -> "
-                    f"params={param_count(model)} min_margin={mm:.4g}")
+                    f"params={param_count(model)}")
             else:
                 log(f"[{time.time()-t0:6.1f}s] keep {kind}[{j}] "
-                    f"({param_count(cand)} trial {step} failed)")
+                    f"(trial {step} failed)")
+        if improved or time.time() > DEADLINE:
+            continue
+        # phase 2: simultaneous pair removals
+        ops = current_ops(model)
+        n = len(ops)
+        pair_done = 0
+        for a in range(n):
+            if time.time() > DEADLINE or improved:
+                break
+            for b in range(a + 1, n):
+                if time.time() > DEADLINE:
+                    break
+                ka, ia = ops[a]
+                kb, ib = ops[b]
+                _, rem_a = drop[ka]
+                _, rem_b = drop[kb]
+                if ka == kb and ia >= ib:
+                    continue
+                if ka == kb:
+                    # same layer: remove the higher index first
+                    c1 = rem_b(model, ib)
+                    cand = rem_a(c1, ia)
+                else:
+                    c1 = rem_a(model, ia)
+                    cand = rem_b(c1, ib)
+                step += 1
+                pair_done += 1
+                out = finetune(cand, rounds=14)
+                if out is not None:
+                    _, exact, mm = evaluate(out)
+                    if exact and mm >= MARGIN:
+                        model = out
+                        improved = True
+                        log(f"[{time.time()-t0:6.1f}s] pruned pair "
+                            f"{ka}[{ia}]+{kb}[{ib}] -> "
+                            f"params={param_count(model)}")
+                        break
+        if pair_done and not improved:
+            log(f"[{time.time()-t0:6.1f}s] all {pair_done} pairs failed")
 
     matched, exact, mm = evaluate(model)
     p = param_count(model)

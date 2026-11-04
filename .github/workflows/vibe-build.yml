@@ -10,9 +10,9 @@ permissions:
   contents: write
 
 env:
-  VIBE_SMOKE: "1" # set to "0" for the real run
-  VIBE_NAME: glm-cycle-smoke # real run: glm-cycle-distilled
-  VIBE_TARGET: submit/glm-cycle-smoke # real run: submit/glm-cycle-distilled
+  VIBE_SMOKE: "0"
+  VIBE_NAME: glm-cycle-distilled
+  VIBE_TARGET: submit/glm-cycle-distilled
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
