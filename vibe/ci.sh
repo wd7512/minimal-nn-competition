@@ -30,25 +30,28 @@ log "runner: $(uname -a)"
 log "pwd=$(pwd)"
 log "git head: $(git rev-parse HEAD 2>>"$LOG") branch checkout ref"
 
-log "step 1/6: uv sync"
+log "step 1/7: uv sync"
 uv sync --dev --locked >>"$LOG" 2>&1 || fail "uv sync"
 
-log "step 2/6: build submission (builder/vibe/build.py)"
+log "step 2/7: diagnose leader model (best-effort)"
+uv run --no-sync python builder/vibe/diag.py >>"$LOG" 2>&1 || log "diag failed (continuing)"
+
+log "step 3/7: build submission (builder/vibe/build.py)"
 uv run --no-sync python builder/vibe/build.py >>"$LOG" 2>&1 || fail "build.py"
 
-log "step 3/6: official evaluation"
+log "step 4/7: official evaluation"
 uv run --no-sync mnnc evaluate snake-simple-16x16 "models/snake-simple-16x16/${VIBE_NAME}" >>"$LOG" 2>&1 || fail "evaluate"
 
-log "step 4/6: validate submission gate"
+log "step 5/7: validate submission gate"
 uv run --no-sync mnnc validate-submission "models/snake-simple-16x16/${VIBE_NAME}" >>"$LOG" 2>&1 || fail "validate-submission"
 
-log "step 5/6: commit submission files"
+log "step 6/7: commit submission files"
 git config user.name "GLM x le vibe"
 git config user.email "wd7512@users.noreply.github.com"
 git add "models/snake-simple-16x16/${VIBE_NAME}"
 git commit -m "Add snake-simple-16x16/${VIBE_NAME}" >>"$LOG" 2>&1 || fail "git commit"
 
-log "step 6/6: push to ${VIBE_TARGET}"
+log "step 7/7: push to ${VIBE_TARGET}"
 git push --force origin "HEAD:${VIBE_TARGET}" >>"$LOG" 2>&1 || fail "git push"
 
 log "=== SUCCESS ==="
