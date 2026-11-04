@@ -104,15 +104,34 @@ def main():
         opt = torch.optim.Adam(model.parameters(), lr=lr)
         sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, steps)
         for _ in range(steps):
+            m = margins(model)
+            if bool((m >= MARGIN).all().item()):
+                return model
             opt.zero_grad()
             loss = nn.functional.cross_entropy(model(X), Y)
             loss.backward()
             opt.step()
             sched.step()
+        # LBFGS polish: often drives the last few mismatches to exact fit.
+        opt2 = torch.optim.LBFGS(
+            model.parameters(), lr=1.0, max_iter=150,
+            line_search_fn="strong_wolfe",
+        )
+
+        def closure():
+            opt2.zero_grad()
+            loss = nn.functional.cross_entropy(model(X), Y)
+            loss.backward()
+            return loss
+
+        for _ in range(4):
+            if bool((margins(model) >= MARGIN).all().item()):
+                break
+            opt2.step(closure)
         return model
 
     if SMOKE:
-        cands = [(count_params((32, 16)), (32, 16))]
+        cands = [(count_params((64, 32)), (64, 32))]
     else:
         cands = []
         for h in range(8, 34):
@@ -130,7 +149,7 @@ def main():
     best = None
     if SMOKE:
         for p, hidden in cands:
-            model = fit(hidden, seed=1, lr=0.05, steps=4000)
+            model = fit(hidden, seed=1, lr=0.05, steps=6000)
             m = margins(model)
             matched = int((m > 0).sum().item())
             print(f"smoke params={p} hidden={hidden} matched={matched}/{n}", flush=True)
