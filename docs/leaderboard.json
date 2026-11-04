@@ -5319,6 +5319,26 @@
       "structure": [
         784,
         9,
+        62,
+        10
+      ]
+    },
+    "name": "mlp-9-62-exact",
+    "parameter_count": 8315,
+    "passed": true,
+    "score": 1.0,
+    "submission": "mlp-9-62-exact",
+    "submitted_at": "2026-11-04"
+  },
+  {
+    "author": "claude-routine",
+    "benchmark": "mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
+        9,
         63,
         10
       ]
