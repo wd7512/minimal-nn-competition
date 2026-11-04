@@ -4,11 +4,14 @@ Teacher: a fixed closed Hamiltonian cycle over the 16x16 board. The student
 MLP reads only observation indices (0, 1) (head distances), which depend
 purely on the head position, so an exact argmax match on all 256 cells makes
 the student play identically to the teacher: guaranteed fill on every seed.
-The search tries architectures strictly below the current 242-parameter
-leaderboard record for snake-simple-16x16.
+
+Real mode searches architectures strictly below the current 242-parameter
+leaderboard record for snake-simple-16x16. Smoke mode (VIBE_SMOKE=1) trains
+one generously sized net to validate the entire pipeline quickly.
 """
 
 import json
+import os
 import statistics
 import sys
 import time
@@ -23,13 +26,22 @@ from minimal_nn_competition.benchmarks.common.snake.environment import (
 
 SIZE = 16
 BENCH = "snake-simple-16x16"
-NAME = "glm-cycle-distilled"
 AUTHOR = "GLM x le vibe"
-RECORD = 242  # current leaderboard record; require strictly fewer parameters
-IDX = (0, 1)
 DIRECTIONS = ((0, -1), (1, 0), (0, 1), (-1, 0))
-DEADLINE = time.time() + 40 * 60
+IDX = (0, 1)
 MARGIN = 1e-3
+SMOKE = os.environ.get("VIBE_SMOKE", "1") == "1"
+
+if SMOKE:
+    NAME = "glm-cycle-smoke"
+    RECORD = 10 ** 9
+    DEADLINE = time.time() + 10 * 60
+    SEEDS = 5
+else:
+    NAME = "glm-cycle-distilled"
+    RECORD = 242  # current leaderboard record; require strictly fewer parameters
+    DEADLINE = time.time() + 40 * 60
+    SEEDS = 100
 
 
 def serpentine_next(size):
@@ -99,51 +111,63 @@ def main():
             sched.step()
         return model
 
-    cands = []
-    for h in range(8, 34):
-        p = count_params((h,))
-        if p < RECORD:
-            cands.append((p, (h,)))
-    for h1 in range(4, 25):
-        for h2 in range(2, 13):
-            p = count_params((h1, h2))
+    if SMOKE:
+        cands = [(count_params((32, 16)), (32, 16))]
+    else:
+        cands = []
+        for h in range(8, 34):
+            p = count_params((h,))
             if p < RECORD:
-                cands.append((p, (h1, h2)))
-    cands = sorted(set(cands))
-    print(f"{len(cands)} candidate architectures below {RECORD} params", flush=True)
-
-    scores = []
-    for p, hidden in cands:
-        if time.time() > DEADLINE:
-            break
-        model = fit(hidden, seed=p, lr=0.05, steps=1800)
-        matched = int((margins(model) > 0).sum().item())
-        scores.append((p, hidden, matched))
-        print(f"screen params={p} hidden={hidden} matched={matched}/{n}", flush=True)
+                cands.append((p, (h,)))
+        for h1 in range(4, 25):
+            for h2 in range(2, 13):
+                p = count_params((h1, h2))
+                if p < RECORD:
+                    cands.append((p, (h1, h2)))
+        cands = sorted(set(cands))
+    print(f"{len(cands)} candidate architectures (smoke={SMOKE})", flush=True)
 
     best = None
-    for threshold in (224, 192, 160):
-        if best or time.time() > DEADLINE:
-            break
-        promising = sorted((p, h) for p, h, m in scores if m >= threshold)
-        print(f"deep pass threshold={threshold}: {len(promising)} candidates", flush=True)
-        for p, hidden in promising:
+    if SMOKE:
+        for p, hidden in cands:
+            model = fit(hidden, seed=1, lr=0.05, steps=4000)
+            m = margins(model)
+            matched = int((m > 0).sum().item())
+            print(f"smoke params={p} hidden={hidden} matched={matched}/{n}", flush=True)
+            if matched == n:
+                best = (p, hidden, model)
+                break
+    else:
+        scores = []
+        for p, hidden in cands:
+            if time.time() > DEADLINE:
+                break
+            model = fit(hidden, seed=p, lr=0.05, steps=1800)
+            matched = int((margins(model) > 0).sum().item())
+            scores.append((p, hidden, matched))
+            print(f"screen params={p} hidden={hidden} matched={matched}/{n}", flush=True)
+        for threshold in (224, 192, 160):
             if best or time.time() > DEADLINE:
                 break
-            for k, (lr, steps) in enumerate(
-                [(0.05, 9000), (0.01, 12000), (0.03, 9000)]
-            ):
-                if time.time() > DEADLINE:
+            promising = sorted((p, h) for p, h, m in scores if m >= threshold)
+            print(f"deep pass threshold={threshold}: {len(promising)} candidates", flush=True)
+            for p, hidden in promising:
+                if best or time.time() > DEADLINE:
                     break
-                model = fit(hidden, seed=7919 * (k + 1) + p, lr=lr, steps=steps)
-                m = margins(model)
-                matched = int((m > 0).sum().item())
-                print(f"deep params={p} hidden={hidden} lr={lr} matched={matched}/{n}", flush=True)
-                if (m >= MARGIN).all().item():
-                    best = (p, hidden, model)
-                    break
-        if best:
-            break
+                for k, (lr, steps) in enumerate(
+                    [(0.05, 9000), (0.01, 12000), (0.03, 9000)]
+                ):
+                    if time.time() > DEADLINE:
+                        break
+                    model = fit(hidden, seed=7919 * (k + 1) + p, lr=lr, steps=steps)
+                    m = margins(model)
+                    matched = int((m > 0).sum().item())
+                    print(f"deep params={p} hidden={hidden} lr={lr} matched={matched}/{n}", flush=True)
+                    if (m >= MARGIN).all().item():
+                        best = (p, hidden, model)
+                        break
+            if best:
+                break
 
     if best is None:
         print("NO EXACT MODEL FOUND", flush=True)
@@ -160,7 +184,7 @@ def main():
 
     wins = 0
     moves_list = []
-    for seed in range(100):
+    for seed in range(SEEDS):
         e = SnakeEnvironment(size=SIZE, seed=seed, input_indices=IDX, max_moves=65536)
         obs = e.reset()
         done = False
@@ -177,8 +201,8 @@ def main():
                     done = True
         wins += bool(e.won)
         moves_list.append(e.moves)
-    print(f"wins={wins}/100 mean_moves={statistics.fmean(moves_list):.1f}", flush=True)
-    if wins != 100:
+    print(f"wins={wins}/{SEEDS} mean_moves={statistics.fmean(moves_list):.1f}", flush=True)
+    if wins != SEEDS:
         sys.exit(2)
 
     out = Path("models") / BENCH / NAME
@@ -198,11 +222,13 @@ def main():
         "description": (
             "Serpentine Hamiltonian-cycle teacher distilled into an MLP on the "
             "two head-distance features; exact argmax match on all 256 cells, "
-            f"{p} parameters, fills the board on all 100 seeds."
+            f"{p} parameters"
+            + (" (smoke pipeline test)" if SMOKE else ", fills the board on all 100 seeds")
+            + "."
         ),
     }
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
-    print(f"SAVED params={p} hidden={hidden}", flush=True)
+    print(f"SAVED params={p} hidden={hidden} name={NAME}", flush=True)
 
 
 if __name__ == "__main__":

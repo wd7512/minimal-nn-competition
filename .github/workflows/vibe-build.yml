@@ -3,19 +3,25 @@ name: Vibe submission builder
 on:
   push:
     branches: [vibe-builder]
+    paths-ignore: ["vibe/last-run.log"]
   workflow_dispatch:
 
 permissions:
   contents: write
+
+env:
+  VIBE_SMOKE: "1" # set to "0" for the real run
+  VIBE_NAME: glm-cycle-smoke # real run: glm-cycle-distilled
 
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out target branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: refs/heads/submit/glm-cycle-distilled
+          ref: refs/heads/submit/glm-cycle-smoke
           fetch-depth: 0
       - name: Check out builder scripts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,17 +35,49 @@ jobs:
           python-version: "3.12"
           version: ">=0.12"
       - name: Install dependencies
-        run: uv sync --dev --frozen
+        run: |
+          exec > >(tee -a /tmp/vibe-run.log) 2>&1
+          set -x
+          uv sync --dev --locked
       - name: Build submission
-        run: uv run --no-sync python builder/vibe/build.py
+        run: |
+          exec > >(tee -a /tmp/vibe-run.log) 2>&1
+          set -x
+          uv run --no-sync python builder/vibe/build.py
       - name: Official evaluation
-        run: uv run --no-sync mnnc evaluate snake-simple-16x16 models/snake-simple-16x16/glm-cycle-distilled
+        run: |
+          exec > >(tee -a /tmp/vibe-run.log) 2>&1
+          set -x
+          uv run --no-sync mnnc evaluate snake-simple-16x16 models/snake-simple-16x16/${VIBE_NAME}
       - name: Validate submission gate
-        run: uv run --no-sync mnnc validate-submission models/snake-simple-16x16/glm-cycle-distilled
+        run: |
+          exec > >(tee -a /tmp/vibe-run.log) 2>&1
+          set -x
+          uv run --no-sync mnnc validate-submission models/snake-simple-16x16/${VIBE_NAME}
       - name: Commit submission
         run: |
+          exec > >(tee -a /tmp/vibe-run.log) 2>&1
+          set -x
           git config user.name "GLM x le vibe"
           git config user.email "wd7512@users.noreply.github.com"
-          git add models/snake-simple-16x16/glm-cycle-distilled
-          git commit -m "Add snake-simple-16x16/glm-cycle-distilled"
-          git push origin HEAD:submit/glm-cycle-distilled
+          git add models/snake-simple-16x16/${VIBE_NAME}
+          git commit -m "Add snake-simple-16x16/${VIBE_NAME}"
+          git push origin HEAD:submit/glm-cycle-smoke
+      - name: Publish run log
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -x
+          cd "$RUNNER_TEMP"
+          rm -rf logrepo
+          git clone --quiet --depth 1 --branch vibe-builder "https://x-access-token:${GH_TOKEN}@github.com/wd7512/minimal-nn-competition.git" logrepo
+          cd logrepo
+          mkdir -p vibe
+          if [ -f /tmp/vibe-run.log ]; then cp /tmp/vibe-run.log vibe/last-run.log; else echo "no log captured" > vibe/last-run.log; fi
+          echo "job=${{ github.job }} run=${{ github.run_id }} workflow=${{ github.workflow }} event=${{ github.event_name }}" >> vibe/last-run.log
+          git config user.name "GLM x le vibe"
+          git config user.email "wd7512@users.noreply.github.com"
+          git add vibe/last-run.log
+          git commit -q -m "Update vibe run log" || true
+          git push -q origin vibe-builder
