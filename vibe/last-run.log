@@ -1,36 +1,36 @@
-[11:29:26] === Vibe CI start ===
-[11:29:26] smoke=1 name=glm-cycle-smoke target=submit/glm-cycle-smoke
-[11:29:26] runner: Linux runnervm48cm3 7.0.0-1017-azure #17~24.04.1-Ubuntu SMP PREEMPT Thu Sep 24 18:46:57 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
-[11:29:26] pwd=/home/runner/work/minimal-nn-competition/minimal-nn-competition
-[11:29:26] git head: 8adc87c1e60b76437e054e30ddcab42c8e2cb05f branch checkout ref
-[11:29:26] step 1/6: uv sync
+[11:32:58] === Vibe CI start ===
+[11:32:58] smoke=1 name=glm-cycle-smoke target=submit/glm-cycle-smoke
+[11:32:58] runner: Linux runnervm7aw5e 7.0.0-1017-azure #17~24.04.1-Ubuntu SMP PREEMPT Thu Sep 24 18:46:57 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+[11:32:58] pwd=/home/runner/work/minimal-nn-competition/minimal-nn-competition
+[11:32:58] git head: 8adc87c1e60b76437e054e30ddcab42c8e2cb05f branch checkout ref
+[11:32:58] step 1/7: uv sync
 Using CPython 3.12.3 interpreter at: /usr/bin/python3.12
 Creating virtual environment at: .venv
-Resolved 53 packages in 0.91ms
+Resolved 53 packages in 0.93ms
    Building minimal-nn-competition @ file:///home/runner/work/minimal-nn-competition/minimal-nn-competition
-Downloading networkx (2.0MiB)
 Downloading sympy (6.0MiB)
-Downloading numpy (16.0MiB)
-Downloading ruff (9.9MiB)
+Downloading torch (187.2MiB)
 Downloading pygments (1.2MiB)
+Downloading networkx (2.0MiB)
+Downloading numpy (16.0MiB)
 Downloading pydantic-core (2.1MiB)
+Downloading ruff (9.9MiB)
 Downloading ty (13.9MiB)
 Downloading box2d (3.5MiB)
 Downloading pygame (13.3MiB)
-Downloading torch (187.2MiB)
  Downloaded pygments
  Downloaded pydantic-core
  Downloaded networkx
-      Built minimal-nn-competition @ file:///home/runner/work/minimal-nn-competition/minimal-nn-competition
  Downloaded box2d
- Downloaded sympy
+      Built minimal-nn-competition @ file:///home/runner/work/minimal-nn-competition/minimal-nn-competition
  Downloaded ruff
  Downloaded ty
+ Downloaded sympy
  Downloaded pygame
  Downloaded numpy
  Downloaded torch
-Prepared 30 packages in 2.79s
-Installed 30 packages in 417ms
+Prepared 30 packages in 2.25s
+Installed 30 packages in 248ms
  + annotated-types==0.8.0
  + box2d==2.3.10
  + cloudpickle==3.1.2
@@ -61,7 +61,77 @@ Installed 30 packages in 417ms
  + ty==0.0.90
  + typing-extensions==4.16.0
  + typing-inspection==0.4.4
-[11:29:29] step 2/6: build submission (builder/vibe/build.py)
+[11:33:01] step 2/7: diagnose leader model (best-effort)
+=== config ===
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "cycle-16x6",
+  "author": "wd7512",
+  "architecture": "mlp",
+  "input_size": 6,
+  "output_size": 4,
+  "hidden_sizes": [
+    16,
+    6
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "A distilled Hamiltonian-cycle policy with 242 parameters, 35 fewer than the 277-parameter baseline."
+}
+
+=== state dict ===
+0.weight [16, 6]
+[-1.90515, 4.37878, -2.17828, -8.17231, -2.43461, 4.13044]
+[1.76551, 2.98212, 1.84019, 0.77023, 1.29137, 3.61297]
+[-3.51064, -1.36782, -7.6429, 0.0316987, 1.3906, 1.86041]
+[0.714709, 2.11082, 0.364271, -2.58537, -1.75566, -1.68368]
+[-7.13797, 2.4615, -6.29196, -3.32029, 2.65106, 0.850246]
+[-0.558474, 1.82518, 1.15221, -9.57522, 10.1775, 6.39554]
+[0.611919, 3.03245, 4.58387, -1.00484, 1.52954, 6.63382]
+[-0.466401, -1.51113, 3.56689, -2.0053, 0.426442, -2.64647]
+[2.82225, 3.8911, -0.37599, -3.10249, 1.72267, 8.25505]
+[3.00848, -2.18002, 2.02887, 5.90361, -3.99497, -1.2956]
+[2.16926, 1.95067, 5.86386, 5.34527, 0.0779868, -5.93763]
+[1.36783, -3.0427, 4.24589, 3.51112, 1.10614, -4.6488]
+[-0.320306, -5.1068, 1.30304, -1.13582, -1.11672, -4.38116]
+[3.06552, 3.72682, 4.65514, -3.06726, 2.4769, -0.857502]
+[1.25508, 7.45578, 1.38569, -9.42562, 10.4905, 10.3009]
+[-6.13974, -3.32473, -4.98502, 0.77102, -4.62744, -6.49795]
+0.bias [16]
+[3.3093, -4.57369, 3.19704, 3.42044, 3.05259, -6.32428, -6.82821, 2.57361, -3.59425, 1.22702, -1.84986, 0.252644, 4.08937, -2.47193, -10.985, 12.0623]
+2.weight [6, 16]
+[-0.14135, 1.30439, -15.5682, -0.163351, -11.0674, -1.96827, 0.395863, 0.912086, -1.24631, 1.21101, 1.43545, 0.0363945, -1.23896, -0.410953, 2.73304, 1.45388]
+[0.423308, 0.727218, 2.13715, 0.782199, 1.98442, 2.82015, 1.45261, 0.747442, 1.35174, 0.00251253, 0.0721069, 0.203367, 3.25, 1.58391, -2.05118, -0.906732]
+[0.574947, -0.550528, 1.08434, -0.395653, -2.65863, 1.07841, 0.0814494, -0.150171, 0.162184, 1.88377, -1.41879, -1.62265, -6.24445, -1.15552, 1.2116, -0.271997]
+[-3.36125, -0.507029, 2.51846, -1.86003, 4.32089, 1.12056, -0.0551715, 0.442538, -2.99719, 0.578165, 0.342882, 0.170041, 3.52592, 2.96528, 1.48753, -2.53637]
+[0.95451, 0.380763, 0.670801, -0.192359, 3.70438, 1.00959, -0.149709, 0.319172, -1.77259, 0.509087, -6.54975, 0.485612, 2.57943, 0.950064, -0.127451, 1.97337]
+[-0.306361, -2.93446, 0.715549, 0.991194, 0.975325, -1.54108, -4.92481, -8.72701, 2.1449, 0.580521, -0.378563, 2.17921, -1.1034, -1.52552, 1.73879, -0.658409]
+2.bias [6]
+[0.446026, 0.606903, -0.392107, -0.0240439, -1.47966, 0.452656]
+4.weight [4, 6]
+[2.39094, -0.359918, 0.412444, -9.24348, 1.939, -2.44064]
+[-2.11061, -2.13654, 4.76248, -4.43658, -0.264856, 5.06569]
+[-1.12355, 2.01581, -2.04726, 8.11934, -8.70121, -2.44435]
+[-3.24045, -3.53052, -3.10481, 0.72745, 2.05745, 2.7611]
+4.bias [4]
+[0.0944983, -0.539186, 0.350124, -1.05499]
+=== argmax grid (rows=y=0 top) ===
+Traceback (most recent call last):
+  File "/home/runner/work/minimal-nn-competition/minimal-nn-competition/builder/vibe/diag.py", line 81, in <module>
+    main()
+  File "/home/runner/work/minimal-nn-competition/minimal-nn-competition/builder/vibe/diag.py", line 63, in main
+    state["6.weight"],
+    ~~~~~^^^^^^^^^^^^
+KeyError: '6.weight'
+[11:33:04] diag failed (continuing)
+[11:33:04] step 3/7: build submission (builder/vibe/build.py)
 1 candidate architectures (smoke=True)
 train idx=(0, 1, 2, 3, 4, 5) hidden=(16, 6) params=242 k=0 matched=166/256 exact=False
 train idx=(0, 1, 2, 3, 4, 5) hidden=(16, 6) params=242 k=1 matched=165/256 exact=False
@@ -74,34 +144,34 @@ train idx=(0, 1, 2, 3, 4, 5) hidden=(16, 6) params=242 k=7 matched=167/256 exact
 chosen model: params=242 hidden=(16, 6) idx=(0, 1, 2, 3, 4, 5)
 wins=0/5 mean_moves=523.4
 SAVED params=242 hidden=(16, 6) idx=(0, 1, 2, 3, 4, 5) name=glm-cycle-smoke
-[11:29:54] step 3/6: official evaluation
+[11:33:35] step 4/7: official evaluation
 {"author": "GLM x le vibe", "benchmark": "snake-simple-16x16", "details": {"seed_blocked": [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []], "seed_lengths": [1, 1, 2, 1, 1, 8, 3, 3, 1, 1, 4, 1, 1, 1, 3, 2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 4, 2, 1, 6, 5, 3, 2, 3, 2, 1, 7, 8, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 5, 3, 2, 1, 2, 2, 1, 4, 2, 6, 2, 1, 1, 1, 1, 1, 1, 1, 3, 4, 1, 4, 1, 2, 5, 1, 1, 1, 2, 4, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 1, 4, 1, 3, 1, 1, 2, 2, 3, 3, 3, 1], "seed_moves": [513, 513, 565, 513, 513, 910, 650, 682, 513, 513, 694, 513, 513, 513, 637, 562, 630, 513, 513, 513, 513, 513, 564, 513, 513, 686, 573, 513, 755, 639, 572, 588, 670, 533, 513, 857, 1032, 513, 513, 513, 513, 513, 513, 594, 513, 513, 513, 700, 650, 628, 635, 513, 559, 522, 513, 682, 562, 937, 531, 513, 513, 513, 513, 513, 513, 513, 619, 776, 513, 605, 513, 620, 770, 513, 513, 513, 632, 623, 513, 513, 513, 513, 513, 635, 513, 513, 766, 513, 513, 757, 513, 643, 513, 513, 517, 540, 696, 634, 647, 513], "seed_passed": [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], "seed_target_lengths": [256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256], "structure": [6, 16, 6, 4]}, "name": "glm-cycle-smoke", "parameter_count": 242, "passed": false, "score": 0.0, "submission": "glm-cycle-smoke", "submitted_at": null}
-[11:29:58] step 4/6: validate submission gate
-2026-11-04 11:30:01,421 INFO minimal_nn_competition.submissions.local: Validation report: {"author": "GLM x le vibe", "benchmark": "snake-simple-16x16", "details": {"seed_blocked": [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []], "seed_lengths": [1, 1, 2, 1, 1, 8, 3, 3, 1, 1, 4, 1, 1, 1, 3, 2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 4, 2, 1, 6, 5, 3, 2, 3, 2, 1, 7, 8, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 5, 3, 2, 1, 2, 2, 1, 4, 2, 6, 2, 1, 1, 1, 1, 1, 1, 1, 3, 4, 1, 4, 1, 2, 5, 1, 1, 1, 2, 4, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 1, 4, 1, 3, 1, 1, 2, 2, 3, 3, 3, 1], "seed_moves": [513, 513, 565, 513, 513, 910, 650, 682, 513, 513, 694, 513, 513, 513, 637, 562, 630, 513, 513, 513, 513, 513, 564, 513, 513, 686, 573, 513, 755, 639, 572, 588, 670, 533, 513, 857, 1032, 513, 513, 513, 513, 513, 513, 594, 513, 513, 513, 700, 650, 628, 635, 513, 559, 522, 513, 682, 562, 937, 531, 513, 513, 513, 513, 513, 513, 513, 619, 776, 513, 605, 513, 620, 770, 513, 513, 513, 632, 623, 513, 513, 513, 513, 513, 635, 513, 513, 766, 513, 513, 757, 513, 643, 513, 513, 517, 540, 696, 634, 647, 513], "seed_passed": [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], "seed_target_lengths": [256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256], "structure": [6, 16, 6, 4]}, "name": "glm-cycle-smoke", "parameter_count": 242, "passed": false, "score": 0.0, "submission": "glm-cycle-smoke", "submitted_at": null}
-[11:30:01] FAILED at step: validate-submission
-[11:30:01] last 40 log lines:
-   + jinja2==3.1.6
-   + markupsafe==3.0.4
-   + minimal-nn-competition==0.0.3 (from file:///home/runner/work/minimal-nn-competition/minimal-nn-competition)
-   + mpmath==1.3.0
-   + networkx==3.7
-   + numpy==2.5.4
-   + packaging==26.2
-   + pluggy==1.6.0
-   + pydantic==2.14.1
-   + pydantic-core==2.50.1
-   + pygame==2.6.1
-   + pygments==2.20.0
-   + pytest==9.1.1
-   + pytest-xdist==3.8.0
-   + ruff==0.17.1
-   + setuptools==84.2.1
-   + sympy==1.14.0
-   + torch==2.14.1+cpu
-   + ty==0.0.90
-   + typing-extensions==4.16.0
-   + typing-inspection==0.4.4
-  [11:29:29] step 2/6: build submission (builder/vibe/build.py)
+[11:33:40] step 5/7: validate submission gate
+2026-11-04 11:33:44,934 INFO minimal_nn_competition.submissions.local: Validation report: {"author": "GLM x le vibe", "benchmark": "snake-simple-16x16", "details": {"seed_blocked": [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []], "seed_lengths": [1, 1, 2, 1, 1, 8, 3, 3, 1, 1, 4, 1, 1, 1, 3, 2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 4, 2, 1, 6, 5, 3, 2, 3, 2, 1, 7, 8, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 5, 3, 2, 1, 2, 2, 1, 4, 2, 6, 2, 1, 1, 1, 1, 1, 1, 1, 3, 4, 1, 4, 1, 2, 5, 1, 1, 1, 2, 4, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 1, 4, 1, 3, 1, 1, 2, 2, 3, 3, 3, 1], "seed_moves": [513, 513, 565, 513, 513, 910, 650, 682, 513, 513, 694, 513, 513, 513, 637, 562, 630, 513, 513, 513, 513, 513, 564, 513, 513, 686, 573, 513, 755, 639, 572, 588, 670, 533, 513, 857, 1032, 513, 513, 513, 513, 513, 513, 594, 513, 513, 513, 700, 650, 628, 635, 513, 559, 522, 513, 682, 562, 937, 531, 513, 513, 513, 513, 513, 513, 513, 619, 776, 513, 605, 513, 620, 770, 513, 513, 513, 632, 623, 513, 513, 513, 513, 513, 635, 513, 513, 766, 513, 513, 757, 513, 643, 513, 513, 517, 540, 696, 634, 647, 513], "seed_passed": [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], "seed_target_lengths": [256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256], "structure": [6, 16, 6, 4]}, "name": "glm-cycle-smoke", "parameter_count": 242, "passed": false, "score": 0.0, "submission": "glm-cycle-smoke", "submitted_at": null}
+[11:33:44] FAILED at step: validate-submission
+[11:33:44] last 40 log lines:
+  [-3.36125, -0.507029, 2.51846, -1.86003, 4.32089, 1.12056, -0.0551715, 0.442538, -2.99719, 0.578165, 0.342882, 0.170041, 3.52592, 2.96528, 1.48753, -2.53637]
+  [0.95451, 0.380763, 0.670801, -0.192359, 3.70438, 1.00959, -0.149709, 0.319172, -1.77259, 0.509087, -6.54975, 0.485612, 2.57943, 0.950064, -0.127451, 1.97337]
+  [-0.306361, -2.93446, 0.715549, 0.991194, 0.975325, -1.54108, -4.92481, -8.72701, 2.1449, 0.580521, -0.378563, 2.17921, -1.1034, -1.52552, 1.73879, -0.658409]
+  2.bias [6]
+  [0.446026, 0.606903, -0.392107, -0.0240439, -1.47966, 0.452656]
+  4.weight [4, 6]
+  [2.39094, -0.359918, 0.412444, -9.24348, 1.939, -2.44064]
+  [-2.11061, -2.13654, 4.76248, -4.43658, -0.264856, 5.06569]
+  [-1.12355, 2.01581, -2.04726, 8.11934, -8.70121, -2.44435]
+  [-3.24045, -3.53052, -3.10481, 0.72745, 2.05745, 2.7611]
+  4.bias [4]
+  [0.0944983, -0.539186, 0.350124, -1.05499]
+  === argmax grid (rows=y=0 top) ===
+  Traceback (most recent call last):
+    File "/home/runner/work/minimal-nn-competition/minimal-nn-competition/builder/vibe/diag.py", line 81, in <module>
+      main()
+    File "/home/runner/work/minimal-nn-competition/minimal-nn-competition/builder/vibe/diag.py", line 63, in main
+      state["6.weight"],
+      ~~~~~^^^^^^^^^^^^
+  KeyError: '6.weight'
+  [11:33:04] diag failed (continuing)
+  [11:33:04] step 3/7: build submission (builder/vibe/build.py)
   1 candidate architectures (smoke=True)
   train idx=(0, 1, 2, 3, 4, 5) hidden=(16, 6) params=242 k=0 matched=166/256 exact=False
   train idx=(0, 1, 2, 3, 4, 5) hidden=(16, 6) params=242 k=1 matched=165/256 exact=False
@@ -114,11 +184,11 @@ SAVED params=242 hidden=(16, 6) idx=(0, 1, 2, 3, 4, 5) name=glm-cycle-smoke
   chosen model: params=242 hidden=(16, 6) idx=(0, 1, 2, 3, 4, 5)
   wins=0/5 mean_moves=523.4
   SAVED params=242 hidden=(16, 6) idx=(0, 1, 2, 3, 4, 5) name=glm-cycle-smoke
-  [11:29:54] step 3/6: official evaluation
+  [11:33:35] step 4/7: official evaluation
   {"author": "GLM x le vibe", "benchmark": "snake-simple-16x16", "details": {"seed_blocked": [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []], "seed_lengths": [1, 1, 2, 1, 1, 8, 3, 3, 1, 1, 4, 1, 1, 1, 3, 2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 4, 2, 1, 6, 5, 3, 2, 3, 2, 1, 7, 8, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 5, 3, 2, 1, 2, 2, 1, 4, 2, 6, 2, 1, 1, 1, 1, 1, 1, 1, 3, 4, 1, 4, 1, 2, 5, 1, 1, 1, 2, 4, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 1, 4, 1, 3, 1, 1, 2, 2, 3, 3, 3, 1], "seed_moves": [513, 513, 565, 513, 513, 910, 650, 682, 513, 513, 694, 513, 513, 513, 637, 562, 630, 513, 513, 513, 513, 513, 564, 513, 513, 686, 573, 513, 755, 639, 572, 588, 670, 533, 513, 857, 1032, 513, 513, 513, 513, 513, 513, 594, 513, 513, 513, 700, 650, 628, 635, 513, 559, 522, 513, 682, 562, 937, 531, 513, 513, 513, 513, 513, 513, 513, 619, 776, 513, 605, 513, 620, 770, 513, 513, 513, 632, 623, 513, 513, 513, 513, 513, 635, 513, 513, 766, 513, 513, 757, 513, 643, 513, 513, 517, 540, 696, 634, 647, 513], "seed_passed": [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], "seed_target_lengths": [256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256], "structure": [6, 16, 6, 4]}, "name": "glm-cycle-smoke", "parameter_count": 242, "passed": false, "score": 0.0, "submission": "glm-cycle-smoke", "submitted_at": null}
-  [11:29:58] step 4/6: validate submission gate
-  2026-11-04 11:30:01,421 INFO minimal_nn_competition.submissions.local: Validation report: {"author": "GLM x le vibe", "benchmark": "snake-simple-16x16", "details": {"seed_blocked": [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []], "seed_lengths": [1, 1, 2, 1, 1, 8, 3, 3, 1, 1, 4, 1, 1, 1, 3, 2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 4, 2, 1, 6, 5, 3, 2, 3, 2, 1, 7, 8, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 5, 3, 2, 1, 2, 2, 1, 4, 2, 6, 2, 1, 1, 1, 1, 1, 1, 1, 3, 4, 1, 4, 1, 2, 5, 1, 1, 1, 2, 4, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 1, 4, 1, 3, 1, 1, 2, 2, 3, 3, 3, 1], "seed_moves": [513, 513, 565, 513, 513, 910, 650, 682, 513, 513, 694, 513, 513, 513, 637, 562, 630, 513, 513, 513, 513, 513, 564, 513, 513, 686, 573, 513, 755, 639, 572, 588, 670, 533, 513, 857, 1032, 513, 513, 513, 513, 513, 513, 594, 513, 513, 513, 700, 650, 628, 635, 513, 559, 522, 513, 682, 562, 937, 531, 513, 513, 513, 513, 513, 513, 513, 619, 776, 513, 605, 513, 620, 770, 513, 513, 513, 632, 623, 513, 513, 513, 513, 513, 635, 513, 513, 766, 513, 513, 757, 513, 643, 513, 513, 517, 540, 696, 634, 647, 513], "seed_passed": [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], "seed_target_lengths": [256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256], "structure": [6, 16, 6, 4]}, "name": "glm-cycle-smoke", "parameter_count": 242, "passed": false, "score": 0.0, "submission": "glm-cycle-smoke", "submitted_at": null}
-  [11:30:01] FAILED at step: validate-submission
-  [11:30:01] last 40 log lines:
-[11:30:01] END (failure)
-[11:30:01] publishing run log via gh api
+  [11:33:40] step 5/7: validate submission gate
+  2026-11-04 11:33:44,934 INFO minimal_nn_competition.submissions.local: Validation report: {"author": "GLM x le vibe", "benchmark": "snake-simple-16x16", "details": {"seed_blocked": [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []], "seed_lengths": [1, 1, 2, 1, 1, 8, 3, 3, 1, 1, 4, 1, 1, 1, 3, 2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 4, 2, 1, 6, 5, 3, 2, 3, 2, 1, 7, 8, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 3, 5, 3, 2, 1, 2, 2, 1, 4, 2, 6, 2, 1, 1, 1, 1, 1, 1, 1, 3, 4, 1, 4, 1, 2, 5, 1, 1, 1, 2, 4, 1, 1, 1, 1, 1, 2, 1, 1, 5, 1, 1, 4, 1, 3, 1, 1, 2, 2, 3, 3, 3, 1], "seed_moves": [513, 513, 565, 513, 513, 910, 650, 682, 513, 513, 694, 513, 513, 513, 637, 562, 630, 513, 513, 513, 513, 513, 564, 513, 513, 686, 573, 513, 755, 639, 572, 588, 670, 533, 513, 857, 1032, 513, 513, 513, 513, 513, 513, 594, 513, 513, 513, 700, 650, 628, 635, 513, 559, 522, 513, 682, 562, 937, 531, 513, 513, 513, 513, 513, 513, 513, 619, 776, 513, 605, 513, 620, 770, 513, 513, 513, 632, 623, 513, 513, 513, 513, 513, 635, 513, 513, 766, 513, 513, 757, 513, 643, 513, 513, 517, 540, 696, 634, 647, 513], "seed_passed": [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], "seed_target_lengths": [256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256], "structure": [6, 16, 6, 4]}, "name": "glm-cycle-smoke", "parameter_count": 242, "passed": false, "score": 0.0, "submission": "glm-cycle-smoke", "submitted_at": null}
+  [11:33:44] FAILED at step: validate-submission
+  [11:33:44] last 40 log lines:
+[11:33:44] END (failure)
+[11:33:44] publishing run log via gh api
