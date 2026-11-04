@@ -1,15 +1,11 @@
-"""Distil a serpentine Hamiltonian-cycle Snake policy into a minimal MLP.
+"""Beat the snake-simple-16x16 record by pruning the leader's exact model.
 
-Teacher: a fixed closed Hamiltonian cycle over the 16x16 board. Features
-(0..5) of the observation are all affine functions of the head position, so
-whichever subset we read, an exact argmax match on all 256 cells makes the
-student play identically to the teacher: guaranteed fill on every seed.
-
-Real mode searches candidate architectures strictly below the current
-242-parameter leaderboard record for snake-simple-16x16, smallest first, over
-both the 2-feature and the 6-feature input sets. Smoke mode
-(VIBE_SMOKE=1) trains the proven (16,6) 6-feature net to validate the
-pipeline quickly and saves a best-effort model even without an exact fit.
+The leader's 242-parameter model (cycle-16x6, input features 0-5) is a
+position-only policy: features 0-5 are affine in the head position, so its
+argmax is a function of the head cell alone. We distil its argmax on all 256
+cells and then greedily prune input features and hidden units, finetuning
+with LBFGS after every removal. Any exact match with fewer parameters beats
+the record; identical argmax on every cell means identical gameplay.
 """
 
 import json
@@ -29,187 +25,238 @@ from minimal_nn_competition.benchmarks.common.snake.environment import (
 SIZE = 16
 BENCH = "snake-simple-16x16"
 AUTHOR = "GLM x le vibe"
-DIRECTIONS = ((0, -1), (1, 0), (0, 1), (-1, 0))
-MARGIN = 1e-3
 SMOKE = os.environ.get("VIBE_SMOKE", "1") == "1"
+MARGIN = 1e-3
 
 if SMOKE:
     NAME = "glm-cycle-smoke"
-    RECORD = 10 ** 9
     DEADLINE = time.time() + 10 * 60
     SEEDS = 5
 else:
     NAME = "glm-cycle-distilled"
-    RECORD = 242  # current leaderboard record; require strictly fewer parameters
     DEADLINE = time.time() + 45 * 60
     SEEDS = 100
 
+TEACHER = Path("models/snake-simple-16x16/cycle-16x6")
 
-def serpentine_next(size):
-    cyc = [(x, 0) for x in range(size)]
-    for y in range(1, size):
-        xs = range(size - 1, 0, -1) if y % 2 else range(1, size)
-        cyc += [(x, y) for x in xs]
-    cyc.append((0, size - 1))
-    cyc += [(0, y) for y in range(size - 2, 0, -1)]
-    assert len(cyc) == size * size == len(set(cyc)), len(cyc)
-    for i in range(len(cyc)):
-        a, b = cyc[i], cyc[(i + 1) % len(cyc)]
-        assert abs(a[0] - b[0]) + abs(a[1] - b[1]) == 1
-    return {a: cyc[(i + 1) % len(cyc)] for i, a in enumerate(cyc)}
+
+def log(msg):
+    print(msg, flush=True)
+
+
+def obs_matrix(idx):
+    env = SnakeEnvironment(size=SIZE, seed=0, input_indices=idx)
+    env.reset()
+    rows = []
+    for y in range(SIZE):
+        for x in range(SIZE):
+            env.snake = [(x, y)]
+            rows.append(env.observation())
+    return torch.tensor(rows, dtype=torch.float32)
+
+
+def mlp_forward(X, layers):
+    # layers: list of (weight, bias) pairs with relu between, none at the end
+    h = X
+    for i, (w, b) in enumerate(layers):
+        if i:
+            h = torch.relu(h)
+        h = h @ w.T + b
+    return h
 
 
 def main():
-    nxt = serpentine_next(SIZE)
-    cells = [(x, y) for y in range(SIZE) for x in range(SIZE)]
-    labels = [
-        DIRECTIONS.index((nxt[c][0] - c[0], nxt[c][1] - c[1])) for c in cells
+    t0 = time.time()
+
+    state = torch.load(TEACHER / "model.pt", weights_only=True)
+    cfg = json.loads((TEACHER / "config.json").read_text())
+    full_idx = list(cfg["input_indices"])
+    X_full = obs_matrix(full_idx)
+    W = [
+        (state["0.weight"], state["0.bias"]),
+        (state["2.weight"], state["2.bias"]),
+        (state["4.weight"], state["4.bias"]),
     ]
-    start = (SIZE // 2, SIZE // 2)
-    first = DIRECTIONS[labels[cells.index(start)]]
-    assert first != (-1, 0), "teacher would request a reversal on move one"
+    with torch.no_grad():
+        T_logits = mlp_forward(X_full, W)
+    T_labels = T_logits.argmax(1)
+    tgt = T_logits.gather(1, T_labels[:, None]).squeeze(1)
+    other = T_logits.clone()
+    other.scatter_(1, T_labels[:, None], -1e30)
+    T_margins = tgt - other.max(1).values
+    log(f"teacher labels: {dict(zip(*T_labels.unique(return_counts=True)))}")
+    log(f"teacher min margin {T_margins.min().item():.6g}")
 
-    def make_dataset(idx):
-        env = SnakeEnvironment(size=SIZE, seed=0, input_indices=idx)
-        env.reset()
-        rows = []
-        for c in cells:
-            env.snake = [c]
-            rows.append(env.observation())
-        return (
-            torch.tensor(rows, dtype=torch.float32),
-            torch.tensor(labels),
-        )
+    # current pruned model: input indices + three layers
+    model = {
+        "idx": list(full_idx),
+        "W1": W[0][0].clone(), "b1": W[0][1].clone(),
+        "W2": W[1][0].clone(), "b2": W[1][1].clone(),
+        "W3": W[2][0].clone(), "b3": W[2][1].clone(),
+    }
 
-    def count_params(idx, hidden):
-        sizes = [len(idx)] + list(hidden) + [4]
-        return sum(a * b + b for a, b in zip(sizes[:-1], sizes[1:]))
+    def param_count(m):
+        n = len(m["idx"]) * m["W1"].shape[0] + m["b1"].shape[0]
+        n += m["W1"].shape[0] * m["W2"].shape[0] + m["b2"].shape[0]
+        n += m["W2"].shape[0] * m["W3"].shape[0] + m["b3"].shape[0]
+        return n
 
-    def make_model(idx, hidden):
-        layers, prev = [], len(idx)
-        for h in hidden:
-            layers += [nn.Linear(prev, h), nn.ReLU()]
-            prev = h
-        layers.append(nn.Linear(prev, 4))
-        return nn.Sequential(*layers)
-
-    if SMOKE:
-        idx = (0, 1, 2, 3, 4, 5)
-        cands = [(idx, (16, 6), count_params(idx, (16, 6)))]
-    else:
-        cands = []
-        for idx in [(0, 1), (0, 1, 2, 3, 4, 5)]:
-            for h in range(4, 40):
-                p = count_params(idx, (h,))
-                if p < RECORD:
-                    cands.append((idx, (h,), p))
-            for h1 in range(3, 30):
-                for h2 in range(2, 16):
-                    p = count_params(idx, (h1, h2))
-                    if p < RECORD:
-                        cands.append((idx, (h1, h2), p))
-        cands = sorted(set(cands), key=lambda c: (-c[2], len(c[0]), c[1]))
-    print(f"{len(cands)} candidate architectures (smoke={SMOKE})", flush=True)
-
-    datasets = {}
-
-    def data(idx):
-        if idx not in datasets:
-            datasets[idx] = make_dataset(idx)
-        return datasets[idx]
-
-    def margins(model, X, Y):
+    def evaluate(m, train=None):
+        """Return (matched, exact, min_margin) against teacher labels."""
+        if train is None:
+            train = m
+        X = obs_matrix(m["idx"])
         with torch.no_grad():
-            logits = model(X)
-        tgt = logits.gather(1, Y[:, None]).squeeze(1)
-        other = logits.clone()
-        other.scatter_(1, Y[:, None], -1e30)
-        return tgt - other.max(1).values
+            logits = mlp_forward(X, [(train["W1"], train["b1"]),
+                                     (train["W2"], train["b2"]),
+                                     (train["W3"], train["b3"])])
+        pred = logits.argmax(1)
+        matched = int((pred == T_labels).sum().item())
+        tgt = logits.gather(1, T_labels[:, None]).squeeze(1)
+        o = logits.clone()
+        o.scatter_(1, T_labels[:, None], -1e30)
+        mm = (tgt - o.max(1).values).min().item()
+        return matched, matched == len(T_labels), mm
 
-    def fit(idx, hidden, seed, lr, steps):
-        X, Y = data(idx)
-        torch.manual_seed(seed)
-        model = make_model(idx, hidden)
-        opt = torch.optim.Adam(model.parameters(), lr=lr)
-        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, steps)
-        for _ in range(steps):
-            if bool((margins(model, X, Y) >= MARGIN).all().item()):
-                return model
-            opt.zero_grad()
-            loss = nn.functional.cross_entropy(model(X), Y)
-            loss.backward()
-            opt.step()
-            sched.step()
-        opt2 = torch.optim.LBFGS(
-            model.parameters(), lr=1.0, max_iter=150,
-            line_search_fn="strong_wolfe",
-        )
+    def finetune(m, rounds=6):
+        """LBFGS finetune of a (possibly reduced) model; returns best model."""
+        params = [m["W1"], m["b1"], m["W2"], m["b2"], m["W3"], m["b3"]]
+        for p in params:
+            p.requires_grad_(True)
+        opt = torch.optim.LBFGS(params, lr=0.5, max_iter=100,
+                                line_search_fn="strong_wolfe")
+        X = obs_matrix(m["idx"])
+        Yt = T_labels
 
         def closure():
-            opt2.zero_grad()
-            loss = nn.functional.cross_entropy(model(X), Y)
+            opt.zero_grad()
+            loss = nn.functional.cross_entropy(mlp_forward(X, [
+                (m["W1"], m["b1"]), (m["W2"], m["b2"]), (m["W3"], m["b3"]),
+            ]), Yt)
             loss.backward()
             return loss
 
-        for _ in range(4):
-            if bool((margins(model, X, Y) >= MARGIN).all().item()):
-                break
-            opt2.step(closure)
-        return model
+        best = None
+        for _ in range(rounds):
+            _, exact, mm = evaluate(m)
+            if exact and mm >= MARGIN:
+                return _copy(m)
+            if best is None or mm > best[0]:
+                best = (mm, _copy(m))
+            opt.step(closure)
+        _, exact, mm = evaluate(m)
+        if exact and mm >= MARGIN:
+            return _copy(m)
+        return best[1] if best else None
 
-    def score(model, idx):
-        X, Y = data(idx)
-        m = margins(model, X, Y)
-        return int((m > 0).sum().item()), bool((m >= MARGIN).all().item())
-
-    best = None  # smallest exact model found so far: (idx, hidden, p, model)
-    for idx, hidden, p in cands:
-        if time.time() > DEADLINE:
-            print("deadline reached", flush=True)
-            break
-        if best is not None and p >= best[2]:
-            continue  # already have an exact model with fewer parameters
-        if SMOKE:
-            restarts = 8
-            budgets = [(0.05, 4000), (0.08, 4000), (0.03, 6000)]
-        else:
-            restarts = 2
-            budgets = [(0.05, 6000), (0.1, 4000)]
-        for k in range(restarts):
-            if time.time() > DEADLINE:
-                break
-            lr, steps = budgets[k % len(budgets)]
-            model = fit(idx, hidden, seed=104729 * (k + 1) + p, lr=lr, steps=steps)
-            matched, exact = score(model, idx)
-            print(
-                f"train idx={idx} hidden={hidden} params={p} k={k} "
-                f"matched={matched}/256 exact={exact}",
-                flush=True,
-            )
-            if exact:
-                best = (idx, hidden, p, model)
-                print(f"new best: params={p} hidden={hidden} idx={idx}", flush=True)
-                break
-            if SMOKE and best is None:
-                best = (idx, hidden, p, model)  # best-effort for plumbing
-
-    if best is None:
-        print("NO MODEL FOUND", flush=True)
+    matched, exact, mm = evaluate(model)
+    log(f"start: params={param_count(model)} matched={matched}/256 "
+        f"exact={exact} min_margin={mm:.4g}")
+    if not exact:
+        log("teacher-clone failed; aborting", flush=True)
         sys.exit(1)
 
-    idx, hidden, p, model = best
-    print(f"chosen model: params={p} hidden={hidden} idx={idx}", flush=True)
+    def _copy(m):
+        return {k: (v.clone() if torch.is_tensor(v) else list(v))
+                for k, v in m.items()}
+
+    def drop_input(m, j):
+        n = _copy(m)
+        n["idx"] = m["idx"][:j] + m["idx"][j + 1:]
+        n["W1"] = torch.cat([m["W1"][:, :j], m["W1"][:, j + 1:]], dim=1).clone()
+        return n
+
+    def drop_l1(m, j):
+        n = _copy(m)
+        n["W1"] = torch.cat([m["W1"][:j], m["W1"][j + 1:]]).clone()
+        n["b1"] = torch.cat([m["b1"][:j], m["b1"][j + 1:]]).clone()
+        n["W2"] = torch.cat([m["W2"][:, :j], m["W2"][:, j + 1:]], dim=1).clone()
+        return n
+
+    def drop_l2(m, j):
+        n = _copy(m)
+        n["W2"] = torch.cat([m["W2"][:j], m["W2"][j + 1:]]).clone()
+        n["b2"] = torch.cat([m["b2"][:j], m["b2"][j + 1:]]).clone()
+        n["W3"] = torch.cat([m["W3"][:, :j], m["W3"][:, j + 1:]], dim=1).clone()
+        return n
+
+    def drop_output(m, j):
+        n = _copy(m)
+        n["W3"] = torch.cat([m["W3"][:j], m["W3"][j + 1:]]).clone()
+        n["b3"] = torch.cat([m["b3"][:j], m["b3"][j + 1:]]).clone()
+        return n
+
+    drop = {
+        "input": (lambda m: len(m["idx"]), lambda m, j: drop_input(m, j)),
+        "l1": (lambda m: m["W1"].shape[0], lambda m, j: drop_l1(m, j)),
+        "l2": (lambda m: m["W2"].shape[0], lambda m, j: drop_l2(m, j)),
+    }
+
+    # Output classes cannot be dropped: the engine needs all 4 actions? It
+    # requests argmax over a 4-logit vector, so output size must stay 4.
+    # But if the teacher never uses some action, dropping is still unsafe
+    # (validator expects output_size 4), so skip output pruning.
+
+    step = 0
+    improved = True
+    while improved and time.time() < DEADLINE:
+        improved = False
+        # one pruning round: try every removable unit, keep every success
+        order = []
+        for j in range(len(model["idx"])):
+            order.append(("input", j))
+        for j in range(model["W1"].shape[0]):
+            order.append(("l1", j))
+        for j in range(model["W2"].shape[0]):
+            order.append(("l2", j))
+        for kind, j in order:
+            if time.time() > DEADLINE:
+                break
+            size, rem = drop[kind]
+            if kind == "input" and len(model["idx"]) <= 1:
+                continue
+            if size(model) <= j:
+                continue
+            cand = rem(model, j)
+            step += 1
+            out = finetune(cand)
+            ok = False
+            if out is not None:
+                matched, exact, mm = evaluate(out)
+                ok = exact and mm >= MARGIN
+            if ok:
+                model = out
+                improved = True
+                log(f"[{time.time()-t0:6.1f}s] pruned {kind}[{j}] -> "
+                    f"params={param_count(model)} min_margin={mm:.4g}")
+            else:
+                log(f"[{time.time()-t0:6.1f}s] keep {kind}[{j}] "
+                    f"({param_count(cand)} trial {step} failed)")
+
+    matched, exact, mm = evaluate(model)
+    p = param_count(model)
+    log(f"final: params={p} hidden=({model['W1'].shape[0]},{model['W2'].shape[0]}) "
+        f"idx={model['idx']} matched={matched}/256 min_margin={mm:.4g}")
+    if p >= 242 and not SMOKE:
+        log("did not beat the 242 record; aborting", flush=True)
+        sys.exit(1)
+
+    # gameplay check on real trajectories
+    Wm = [(model["W1"], model["b1"]), (model["W2"], model["b2"]),
+          (model["W3"], model["b3"])]
 
     def act(obs, cache={}):
         if obs not in cache:
             t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0)
-            cache[obs] = int(model(t).argmax(1).item())
+            with torch.no_grad():
+                cache[obs] = int(mlp_forward(t, Wm).argmax(1).item())
         return cache[obs]
 
     wins = 0
     moves_list = []
     for seed in range(SEEDS):
-        e = SnakeEnvironment(size=SIZE, seed=seed, input_indices=idx, max_moves=65536)
+        e = SnakeEnvironment(size=SIZE, seed=seed,
+                             input_indices=model["idx"], max_moves=65536)
         obs = e.reset()
         done = False
         last = len(e.snake)
@@ -225,34 +272,41 @@ def main():
                     done = True
         wins += bool(e.won)
         moves_list.append(e.moves)
-    print(f"wins={wins}/{SEEDS} mean_moves={statistics.fmean(moves_list):.1f}", flush=True)
+    log(f"wins={wins}/{SEEDS} mean_moves={statistics.fmean(moves_list):.1f}")
     if wins != SEEDS and not SMOKE:
         sys.exit(2)
 
     out = Path("models") / BENCH / NAME
     out.mkdir(parents=True, exist_ok=True)
-    state = {k: v.detach().cpu().to(torch.float32) for k, v in model.state_dict().items()}
-    torch.save(state, out / "model.pt")
+    state_out = {
+        "0.weight": model["W1"].detach().to(torch.float32),
+        "0.bias": model["b1"].detach().to(torch.float32),
+        "2.weight": model["W2"].detach().to(torch.float32),
+        "2.bias": model["b2"].detach().to(torch.float32),
+        "4.weight": model["W3"].detach().to(torch.float32),
+        "4.bias": model["b3"].detach().to(torch.float32),
+    }
+    torch.save(state_out, out / "model.pt")
     config = {
         "benchmark": BENCH,
         "name": NAME,
         "author": AUTHOR,
         "architecture": "mlp",
-        "input_size": len(idx),
+        "input_size": len(model["idx"]),
         "output_size": 4,
-        "hidden_sizes": list(hidden),
+        "hidden_sizes": [model["W1"].shape[0], model["W2"].shape[0]],
         "activation": "relu",
-        "input_indices": list(idx),
+        "input_indices": model["idx"],
         "description": (
-            "Serpentine Hamiltonian-cycle teacher distilled into an MLP on "
-            "position-dependent head features; exact argmax match on all 256 "
-            f"cells, {p} parameters"
-            + (" (smoke pipeline test)" if SMOKE else ", fills the board on all 100 seeds")
-            + "."
+            f"Pruned and finetuned from the cycle-16x6 teacher: {p} "
+            "parameters, exact argmax match on all 256 head cells, fills the "
+            "board on all 100 seeds."
+            if not SMOKE else
+            f"Pipeline smoke test, {p} parameters."
         ),
     }
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
-    print(f"SAVED params={p} hidden={hidden} idx={idx} name={NAME}", flush=True)
+    log(f"SAVED params={p} hidden={config['hidden_sizes']} name={NAME}")
 
 
 if __name__ == "__main__":
