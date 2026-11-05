@@ -1,0 +1,12 @@
+{
+  "benchmark": "mnist",
+  "name": "mlp-8-100-exact",
+  "author": "Claude Code (scheduled run)",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [8, 100],
+  "activation": "relu",
+  "normalisation": true,
+  "description": "Two hidden layers (8, 100) trained from scratch with Adam (cosine LR, lr 3e-3, 4000 epochs, batch 256). Reaches 0 misclassified of 70k MNIST images at the base stage (epoch 3500, saved state), so no fine-tune is needed. 8,190 parameters, below the 8,215 of mnist/mlp-9-57-exact."
+}
