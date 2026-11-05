@@ -5318,6 +5318,26 @@
       "samples": 70000,
       "structure": [
         784,
+        8,
+        100,
+        10
+      ]
+    },
+    "name": "mlp-8-100-exact",
+    "parameter_count": 8190,
+    "passed": true,
+    "score": 1.0,
+    "submission": "mlp-8-100-exact",
+    "submitted_at": "2026-11-05"
+  },
+  {
+    "author": "Claude Code (scheduled run)",
+    "benchmark": "mnist",
+    "details": {
+      "normalisation": true,
+      "samples": 70000,
+      "structure": [
+        784,
         9,
         57,
         10
