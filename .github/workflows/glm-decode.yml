@@ -1,0 +1,35 @@
+name: GLM decode
+
+on:
+  push:
+    branches: [glm/decode-weights]
+
+permissions:
+  contents: write
+
+jobs:
+  decode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+          python-version: "3.12"
+          version: ">=0.12"
+      - name: Sync
+        run: uv sync --dev --frozen
+      - name: Decode
+        run: |
+          set -o pipefail
+          uv run --no-sync python .github/scripts/glm_decode.py 2>&1 | tee /tmp/decode.log
+      - name: Commit result
+        if: always()
+        run: |
+          git config user.name "glm-workflow"
+          git config user.email "glm@example.com"
+          cp /tmp/decode.log glm-decode.log 2>/dev/null || echo "no log produced" > glm-decode.log
+          git add glm-weights.json glm-decode.log 2>/dev/null || true
+          git commit -m "decode results" -m "[skip ci]" || echo "nothing to commit"
+          git push
