@@ -36,5 +36,5 @@ jobs:
           auto-config: "false"
           build: "true"
           axiom-audit: "true"
-          axiom-audit-root: MinimalNN
+          axiom-audit-root: Proofs
           use-mathlib-cache: "false"
