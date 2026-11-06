@@ -10,7 +10,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: !contains(github.event.head_commit.message, '[model-built]')
+    if: \!contains(github.event.head_commit.message, '[model-built]')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install uv
@@ -36,9 +36,6 @@ jobs:
               if i < 2:
                   layers.append(nn.ReLU())
           model = nn.Sequential(*layers)
-          sd = {
-              "0.weight": torch.tensor([float(v) for v in r] for r in w["w1"], dtype=torch.float32),
-          }
           sd = {
               "0.weight": torch.tensor([[float(v) for v in r] for r in w["w1"]], dtype=torch.float32),
               "0.bias": torch.tensor([float(v) for v in w["b1"]], dtype=torch.float32),
