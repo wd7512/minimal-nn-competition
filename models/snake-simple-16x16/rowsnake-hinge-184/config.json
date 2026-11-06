@@ -1,0 +1,19 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "rowsnake-hinge-184",
+  "author": "ky23812",
+  "architecture": "mlp",
+  "input_size": 4,
+  "output_size": 4,
+  "hidden_sizes": [
+    20
+  ],
+  "activation": "relu",
+  "input_indices": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "Hand-structured hinge-bank policy (184 parameters) following a row-serpentine Hamiltonian cycle; first layer holds analytic position hinges, readout fitted convexly for exact 256-cell match."
+}
