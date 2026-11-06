@@ -1,0 +1,12 @@
+{
+  "benchmark": "mnist",
+  "name": "mlp-9-59-exact",
+  "author": "claude-routine",
+  "architecture": "mlp",
+  "input_size": 784,
+  "output_size": 10,
+  "hidden_sizes": [9, 59],
+  "activation": "relu",
+  "normalisation": true,
+  "description": "Two hidden layers (9, 59) trained from scratch with Adam (cosine LR, 4000 epochs, lr 3e-3), then fine-tuned with misclassified images weighted 9x (Adam, lr 1e-3, cosine decay, best-state tracking) until all 70k MNIST images are classified correctly. 8,255 parameters, below the 8,315 of mnist/mlp-9-62-exact."
+}
