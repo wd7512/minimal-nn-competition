@@ -44,10 +44,15 @@ jobs:
           EOF
       - name: Evaluate submission
         if: env.SKIP != '1'
-        run: uv run mnnc evaluate snake-simple-16x16 models/snake-simple-16x16/glm-spiral-10
+        run: uv run mnnc evaluate snake-simple-16x16 models/snake-simple-16x16/glm-spiral-10 2>&1 | tee evaluate.log
       - name: Run test suite
         if: env.SKIP != '1'
-        run: uv run pytest
+        run: |
+          set +e
+          uv run pytest 2>&1 | tee pytest.log
+          code=${PIPESTATUS[0]}
+          echo "PYTEST_EXIT=$code" >> "$GITHUB_ENV"
+          set -e
       - name: Commit model.pt and clean up
         if: env.SKIP != '1'
         run: |
@@ -58,3 +63,12 @@ jobs:
           git rm .github/workflows/build-glm-spiral-10.yml
           git commit -m "Add glm-spiral-10 model.pt"
           git push
+      - name: Publish logs to debug branch
+        if: env.SKIP != '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b debug/glm-spiral-10
+          git add -f evaluate.log pytest.log
+          git commit -m "Logs: pytest exit $PYTEST_EXIT"
+          git push origin debug/glm-spiral-10
