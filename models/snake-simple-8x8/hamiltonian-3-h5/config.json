@@ -1,0 +1,20 @@
+{
+  "activation": "relu",
+  "architecture": "mlp",
+  "author": "ky23812",
+  "benchmark": "snake-simple-8x8",
+  "description": "Hamiltonian cycle distilled from hamiltonian-3-h6 into a [3] MLP on head features [0,1,2,4,5] (f3 dropped, smallest-magnitude input column); fills the board on all 100 seeds (34 params).",
+  "hidden_sizes": [
+    3
+  ],
+  "input_indices": [
+    0,
+    1,
+    2,
+    4,
+    5
+  ],
+  "input_size": 5,
+  "name": "hamiltonian-3-h5",
+  "output_size": 4
+}
