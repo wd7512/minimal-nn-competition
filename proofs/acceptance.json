@@ -1,0 +1,22 @@
+{
+  "schema": "mnnc.acceptance.v1",
+  "benchmark": "cartpole-gym-v1",
+  "architecture": {
+    "kind": "mlp",
+    "input_size": 4,
+    "output_size": 2,
+    "min_hidden_width": 1,
+    "activations": ["relu", "identity"],
+    "input_indices": false,
+    "dtype": "float32",
+    "fully_connected": true,
+    "biases": true
+  },
+  "source_sha256": {
+    "src/minimal_nn_competition/model/entry.py": "91b1dbb58e2021d0151e7f89659e36a3257791a814a6528308a3b9ef7fa0d185",
+    "src/minimal_nn_competition/model/limits.py": "ddcd41df225a6f7b52972fd033cff5d90032d300cd3bedd340311f05a518c4c7",
+    "src/minimal_nn_competition/benchmarks/common/control/spec.json": "3bdf234a8fd23a18638916e2bd5ede1e8dcda48f52db648b06707336c3caf737",
+    "src/minimal_nn_competition/benchmarks/common/control/__init__.py": "adfc430c6aca62667243eb1a5be3689a49cbf81cee7fde37c5171518a2c30164",
+    "src/minimal_nn_competition/benchmarks/cartpole.py": "0dbaf94b0893510c1b20c687391ba5e39e6071d0beaab14fc727240a134f14c9"
+  }
+}

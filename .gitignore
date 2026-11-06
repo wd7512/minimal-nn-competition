@@ -218,3 +218,7 @@ __marimo__/
 
 # Local investigation scratch
 /work/
+
+# Lean proof toolchain and build artifacts
+.elan/
+proofs/lean/.lake/

@@ -1,0 +1,57 @@
+{
+  "acceptance": {
+    "file": "proofs/acceptance.json",
+    "sha256": "d101fd81663e644f53564f6fcb2045034bb597e6fe9bdc2646df850b82581321"
+  },
+  "benchmark": "cartpole-gym-v1",
+  "conclusion": {
+    "note": "the architectural lower bound is Lean-verified; the 9-parameter upper bound is evaluator-verified",
+    "requires": [
+      "formal_theorem",
+      "empirical_witness"
+    ],
+    "statement": "the minimum passing parameter count is 9",
+    "status": "combined",
+    "value": 9
+  },
+  "evidence": {
+    "computation_certificate": {
+      "checked_by": "lake build",
+      "claims": [
+        "parameterCount 4 2 [1] = 9",
+        "architecturalFloor 4 2 = 9"
+      ],
+      "file": "proofs/lean/Proofs/Generated.lean",
+      "kind": "computation_certificate"
+    },
+    "empirical_witness": {
+      "checkpoint_sha256": "d7b49fe74f5d28294dae04291f1cdd69fd479216c3647ce538ce6eddafaba862",
+      "config_sha256": "3e390a4d6f3bef6bce400bb8b694be3cf43b138d8840d05c3eb3d0b53280e4b5",
+      "evaluation_sha256": "c63c576a4e2b74228c282a008d0e45ce2ad63a5bce356a106c874f1c31e9018f",
+      "kind": "empirical_witness",
+      "passed": true,
+      "score": 1.0,
+      "seeds": 100,
+      "submission": "models/cartpole-gym-v1/relu-threshold-9",
+      "value": 9
+    },
+    "formal_theorem": {
+      "file": "proofs/lean/Proofs/CartPole.lean",
+      "kind": "formal_theorem",
+      "statement": "every accepted CartPole MLP architecture has at least 9 parameters",
+      "theorem": "MinimalNN.cartPole_architecturalMinimum",
+      "value": 9
+    }
+  },
+  "schema": "mnnc.parameter-bounds.v1",
+  "spec": {
+    "benchmark": "cartpole-gym-v1",
+    "control_spec_sha256": "3bdf234a8fd23a18638916e2bd5ede1e8dcda48f52db648b06707336c3caf737",
+    "control_spec_version": "gym-controls-v1",
+    "horizon": 500,
+    "inputs": 4,
+    "outputs": 2,
+    "seeds": 100,
+    "threshold": 500
+  }
+}

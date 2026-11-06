@@ -102,6 +102,7 @@ tests/test_integration.py::test_collect_cli
 tests/test_internal.py
 tests/test_dev_tools.py
 tests/test_model.py
+tests/test_proofs.py
 tests/test_speed.py
 tests/test_submission_check.py""".splitlines()
             + [

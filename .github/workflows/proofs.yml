@@ -1,0 +1,40 @@
+name: Proofs
+
+on:
+  pull_request:
+    branches: [main, dev]
+    paths:
+      - "proofs/**"
+      - ".github/workflows/proofs.yml"
+      - "reports/theoretical-lower-bounds.md"
+      - "src/minimal_nn_competition/model/entry.py"
+      - "src/minimal_nn_competition/model/limits.py"
+      - "src/minimal_nn_competition/benchmarks/common/control/spec.json"
+      - "src/minimal_nn_competition/benchmarks/common/control/__init__.py"
+      - "src/minimal_nn_competition/benchmarks/cartpole.py"
+      - "models/cartpole-gym-v1/relu-threshold-9/**"
+      - "docs/leaderboard.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check generated certificate
+        run: python3 -m proofs check-lean
+      - name: Build and audit Lean proofs
+        uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64 # v1.7.0
+        with:
+          lake-package-directory: proofs/lean
+          auto-config: "false"
+          build: "true"
+          axiom-audit: "true"
+          axiom-audit-root: MinimalNN
+          use-mathlib-cache: "false"
