@@ -1,0 +1,60 @@
+name: Build glm-spiral-10 model
+
+on:
+  push:
+    branches: [submit/glm-spiral-10]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: submit/glm-spiral-10
+          persist-credentials: true
+      - name: Skip if model.pt already built
+        run: |
+          if [ -f "models/snake-simple-16x16/glm-spiral-10/model.pt" ]; then
+            echo "model.pt exists, nothing to do"
+            echo "SKIP=1" >> "$GITHUB_ENV"
+          fi
+      - name: Install uv
+        if: env.SKIP != '1'
+        uses: astral-sh/setup-uv@v6
+      - name: Sync dependencies
+        if: env.SKIP != '1'
+        run: uv sync
+      - name: Build model.pt
+        if: env.SKIP != '1'
+        run: |
+          uv run python - <<'EOF'
+          import json, torch
+          w = json.load(open("models/snake-simple-16x16/glm-spiral-10/weights.json"))
+          sd = {
+              "0.weight": torch.tensor(w["W0"], dtype=torch.float32).reshape(10, 6),
+              "0.bias": torch.tensor(w["b0"], dtype=torch.float32),
+              "2.weight": torch.tensor(w["W1"], dtype=torch.float32).reshape(4, 10),
+              "2.bias": torch.tensor(w["b1"], dtype=torch.float32),
+          }
+          torch.save(sd, "models/snake-simple-16x16/glm-spiral-10/model.pt")
+          print("saved model.pt")
+          EOF
+      - name: Evaluate submission
+        if: env.SKIP != '1'
+        run: uv run mnnc evaluate snake-simple-16x16 models/snake-simple-16x16/glm-spiral-10
+      - name: Run test suite
+        if: env.SKIP != '1'
+        run: uv run pytest
+      - name: Commit model.pt and clean up
+        if: env.SKIP != '1'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add models/snake-simple-16x16/glm-spiral-10/model.pt
+          git rm models/snake-simple-16x16/glm-spiral-10/weights.json
+          git rm .github/workflows/build-glm-spiral-10.yml
+          git commit -m "Add glm-spiral-10 model.pt"
+          git push

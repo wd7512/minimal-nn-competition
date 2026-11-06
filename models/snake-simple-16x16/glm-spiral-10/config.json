@@ -1,0 +1,21 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "glm-spiral-10",
+  "author": "GLM x le vibe",
+  "architecture": "mlp",
+  "input_size": 6,
+  "output_size": 4,
+  "hidden_sizes": [
+    10
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "Single hidden layer of 10 ReLU units (114 parameters). Exact argmax match on all 256 head cells for a Hamiltonian-path policy, so the snake fills the board on every seed. Distilled from a deterministic spiral path policy on the 6 position-only observation features."
+}
