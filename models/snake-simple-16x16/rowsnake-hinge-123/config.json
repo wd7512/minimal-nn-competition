@@ -1,0 +1,17 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "rowsnake-hinge-123",
+  "author": "ky23812",
+  "architecture": "mlp",
+  "input_size": 2,
+  "output_size": 4,
+  "hidden_sizes": [
+    17
+  ],
+  "activation": "relu",
+  "input_indices": [
+    4,
+    5
+  ],
+  "description": "2-input hinge bank (123 params) on [f4,f5]: 13 row-ramp thresholds + row-14 kink + always-on f5 ramp + f4-snap/corner hinges + f4 edge hinge; readout by exact Newton solve, argmax-verified on all 256 cells."
+}
