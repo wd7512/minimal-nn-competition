@@ -340,6 +340,15 @@ So $P\ge9$. The submission `relu-threshold-9` has $[4,1,2]$, $P=4+1+2+2=9$, and
 passes all 100 seeds. Therefore **$P_{\min}=9$ exactly**. This is the only
 benchmark whose lower bound is proved and attained.
 
+The architectural lower bound is machine-checked in Lean 4:
+`MinimalNN.cartPole_architecturalMinimum` in
+[`proofs/lean/Proofs/CartPole.lean`](../proofs/lean/Proofs/CartPole.lean)
+proves that every accepted CartPole MLP architecture has at least nine
+parameters and that nine is attained. The 100-seed pass is an empirical upper
+bound recorded in [`proofs/bounds.json`](../proofs/bounds.json); together they
+give the exact passing minimum. The Lean theorem does not formalise Gymnasium or
+Box2D.
+
 ### 7.2 Pendulum
 
 For $d=3$, $k=1$: linear $P=4$; one hidden unit $P=6$; the current best
@@ -438,6 +447,11 @@ collision search followed `find_closed_tour` for all 100 seeds, recorded
 `observe(engine)` at each step, and compared the tour's next action across
 states with identical observations; safe-action sets were computed by cloning
 the engine and stepping each of the four actions.
+
+The CartPole architectural theorem is checked with
+`cd proofs/lean && lake build`; the certificate is checked with
+`uv run python -m proofs check`. See [`proofs/README.md`](../proofs/README.md)
+for the trust boundary and evidence classes.
 
 The main targets for future work are: a two-layer lower bound for MNIST, a
 bit-efficient construction for the shuffled labels, a structure-aware lower

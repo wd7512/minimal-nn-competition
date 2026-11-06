@@ -1,0 +1,30 @@
+[
+  {
+    "label": "cartpole-linear",
+    "input_size": 4,
+    "hidden_sizes": [],
+    "output_size": 2,
+    "parameters": 10
+  },
+  {
+    "label": "cartpole-witness",
+    "input_size": 4,
+    "hidden_sizes": [1],
+    "output_size": 2,
+    "parameters": 9
+  },
+  {
+    "label": "cartpole-two-hidden",
+    "input_size": 4,
+    "hidden_sizes": [1, 3],
+    "output_size": 2,
+    "parameters": 19
+  },
+  {
+    "label": "mnist-one-hidden",
+    "input_size": 784,
+    "hidden_sizes": [1],
+    "output_size": 10,
+    "parameters": 805
+  }
+]
