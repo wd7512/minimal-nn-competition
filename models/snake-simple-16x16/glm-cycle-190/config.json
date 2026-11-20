@@ -1,0 +1,22 @@
+{
+  "benchmark": "snake-simple-16x16",
+  "name": "glm-cycle-190",
+  "author": "GLM x le vibe",
+  "architecture": "mlp",
+  "input_size": 6,
+  "output_size": 4,
+  "hidden_sizes": [
+    12,
+    6
+  ],
+  "activation": "relu",
+  "input_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "description": "Pruned and distilled from the glm-cycle-distilled 203-parameter teacher: 190 parameters ([12,6] MLP), exact argmax match on all 256 head cells, fills the board on all 100 seeds."
+}

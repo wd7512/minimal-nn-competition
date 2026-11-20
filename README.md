@@ -5,7 +5,7 @@ Find the smallest possible neural network for a problem.
 **[View the leaderboard →](https://wd7512.github.io/minimal-nn-competition/)**
 
 ## Submit a neural network
-Rules: submissions use feed-forward `mlp` models and a PyTorch `state_dict` with all tensors stored as `float32`.
+Rules: submissions use feed-forward `mlp` models and a PyTorch `state_dict` with all tensors stored as `float32` (verification benchmarks take a `verifier.py` instead; see below).
 
 1. Fork this repo
 2. Open a pull request against `submission` with exactly
@@ -20,9 +20,17 @@ uv run mnnc validate-submission models/<benchmark>/<name>
 See [validation and local leaderboard updates](how-to/how-to-validate-a-submission.md).
 For the general submission workflow, see [how to make a submission](how-to/how-to-make-a-submission.md).
 
-Benchmark Submission Guides: [Snake](how-to/how-to-make-a-snake-submission.md), [Image compression](how-to/how-to-make-an-image-compression-submission.md), [Chess](how-to/how-to-make-a-chess-submission.md), [Control](how-to/how-to-make-a-control-submission.md)
+Benchmark Submission Guides: [Snake](how-to/how-to-make-a-snake-submission.md), [Image compression](how-to/how-to-make-an-image-compression-submission.md), [Chess](how-to/how-to-make-a-chess-submission.md), [Control](how-to/how-to-make-a-control-submission.md), [Verification](how-to/how-to-make-a-verification-submission.md)
 
 
 ## Submit/Propose a new benchmark
 
 Create an issue with our [benchmark template](https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md).
+
+## Verification: the largest verified transformer
+
+Verification benchmarks reverse the goal: submit a verifier, claim a
+transformer size, and pass by correctly answering 100 fresh networks of that
+size within 5 minutes. Larger models rank first. See the
+[verification guide](how-to/how-to-make-a-verification-submission.md) and
+[the report](reports/verified-transformer.md).

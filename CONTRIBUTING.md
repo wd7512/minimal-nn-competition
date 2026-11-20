@@ -40,6 +40,7 @@ Benchmark guides:
 - [Image compression](how-to/how-to-make-an-image-compression-submission.md)
 - [Chess](how-to/how-to-make-a-chess-submission.md)
 - [Control](how-to/how-to-make-a-control-submission.md)
+- [Verification](how-to/how-to-make-a-verification-submission.md)
 
 Each submission's detail page shows its structure — for example
 `[784,14,14,10]` — directly above the parameter count, taken from

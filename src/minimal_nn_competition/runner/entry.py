@@ -99,13 +99,18 @@ def evaluate_submission(submission, benchmark):
     score, passed, details = benchmark.evaluate(loaded)
     config = submission.config
     details = dict(details)
-    details["structure"] = [config.input_size, *config.hidden_sizes, config.output_size]
+    if config.architecture == "verifier":
+        details["structure"] = config.structure()
+        count = config.parameter_count()
+    else:
+        details["structure"] = [config.input_size, *config.hidden_sizes, config.output_size]
+        count = parameter_count(loaded.state_dict)
     return BenchmarkResult(
         submission=submission.checkpoint.parent.name,
         benchmark=benchmark.name,
         score=float(score),
         passed=bool(passed),
-        parameter_count=parameter_count(loaded.state_dict),
+        parameter_count=count,
         details=details,
         name=submission.config.name,
         author=submission.config.author,

@@ -8,15 +8,21 @@ from pathlib import Path
 from typing import Any
 
 from minimal_nn_competition.benchmarks.common.snake.observation import OBSERVATION_SIZE
-from minimal_nn_competition.benchmarks.registry import CONTROL_SPEC, SNAKE_BENCHMARKS
-from minimal_nn_competition.model.entry import SubmissionConfig
+from minimal_nn_competition.benchmarks.registry import (
+    CONTROL_SPEC,
+    SNAKE_BENCHMARKS,
+    VERIFY_BENCHMARKS,
+)
+from minimal_nn_competition.model.entry import SubmissionConfig, VerifierConfig
 from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,
     MAX_PARAMETERS,
     parameter_count_from_dimensions,
 )
 
-SUBMISSION_PATH = re.compile(r"^models/([^/]+)/([^/]+)/(config\.json|model\.pt)$")
+SUBMISSION_PATH = re.compile(r"^models/([^/]+)/([^/]+)/(config\.json|model\.pt|verifier\.py)$")
+# Verifier code is reviewed by a maintainer and never run in CI; keep it small.
+MAX_VERIFIER_BYTES = 256 * 1024
 ALLOWED_STATUSES = {"A", "M", "C"}
 ALLOWED_ACTIVATIONS = {"relu", "identity"}
 ALLOWED_CONFIG_KEYS = set(SubmissionConfig.model_fields)
@@ -52,12 +58,27 @@ def _validate_input_indices(
     return []
 
 
+def validate_verifier_config(config: dict[str, Any], directory: Path) -> list[str]:
+    config_path = directory / "config.json"
+    benchmark = directory.parts[1] if len(directory.parts) > 1 else ""
+    errors = []
+    if config.get("benchmark") != benchmark:
+        errors.append(f"{config_path}: benchmark must be {benchmark!r}")
+    try:
+        VerifierConfig.model_validate(config)
+    except ValueError as exc:
+        errors.append(f"{config_path}: {exc}")
+    return errors
+
+
 def validate_config(config: Any, directory: Path) -> list[str]:
     config_path = directory / "config.json"
     if not isinstance(config, dict):
         return [f"{config_path}: must contain a JSON object"]
     errors: list[str] = []
     benchmark = directory.parts[1] if len(directory.parts) > 1 else ""
+    if benchmark in VERIFY_BENCHMARKS:
+        return validate_verifier_config(config, directory)
     if config.get("benchmark") != benchmark:
         errors.append(f"{config_path}: benchmark must be {benchmark!r}")
     unknown_keys = sorted(set(config) - ALLOWED_CONFIG_KEYS)
@@ -137,23 +158,26 @@ def validate_diff(diff_text: str, root: Path) -> list[str]:
             errors.append(f"{path}: only added or modified files are allowed")
         elif SUBMISSION_PATH.match(path) is None:
             errors.append(
-                f"{path}: only models/<benchmark>/<name>/config.json and model.pt are allowed"
+                f"{path}: only models/<benchmark>/<name>/config.json and model.pt "
+                "(or verifier.py for verification benchmarks) are allowed"
             )
         else:
             paths.append(path)
     if len(paths) != 2:
         errors.append(f"expected exactly two submission files, found {len(paths)}")
         return errors
-    if {Path(path).name for path in paths} != {"config.json", "model.pt"}:
-        errors.append("a submission must contain exactly config.json and model.pt")
-        return errors
     directories = {Path(path).parent for path in paths}
     if len(directories) != 1:
         errors.append("config.json and model.pt must be in the same submission directory")
         return errors
     directory = directories.pop()
+    verifier = directory.parts[1] in VERIFY_BENCHMARKS
+    second = "verifier.py" if verifier else "model.pt"
+    if {Path(path).name for path in paths} != {"config.json", second}:
+        errors.append(f"a submission must contain exactly config.json and {second}")
+        return errors
     config_path = root / directory / "config.json"
-    model_path = root / directory / "model.pt"
+    model_path = root / directory / second
     if not config_path.is_file():
         errors.append(f"{config_path}: missing")
     else:
@@ -167,6 +191,8 @@ def validate_diff(diff_text: str, root: Path) -> list[str]:
         errors.append(f"{model_path}: missing")
     elif model_path.stat().st_size == 0:
         errors.append(f"{model_path}: must not be empty")
+    elif verifier and model_path.stat().st_size > MAX_VERIFIER_BYTES:
+        errors.append(f"{model_path}: verifier is larger than {MAX_VERIFIER_BYTES} bytes")
     elif model_path.stat().st_size > MAX_CHECKPOINT_BYTES:
         errors.append(
             f"{model_path}: checkpoint is too large "

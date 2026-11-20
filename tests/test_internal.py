@@ -220,6 +220,7 @@ def test_benchmark_families_partition_registry() -> None:
         IMAGE_BENCHMARKS,
         RL_BENCHMARKS,
         SNAKE_BENCHMARKS,
+        VERIFY_BENCHMARKS,
         available_benchmarks,
     )
 
@@ -228,6 +229,7 @@ def test_benchmark_families_partition_registry() -> None:
         ("IMAGE_BENCHMARKS", IMAGE_BENCHMARKS),
         ("RL_BENCHMARKS", RL_BENCHMARKS),
         ("SNAKE_BENCHMARKS", SNAKE_BENCHMARKS),
+        ("VERIFY_BENCHMARKS", VERIFY_BENCHMARKS),
     )
     grouped = [name for _, names in families for name in names]
     assert len(grouped) == len(set(grouped))

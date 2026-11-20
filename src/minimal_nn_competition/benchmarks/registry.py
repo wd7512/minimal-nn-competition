@@ -16,6 +16,13 @@ CHESS_BENCHMARKS = ("chess-eval-10k", "chess-eval-100k")
 IMAGE_BENCHMARKS = ("mnist", "fashion-mnist", "mnist-shuffled", "fashion-mnist-shuffled")
 SNAKE_BENCHMARKS = ("snake-simple-8x8", "snake-simple-16x16", "snake-obstacles-8x8")
 RL_BENCHMARKS = tuple(CONTROL_SPEC["tasks"])
+# Verification: binary vocabulary, forbidden token 1, inputs of exactly max_len tokens
+# after BOS. Length 16 (65,536 inputs) is work in progress.
+VERIFY_SPECS = {
+    "verify-transformer-len0": {"vocab": 2, "max_len": 0},
+    "verify-transformer-len4": {"vocab": 2, "max_len": 4},
+}
+VERIFY_BENCHMARKS = tuple(VERIFY_SPECS)
 # Benchmarks whose detail page runs the submission's weights in the browser.
 WEIGHT_BENCHMARKS = IMAGE_BENCHMARKS + CHESS_BENCHMARKS
 
@@ -37,6 +44,7 @@ def _factories():
     from minimal_nn_competition.benchmarks.snake_obstacles_8x8 import SnakeObstacles8x8Benchmark
     from minimal_nn_competition.benchmarks.snake_simple_8x8 import SnakeSimple8x8Benchmark
     from minimal_nn_competition.benchmarks.snake_simple_16x16 import SnakeSimple16x16Benchmark
+    from minimal_nn_competition.benchmarks.verification import VerificationBenchmark
 
     return {
         "cartpole-gym-v1": CartPoleBenchmark,
@@ -51,7 +59,7 @@ def _factories():
         "snake-simple-8x8": SnakeSimple8x8Benchmark,
         "snake-simple-16x16": SnakeSimple16x16Benchmark,
         "snake-obstacles-8x8": SnakeObstacles8x8Benchmark,
-    }
+    } | {name: VerificationBenchmark.factory(name) for name in VERIFY_BENCHMARKS}
 
 
 def available_benchmarks():

@@ -15,6 +15,7 @@ from minimal_nn_competition.benchmarks.registry import (
     IMAGE_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    VERIFY_BENCHMARKS,
     WEIGHT_BENCHMARKS,
 )
 from minimal_nn_competition.leaderboard import rank_results
@@ -46,6 +47,12 @@ _GROUP_SPECS = (
         "benchmarks": RL_BENCHMARKS,
         "accent": "control",
     },
+    {
+        "id": "verification",
+        "label": "Verification",
+        "benchmarks": VERIFY_BENCHMARKS,
+        "accent": "verification",
+    },
 )
 BENCHMARK_GROUPS = tuple(spec["id"] for spec in _GROUP_SPECS)
 GROUP_NAMES = BENCHMARK_GROUPS
@@ -63,6 +70,8 @@ _VERSION_LABELS = {
     "cartpole-gym-v1": "CartPole",
     "pendulum-gym-v1": "Pendulum",
     "lunarlander-gym-v1": "Lunar Lander",
+    "verify-transformer-len0": "Length 0",
+    "verify-transformer-len4": "Length 4",
 }
 _STYLE = (
     SITE_THEME_CSS
@@ -72,6 +81,7 @@ _STYLE = (
 [data-accent="image-compression"] { --accent: var(--accent-image-compression); }
 [data-accent="chess"] { --accent: var(--accent-chess); }
 [data-accent="control"] { --accent: var(--accent-control); }
+[data-accent="verification"] { --accent: var(--accent-verification); }
 [data-accent="default"] { --accent: var(--accent-snake); }
 .status {
   display: inline-flex;
@@ -799,10 +809,14 @@ def _error_text(result):
 
 
 def _fourth_text(result):
-    if result.benchmark in SNAKE_BENCHMARKS:
+    benchmark = result.benchmark
+    if benchmark in SNAKE_BENCHMARKS:
         return _game_length_text(result)
-    if result.benchmark in CHESS_BENCHMARKS:
+    if benchmark in CHESS_BENCHMARKS:
         return _error_text(result)
+    if benchmark in VERIFY_BENCHMARKS:
+        solved = result.details.get("solved")
+        return f"{solved}/{result.details.get('instances')}" if solved is not None else "-"
     return "-"
 
 
@@ -819,6 +833,8 @@ def _fourth_header(benchmark):
         return "Game length"
     if benchmark in CHESS_BENCHMARKS:
         return "Error"
+    if benchmark in VERIFY_BENCHMARKS:
+        return "Solved"
     return None
 
 
@@ -837,6 +853,11 @@ def _ranking_text(benchmark):
     if benchmark in CHESS_BENCHMARKS:
         return (
             "pass status, score, parameter count, then lower mean error; "
+            "final ties use submission date (older first), then name"
+        )
+    if benchmark in VERIFY_BENCHMARKS:
+        return (
+            "pass status (all 100 networks solved), score, then larger parameter count first; "
             "final ties use submission date (older first), then name"
         )
     return (
@@ -920,6 +941,8 @@ def _submission_guide_url(benchmark):
         guide = "how-to-make-a-chess-submission.md"
     elif benchmark in RL_BENCHMARKS:
         guide = "how-to-make-a-control-submission.md"
+    elif benchmark in VERIFY_BENCHMARKS:
+        guide = "how-to-make-a-verification-submission.md"
     else:
         return "https://github.com/wd7512/minimal-nn-competition/blob/main/CONTRIBUTING.md"
     return "https://github.com/wd7512/minimal-nn-competition/blob/main/how-to/" + guide

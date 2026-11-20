@@ -9,6 +9,7 @@ from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    VERIFY_BENCHMARKS,
     WEIGHT_BENCHMARKS,
     available_benchmarks,
     create_benchmark,
@@ -74,6 +75,7 @@ def _parser():
     evaluate.add_argument("benchmark", choices=available_benchmarks())
     evaluate.add_argument("submission_dir", type=Path)
     evaluate.add_argument("--data-path", type=Path)
+    evaluate.add_argument("--seed", type=int, help="Verification only: reproduce an evaluation")
     leaderboard = add("leaderboard", help="Print a saved leaderboard")
     leaderboard.add_argument("path", type=Path)
     render = add("render", help="Render a leaderboard as static HTML")
@@ -425,6 +427,11 @@ def main(argv=None):
         kwargs["data_path"] = Path("data/mnist-shuffled.pt")
     elif args.benchmark == "fashion-mnist-shuffled":
         kwargs["data_path"] = Path("data/fashion-mnist-shuffled.pt")
+    if args.seed is not None:
+        if args.benchmark not in VERIFY_BENCHMARKS:
+            logger.error("--seed is only supported for verification benchmarks")
+            return 2
+        kwargs["seed"] = args.seed
     try:
         benchmark = create_benchmark(args.benchmark, **kwargs)
         result = evaluate_submission(Submission.from_directory(args.submission_dir), benchmark)

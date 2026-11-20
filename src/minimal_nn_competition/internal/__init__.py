@@ -249,6 +249,11 @@ tests/test_integration.py::test_data_path_rejected_for_snake""".splitlines()
         _SNAKE_OBSTACLES_SOURCES,
         tuple("""tests/test_snake_obstacles.py""".splitlines()),
     ),
+    Scope(
+        "verification",
+        (f"{PACKAGE}/verification", f"{_BENCHMARKS}/verification.py"),
+        ("tests/test_verification.py",),
+    ),
 )
 
 
@@ -344,6 +349,8 @@ def scope_for_benchmark(name):
         return "chess-eval"
     if name in ("mnist-shuffled", "fashion-mnist-shuffled"):
         return "shuffled-labels"
+    if name.startswith("verify-"):
+        return "verification"
     return name.removesuffix("-gym-v1")
 
 

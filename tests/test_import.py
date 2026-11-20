@@ -24,4 +24,6 @@ def test_main_lists_benchmarks(capsys: pytest.CaptureFixture[str]) -> None:
         "snake-obstacles-8x8",
         "snake-simple-16x16",
         "snake-simple-8x8",
+        "verify-transformer-len0",
+        "verify-transformer-len4",
     ]

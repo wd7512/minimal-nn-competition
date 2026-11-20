@@ -8,6 +8,7 @@ from pathlib import Path
 from minimal_nn_competition.benchmarks.registry import (
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    VERIFY_BENCHMARKS,
     WEIGHT_BENCHMARKS,
     available_benchmarks,
     create_benchmark,
@@ -68,7 +69,9 @@ def update_artifacts(directory: Path, submission: Submission, result, output: Pa
 def run(directory: Path, data_root: Path, *, update: bool = False) -> int:
     directory = directory.resolve()
     submission = validate_directory(directory)
-    result = score_submission_process(directory, data_root.resolve())
+    # Verification adds network generation to a 5-minute verifier budget.
+    timeout = 3600 if submission.config.benchmark in VERIFY_BENCHMARKS else 600
+    result = score_submission_process(directory, data_root.resolve(), timeout=timeout)
     logger.info("Validation report: %s", result.to_json())
     if update:
         update_artifacts(directory, submission, result, Path.cwd() / "docs")
