@@ -46863,10 +46863,8 @@
     "author": "wd7512",
     "benchmark": "verify-transformer-len0",
     "details": {
-      "generation_seconds": 0.09,
-      "inputs_per_network": 1,
       "instances": 100,
-      "seed": 1705477616,
+      "seed": 2343667493,
       "solved": 100,
       "structure": [
         4,
@@ -46874,26 +46872,22 @@
         1,
         16
       ],
-      "time_limit_seconds": 300.0,
-      "unsolved": 0,
-      "verifier_seconds": 0.3,
+      "verifier_seconds": 0.24,
       "wrong": 0
     },
-    "name": "example-interval",
+    "name": "example-enumerate",
     "parameter_count": 236,
     "passed": true,
     "score": 1.0,
-    "submission": "example-interval",
+    "submission": "example-enumerate",
     "submitted_at": "2026-11-20"
   },
   {
     "author": "wd7512",
     "benchmark": "verify-transformer-len4",
     "details": {
-      "generation_seconds": 97.13,
-      "inputs_per_network": 16,
       "instances": 100,
-      "seed": 27657632,
+      "seed": 4068665378,
       "solved": 100,
       "structure": [
         512,
@@ -46901,9 +46895,7 @@
         8,
         2048
       ],
-      "time_limit_seconds": 300.0,
-      "unsolved": 0,
-      "verifier_seconds": 26.1,
+      "verifier_seconds": 25.17,
       "wrong": 0
     },
     "name": "example-enumerate",
