@@ -59,6 +59,8 @@ def test_registry_and_list_include_16x16(capsys: pytest.CaptureFixture[str]) -> 
         "snake-obstacles-8x8",
         "snake-simple-16x16",
         "snake-simple-8x8",
+        "verify-transformer-len0",
+        "verify-transformer-len4",
     ]
 
 

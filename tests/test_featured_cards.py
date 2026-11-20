@@ -119,11 +119,11 @@ def test_open_challenges_include_absent_benchmarks_with_working_destinations() -
     html = render_html(results)
     card = _FeaturedCards(html).cards["challenges"]
 
-    assert "10" in card.text
+    assert "12" in card.text
     assert "Find your next challenge" in card.text
     assert "Simple 8×8" in card.text
     assert "MNIST Shuffled" in card.text
-    assert len(card.links) == 10
+    assert len(card.links) == 12
     assert "#panel-snake-simple-8x8" in card.links
     assert "#panel-mnist" not in card.links
     assert "#panel-cartpole" not in card.links
@@ -136,7 +136,7 @@ def test_open_challenges_include_absent_benchmarks_with_working_destinations() -
     assert guide_prefix + "how-to-make-a-chess-submission.md" in card.links
     assert guide_prefix + "how-to-make-a-control-submission.md" in card.links
     empty_card = _FeaturedCards(render_html([])).cards["challenges"]
-    assert len(empty_card.links) == 12
+    assert len(empty_card.links) == 14
     assert guide_prefix + "how-to-make-an-image-compression-submission.md" in empty_card.links
 
 

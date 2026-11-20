@@ -46858,5 +46858,59 @@
     "score": 0.0,
     "submission": "example",
     "submitted_at": "2026-10-23"
+  },
+  {
+    "author": "wd7512",
+    "benchmark": "verify-transformer-len0",
+    "details": {
+      "generation_seconds": 0.09,
+      "inputs_per_network": 1,
+      "instances": 100,
+      "seed": 1705477616,
+      "solved": 100,
+      "structure": [
+        4,
+        1,
+        1,
+        16
+      ],
+      "time_limit_seconds": 300.0,
+      "unsolved": 0,
+      "verifier_seconds": 0.3,
+      "wrong": 0
+    },
+    "name": "example-interval",
+    "parameter_count": 236,
+    "passed": true,
+    "score": 1.0,
+    "submission": "example-interval",
+    "submitted_at": "2026-11-20"
+  },
+  {
+    "author": "wd7512",
+    "benchmark": "verify-transformer-len4",
+    "details": {
+      "generation_seconds": 97.13,
+      "inputs_per_network": 16,
+      "instances": 100,
+      "seed": 27657632,
+      "solved": 100,
+      "structure": [
+        512,
+        8,
+        8,
+        2048
+      ],
+      "time_limit_seconds": 300.0,
+      "unsolved": 0,
+      "verifier_seconds": 26.1,
+      "wrong": 0
+    },
+    "name": "example-enumerate",
+    "parameter_count": 25191424,
+    "passed": true,
+    "score": 1.0,
+    "submission": "example-enumerate",
+    "submitted_at": "2026-11-20"
   }
 ]
