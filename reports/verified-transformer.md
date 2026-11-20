@@ -82,6 +82,22 @@ A rejected claim is wrong. The construction guarantees a margin of at least
 | Benchmark | Example | Method | Claimed size |
 | --- | --- | --- | --- |
 | len0 | `example-interval` | interval branch-and-bound, point checks at single sequences | 236 parameters |
-| len4 | `example-enumerate` | one batched forward pass over all 16 inputs, point leaves | see below |
+| len4 | `example-enumerate` | one batched forward pass over all 16 inputs, point leaves | 25,191,424 parameters |
 
-SCALING_RESULTS
+## Scaling the enumeration example (len4)
+
+All 100 networks per row on the 4-CPU, 15 GB development container, using
+`d_mlp = 4 * d_model`. Generation is ours and is not charged to the verifier.
+
+| d_model | layers | heads | Parameters | Solved | Verifier time | Generation |
+| --- | --- | --- | --- | --- | --- | --- |
+| 8 | 2 | 2 | 1,696 | 100 | under 1 s | under 1 s |
+| 128 | 4 | 4 | 790,272 | 100 | 1.3 s | 3.1 s |
+| 256 | 8 | 8 | 6,304,256 | 100 | 8.7 s | 25.9 s |
+| 512 | 8 | 8 | 25,191,424 | 100 | 39.2 s | 113.6 s |
+| 1024 | 8 | 16 | 100,714,496 | 88 | 300 s (limit) | 401.8 s |
+
+With 16 inputs, checking every input is cheap, so the forward pass speed sets
+the limit, at about 25M parameters within 5 minutes. Length 16 has 65,536
+inputs per network, where enumeration is about 4,000 times more work. Set-based
+proofs matter there, which is why that tier is the next step.

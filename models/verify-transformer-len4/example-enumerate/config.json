@@ -3,9 +3,9 @@
   "name": "example-enumerate",
   "author": "wd7512",
   "architecture": "verifier",
-  "d_model": 64,
-  "layers": 2,
-  "heads": 2,
-  "d_mlp": 256,
+  "d_model": 512,
+  "layers": 8,
+  "heads": 8,
+  "d_mlp": 2048,
   "description": "Example: one batched forward pass over every input, with point leaves."
 }

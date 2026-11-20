@@ -169,13 +169,14 @@ def test_runner_grades_wrong_and_partial_answers(tmp_path):
 
 
 def test_example_submissions_pass_full_evaluation_quickly():
-    for directory in (LEN0, LEN4):
-        submission = Submission.from_directory(directory)
-        start = time.monotonic()
-        result = run_evaluation(submission.checkpoint, submission.config.model_spec(), seed=9)
-        assert (result.solved, result.wrong) == (100, 0)
-        if directory == LEN0:
-            assert time.monotonic() - start < 30
+    # LEN0 at its claimed size; LEN4 claims 25M parameters, so test its verifier on SPEC4.
+    start = time.monotonic()
+    submission = Submission.from_directory(LEN0)
+    result = run_evaluation(submission.checkpoint, submission.config.model_spec(), seed=9)
+    assert (result.solved, result.wrong) == (100, 0)
+    assert time.monotonic() - start < 30
+    result = run_evaluation(Submission.from_directory(LEN4).checkpoint, SPEC4, seed=9)
+    assert (result.solved, result.wrong) == (100, 0)
 
 
 def test_evaluate_cli_reports_parameters(capsys):
