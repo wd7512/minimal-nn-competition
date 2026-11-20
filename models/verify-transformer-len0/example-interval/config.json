@@ -1,0 +1,11 @@
+{
+  "benchmark": "verify-transformer-len0",
+  "name": "example-interval",
+  "author": "wd7512",
+  "architecture": "verifier",
+  "d_model": 4,
+  "layers": 1,
+  "heads": 1,
+  "d_mlp": 16,
+  "description": "Example: interval branch-and-bound with float64 point checks."
+}

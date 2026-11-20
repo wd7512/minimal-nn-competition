@@ -5,7 +5,11 @@ import statistics
 from dataclasses import asdict
 from datetime import date
 
-from minimal_nn_competition.benchmarks.registry import CHESS_BENCHMARKS, SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import (
+    CHESS_BENCHMARKS,
+    SNAKE_BENCHMARKS,
+    VERIFY_BENCHMARKS,
+)
 from minimal_nn_competition.runner.entry import BenchmarkResult, validate_result
 
 
@@ -47,8 +51,17 @@ def _submission_date(result):
         return date.max
 
 
+def _size_key(result):
+    """Smaller models rank first, except verification, where larger models win."""
+    if result.benchmark in VERIFY_BENCHMARKS:
+        return -result.parameter_count
+    return result.parameter_count
+
+
 def rank_results(results):
     """Rank by passing status, score, parameter count, Snake game length, then Chess mean error.
+
+    Verification benchmarks rank larger parameter counts first.
 
     Failed Snake entries instead rank by longest game first, then
     parameter count, since survival is the only signal when nothing is won.
@@ -61,8 +74,8 @@ def rank_results(results):
             result.benchmark,
             not result.passed,
             -result.score,
-            # Failed Snakes rank the longest survival first.
-            _longest_game_first(result) if snake_failed else result.parameter_count,
+            # Failed Snakes rank the longest survival first; verification ranks larger models first.
+            _longest_game_first(result) if snake_failed else _size_key(result),
             result.parameter_count if snake_failed else _game_length(result),
             _mean_error(result),
             _submission_date(result),

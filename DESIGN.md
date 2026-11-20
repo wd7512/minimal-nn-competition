@@ -31,6 +31,7 @@ not fill surfaces or decorate every control.
 | Snake | Simple 8×8, Simple 16×16, Obstacles 8×8 | Simple 8×8 |
 | Image compression | MNIST, Fashion-MNIST | MNIST |
 | Chess evaluation | Stockfish 10k, Stockfish 100k | Stockfish 10k |
+| Verification | Length 0, Length 4 | Length 0 |
 
 Unknown benchmarks fall back to their own single-version group after the known
 groups, so a new benchmark is never dropped from the page.
@@ -54,6 +55,7 @@ and rose are reserved for Pass/Fail.
 | Snake accent | `#256b66` | `#7fcac1` | Snake identity |
 | MNIST accent | `#8a5b16` | `#e0b76b` | MNIST identity |
 | Chess accent | `#3f5f86` | `#9bb9df` | Chess identity |
+| Verification accent | `#8a3f6b` | `#e79cc6` | Verification identity |
 
 Accents appear only on the group number, the rail marker, the active version
 underline, the cycle glyph, the rail and title hover underlines, and the three

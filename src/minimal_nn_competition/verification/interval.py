@@ -139,21 +139,14 @@ def _bound_logits(params, spec, box):
 
 
 def box_status(params, spec, forbidden, box, witness=None):
-    """Classify a box as ``proved``, ``violated`` or ``open``.
+    """Return ``(True, witness)`` if the interval bounds prove the box safe.
 
-    ``proved``: some token ``j != forbidden`` has ``lo(logit_j) > hi(logit_forbidden)``
-    on the whole box, so ``forbidden`` is never the argmax there. ``witness``
-    fixes ``j``; otherwise the best candidate is used.
-    ``violated``: the box is a single sequence and ``forbidden`` is strictly the
-    largest logit. Anything else, including a near tie, is ``open``.
+    Proved means some token ``j != forbidden`` has ``lo(logit_j) > hi(logit_forbidden)``
+    on every sequence in the box. ``witness`` fixes ``j``; otherwise the best
+    candidate is tried.
     """
     lo, hi = bound_logits(params, spec, box)
     others = [j for j in range(spec.vocab) if j != forbidden]
     if witness is None:
         witness = max(others, key=lambda j: lo[j])
-    if lo[witness] > hi[forbidden]:
-        return "proved", witness
-    single = all(len(position) == 1 for position in box)
-    if single and all(lo[forbidden] > hi[j] for j in others):
-        return "violated", None
-    return "open", None
+    return bool(lo[witness] > hi[forbidden]), witness

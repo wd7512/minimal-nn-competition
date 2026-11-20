@@ -1,17 +1,19 @@
-"""A tiny decoder-only transformer whose next-token behaviour can be verified.
+"""The verification transformer's shape, parameter count and instance files.
 
 Tokens are ``0..vocab-1``; token ``vocab`` is BOS and is always at position 0,
 so the empty sequence is valid. Each block applies causal multi-head attention
 and a ReLU MLP, both added back to the residual stream. There is no LayerNorm
-and no unembedding bias. The model's meaning is the exact real-valued forward
-pass with the stored float32 weights and the float64 attention ``scale``.
+and no unembedding bias. The next token is the argmax of the last position's
+logits.
+
+This module imports nothing heavy: the submission check runs it with only
+pydantic installed.
 """
 
 import json
 import math
 from dataclasses import asdict, dataclass
 
-ARCHITECTURE = "verification-transformer"
 MAX_VOCAB = 64
 
 
@@ -54,69 +56,38 @@ class ModelSpec:
         return sum(math.prod(shape) for shape in self.shapes().values())
 
 
-def hidden(params, spec, tokens):
-    """Residual stream for a batch of BOS-prefixed token tensors ``(batch, time)``."""
-    import torch
-
-    batch, length = tokens.shape
-    size = spec.d_model // spec.heads
-    x = params["embed"][tokens] + params["pos"][:length]
-    causal = torch.ones(length, length, dtype=torch.bool).tril()
-    for layer in range(spec.layers):
-        prefix = f"layers.{layer}"
-
-        def split(name, x=x, prefix=prefix):
-            out = x @ params[f"{prefix}.{name}"]
-            return out.view(batch, length, spec.heads, size).transpose(1, 2)
-
-        scores = (split("wq") @ split("wk").transpose(-1, -2)) * spec.scale
-        weights = scores.masked_fill(~causal, float("-inf")).softmax(dim=-1)
-        mixed = (weights @ split("wv")).transpose(1, 2).reshape(batch, length, spec.d_model)
-        x = x + mixed @ params[f"{prefix}.wo"]
-        inner = torch.relu(x @ params[f"{prefix}.w1"] + params[f"{prefix}.b1"])
-        x = x + inner @ params[f"{prefix}.w2"] + params[f"{prefix}.b2"]
-    return x
-
-
-def logits(params, spec, tokens):
-    return hidden(params, spec, tokens) @ params["unembed"]
-
-
-def to_numpy(params):
-    """float64 copies of the weights for the interval engine (exact for float32)."""
-    return {name: value.detach().double().numpy() for name, value in params.items()}
-
-
-def save_model(directory, spec, params, model_id, forbidden):
-    import torch
+def save_instance(directory, spec, params, instance_id, forbidden, tau):
+    """Write ``config.json`` and float32 ``weights.npz`` for one verification instance."""
+    import numpy as np
 
     directory.mkdir(parents=True, exist_ok=True)
-    config = {"architecture": ARCHITECTURE, "model_id": model_id, "forbidden": forbidden}
-    (directory / "config.json").write_text(json.dumps(config | asdict(spec), indent=2) + "\n")
-    state = {name: value.detach().float().contiguous() for name, value in params.items()}
-    torch.save(state, directory / "model.pt")
+    config = {"id": instance_id, "forbidden": forbidden, "tau": tau} | asdict(spec)
+    (directory / "config.json").write_text(json.dumps(config, indent=2) + "\n")
+    weights = {name: np.asarray(value, dtype=np.float32) for name, value in params.items()}
+    np.savez(directory / "weights.npz", **weights)  # ty: ignore[invalid-argument-type]
 
 
-def load_model(directory):
-    """Return ``(spec, params, model_id, forbidden)``; ``params`` are float32 tensors."""
-    import torch
+def load_instance(directory):
+    """Return ``(spec, params, instance_id, forbidden, tau)``; params are float64 arrays.
+
+    float32 values are exactly representable in float64, so nothing is rounded.
+    """
+    import numpy as np
 
     config = json.loads((directory / "config.json").read_text())
-    if config.pop("architecture", None) != ARCHITECTURE:
-        raise ValueError(f"config architecture must be {ARCHITECTURE!r}")
-    model_id = config.pop("model_id")
-    forbidden = config.pop("forbidden")
+    instance_id, forbidden, tau = config.pop("id"), config.pop("forbidden"), config.pop("tau")
     spec = ModelSpec(**config)
     if not 0 <= forbidden < spec.vocab:
         raise ValueError("forbidden must be a token in the vocabulary")
-    params = torch.load(directory / "model.pt", map_location="cpu", weights_only=True)
+    with np.load(directory / "weights.npz", allow_pickle=False) as data:
+        params = {name: data[name] for name in data.files}
     shapes = spec.shapes()
     if set(params) != set(shapes):
-        raise ValueError("checkpoint keys do not match the config")
+        raise ValueError("weights do not match the config")
     for name, shape in shapes.items():
         value = params[name]
-        if value.dtype != torch.float32 or tuple(value.shape) != shape:
+        if value.dtype != np.float32 or value.shape != shape:
             raise ValueError(f"{name} must be float32 with shape {shape}")
-        if not torch.isfinite(value).all():
+        if not np.isfinite(value).all():
             raise ValueError(f"{name} contains non-finite values")
-    return spec, params, model_id, forbidden
+    return spec, {k: v.astype(np.float64) for k, v in params.items()}, instance_id, forbidden, tau

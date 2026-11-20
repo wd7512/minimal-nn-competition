@@ -9,6 +9,7 @@ from minimal_nn_competition.benchmarks.registry import (
     CHESS_BENCHMARKS,
     RL_BENCHMARKS,
     SNAKE_BENCHMARKS,
+    VERIFY_BENCHMARKS,
     WEIGHT_BENCHMARKS,
     available_benchmarks,
     create_benchmark,
@@ -74,6 +75,7 @@ def _parser():
     evaluate.add_argument("benchmark", choices=available_benchmarks())
     evaluate.add_argument("submission_dir", type=Path)
     evaluate.add_argument("--data-path", type=Path)
+    evaluate.add_argument("--seed", type=int, help="Verification only: reproduce an evaluation")
     leaderboard = add("leaderboard", help="Print a saved leaderboard")
     leaderboard.add_argument("path", type=Path)
     render = add("render", help="Render a leaderboard as static HTML")
@@ -91,18 +93,16 @@ def _parser():
     speed.add_argument("--output", type=Path, default=Path("docs/internal/speed/leaderboard.json"))
     render_speed = add("render-speed", help="Render the hidden Snake Simple 8x8 speed leaderboard")
     _render_args(render_speed)
-    verify = add("verify-transformer", help="Experimental: verify a reference transformer")
-    for flag, default in (("vocab", 2), ("max-len", 2), ("d-model", 4), ("layers", 1)):
-        verify.add_argument(f"--{flag}", type=int, default=default)
-    for flag, default in (("heads", 1), ("seed", 0), ("forbidden", 1)):
-        verify.add_argument(f"--{flag}", type=int, default=default)
-    verify.add_argument("--planted", action="store_true", help="Plant a violation on [0, 1]")
-    verify.add_argument("--timeout", type=float, default=60.0)
-    for flag in ("save-model", "cert", "oracle"):
-        verify.add_argument(f"--{flag}", type=Path, default=None)
-    check_cert = add("check-certificate", help="Experimental: check a verification certificate")
-    check_cert.add_argument("model_dir", type=Path)
-    check_cert.add_argument("certificate", type=Path)
+    instances = add("make-instances", help="Write verification instances to practise on")
+    instances.add_argument("benchmark", choices=VERIFY_BENCHMARKS)
+    instances.add_argument("output", type=Path)
+    for flag, default in (("d-model", 4), ("layers", 1), ("heads", 1), ("d-mlp", 16)):
+        instances.add_argument(f"--{flag}", type=int, default=default)
+    instances.add_argument("--seed", type=int, default=0)
+    instances.add_argument("--count", type=int, default=100)
+    check_answer = add("check-answer", help="Check one verifier answer against its instance")
+    check_answer.add_argument("instance_dir", type=Path)
+    check_answer.add_argument("answer", type=Path)
     internal = add("internal", help="Score this repo's own code against its test scopes")
     internal.add_argument("--root", type=Path, default=Path("."))
     internal.add_argument("--output", type=Path, default=Path("docs/internal/leaderboard.json"))
@@ -269,7 +269,7 @@ def main(argv=None):
             return _fail(exc)
         _emit(index)
         return 0
-    if args.command in ("verify-transformer", "check-certificate"):
+    if args.command in ("make-instances", "check-answer"):
         from minimal_nn_competition.verification.cli import run
 
         try:
@@ -444,6 +444,11 @@ def main(argv=None):
         kwargs["data_path"] = Path("data/mnist-shuffled.pt")
     elif args.benchmark == "fashion-mnist-shuffled":
         kwargs["data_path"] = Path("data/fashion-mnist-shuffled.pt")
+    if args.seed is not None:
+        if args.benchmark not in VERIFY_BENCHMARKS:
+            logger.error("--seed is only supported for verification benchmarks")
+            return 2
+        kwargs["seed"] = args.seed
     try:
         benchmark = create_benchmark(args.benchmark, **kwargs)
         result = evaluate_submission(Submission.from_directory(args.submission_dir), benchmark)

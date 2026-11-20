@@ -18,7 +18,12 @@ from pydantic import (
     model_validator,
 )
 
-from minimal_nn_competition.benchmarks.registry import CONTROL_SPEC, SNAKE_BENCHMARKS
+from minimal_nn_competition.benchmarks.registry import (
+    CONTROL_SPEC,
+    SNAKE_BENCHMARKS,
+    VERIFY_BENCHMARKS,
+    VERIFY_SPECS,
+)
 from minimal_nn_competition.model.limits import (
     MAX_CHECKPOINT_BYTES,
     MAX_PARAMETERS,
@@ -98,31 +103,88 @@ class SubmissionConfig(BaseModel):
 
     @classmethod
     def from_file(cls, path):
-        try:
-            raw = json.loads(path.read_text())
-        except (OSError, json.JSONDecodeError) as exc:
-            raise SubmissionError(f"Could not read config {path}: {exc}") from exc
-        if not isinstance(raw, dict):
-            raise SubmissionError("Submission config must be a JSON object")
-        try:
-            return cls.model_validate(raw)
-        except ValidationError as exc:
-            raise SubmissionError(f"Invalid submission config {path}: {exc}") from exc
+        return _read_config(path, cls)
+
+
+class VerifierConfig(BaseModel):
+    """A verifier submission: the transformer shape it claims to verify in time."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    benchmark: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    author: str = Field(min_length=1)
+    architecture: Literal["verifier"]
+    d_model: StrictInt = Field(gt=0)
+    layers: StrictInt = Field(gt=0)
+    heads: StrictInt = Field(gt=0)
+    d_mlp: StrictInt = Field(gt=0)
+    description: str = ""
+
+    @model_validator(mode="after")
+    def _validate_shape(self):
+        if self.benchmark not in VERIFY_BENCHMARKS:
+            raise ValueError(f"benchmark must be one of {', '.join(VERIFY_BENCHMARKS)}")
+        self.model_spec()  # raises on an invalid shape, e.g. d_model not divisible by heads
+        return self
+
+    def model_spec(self):
+        from minimal_nn_competition.verification.model import ModelSpec
+
+        dims = (self.d_model, self.layers, self.heads, self.d_mlp)
+        return ModelSpec(
+            **VERIFY_SPECS[self.benchmark],
+            d_model=dims[0],
+            layers=dims[1],
+            heads=dims[2],
+            d_mlp=dims[3],
+        )
+
+    def parameter_count(self):
+        return self.model_spec().parameter_count()
+
+    def structure(self):
+        return [self.d_model, self.layers, self.heads, self.d_mlp]
+
+    @classmethod
+    def from_file(cls, path):
+        return _read_config(path, cls)
+
+
+def _read_config(path, config_class):
+    try:
+        raw = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SubmissionError(f"Could not read config {path}: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise SubmissionError("Submission config must be a JSON object")
+    if config_class is None:
+        config_class = (
+            VerifierConfig if raw.get("benchmark") in VERIFY_BENCHMARKS else SubmissionConfig
+        )
+    try:
+        return config_class.model_validate(raw)
+    except ValidationError as exc:
+        raise SubmissionError(f"Invalid submission config {path}: {exc}") from exc
 
 
 @dataclass(frozen=True)
 class Submission:
     """A config and checkpoint pair located under a submission directory."""
 
-    config: SubmissionConfig
+    config: SubmissionConfig | VerifierConfig
     checkpoint: Path
 
     @classmethod
     def from_directory(cls, directory):
-        checkpoint = directory / "model.pt"
+        config = _read_config(directory / "config.json", None)
+        # Verifier submissions carry code instead of weights; ``checkpoint`` points at it.
+        checkpoint = directory / (
+            "verifier.py" if isinstance(config, VerifierConfig) else "model.pt"
+        )
         if not checkpoint.is_file():
             raise SubmissionError(f"Missing checkpoint: {checkpoint}")
-        return cls(SubmissionConfig.from_file(directory / "config.json"), checkpoint)
+        return cls(config, checkpoint)
 
 
 @dataclass(frozen=True)
