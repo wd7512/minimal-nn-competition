@@ -249,6 +249,11 @@ tests/test_integration.py::test_data_path_rejected_for_snake""".splitlines()
         _SNAKE_OBSTACLES_SOURCES,
         tuple("""tests/test_snake_obstacles.py""".splitlines()),
     ),
+    Scope(
+        "verification",
+        (f"{PACKAGE}/verification",),
+        ("tests/test_verification.py",),
+    ),
 )
 
 

@@ -26,3 +26,18 @@ Benchmark Submission Guides: [Snake](how-to/how-to-make-a-snake-submission.md), 
 ## Submit/Propose a new benchmark
 
 Create an issue with our [benchmark template](https://github.com/wd7512/minimal-nn-competition/blob/main/.github/ISSUE_TEMPLATE/new-benchmark.md).
+
+## Experimental: largest verified transformer
+
+How large can a transformer be while we still formally prove that it never
+emits a chosen token next? Verifiers answer with a certificate that a trusted
+checker validates, so no verifier code is run. See
+[the report](reports/verified-transformer.md).
+
+```bash
+uv run mnnc verify-transformer --save-model out/model --cert out/cert.json
+```
+
+```bash
+uv run mnnc check-certificate out/model out/cert.json
+```
