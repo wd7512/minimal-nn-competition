@@ -2,6 +2,7 @@
 
 import json
 import logging
+import math
 
 from minimal_nn_competition.verification.certificate import (
     CertificateError,
@@ -10,6 +11,7 @@ from minimal_nn_competition.verification.certificate import (
 )
 from minimal_nn_competition.verification.model import load_model, save_model, to_numpy
 from minimal_nn_competition.verification.reference import (
+    input_count,
     make_reference,
     model_id,
     plant_violation,
@@ -27,6 +29,10 @@ def _write(path, data):
     logger.info("wrote %s", path)
 
 
+def _size(box):
+    return math.prod(len(position) for position in box)
+
+
 def _verify(args):
     spec = reference_spec(args.vocab, args.max_len, args.d_model, args.layers, args.heads)
     if not 0 <= args.forbidden < spec.vocab:
@@ -40,11 +46,13 @@ def _verify(args):
     weights = to_numpy(params)
     result = branch_and_bound(weights, spec, args.forbidden, timeout=args.timeout)
     logger.info(
-        "%s params=%d %s %s leaves=%d boxes=%d %.3fs",
+        "%s params=%d %s %s inputs=%d/%d covered leaves=%d boxes=%d %.3fs",
         name,
         spec.parameter_count(),
         result.status,
         result.counterexample if result.counterexample is not None else result.reason,
+        sum(_size(box) for box, _ in result.leaves),
+        input_count(spec),
         len(result.leaves),
         result.boxes,
         result.seconds,

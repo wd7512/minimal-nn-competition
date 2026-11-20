@@ -19,6 +19,15 @@ uv run mnnc verify-transformer --vocab 2 --max-len 2 --d-model 4 --layers 1 --he
 Result: PROVED for all 7 inputs (244 parameters, 7 certificate leaves, about
 0.01 s). A planted variant (`--planted`) returns a checked COUNTEREXAMPLE.
 
+## What PROVED means
+
+PROVED is a total proof: for every sequence the model can accept, the
+forbidden token is never the next-token argmax. The model has positions only
+up to `max_len`, so no other inputs exist. For vocabulary V and maximum
+length L that is 1 + V + ... + V^L sequences: 7 in the seed case, 341 for
+V=4, L=4. The cost grows with that count because the current bounds prove one
+sequence at a time, but every PROVED row covers the whole space.
+
 ## What the field uses
 
 - alpha-beta-CROWN (built on auto_LiRPA) won VNN-COMP 2021-2025 and ranked
@@ -76,7 +85,7 @@ plus a forbidden token. The answer is one of:
 Reference models with seed 0, forbidden token 1, 30 s timeout, heads 2 for
 d_model above 4. Measured on the cloud development container.
 
-| V | L | inputs | d_model | layers | params | result | leaves | seconds |
+| V | L | input space (all sequences) | d_model | layers | params | result | leaves | seconds |
 |---|---|---|---|---|---|---|---|---|
 | 2 | 2 | 7 | 4 | 1 | 244 | PROVED | 7 | 0.01 |
 | 2 | 2 | 7 | 16 | 2 | 6432 | PROVED | 7 | 0.04 |
