@@ -1,7 +1,6 @@
-"""Example verifier: check every input with one batched forward pass per network.
+"""Example verifier: one batched forward pass over every input of each network.
 
-Finds the strongest counterexample if one exists, otherwise proves the network
-with one point leaf per input. Run as ``python verifier.py <instances> <answers>``.
+Run as ``python verifier.py <instances_dir> <answers_dir>``.
 """
 
 import json
@@ -14,28 +13,15 @@ from minimal_nn_competition.verification.forward import all_sequences, gaps, log
 from minimal_nn_competition.verification.model import load_instance
 
 
-def answer_for(params, spec, forbidden, tau):
-    seqs = all_sequences(spec)
-    rows = logits(params, spec, seqs)
-    gap = gaps(rows, forbidden)
-    worst = int(np.argmax(gap))
-    if gap[worst] >= tau / 2:
-        return {"answer": "COUNTEREXAMPLE", "sequence": list(seqs[worst])}
-    if np.any(gap > -tau / 2):
-        return {"answer": "UNKNOWN"}
-    others = np.delete(np.arange(spec.vocab), forbidden)
-    witnesses = others[np.argmax(rows[:, others], axis=1)]
-    leaves = [
-        {"box": [[t] for t in seq], "witness": int(w), "method": "point"}
-        for seq, w in zip(seqs, witnesses, strict=True)
-    ]
-    return {"answer": "PROVED", "leaves": leaves}
-
-
 def main(instances, answers):
     for directory in sorted(Path(instances).iterdir()):
-        spec, params, instance_id, forbidden, tau = load_instance(directory)
-        answer = {"id": instance_id} | answer_for(params, spec, forbidden, tau)
+        spec, params, instance_id, forbidden = load_instance(directory)
+        seqs = all_sequences(spec)
+        gap = gaps(logits(params, spec, seqs), forbidden)
+        answer = {"id": instance_id, "answer": "PROVED"}
+        if gap.max() > 0:
+            answer |= {"answer": "COUNTEREXAMPLE", "sequence": list(seqs[int(np.argmax(gap))])}
+        # Write then rename, so a kill at the time limit never leaves half a file.
         partial = Path(answers) / f"{instance_id}.json.partial"
         partial.write_text(json.dumps(answer))
         partial.rename(Path(answers) / f"{instance_id}.json")

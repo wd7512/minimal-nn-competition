@@ -29,7 +29,7 @@ import numpy as np
 from minimal_nn_competition.verification.forward import all_sequences, gaps, residuals
 
 COUNT = 100
-TAU = 0.5  # every input's logit gap is at least 2 * TAU from a tie by construction
+TAU = 0.5  # every input's logit gap is at least TAU from a tie
 MAX_VIOLATIONS = 3
 MAX_ATTEMPTS = 50
 
@@ -37,10 +37,8 @@ MAX_ATTEMPTS = 50
 @dataclass
 class Instance:
     instance_id: str
-    sound: bool
     params: dict
-    tau: float
-    violations: list = field(default_factory=list)  # ground truth, never shown to verifiers
+    violations: list = field(default_factory=list)  # ground truth; empty means sound
 
 
 def random_params(spec, rng):
@@ -104,7 +102,7 @@ def make_instance(spec, seed, index, sound=True):
     for _ in range(MAX_ATTEMPTS):
         shaped = _shape(random_params(spec, rng), spec, seqs, rng, sound)
         if shaped is not None:
-            return Instance(f"{index:03d}", sound, shaped[0], TAU, shaped[1])
+            return Instance(f"{index:03d}", shaped[0], shaped[1])
     raise RuntimeError(f"could not build instance {seed}-{index} for {spec}")
 
 

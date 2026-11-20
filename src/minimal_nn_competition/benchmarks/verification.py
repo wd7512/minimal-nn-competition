@@ -35,12 +35,8 @@ class VerificationBenchmark:
         details = {
             "solved": result.solved,
             "wrong": result.wrong,
-            "unsolved": result.unsolved,
             "instances": COUNT,
-            "inputs_per_network": spec.vocab**spec.max_len,
             "seed": self.seed,
-            "time_limit_seconds": self.time_limit,
             "verifier_seconds": round(result.verifier_seconds, 2),
-            "generation_seconds": round(result.generation_seconds, 2),
         }
         return result.solved / COUNT, result.solved == COUNT, details

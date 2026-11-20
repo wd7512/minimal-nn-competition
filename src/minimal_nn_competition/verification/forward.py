@@ -5,17 +5,9 @@ import itertools
 import numpy as np
 
 
-def sequences(vocab, length):
-    return list(itertools.product(range(vocab), repeat=length))
-
-
 def all_sequences(spec):
     """The input space: every sequence of exactly ``max_len`` tokens (after BOS)."""
-    return sequences(spec.vocab, spec.max_len)
-
-
-def input_count(spec):
-    return spec.vocab**spec.max_len
+    return list(itertools.product(range(spec.vocab), repeat=spec.max_len))
 
 
 def _softmax(scores):
@@ -34,7 +26,6 @@ def residuals(params, spec, seqs, chunk=256):
     for start in range(0, len(seqs), chunk):
         batch = seqs[start : start + chunk]
         n, length = len(batch), max(len(seq) for seq in batch) + 1
-        # tokens[:, 0] is BOS; sequences may differ in length (padding is harmless).
         tokens = np.zeros((n, length), dtype=np.int64)
         tokens[:, 0] = spec.vocab
         for row, seq in enumerate(batch):

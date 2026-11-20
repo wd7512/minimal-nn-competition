@@ -7,5 +7,5 @@
   "layers": 8,
   "heads": 8,
   "d_mlp": 2048,
-  "description": "Example: one batched forward pass over every input, with point leaves."
+  "description": "Example: one batched forward pass over every input."
 }

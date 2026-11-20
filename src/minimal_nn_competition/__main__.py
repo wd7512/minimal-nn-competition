@@ -93,16 +93,6 @@ def _parser():
     speed.add_argument("--output", type=Path, default=Path("docs/internal/speed/leaderboard.json"))
     render_speed = add("render-speed", help="Render the hidden Snake Simple 8x8 speed leaderboard")
     _render_args(render_speed)
-    instances = add("make-instances", help="Write verification instances to practise on")
-    instances.add_argument("benchmark", choices=VERIFY_BENCHMARKS)
-    instances.add_argument("output", type=Path)
-    for flag, default in (("d-model", 4), ("layers", 1), ("heads", 1), ("d-mlp", 16)):
-        instances.add_argument(f"--{flag}", type=int, default=default)
-    instances.add_argument("--seed", type=int, default=0)
-    instances.add_argument("--count", type=int, default=100)
-    check_answer = add("check-answer", help="Check one verifier answer against its instance")
-    check_answer.add_argument("instance_dir", type=Path)
-    check_answer.add_argument("answer", type=Path)
     internal = add("internal", help="Score this repo's own code against its test scopes")
     internal.add_argument("--root", type=Path, default=Path("."))
     internal.add_argument("--output", type=Path, default=Path("docs/internal/leaderboard.json"))
@@ -269,13 +259,6 @@ def main(argv=None):
             return _fail(exc)
         _emit(index)
         return 0
-    if args.command in ("make-instances", "check-answer"):
-        from minimal_nn_competition.verification.cli import run
-
-        try:
-            return run(args)
-        except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as exc:
-            return _fail(exc)
     if args.command == "internal":
         from minimal_nn_competition.internal import (
             SCOPES,
