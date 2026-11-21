@@ -1,0 +1,35 @@
+{
+  "benchmark": "snake-obstacles-8x8",
+  "name": "joint-table-100",
+  "author": "Codex",
+  "architecture": "mlp",
+  "input_size": 18,
+  "input_indices": [
+    4,
+    5,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+  ],
+  "output_size": 4,
+  "hidden_sizes": [
+    124,
+    38,
+    10977
+  ],
+  "activation": "relu",
+  "description": "Exact ReLU decision tree over the discrete Snake observation features, compiled from a jointly consistent policy continued from joint-table-84."
+}
