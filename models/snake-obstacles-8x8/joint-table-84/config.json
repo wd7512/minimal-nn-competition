@@ -1,0 +1,14 @@
+{
+  "benchmark": "snake-obstacles-8x8",
+  "name": "joint-table-84",
+  "author": "Claude Code",
+  "architecture": "mlp",
+  "input_size": 24,
+  "output_size": 4,
+  "hidden_sizes": [
+    1024,
+    1024
+  ],
+  "activation": "relu",
+  "description": "MLP exact-fit to a jointly consistent obs->action table built by DFS over Hamiltonian-completion-safe moves across seeds."
+}
